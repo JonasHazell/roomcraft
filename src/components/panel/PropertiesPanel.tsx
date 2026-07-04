@@ -1,15 +1,24 @@
+import { useState } from 'react';
 import * as THREE from 'three';
 import { useDesignStore } from '../../store/useDesignStore';
+import { useLibraryStore } from '../../store/useLibraryStore';
 import { useUiStore } from '../../store/useUiStore';
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { ColorField, NumberField } from './fields';
 
 export function PropertiesPanel() {
-  const selectedId = useUiStore((s) => s.selectedId);
+  const selection = useUiStore((s) => s.selection);
   const select = useUiStore((s) => s.select);
-  const selected = useDesignStore((s) => s.design.furniture.find((f) => f.id === selectedId));
+  const selected = useDesignStore((s) =>
+    selection?.kind === 'furniture'
+      ? s.design.furniture.find((f) => f.id === selection.id)
+      : undefined,
+  );
   const updateFurniture = useDesignStore((s) => s.updateFurniture);
+  const duplicateFurniture = useDesignStore((s) => s.duplicateFurniture);
   const removeFurniture = useDesignStore((s) => s.removeFurniture);
+  const saveToLibrary = useLibraryStore((s) => s.save);
+  const [savedForId, setSavedForId] = useState<string | null>(null);
 
   if (!selected) {
     return <p className="hint">Klicka på en möbel i 3D-vyn för att redigera den.</p>;
@@ -33,24 +42,27 @@ export function PropertiesPanel() {
       <div className="field-grid">
         <NumberField
           label="Bredd"
-          value={selected.size.width}
-          min={0.05}
-          max={20}
-          onChange={(width) => updateFurniture(selected.id, { size: { width } })}
+          value={Math.round(selected.size.width * 100)}
+          min={5}
+          max={2000}
+          step={1}
+          onChange={(v) => updateFurniture(selected.id, { size: { width: v / 100 } })}
         />
         <NumberField
           label="Djup"
-          value={selected.size.depth}
-          min={0.05}
-          max={20}
-          onChange={(depth) => updateFurniture(selected.id, { size: { depth } })}
+          value={Math.round(selected.size.depth * 100)}
+          min={5}
+          max={2000}
+          step={1}
+          onChange={(v) => updateFurniture(selected.id, { size: { depth: v / 100 } })}
         />
         <NumberField
           label="Höjd"
-          value={selected.size.height}
-          min={0.02}
-          max={6}
-          onChange={(height) => updateFurniture(selected.id, { size: { height } })}
+          value={Math.round(selected.size.height * 100)}
+          min={2}
+          max={600}
+          step={1}
+          onChange={(v) => updateFurniture(selected.id, { size: { height: v / 100 } })}
         />
         <NumberField
           label="Rotation"
@@ -62,6 +74,14 @@ export function PropertiesPanel() {
           onChange={(deg) =>
             updateFurniture(selected.id, { rotationY: THREE.MathUtils.degToRad(deg) })
           }
+        />
+        <NumberField
+          label="Höjd över golv"
+          value={Math.round(selected.elevation * 100)}
+          min={0}
+          max={600}
+          step={1}
+          onChange={(v) => updateFurniture(selected.id, { elevation: v / 100 })}
         />
       </div>
       <ColorField
@@ -92,6 +112,34 @@ export function PropertiesPanel() {
         </button>
         <button
           type="button"
+          className="btn"
+          title="Skapa en likadan möbel med samma mått"
+          onClick={() => {
+            const newId = duplicateFurniture(selected.id);
+            if (newId) select({ kind: 'furniture', id: newId });
+          }}
+        >
+          ⧉ Kopiera
+        </button>
+        <button
+          type="button"
+          className="btn"
+          title="Spara den här möbeln med mått och färg för att kunna lägga till den igen"
+          onClick={() => {
+            saveToLibrary({
+              name: selected.name,
+              kind: selected.kind,
+              size: { ...selected.size },
+              elevation: selected.elevation,
+              color: selected.color,
+            });
+            setSavedForId(selected.id);
+          }}
+        >
+          ☆ Spara i bibliotek
+        </button>
+        <button
+          type="button"
           className="btn btn-danger"
           onClick={() => {
             removeFurniture(selected.id);
@@ -101,8 +149,12 @@ export function PropertiesPanel() {
           Ta bort
         </button>
       </div>
+      {savedForId === selected.id && (
+        <p className="hint">Sparad i biblioteket — du hittar den under ”Mitt bibliotek”.</p>
+      )}
       <p className="hint">
-        Kortkommandon: R roterar höger · Shift+R vänster · Delete tar bort · Esc avmarkerar
+        Kortkommandon: R roterar höger · Shift+R vänster · Ctrl+D kopierar · Delete tar bort · Esc
+        avmarkerar
       </p>
     </div>
   );

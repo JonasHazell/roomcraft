@@ -7,7 +7,7 @@ export function NumberField({
   min = 0,
   max = 1000,
   step = 0.1,
-  suffix = 'm',
+  suffix = 'cm',
 }: {
   label: string;
   value: number;

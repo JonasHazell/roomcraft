@@ -2,10 +2,15 @@ import { Section } from './fields';
 import { RoomForm } from './RoomForm';
 import { OpeningsEditor } from './OpeningsEditor';
 import { FurniturePalette } from './FurniturePalette';
+import { FurnitureLibrary } from './FurnitureLibrary';
+import { AiProposalsPanel } from './AiProposalsPanel';
 import { PropertiesPanel } from './PropertiesPanel';
 import { SaveLoadPanel } from './SaveLoadPanel';
+import { useUiStore } from '../../store/useUiStore';
 
 export function Sidebar() {
+  const mode = useUiStore((s) => s.mode);
+
   return (
     <aside className="sidebar">
       <header className="brand">
@@ -18,12 +23,22 @@ export function Sidebar() {
       <Section title="Dörrar & fönster">
         <OpeningsEditor />
       </Section>
-      <Section title="Möbler">
-        <FurniturePalette />
-      </Section>
-      <Section title="Vald möbel">
-        <PropertiesPanel />
-      </Section>
+      {mode === '3d' && (
+        <>
+          <Section title="Möbler">
+            <FurniturePalette />
+          </Section>
+          <Section title="Mitt bibliotek">
+            <FurnitureLibrary />
+          </Section>
+          <Section title="AI-förslag">
+            <AiProposalsPanel />
+          </Section>
+          <Section title="Vald möbel">
+            <PropertiesPanel />
+          </Section>
+        </>
+      )}
       <Section title="Spara & ladda">
         <SaveLoadPanel />
       </Section>

@@ -32,7 +32,9 @@ const hit = new THREE.Vector3();
 
 export function FurnitureMesh({ id }: { id: string }) {
   const item = useDesignStore((s) => s.design.furniture.find((f) => f.id === id));
-  const selected = useUiStore((s) => s.selectedId === id);
+  const selected = useUiStore(
+    (s) => s.selection?.kind === 'furniture' && s.selection.id === id,
+  );
   const select = useUiStore((s) => s.select);
   const setDragging = useUiStore((s) => s.setDragging);
   const moveFurniture = useDesignStore((s) => s.moveFurniture);
@@ -46,7 +48,7 @@ export function FurnitureMesh({ id }: { id: string }) {
   const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
     if (e.button !== 0) return; // högerknapp lämnas åt kamerapanorering
     e.stopPropagation();
-    select(id);
+    select({ kind: 'furniture', id });
     (e.target as Element).setPointerCapture(e.pointerId);
     if (e.ray.intersectPlane(FLOOR_PLANE, hit)) {
       dragOffset.current = { x: item.position.x - hit.x, z: item.position.z - hit.z };
@@ -68,7 +70,7 @@ export function FurnitureMesh({ id }: { id: string }) {
 
   return (
     <group
-      position={[item.position.x, 0, item.position.z]}
+      position={[item.position.x, item.elevation, item.position.z]}
       rotation-y={item.rotationY}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -76,7 +78,7 @@ export function FurnitureMesh({ id }: { id: string }) {
       onClick={(e) => {
         // Stoppa klicket så att golvet bakom möbeln inte avmarkerar den.
         e.stopPropagation();
-        select(id);
+        select({ kind: 'furniture', id });
       }}
       onPointerOver={(e) => {
         e.stopPropagation();
@@ -86,7 +88,9 @@ export function FurnitureMesh({ id }: { id: string }) {
     >
       <Piece size={item.size} color={item.color} selected={selected} />
       {selected && (
-        <mesh rotation-x={-Math.PI / 2} position-y={0.01}>
+        // Markeringen projiceras ner på golvet så att fotavtrycket syns
+        // även när möbeln hänger ovanför.
+        <mesh rotation-x={-Math.PI / 2} position-y={0.01 - item.elevation}>
           <planeGeometry args={[item.size.width + 0.14, item.size.depth + 0.14]} />
           <meshBasicMaterial color={SELECT_EMISSIVE} transparent opacity={0.5} />
         </mesh>

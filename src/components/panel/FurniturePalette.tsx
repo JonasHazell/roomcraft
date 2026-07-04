@@ -13,7 +13,7 @@ export function FurniturePalette() {
           type="button"
           key={kind}
           className="palette-btn"
-          onClick={() => select(addFurniture(kind))}
+          onClick={() => select({ kind: 'furniture', id: addFurniture(kind) })}
         >
           <span className="swatch" style={{ background: FURNITURE_CATALOG[kind].defaultColor }} />
           {FURNITURE_CATALOG[kind].label}

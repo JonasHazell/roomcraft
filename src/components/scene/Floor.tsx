@@ -1,4 +1,7 @@
+import { useEffect, useMemo } from 'react';
 import type { ThreeEvent } from '@react-three/fiber';
+import * as THREE from 'three';
+import { floorPolygon } from '../../lib/polygon';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 
@@ -9,12 +12,27 @@ export function deselectOnStillClick(e: ThreeEvent<MouseEvent>) {
 }
 
 export function Floor() {
-  const room = useDesignStore((s) => s.design.room);
+  const walls = useDesignStore((s) => s.design.walls);
+  const floorColor = useDesignStore((s) => s.design.room.floorColor);
+
+  const geometry = useMemo(() => {
+    const poly = floorPolygon(walls);
+    const shape = new THREE.Shape();
+    // Med rotation-x = -π/2 mappas lokal +y till världens -z.
+    poly.forEach((p, i) => (i === 0 ? shape.moveTo(p.x, -p.z) : shape.lineTo(p.x, -p.z)));
+    shape.closePath();
+    return new THREE.ShapeGeometry(shape);
+  }, [walls]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
 
   return (
-    <mesh rotation-x={-Math.PI / 2} receiveShadow onClick={deselectOnStillClick}>
-      <planeGeometry args={[room.width, room.length]} />
-      <meshStandardMaterial color={room.floorColor} roughness={0.9} />
+    <mesh
+      rotation-x={-Math.PI / 2}
+      geometry={geometry}
+      receiveShadow
+      onClick={deselectOnStillClick}
+    >
+      <meshStandardMaterial color={floorColor} roughness={0.9} />
     </mesh>
   );
 }

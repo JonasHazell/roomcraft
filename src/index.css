@@ -174,7 +174,8 @@ body {
 }
 
 .field-input input[type='number'],
-.field-input input[type='text'] {
+.field-input input[type='text'],
+.field-input textarea {
   width: 100%;
   min-width: 0;
   border: 0;
@@ -183,6 +184,11 @@ body {
   font: inherit;
   color: inherit;
   background: transparent;
+}
+
+.field-input textarea {
+  resize: vertical;
+  line-height: 1.4;
 }
 
 .field-suffix {
@@ -225,6 +231,11 @@ select {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* Wrapper runt en disabled-knapp så att title-tooltipen fångas på hover. */
+.btn-tooltip-wrap {
+  display: inline-flex;
 }
 
 .btn {
@@ -425,6 +436,12 @@ select {
   color: var(--muted);
 }
 
+.lib-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* ---------- 3D-vy ---------- */
 
 .viewport {
@@ -448,4 +465,307 @@ select {
   border-radius: 999px;
   padding: 5px 12px;
   pointer-events: none;
+}
+
+/* ---------- Lägestabbar ---------- */
+
+.mode-tabs {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.mode-tabs button {
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 16px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.mode-tabs button.active {
+  background: var(--ink);
+  color: var(--card);
+}
+
+/* ---------- Planritning (2D) ---------- */
+
+.plan-editor {
+  position: absolute;
+  inset: 0;
+  background: var(--paper-2);
+}
+
+.plan-editor svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.plan-grid line {
+  stroke: var(--line);
+  stroke-width: 0.015;
+}
+
+.plan-wall .wall-band {
+  stroke: #5b5142;
+  stroke-linecap: butt;
+}
+
+.plan-wall.interior .wall-band {
+  stroke: #837661;
+}
+
+.plan-wall.selected .wall-band {
+  stroke: var(--select);
+}
+
+.plan-wall.dimmed {
+  opacity: 0.3;
+}
+
+.plan-wall .wall-hit {
+  stroke: transparent;
+  fill: none;
+  cursor: pointer;
+}
+
+.wall-opening.door {
+  stroke: var(--accent);
+}
+
+.wall-opening.window {
+  stroke: #8fb9c9;
+}
+
+.wall-measure,
+.draft-measure {
+  font-family: var(--body);
+  font-size: 0.26px;
+  fill: var(--muted);
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  user-select: none;
+}
+
+.draft-measure {
+  fill: var(--accent-dark);
+}
+
+.plan-draft .draft-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 0.05;
+}
+
+.plan-draft .draft-rubber {
+  stroke: var(--accent);
+  stroke-width: 0.035;
+  stroke-dasharray: 0.12 0.08;
+}
+
+.plan-draft .draft-guide {
+  stroke: var(--select);
+  stroke-width: 0.025;
+  stroke-dasharray: 0.06 0.06;
+}
+
+.plan-draft .draft-guide-corner {
+  fill: none;
+  stroke: var(--select);
+  stroke-width: 0.03;
+}
+
+.plan-draft .draft-point {
+  fill: var(--accent-dark);
+}
+
+.plan-draft .draft-close-ring {
+  fill: none;
+  stroke: var(--select);
+  stroke-width: 0.04;
+}
+
+.plan-overlay {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plan-toolbar,
+.plan-wall-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(245, 239, 226, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.plan-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.plan-error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.opening-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.opening-list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.opening-list button {
+  display: block;
+  width: 100%;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.opening-list button:hover {
+  background: rgba(180, 83, 47, 0.07);
+}
+
+.plan-wall-panel .field-grid {
+  gap: 8px 10px;
+}
+
+.wall-end-start {
+  fill: var(--select);
+}
+
+.wall-end-arrow {
+  fill: var(--select);
+}
+
+/* ---------- AI-förslag ---------- */
+
+.ai-error {
+  font-size: 13px;
+  color: var(--danger);
+  background: rgba(163, 58, 42, 0.08);
+  border: 1px solid rgba(163, 58, 42, 0.25);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin: 0;
+}
+
+.ai-proposal {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-proposal-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ai-proposal-head h4 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.ai-applied {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--accent);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.ai-concept {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.ai-furniture {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-furniture li {
+  display: flex;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.ai-furniture .swatch {
+  flex: 0 0 auto;
+  margin-top: 3px;
+}
+
+.ai-dim {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.ai-reason {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.ai-warnings {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.ai-warnings ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
 }

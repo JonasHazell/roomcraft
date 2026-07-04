@@ -9,28 +9,13 @@ export function RoomForm() {
     <div className="stack">
       <div className="field-grid">
         <NumberField
-          label="Bredd"
-          value={room.width}
-          min={1}
-          max={30}
-          onChange={(width) => setRoom({ width })}
-        />
-        <NumberField
-          label="Längd"
-          value={room.length}
-          min={1}
-          max={30}
-          onChange={(length) => setRoom({ length })}
-        />
-        <NumberField
           label="Takhöjd"
-          value={room.height}
-          min={2}
-          max={6}
-          onChange={(height) => setRoom({ height })}
+          value={Math.round(room.height * 100)}
+          min={200}
+          max={600}
+          step={1}
+          onChange={(v) => setRoom({ height: v / 100 })}
         />
-      </div>
-      <div className="field-grid">
         <ColorField
           label="Golv"
           value={room.floorColor}
@@ -42,6 +27,7 @@ export function RoomForm() {
           onChange={(wallColor) => setRoom({ wallColor })}
         />
       </div>
+      <p className="hint">Rummets form ritas i planritningen.</p>
     </div>
   );
 }
