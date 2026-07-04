@@ -13,8 +13,8 @@ export function FurnitureLibrary() {
   if (entries.length === 0) {
     return (
       <p className="hint">
-        Inga sparade möbler än. Markera en möbel och välj ”Spara i bibliotek” för att lägga till
-        den här.
+        No saved furniture yet. Select a piece and choose “Save to library” to add
+        it here.
       </p>
     );
   }
@@ -26,7 +26,7 @@ export function FurnitureLibrary() {
           <button
             type="button"
             className="save-name"
-            title={`Lägg till ”${entry.name}” i rummet`}
+            title={`Add “${entry.name}” to the room`}
             onClick={() => select({ kind: 'furniture', id: addFurnitureFromLibrary(entry) })}
           >
             <span className="lib-name">
@@ -40,7 +40,7 @@ export function FurnitureLibrary() {
           <button
             type="button"
             className="btn-icon"
-            title="Ta bort ur biblioteket"
+            title="Remove from library"
             onClick={() => remove(entry.id)}
           >
             ✕

@@ -11,7 +11,7 @@ function scoreClass(score: number | null): string {
   return 'score-bad';
 }
 
-/** Rad-id + titel, t.ex. "ERG-08 / FEN-03 — Huvudgärd mot stabil vägg". */
+/** Rule id + title, e.g. "ERG-08 / FEN-03 — Headboard against a solid wall". */
 function ruleLabel(r: RuleResult): string {
   const twin = r.rule.twin ? ` / ${r.rule.twin.id}` : '';
   return `${r.rule.id}${twin} — ${r.rule.title}`;
@@ -41,8 +41,8 @@ export function ValidationPanel() {
   return (
     <div className="stack">
       <p className="hint">
-        Kontrollerar möbleringen mot regelkatalogen (säkerhet, tillgänglighet, ergonomi, feng
-        shui m.m.). Klicka på ett fel för att markera det i 3D-vyn.
+        Checks the furnishing against the rule catalog (safety, accessibility, ergonomics, feng
+        shui, etc.). Click an issue to highlight it in the 3D view.
       </p>
       <label className="check-field">
         <input
@@ -50,31 +50,31 @@ export function ValidationPanel() {
           checked={fengShui}
           onChange={(e) => setFengShui(e.target.checked)}
         />
-        <span>Ta med feng shui-regler</span>
+        <span>Include feng shui rules</span>
       </label>
       <div className="button-row">
         <button type="button" className="btn btn-accent" onClick={validate}>
-          Validera möblering
+          Validate furnishing
         </button>
       </div>
 
-      {stale && <p className="hint validation-stale">Rummet har ändrats — validera igen.</p>}
+      {stale && <p className="hint validation-stale">The room has changed — validate again.</p>}
 
       {report && (
         <>
           <div className="validation-summary">
             <div className={`validation-total ${scoreClass(report.total)}`}>
-              <strong>{report.total === null ? '–' : `${report.total} p`}</strong>
-              <span>av 100</span>
+              <strong>{report.total === null ? '–' : `${report.total} pts`}</strong>
+              <span>of 100</span>
             </div>
             <div className="validation-meta">
               <span>
                 {report.roomTypes.length > 0
-                  ? `Tolkat som: ${report.roomTypes.map((t) => ROOM_TYPE_LABEL[t]).join(' + ')}`
-                  : 'Rumstyp okänd — möblera för att aktivera fler regler.'}
+                  ? `Interpreted as: ${report.roomTypes.map((t) => ROOM_TYPE_LABEL[t]).join(' + ')}`
+                  : 'Room type unknown — add furniture to activate more rules.'}
               </span>
               <span>
-                {passedCount} godkända · {violated.length} brutna
+                {passedCount} passed · {violated.length} violated
               </span>
             </div>
           </div>
@@ -93,7 +93,7 @@ export function ValidationPanel() {
           </ul>
 
           {violated.length === 0 ? (
-            <p className="hint">Inga regelbrott hittades — snyggt möblerat!</p>
+            <p className="hint">No rule violations found — nicely furnished!</p>
           ) : (
             <ul className="validation-list">
               {violated.map((r) =>
@@ -112,7 +112,7 @@ export function ValidationPanel() {
                                 furnitureIds: v.furnitureIds,
                                 zones: v.zones ?? [],
                               });
-                              // Markera i 3D:n, inte i egenskapspanelen.
+                              // Highlight in the 3D view, not in the properties panel.
                               select(null);
                             }}
                           >

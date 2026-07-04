@@ -7,7 +7,7 @@ import { useValidationStore } from '../../store/useValidationStore';
 const VIOLATION_COLOR = '#d9482b';
 
 function ZoneMesh({ zone }: { zone: Point[] }) {
-  // Shape i (x, y) mappas till golvets (x, z) via rotation-x nedan.
+  // Shape in (x, y) maps to the floor's (x, z) via rotation-x below.
   const geometry = useMemo(() => {
     const shape = new THREE.Shape();
     shape.moveTo(zone[0].x, zone[0].z);
@@ -30,8 +30,8 @@ function ZoneMesh({ zone }: { zone: Point[] }) {
 }
 
 /**
- * Rödmarkerar det valda valideringsfelet i 3D-vyn: inblandade möblers
- * fotavtryck plus eventuella golvzoner (dörrsvep, frizoner m.m.).
+ * Highlights the selected validation issue in red in the 3D view: the footprints
+ * of the furniture involved plus any floor zones (door swings, clearance zones, etc.).
  */
 export function ValidationOverlay() {
   const highlight = useValidationStore((s) => s.highlight);
@@ -60,7 +60,7 @@ export function ValidationOverlay() {
               depthWrite={false}
             />
           </mesh>
-          {/* Pelare som syns även bakom andra möbler. */}
+          {/* Marker that is visible even behind other furniture. */}
           <mesh position-y={f.elevation + f.size.height + 0.35} rotation-x={Math.PI}>
             <coneGeometry args={[0.09, 0.26, 4]} />
             <meshBasicMaterial color={VIOLATION_COLOR} />

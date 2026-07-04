@@ -1,13 +1,13 @@
 import type { Point, Wall } from '../types';
 
-/** Rutnät för snappning i 2D-editorn, meter. */
+/** Snap grid in the 2D editor, meters. */
 export const GRID = 0.1;
-/** Väggtjocklek, meter. */
+/** Wall thickness, meters. */
 export const WALL_T = 0.12;
 
 const EPS = 1e-6;
 
-/** Rundar bort flyttalsbrus till mm-precision. */
+/** Rounds away floating point noise to mm precision. */
 function roundCoord(v: number): number {
   return Math.round(v * 1000) / 1000;
 }
@@ -20,20 +20,20 @@ export function snapPoint(p: Point, grid = GRID): Point {
   return { x: snap(p.x, grid), z: snap(p.z, grid) };
 }
 
-/** Låser p till samma x- eller z-linje som prev (den minsta delta-komponenten nollas). */
+/** Locks p to the same x or z line as prev (the smaller delta component is zeroed). */
 export function axisLock(prev: Point, p: Point): Point {
   const dx = p.x - prev.x;
   const dz = p.z - prev.z;
   return Math.abs(dx) >= Math.abs(dz) ? { x: p.x, z: prev.z } : { x: prev.x, z: p.z };
 }
 
-/** Snappavstånd till redan utplacerade hörn i 2D-editorn, meter. */
+/** Snap distance to already placed corners in the 2D editor, meters. */
 export const CORNER_SNAP = 0.25;
 
 /**
- * Snappar p:s fria koordinat (x om segmentet är vågrätt, annars z) till
- * närmsta hörnkoordinat inom tol. Returnerar hörnet som styrde snappningen
- * (för hjälplinje i UI:t) eller null om inget hörn låg inom tolerans.
+ * Snaps p's free coordinate (x if the segment is horizontal, otherwise z) to
+ * the nearest corner coordinate within tol. Returns the corner that drove the
+ * snap (for the guide line in the UI) or null if no corner was within tolerance.
  */
 export function snapToCornerAxis(
   p: Point,
@@ -65,7 +65,7 @@ export function pointsEqual(p: Point, q: Point): boolean {
   return Math.abs(p.x - q.x) < EPS && Math.abs(p.z - q.z) < EPS;
 }
 
-/** Shoelace-summa i (x,z); positiv för kanonisk winding. */
+/** Shoelace sum in (x,z); positive for canonical winding. */
 export function signedArea(poly: Point[]): number {
   let sum = 0;
   for (let i = 0; i < poly.length; i++) {
@@ -76,7 +76,7 @@ export function signedArea(poly: Point[]): number {
   return sum / 2;
 }
 
-/** Vänder punktordningen vid behov så att shoelace-summan blir positiv. */
+/** Reverses the point order if needed so the shoelace sum becomes positive. */
 export function normalizeWinding(points: Point[]): Point[] {
   return signedArea(points) < 0 ? [...points].reverse() : points;
 }
@@ -102,13 +102,13 @@ export function polygonBounds(poly: Point[]): Bounds {
   return { minX, maxX, minZ, maxZ };
 }
 
-/** Bbox-mitt — bra nog som kameramål och scencentrum. */
+/** Bbox center — good enough as camera target and scene center. */
 export function polygonCenter(poly: Point[]): Point {
   const b = polygonBounds(poly);
   return { x: (b.minX + b.maxX) / 2, z: (b.minZ + b.maxZ) / 2 };
 }
 
-/** Even-odd ray casting i (x,z)-planet. */
+/** Even-odd ray casting in the (x,z) plane. */
 export function pointInPolygon(p: Point, poly: Point[]): boolean {
   let inside = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
@@ -131,8 +131,8 @@ export function closestPointOnSegment(p: Point, a: Point, b: Point): Point {
 }
 
 /**
- * Inuti → p oförändrad; annars närmsta randpunkt, knuffad 0,01 m in längs
- * kantens inåtnormal (-dz, dx) så att resultatet hamnar strikt innanför.
+ * Inside → p unchanged; otherwise the closest boundary point, nudged 0.01 m in
+ * along the edge's inward normal (-dz, dx) so the result lands strictly inside.
  */
 export function clampToPolygon(p: Point, poly: Point[]): Point {
   if (poly.length < 3 || pointInPolygon(p, poly)) return p;
@@ -158,9 +158,9 @@ export function clampToPolygon(p: Point, poly: Point[]): Point {
   return { x: best.x + nx * 0.01, z: best.z + nz * 0.01 };
 }
 
-// ---- Väggsegment ----
+// ---- Wall segments ----
 
-/** Normaliserad riktning a→b. */
+/** Normalized direction a→b. */
 export function wallDir(w: Pick<Wall, 'a' | 'b'>): Point {
   const len = dist(w.a, w.b) || 1;
   return { x: (w.b.x - w.a.x) / len, z: (w.b.z - w.a.z) / len };
@@ -170,10 +170,10 @@ export function wallLen(w: Pick<Wall, 'a' | 'b'>): number {
   return dist(w.a, w.b);
 }
 
-/** Utåtnormal för yttervägg i kanonisk (positiv) winding: (dz, -dx). */
+/** Outward normal for an exterior wall in canonical (positive) winding: (dz, -dx). */
 export function outwardNormal(w: Pick<Wall, 'a' | 'b'>): Point {
   const d = wallDir(w);
-  return { x: d.z + 0, z: -d.x + 0 }; // + 0 normaliserar bort -0
+  return { x: d.z + 0, z: -d.x + 0 }; // + 0 normalizes away -0
 }
 
 export function wallMidpoint(w: Pick<Wall, 'a' | 'b'>): Point {
@@ -184,7 +184,7 @@ export function isAxisParallel(a: Point, b: Point): boolean {
   return Math.abs(a.x - b.x) < EPS || Math.abs(a.z - b.z) < EPS;
 }
 
-/** Golvpolygonen: ytterväggarnas startpunkter i slingordning. */
+/** The floor polygon: the exterior walls' start points in loop order. */
 export function floorPolygon(walls: Wall[]): Point[] {
   return walls.filter((w) => w.kind === 'exterior').map((w) => w.a);
 }
@@ -203,7 +203,7 @@ function onSegment(p: Point, q: Point, r: Point): boolean {
   );
 }
 
-/** Sant om segmenten skär eller rör vid varandra (inkl. kolinjär överlappning). */
+/** True if the segments cross or touch each other (incl. collinear overlap). */
 export function segmentsIntersect(p1: Point, p2: Point, p3: Point, p4: Point): boolean {
   const o1 = orient(p1, p2, p3);
   const o2 = orient(p1, p2, p4);
@@ -220,33 +220,33 @@ export function segmentsIntersect(p1: Point, p2: Point, p3: Point, p4: Point): b
 export type LoopValidation = { ok: true } | { ok: false; reason: string };
 
 /**
- * Validerar att ytterväggarna bildar en sluten, enkel, axelparallell slinga
- * med kanonisk (positiv) winding. Svenska felmeddelanden för UI:t.
+ * Validates that the exterior walls form a closed, simple, axis-parallel loop
+ * with canonical (positive) winding. Error messages are shown in the UI.
  */
 export function validateExteriorLoop(walls: Pick<Wall, 'a' | 'b'>[]): LoopValidation {
   const n = walls.length;
-  if (n < 4) return { ok: false, reason: 'Konturen måste ha minst fyra hörn.' };
+  if (n < 4) return { ok: false, reason: 'The outline must have at least four corners.' };
   for (const w of walls) {
     if (!isAxisParallel(w.a, w.b)) {
-      return { ok: false, reason: 'Väggarna måste vara vågräta eller lodräta.' };
+      return { ok: false, reason: 'Walls must be horizontal or vertical.' };
     }
     if (wallLen(w) < GRID - EPS) {
-      return { ok: false, reason: 'En vägg är för kort (minst 10 cm).' };
+      return { ok: false, reason: 'A wall is too short (at least 10 cm).' };
     }
   }
   for (let i = 0; i < n; i++) {
     if (!pointsEqual(walls[i].b, walls[(i + 1) % n].a)) {
-      return { ok: false, reason: 'Konturen är inte sluten.' };
+      return { ok: false, reason: 'The outline is not closed.' };
     }
   }
-  // Grannar får inte vika tillbaka längs samma linje.
+  // Neighbors must not fold back along the same line.
   for (let i = 0; i < n; i++) {
     const d1 = wallDir(walls[i]);
     const d2 = wallDir(walls[(i + 1) % n]);
     const cross = d1.x * d2.z - d1.z * d2.x;
     const dot = d1.x * d2.x + d1.z * d2.z;
     if (Math.abs(cross) < EPS && dot < 0) {
-      return { ok: false, reason: 'Väggarna korsar varandra.' };
+      return { ok: false, reason: 'The walls cross each other.' };
     }
   }
   for (let i = 0; i < n; i++) {
@@ -254,17 +254,17 @@ export function validateExteriorLoop(walls: Pick<Wall, 'a' | 'b'>[]): LoopValida
       const adjacent = j === i + 1 || (i === 0 && j === n - 1);
       if (adjacent) continue;
       if (segmentsIntersect(walls[i].a, walls[i].b, walls[j].a, walls[j].b)) {
-        return { ok: false, reason: 'Väggarna korsar varandra.' };
+        return { ok: false, reason: 'The walls cross each other.' };
       }
     }
   }
   if (signedArea(walls.map((w) => w.a)) <= 0) {
-    return { ok: false, reason: 'Konturen är inte sluten.' };
+    return { ok: false, reason: 'The outline is not closed.' };
   }
   return { ok: true };
 }
 
-/** Bygger ytterväggskedjan från en sluten punktlista (sista → första sluter). */
+/** Builds the exterior wall chain from a closed point list (last → first closes it). */
 export function wallsFromPolygon(points: Point[], idFactory: () => string): Wall[] {
   return points.map((a, i) => ({
     id: idFactory(),
@@ -275,10 +275,10 @@ export function wallsFromPolygon(points: Point[], idFactory: () => string): Wall
 }
 
 /**
- * Hörnfyllnad: hur mycket vägg i:s extruderade längd ska justeras vid sitt
- * slut (hörnet mot nästa vägg). Konvext hörn +t, konkavt −t, kolinjärt 0.
- * Starten justeras aldrig — varje hörn hanteras av sin inkommande vägg, vilket
- * tätar ytterbandet utan överlapp och lämnar u = 0 (öppnings-offset) orörd.
+ * Corner fill: how much wall i's extruded length should be adjusted at its
+ * end (the corner toward the next wall). Convex corner +t, concave −t, collinear 0.
+ * The start is never adjusted — each corner is handled by its incoming wall, which
+ * seals the exterior band without overlap and leaves u = 0 (opening offset) untouched.
  */
 export function exteriorEndExtension(walls: Wall[], i: number, t = WALL_T): number {
   const exterior = walls.filter((w) => w.kind === 'exterior');
@@ -292,13 +292,13 @@ export function exteriorEndExtension(walls: Wall[], i: number, t = WALL_T): numb
   return 0;
 }
 
-/** UI-etikett: väggarna numreras per sort i arrayordning. */
+/** UI label: walls are numbered per kind in array order. */
 export function wallLabel(walls: Wall[], id: string): string {
   const wall = walls.find((w) => w.id === id);
-  if (!wall) return 'Vägg';
+  if (!wall) return 'Wall';
   const siblings = walls.filter((w) => w.kind === wall.kind);
   const idx = siblings.indexOf(wall) + 1;
-  return `${wall.kind === 'exterior' ? 'Yttervägg' : 'Innervägg'} ${idx}`;
+  return `${wall.kind === 'exterior' ? 'Exterior wall' : 'Interior wall'} ${idx}`;
 }
 
 export function formatCm(v: number): string {

@@ -26,11 +26,11 @@ export function SaveLoadPanel() {
   const refresh = () => setSaves(listSaves());
 
   const onSave = () => {
-    const trimmed = name.trim() || 'Mitt rum';
+    const trimmed = name.trim() || 'My room';
     saveAs(trimmed, useDesignStore.getState().design);
     refresh();
     setError(null);
-    setNotice(`Sparade ”${trimmed}”.`);
+    setNotice(`Saved “${trimmed}”.`);
   };
 
   const onImport = async (file: File) => {
@@ -39,36 +39,36 @@ export function SaveLoadPanel() {
       loadDesign(design);
       select(null);
       setError(null);
-      setNotice(`Importerade ”${design.name}”.`);
+      setNotice(`Imported “${design.name}”.`);
     } catch (e) {
       setNotice(null);
-      setError(e instanceof Error ? e.message : 'Importen misslyckades.');
+      setError(e instanceof Error ? e.message : 'Import failed.');
     }
   };
 
   return (
     <div className="stack">
       <label className="field">
-        <span className="field-label">Namn på designen</span>
+        <span className="field-label">Design name</span>
         <span className="field-input">
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
         </span>
       </label>
       <div className="button-row">
         <button type="button" className="btn btn-accent" onClick={onSave}>
-          Spara
+          Save
         </button>
         <button
           type="button"
           className="btn"
           onClick={() => {
-            if (window.confirm('Börja om med en ny design? Osparade ändringar går förlorade.')) {
+            if (window.confirm('Start over with a new design? Unsaved changes will be lost.')) {
               newDesign();
               select(null);
             }
           }}
         >
-          Ny design
+          New design
         </button>
       </div>
 
@@ -79,13 +79,13 @@ export function SaveLoadPanel() {
               <button
                 type="button"
                 className="save-name"
-                title={`Ladda ”${s.name}”`}
+                title={`Load “${s.name}”`}
                 onClick={() => {
                   const d = loadSave(s.name);
                   if (d) {
                     loadDesign(d);
                     select(null);
-                    setNotice(`Laddade ”${s.name}”.`);
+                    setNotice(`Loaded “${s.name}”.`);
                   }
                 }}
               >
@@ -97,9 +97,9 @@ export function SaveLoadPanel() {
               <button
                 type="button"
                 className="btn-icon"
-                title="Ta bort sparning"
+                title="Delete save"
                 onClick={() => {
-                  if (window.confirm(`Ta bort sparningen ”${s.name}”?`)) {
+                  if (window.confirm(`Delete the save “${s.name}”?`)) {
                     deleteSave(s.name);
                     refresh();
                   }
@@ -118,10 +118,10 @@ export function SaveLoadPanel() {
           className="btn"
           onClick={() => exportDesign(useDesignStore.getState().design)}
         >
-          Exportera JSON
+          Export JSON
         </button>
         <button type="button" className="btn" onClick={() => fileRef.current?.click()}>
-          Importera JSON
+          Import JSON
         </button>
         <input
           ref={fileRef}

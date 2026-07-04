@@ -37,7 +37,7 @@ export function Scene() {
         shadow-bias={-0.0004}
       />
 
-      {/* Mark utanför rummet, fångar väggskuggor; klick här avmarkerar */}
+      {/* Ground outside the room, catches wall shadows; clicking here deselects */}
       <mesh
         rotation-x={-Math.PI / 2}
         position={[center.x, -0.03, center.z]}

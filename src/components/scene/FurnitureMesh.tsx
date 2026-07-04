@@ -35,8 +35,8 @@ const COMPONENTS: Record<FurnitureKind, ComponentType<FurnitureProps>> = {
   box: GenericBox,
 };
 
-// Dra mot det matematiska golvplanet (inte en mesh) så att dragget fortsätter
-// även när pekaren lämnar möbelns silhuett.
+// Drag against the mathematical floor plane (not a mesh) so the drag continues
+// even when the pointer leaves the furniture's silhouette.
 const FLOOR_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const hit = new THREE.Vector3();
 
@@ -56,7 +56,7 @@ export function FurnitureMesh({ id }: { id: string }) {
   const Piece = COMPONENTS[item.kind];
 
   const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
-    if (e.button !== 0) return; // högerknapp lämnas åt kamerapanorering
+    if (e.button !== 0) return; // right button is left to camera panning
     e.stopPropagation();
     select({ kind: 'furniture', id });
     (e.target as Element).setPointerCapture(e.pointerId);
@@ -86,7 +86,7 @@ export function FurnitureMesh({ id }: { id: string }) {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onClick={(e) => {
-        // Stoppa klicket så att golvet bakom möbeln inte avmarkerar den.
+        // Stop the click so the floor behind the furniture doesn't deselect it.
         e.stopPropagation();
         select({ kind: 'furniture', id });
       }}
@@ -98,8 +98,8 @@ export function FurnitureMesh({ id }: { id: string }) {
     >
       <Piece size={item.size} color={item.color} selected={selected} />
       {selected && (
-        // Markeringen projiceras ner på golvet så att fotavtrycket syns
-        // även när möbeln hänger ovanför.
+        // The selection is projected down onto the floor so the footprint is
+        // visible even when the furniture hangs above it.
         <mesh rotation-x={-Math.PI / 2} position-y={0.01 - item.elevation}>
           <planeGeometry args={[item.size.width + 0.14, item.size.depth + 0.14]} />
           <meshBasicMaterial color={SELECT_EMISSIVE} transparent opacity={0.5} />

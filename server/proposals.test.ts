@@ -5,7 +5,7 @@ import { resolveProposals } from './orient.ts';
 import { overlapErrors, reachabilityErrors } from './reachability.ts';
 import type { AiFurniture, ResolvedFurniture } from './schema.ts';
 
-/** 4×4 m fyrkantsrum med en dörr mitt på nedre väggen (z=0). */
+/** 4×4 m square room with a door in the middle of the bottom wall (z=0). */
 function makeRoom(): Design {
   const pts = [
     { x: 0, z: 0 },
@@ -34,7 +34,7 @@ function makeRoom(): Design {
 
 const box = (over: Partial<ResolvedFurniture>): ResolvedFurniture => ({
   kind: 'box',
-  name: 'Låda',
+  name: 'Box',
   x: 2,
   z: 2,
   rotationY: 0,
@@ -47,7 +47,7 @@ const box = (over: Partial<ResolvedFurniture>): ResolvedFurniture => ({
 
 const aiItem = (over: Partial<AiFurniture>): AiFurniture => ({
   kind: 'wardrobe',
-  name: 'Garderob',
+  name: 'Wardrobe',
   x: 2,
   z: 3.7,
   facing: { x: 2, z: 1 },
@@ -59,23 +59,23 @@ const aiItem = (over: Partial<AiFurniture>): AiFurniture => ({
   ...over,
 });
 
-describe('resolveProposals — orientering', () => {
-  it('snäpper en againstWall-garderob flush mot närmaste vägg med framsidan ut i rummet', () => {
+describe('resolveProposals — orientation', () => {
+  it('snaps an againstWall wardrobe flush against the nearest wall with its front facing the room', () => {
     const design = makeRoom();
     const resolved = resolveProposals(
       { proposals: [{ title: 't', concept: 'c', furniture: [aiItem({})] }] },
       design,
     );
     const g = resolved.proposals[0].furniture[0];
-    // Övre väggen är z=4; ryggen (djup 0.6) ska stå dikt an → centrum ≈ 4 − 0.3 − gap.
+    // The top wall is z=4; the back (depth 0.6) should sit flush → center ≈ 4 − 0.3 − gap.
     expect(g.z).toBeCloseTo(3.68, 2);
-    // Framsidan ska peka in i rummet (−z).
+    // The front should point into the room (−z).
     const f = frontDir(g.rotationY);
     expect(f.z).toBeLessThan(-0.9);
     expect(Math.abs(f.x)).toBeLessThan(0.01);
   });
 
-  it('vänder en fristående stols framsida mot bordet (facing-punkten)', () => {
+  it('turns the front of a freestanding chair toward the table (the facing point)', () => {
     const design = makeRoom();
     const resolved = resolveProposals(
       {
@@ -86,11 +86,11 @@ describe('resolveProposals — orientering', () => {
             furniture: [
               aiItem({
                 kind: 'chair',
-                name: 'Stol',
+                name: 'Chair',
                 x: 2,
                 z: 1,
                 againstWall: false,
-                facing: { x: 2, z: 3 }, // bordet ligger norrut
+                facing: { x: 2, z: 3 }, // the table is to the north
                 size: { width: 0.45, depth: 0.45, height: 0.9 },
               }),
             ],
@@ -100,47 +100,47 @@ describe('resolveProposals — orientering', () => {
       design,
     );
     const f = frontDir(resolved.proposals[0].furniture[0].rotationY);
-    expect(f.z).toBeGreaterThan(0.9); // framsidan pekar +z, mot bordet
+    expect(f.z).toBeGreaterThan(0.9); // the front points +z, toward the table
   });
 });
 
 describe('overlapErrors', () => {
-  it('flaggar två överlappande lådor', () => {
+  it('flags two overlapping boxes', () => {
     const errs = overlapErrors([box({ name: 'A', x: 2 }), box({ name: 'B', x: 2.5 })], 't');
     expect(errs).toHaveLength(1);
   });
 
-  it('tillåter en stol inskjuten under ett bord', () => {
-    const table = box({ kind: 'table', name: 'Bord', size: { width: 1.4, depth: 0.8, height: 0.75 } });
-    const chair = box({ kind: 'chair', name: 'Stol', size: { width: 0.45, depth: 0.45, height: 0.9 } });
+  it('allows a chair pushed in under a table', () => {
+    const table = box({ kind: 'table', name: 'Table', size: { width: 1.4, depth: 0.8, height: 0.75 } });
+    const chair = box({ kind: 'chair', name: 'Chair', size: { width: 0.45, depth: 0.45, height: 0.9 } });
     expect(overlapErrors([table, chair], 't')).toHaveLength(0);
   });
 });
 
 describe('reachabilityErrors', () => {
-  it('godkänner en möbel med fri väg från dörren', () => {
+  it('accepts a furniture item with a clear path from the door', () => {
     const design = makeRoom();
-    const table = box({ kind: 'table', name: 'Bord', z: 2, size: { width: 1, depth: 0.8, height: 0.75 } });
+    const table = box({ kind: 'table', name: 'Table', z: 2, size: { width: 1, depth: 0.8, height: 0.75 } });
     expect(reachabilityErrors([table], design, 't')).toHaveLength(0);
   });
 
-  it('flaggar en möbel som är instängd bakom en avdelande möbel', () => {
+  it('flags a furniture item trapped behind a dividing piece', () => {
     const design = makeRoom();
-    // Avdelare tvärs över rummet vid z=2 → separerar dörren (nere) från övre halvan.
+    // Divider across the room at z=2 → separates the door (bottom) from the upper half.
     const divider = box({
-      name: 'Avdelare',
+      name: 'Divider',
       x: 2,
       z: 2,
       size: { width: 3.95, depth: 0.6, height: 2 },
     });
     const trapped = box({
       kind: 'table',
-      name: 'Lekbord',
+      name: 'Play table',
       x: 2,
       z: 3.2,
       size: { width: 1, depth: 0.8, height: 0.5 },
     });
     const errs = reachabilityErrors([divider, trapped], design, 't');
-    expect(errs.some((e) => e.includes('Lekbord'))).toBe(true);
+    expect(errs.some((e) => e.includes('Play table'))).toBe(true);
   });
 });

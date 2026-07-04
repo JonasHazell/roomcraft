@@ -9,12 +9,12 @@ export function Desk({ size, color, selected }: FurnitureProps) {
   const screenH = Math.min(0.4, screenW * 0.6);
   return (
     <group>
-      {/* skiva */}
+      {/* top */}
       <mesh castShadow position={[0, h - top / 2, 0]}>
         <boxGeometry args={[w, top, d]} />
         <Mat color={color} selected={selected} />
       </mesh>
-      {/* ben */}
+      {/* legs */}
       {[-1, 1].flatMap((sx) =>
         [-1, 1].map((sz) => (
           <mesh
@@ -27,7 +27,7 @@ export function Desk({ size, color, selected }: FurnitureProps) {
           </mesh>
         )),
       )}
-      {/* skärm mot baksidan (framsidan/sittsidan är lokal +z) */}
+      {/* screen toward the back (the front/seating side is local +z) */}
       <mesh castShadow position={[0, h + 0.06 + screenH / 2, -d / 2 + 0.12]}>
         <boxGeometry args={[screenW, screenH, 0.03]} />
         <Mat color="#2c2c30" selected={selected} roughness={0.4} />

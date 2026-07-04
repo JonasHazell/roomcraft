@@ -5,7 +5,7 @@ import { floorPolygon } from '../../lib/polygon';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 
-/** Avmarkera bara vid stillastående klick — inte när ett drag/kamerasnurr släpps. */
+/** Only deselect on a still click — not when a drag/camera orbit is released. */
 export function deselectOnStillClick(e: ThreeEvent<MouseEvent>) {
   if (e.delta > 3) return;
   useUiStore.getState().select(null);
@@ -18,7 +18,7 @@ export function Floor() {
   const geometry = useMemo(() => {
     const poly = floorPolygon(walls);
     const shape = new THREE.Shape();
-    // Med rotation-x = -π/2 mappas lokal +y till världens -z.
+    // With rotation-x = -π/2, local +y maps to world -z.
     poly.forEach((p, i) => (i === 0 ? shape.moveTo(p.x, -p.z) : shape.lineTo(p.x, -p.z)));
     shape.closePath();
     return new THREE.ShapeGeometry(shape);

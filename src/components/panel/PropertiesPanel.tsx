@@ -21,7 +21,7 @@ export function PropertiesPanel() {
   const [savedForId, setSavedForId] = useState<string | null>(null);
 
   if (!selected) {
-    return <p className="hint">Klicka på en möbel i 3D-vyn för att redigera den.</p>;
+    return <p className="hint">Click a piece of furniture in the 3D view to edit it.</p>;
   }
 
   const degrees = Math.round(THREE.MathUtils.radToDeg(selected.rotationY)) % 360;
@@ -29,7 +29,7 @@ export function PropertiesPanel() {
   return (
     <div className="stack">
       <label className="field">
-        <span className="field-label">Namn</span>
+        <span className="field-label">Name</span>
         <span className="field-input">
           <input
             type="text"
@@ -38,10 +38,10 @@ export function PropertiesPanel() {
           />
         </span>
       </label>
-      <p className="hint">Typ: {FURNITURE_CATALOG[selected.kind].label}</p>
+      <p className="hint">Type: {FURNITURE_CATALOG[selected.kind].label}</p>
       <div className="field-grid">
         <NumberField
-          label="Bredd"
+          label="Width"
           value={Math.round(selected.size.width * 100)}
           min={5}
           max={2000}
@@ -49,7 +49,7 @@ export function PropertiesPanel() {
           onChange={(v) => updateFurniture(selected.id, { size: { width: v / 100 } })}
         />
         <NumberField
-          label="Djup"
+          label="Depth"
           value={Math.round(selected.size.depth * 100)}
           min={5}
           max={2000}
@@ -57,7 +57,7 @@ export function PropertiesPanel() {
           onChange={(v) => updateFurniture(selected.id, { size: { depth: v / 100 } })}
         />
         <NumberField
-          label="Höjd"
+          label="Height"
           value={Math.round(selected.size.height * 100)}
           min={2}
           max={600}
@@ -76,7 +76,7 @@ export function PropertiesPanel() {
           }
         />
         <NumberField
-          label="Höjd över golv"
+          label="Height above floor"
           value={Math.round(selected.elevation * 100)}
           min={0}
           max={600}
@@ -85,7 +85,7 @@ export function PropertiesPanel() {
         />
       </div>
       <ColorField
-        label="Färg"
+        label="Color"
         value={selected.color}
         onChange={(color) => updateFurniture(selected.id, { color })}
       />
@@ -93,38 +93,38 @@ export function PropertiesPanel() {
         <button
           type="button"
           className="btn"
-          title="Rotera 90° åt vänster"
+          title="Rotate 90° left"
           onClick={() =>
             updateFurniture(selected.id, { rotationY: selected.rotationY + Math.PI / 2 })
           }
         >
-          ⟲ Vänster
+          ⟲ Left
         </button>
         <button
           type="button"
           className="btn"
-          title="Rotera 90° åt höger"
+          title="Rotate 90° right"
           onClick={() =>
             updateFurniture(selected.id, { rotationY: selected.rotationY - Math.PI / 2 })
           }
         >
-          ⟳ Höger
+          ⟳ Right
         </button>
         <button
           type="button"
           className="btn"
-          title="Skapa en likadan möbel med samma mått"
+          title="Create an identical piece with the same dimensions"
           onClick={() => {
             const newId = duplicateFurniture(selected.id);
             if (newId) select({ kind: 'furniture', id: newId });
           }}
         >
-          ⧉ Kopiera
+          ⧉ Duplicate
         </button>
         <button
           type="button"
           className="btn"
-          title="Spara den här möbeln med mått och färg för att kunna lägga till den igen"
+          title="Save this piece with its dimensions and color so you can add it again"
           onClick={() => {
             saveToLibrary({
               name: selected.name,
@@ -136,7 +136,7 @@ export function PropertiesPanel() {
             setSavedForId(selected.id);
           }}
         >
-          ☆ Spara i bibliotek
+          ☆ Save to library
         </button>
         <button
           type="button"
@@ -146,15 +146,15 @@ export function PropertiesPanel() {
             select(null);
           }}
         >
-          Ta bort
+          Delete
         </button>
       </div>
       {savedForId === selected.id && (
-        <p className="hint">Sparad i biblioteket — du hittar den under ”Mitt bibliotek”.</p>
+        <p className="hint">Saved to the library — you'll find it under “My library”.</p>
       )}
       <p className="hint">
-        Kortkommandon: R roterar höger · Shift+R vänster · Ctrl+D kopierar · Delete tar bort · Esc
-        avmarkerar
+        Shortcuts: R rotates right · Shift+R left · Ctrl+D duplicates · Delete removes · Esc
+        deselects
       </p>
     </div>
   );

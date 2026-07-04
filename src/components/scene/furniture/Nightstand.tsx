@@ -9,7 +9,7 @@ export function Nightstand({ size, color, selected }: FurnitureProps) {
         <boxGeometry args={[w, h, d]} />
         <Mat color={color} selected={selected} />
       </mesh>
-      {/* lådfront med knopp på framsidan (lokal +z) */}
+      {/* drawer front with knob on the front (local +z) */}
       <mesh castShadow position={[0, h - drawerH, d / 2 + 0.005]}>
         <boxGeometry args={[w * 0.85, drawerH, 0.015]} />
         <Mat color={shade(color, 0.25)} selected={selected} />

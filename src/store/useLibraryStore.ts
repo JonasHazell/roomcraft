@@ -8,12 +8,12 @@ import {
 
 interface LibraryState {
   entries: FurnitureLibraryEntry[];
-  /** Sparar en möbel i biblioteket och returnerar den sparade posten. */
+  /** Saves a furniture piece to the library and returns the saved entry. */
   save: (entry: Omit<FurnitureLibraryEntry, 'id'>) => FurnitureLibraryEntry;
   remove: (id: string) => void;
 }
 
-/** Håller localStorage-biblioteket reaktivt så att alla paneler visar samma lista. */
+/** Keeps the localStorage library reactive so all panels show the same list. */
 export const useLibraryStore = create<LibraryState>((set) => ({
   entries: listFurnitureLibrary(),
   save: (entry) => {

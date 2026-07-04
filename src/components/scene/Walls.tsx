@@ -23,9 +23,9 @@ export function Walls() {
     [walls],
   );
 
-  // Dölj ytterväggar mellan kameran och rummet. Riktningen tas från väggens
-  // mittpunkt så att heuristiken funkar även för L-formade/ocentrerade rum.
-  // Muterar .visible direkt — ingen state behövs, flippen är diskret per frame.
+  // Hide exterior walls between the camera and the room. The direction is taken
+  // from the wall's midpoint so the heuristic works even for L-shaped/off-center
+  // rooms. Mutates .visible directly — no state needed, the flip is discrete per frame.
   useFrame(({ camera }) => {
     for (const { id, mid, normal } of hideData) {
       const group = groupRefs.current[id];
@@ -74,9 +74,9 @@ function WallMesh({
   );
 
   const onClick = (e: ThreeEvent<MouseEvent>) => {
-    // Samma stillastående-klick-guard som deselectOnStillClick.
+    // Same still-click guard as deselectOnStillClick.
     if (e.delta > 3) return;
-    // Kameradolda väggar raycastas ändå — släpp klicket vidare till det bakom.
+    // Camera-hidden walls are still raycast — pass the click through to what's behind.
     if (!e.eventObject.parent?.visible) return;
     e.stopPropagation();
     select({ kind: 'wall', id: wall.id });
@@ -92,7 +92,7 @@ function WallMesh({
 
   return (
     <group ref={ref} position={origin} rotation-y={rotationY}>
-      {/* FrontSide medvetet: extruderad sluten solid med utåtriktade normaler. */}
+      {/* FrontSide deliberately: extruded closed solid with outward-facing normals. */}
       <mesh geometry={geometry} castShadow receiveShadow onClick={onClick}>
         <meshStandardMaterial
           color={room.wallColor}

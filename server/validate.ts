@@ -5,33 +5,33 @@ import { overlapErrors, reachabilityErrors } from './reachability.ts';
 import type { ResolvedProposals } from './schema.ts';
 
 /**
- * Kontrollerar de hårda kraven som går att avgöra maskinellt på de färdiglösta
- * möblerna (rotation/position redan uppslagna i orient.ts).
- * Returnerar en lista svenska felbeskrivningar (tom = godkänt).
+ * Checks the hard requirements that can be verified mechanically on the fully
+ * resolved furniture (rotation/position already resolved in orient.ts).
+ * Returns a list of error descriptions (empty = pass).
  */
 export function validateProposals(data: ResolvedProposals, design: Design): string[] {
   const errors: string[] = [];
   const poly = floorPolygon(design.walls);
   const zones = doorClearanceZones(design);
 
-  if (data.proposals.length === 0) errors.push('Svaret innehåller inga förslag.');
+  if (data.proposals.length === 0) errors.push('The response contains no proposals.');
 
   for (const proposal of data.proposals) {
     for (const f of proposal.furniture) {
       const corners = footprint(f, 0.02);
       if (!corners.every((c) => pointInPolygon(c, poly))) {
         errors.push(
-          `Förslag "${proposal.title}": "${f.name}" (${f.size.width}×${f.size.depth} m vid x=${f.x}, z=${f.z}) sticker utanför rummet.`,
+          `Proposal "${proposal.title}": "${f.name}" (${f.size.width}×${f.size.depth} m at x=${f.x}, z=${f.z}) extends outside the room.`,
         );
         continue;
       }
       if (f.kind === 'rug') continue;
       for (const zone of zones) {
-        // Väggmonterat ovanför dörrhöjden blockerar inte passagen.
+        // Wall-mounted items above the door height do not block the passage.
         if (f.elevation >= zone.doorTop) continue;
         if (convexOverlap(corners, zone.quad)) {
           errors.push(
-            `Förslag "${proposal.title}": "${f.name}" blockerar dörrsvepet (${DOOR_CLEARANCE} m fritt) framför ${zone.label}.`,
+            `Proposal "${proposal.title}": "${f.name}" blocks the door swing (${DOOR_CLEARANCE} m clear) in front of ${zone.label}.`,
           );
         }
       }

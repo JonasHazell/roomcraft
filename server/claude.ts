@@ -4,9 +4,9 @@ export interface ClaudeRunOptions {
   prompt: string;
   jsonSchema: object;
   model: string;
-  /** Sätts bara på första anropet i en session. */
+  /** Only set on the first call in a session. */
   systemPrompt?: string;
-  /** Session-id från ett tidigare svar — fortsätter samma konversation. */
+  /** Session id from a previous response — continues the same conversation. */
   resume?: string;
   timeoutMs?: number;
 }
@@ -29,10 +29,9 @@ interface ClaudeCliResult {
 }
 
 /**
- * Kör Claude Code i headless-läge (`claude -p`) utan verktyg och med
- * strukturerad output. Använder den lokala Claude Code-inloggningen —
- * ingen API-nyckel behövs. OBS: `--bare` bryter inloggningen (CLI 2.1.174),
- * använd inte den flaggan här.
+ * Runs Claude Code in headless mode (`claude -p`) with no tools and with
+ * structured output. Uses the local Claude Code login — no API key needed.
+ * NOTE: `--bare` breaks the login (CLI 2.1.174), do not use that flag here.
  */
 export function runClaude(opts: ClaudeRunOptions): Promise<ClaudeRunResult> {
   const args = [
@@ -64,27 +63,27 @@ export function runClaude(opts: ClaudeRunOptions): Promise<ClaudeRunResult> {
     child.stderr.on('data', (d: Buffer) => (stderr += d.toString()));
     child.on('error', (err) => {
       clearTimeout(timer);
-      reject(new Error(`Kunde inte starta \`claude\`: ${err.message}`));
+      reject(new Error(`Could not start \`claude\`: ${err.message}`));
     });
     child.on('close', (code) => {
       clearTimeout(timer);
       if (timedOut) {
-        return reject(new Error('Claude-anropet tog för lång tid och avbröts.'));
+        return reject(new Error('The Claude call took too long and was aborted.'));
       }
       if (code !== 0) {
-        return reject(new Error(`\`claude\` avslutades med kod ${code}: ${stderr || stdout}`));
+        return reject(new Error(`\`claude\` exited with code ${code}: ${stderr || stdout}`));
       }
       let parsed: ClaudeCliResult;
       try {
         parsed = JSON.parse(stdout) as ClaudeCliResult;
       } catch {
-        return reject(new Error(`Oväntat svar från \`claude\`: ${stdout.slice(0, 300)}`));
+        return reject(new Error(`Unexpected response from \`claude\`: ${stdout.slice(0, 300)}`));
       }
       if (parsed.is_error || parsed.subtype !== 'success') {
-        return reject(new Error(`Claude-anropet misslyckades: ${parsed.result}`));
+        return reject(new Error(`The Claude call failed: ${parsed.result}`));
       }
       if (parsed.structured_output === undefined) {
-        return reject(new Error('Svaret saknar strukturerad output.'));
+        return reject(new Error('The response has no structured output.'));
       }
       resolve({
         structuredOutput: parsed.structured_output,

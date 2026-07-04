@@ -6,8 +6,8 @@ import { runValidation } from './engine';
 import { inferRoomTypes } from './rules';
 
 /**
- * 4×5 m-rum med hörn i origo: norr (z=0), öster (x=4), söder (z=5), väster (x=0).
- * Dörr på södra väggen (x 1,6–2,5), fönster på norra (x 1,2–2,6).
+ * 4×5 m room with a corner at the origin: north (z=0), east (x=4), south (z=5), west (x=0).
+ * Door on the south wall (x 1.6–2.5), window on the north wall (x 1.2–2.6).
  */
 function makeDesign(furniture: FurnitureItem[], openings?: Omit<WallOpening, 'id'>[]): Design {
   let n = 0;
@@ -68,12 +68,12 @@ function piece(
 function outcomeOf(design: Design, ruleId: string, fengShui = true) {
   const report = runValidation(design, fengShui);
   const result = report.results.find((r) => r.rule.id === ruleId);
-  if (!result) throw new Error(`Regeln ${ruleId} saknas i rapporten`);
+  if (!result) throw new Error(`Rule ${ruleId} is missing from the report`);
   return result.outcome;
 }
 
 describe('inferRoomTypes', () => {
-  it('härleder rumstyper från möblerna', () => {
+  it('infers room types from the furniture', () => {
     const d = makeDesign([
       piece('bed', 2, 2, { width: 1.6, depth: 2 }),
       piece('desk', 1, 4, { width: 1.2, depth: 0.7 }),
@@ -81,7 +81,7 @@ describe('inferRoomTypes', () => {
     expect(inferRoomTypes(d)).toEqual(new Set(['sovrum', 'hemmakontor']));
   });
 
-  it('kräver både matbord och stol för matplats', () => {
+  it('requires both a dining table and a chair for a dining area', () => {
     const table = piece('table', 2, 2, { height: 0.75 });
     expect(inferRoomTypes(makeDesign([table]))).toEqual(new Set());
     expect(inferRoomTypes(makeDesign([table, piece('chair', 2, 3, { width: 0.45, depth: 0.45 })])))
@@ -89,8 +89,8 @@ describe('inferRoomTypes', () => {
   });
 });
 
-describe('SAK-02 dörrsvep', () => {
-  it('flaggar garderob i dörrens svepyta', () => {
+describe('SAK-02 door swing', () => {
+  it('flags a wardrobe in the door swing area', () => {
     const wardrobe = piece('wardrobe', 2, 4.6, { width: 1.2, depth: 0.6, height: 2 });
     const outcome = outcomeOf(makeDesign([wardrobe]), 'SAK-02');
     expect(outcome.status).toBe('violated');
@@ -100,32 +100,32 @@ describe('SAK-02 dörrsvep', () => {
     }
   });
 
-  it('godkänner möbel en bit från dörren', () => {
+  it('passes furniture placed away from the door', () => {
     const wardrobe = piece('wardrobe', 0.4, 1, { width: 1.2, depth: 0.6, height: 2 });
     expect(outcomeOf(makeDesign([wardrobe]), 'SAK-02').status).toBe('passed');
   });
 
-  it('ej tillämplig utan dörr', () => {
+  it('not applicable without a door', () => {
     const d = makeDesign([piece('sofa', 2, 2)], []);
     expect(outcomeOf(d, 'SAK-02').status).toBe('not-applicable');
   });
 });
 
-describe('ERG-08 huvudgärd mot vägg', () => {
-  it('flaggar säng med huvudgärden under fönstret', () => {
-    // Rotation 0: framsidan (fotändan) mot +z, huvudgärden mot norra väggen.
+describe('ERG-08 headboard against a wall', () => {
+  it('flags a bed with the headboard under the window', () => {
+    // Rotation 0: front (foot end) toward +z, headboard toward the north wall.
     const bed = piece('bed', 1.9, 1, { width: 1.6, depth: 2, height: 0.5 });
     const outcome = outcomeOf(makeDesign([bed]), 'ERG-08');
     expect(outcome.status).toBe('violated');
   });
 
-  it('flaggar fristående säng utan väggstöd', () => {
+  it('flags a free-standing bed without wall support', () => {
     const bed = piece('bed', 2, 2.5, { width: 1.6, depth: 2, height: 0.5 });
     expect(outcomeOf(makeDesign([bed]), 'ERG-08').status).toBe('violated');
   });
 
-  it('godkänner huvudgärd mot hel vägg', () => {
-    // Huvudgärden mot östra väggen (framsidan pekar mot -x).
+  it('passes a headboard against a solid wall', () => {
+    // Headboard against the east wall (front facing -x).
     const bed = piece('bed', 3, 2.5, {
       width: 1.6,
       depth: 2,
@@ -136,14 +136,14 @@ describe('ERG-08 huvudgärd mot vägg', () => {
   });
 });
 
-describe('FEN-02 kistpositionen', () => {
-  it('flaggar säng med fotändan rakt mot dörren', () => {
-    // Dörren sitter på södra väggen kring x=2; fotändan (rotation 0) pekar mot +z.
+describe('FEN-02 the coffin position', () => {
+  it('flags a bed with the foot end pointing straight at the door', () => {
+    // The door is on the south wall around x=2; the foot end (rotation 0) points toward +z.
     const bed = piece('bed', 2, 1.5, { width: 1.6, depth: 2, height: 0.5 });
     expect(outcomeOf(makeDesign([bed]), 'FEN-02').status).toBe('violated');
   });
 
-  it('godkänner säng förskjuten ur dörrlinjen', () => {
+  it('passes a bed shifted out of the door line', () => {
     const bed = piece('bed', 3.2, 2.5, {
       width: 1.6,
       depth: 2,
@@ -154,8 +154,8 @@ describe('FEN-02 kistpositionen', () => {
   });
 });
 
-describe('TIL-13 övermöblering', () => {
-  it('flaggar rum där möblerna täcker mer än 60 % av golvet', () => {
+describe('TIL-13 over-furnishing', () => {
+  it('flags a room where furniture covers more than 60% of the floor', () => {
     const boxes = [
       piece('box', 1, 1.2, { width: 1.9, depth: 2.3 }),
       piece('box', 3, 1.2, { width: 1.9, depth: 2.3 }),
@@ -165,15 +165,15 @@ describe('TIL-13 övermöblering', () => {
     expect(outcomeOf(makeDesign(boxes), 'TIL-13').status).toBe('violated');
   });
 
-  it('godkänner luftigt rum', () => {
+  it('passes an airy room', () => {
     expect(outcomeOf(makeDesign([piece('sofa', 2, 2, { width: 2, depth: 0.9 })]), 'TIL-13').status).toBe(
       'passed',
     );
   });
 });
 
-describe('AKU-03 växter', () => {
-  it('flaggar rum utan växt och godkänner med', () => {
+describe('AKU-03 plants', () => {
+  it('flags a room without a plant and passes one with', () => {
     const sofa = piece('sofa', 2, 2, { width: 2, depth: 0.9 });
     expect(outcomeOf(makeDesign([sofa]), 'AKU-03').status).toBe('violated');
     const plant = piece('plant', 0.5, 0.5, { width: 0.4, depth: 0.4, height: 1.2 });
@@ -181,19 +181,19 @@ describe('AKU-03 växter', () => {
   });
 });
 
-describe('feng shui-läget', () => {
-  it('utesluter FEN-regler när feng shui är avslaget', () => {
+describe('feng shui mode', () => {
+  it('excludes FEN rules when feng shui is disabled', () => {
     const d = makeDesign([piece('bed', 2, 1.5, { width: 1.6, depth: 2 })]);
     const report = runValidation(d, false);
     expect(report.results.some((r) => r.rule.category === 'Feng shui')).toBe(false);
     expect(report.byCategory.some((c) => c.category === 'Feng shui')).toBe(false);
-    // Tvillingregeln ERG-08 finns kvar i sin primärkategori.
+    // The twin rule ERG-08 remains in its primary category.
     expect(report.results.some((r) => r.rule.id === 'ERG-08')).toBe(true);
   });
 });
 
-describe('betyg', () => {
-  it('ger totalpoäng 0–100 och sänker betyget vid regelbrott', () => {
+describe('scoring', () => {
+  it('gives a total score 0–100 and lowers it on rule violations', () => {
     const tidy = makeDesign([
       piece('bed', 3, 2.5, { width: 1.2, depth: 2, height: 0.5, rotationY: -Math.PI / 2 }),
     ]);
@@ -209,12 +209,12 @@ describe('betyg', () => {
     expect(tidyReport.total!).toBeLessThanOrEqual(100);
   });
 
-  it('redovisar tvillingregeln i båda kategorierna', () => {
+  it('reports the twin rule in both categories', () => {
     const d = makeDesign([piece('bed', 2, 2.5, { width: 1.6, depth: 2, height: 0.5 })]);
     const report = runValidation(d, true);
-    const erg = report.byCategory.find((c) => c.category === 'Ergonomi & mått');
+    const erg = report.byCategory.find((c) => c.category === 'Ergonomics & dimensions');
     const fen = report.byCategory.find((c) => c.category === 'Feng shui');
-    // ERG-08 (fristående säng) räknas som bruten i båda kategorierna.
+    // ERG-08 (free-standing bed) counts as violated in both categories.
     expect(erg!.violated).toBeGreaterThan(0);
     expect(fen!.violated).toBeGreaterThan(0);
   });

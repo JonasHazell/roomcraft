@@ -10,12 +10,12 @@ import type { AiFurniture, AiProposals, ResolvedFurniture, ResolvedProposals } f
 
 const HALF_PI = Math.PI / 2;
 
-/** Snäpper en vinkel till närmaste kvartsvarv. */
+/** Snaps an angle to the nearest quarter turn. */
 function snap90(theta: number): number {
   return Math.round(theta / HALF_PI) * HALF_PI;
 }
 
-/** rotationY så att framsidan (lokal +z) pekar längs dir. Invers av frontDir(). */
+/** rotationY such that the front (local +z) points along dir. Inverse of frontDir(). */
 function rotationForFront(dir: Point): number {
   return Math.atan2(dir.x, dir.z);
 }
@@ -26,7 +26,7 @@ function normalize(v: Point): Point | null {
   return { x: v.x / len, z: v.z / len };
 }
 
-/** Väggnormalen som pekar in mot rummet på möbelns sida (bort från väggen). */
+/** The wall normal pointing into the room on the furniture's side (away from the wall). */
 function inwardNormal(wall: Wall, pos: Point, fallback: Point): Point {
   const n = outwardNormal(wall);
   const foot = closestPointOnSegment(pos, wall.a, wall.b);
@@ -36,9 +36,10 @@ function inwardNormal(wall: Wall, pos: Point, fallback: Point): Point {
 }
 
 /**
- * Väljer väggen möbelns rygg ska stå mot: närmast först, men bara sådana vars
- * inåtnormal hyfsat matchar den önskade framriktningen (så en garderob i ett hörn
- * får ryggen mot rätt av de två väggarna givet `facing`).
+ * Picks the wall the furniture's back should stand against: nearest first, but
+ * only walls whose inward normal reasonably matches the desired front direction
+ * (so a wardrobe in a corner gets its back against the right one of the two
+ * walls given `facing`).
  */
 function pickBackWall(design: Design, pos: Point, desired: Point): Wall | null {
   const walls = [...design.walls].sort(
@@ -53,7 +54,7 @@ function pickBackWall(design: Design, pos: Point, desired: Point): Wall | null {
   return walls[0] ?? null;
 }
 
-/** Löser upp en AI-möbels avsikt till konkret rotation och (vid vägg) flush-position. */
+/** Resolves an AI furniture item's intent into a concrete rotation and (at a wall) flush position. */
 function resolveFurniture(f: AiFurniture, design: Design, roomCenter: Point): ResolvedFurniture {
   const pos: Point = { x: f.x, z: f.z };
   const desired =
@@ -69,7 +70,7 @@ function resolveFurniture(f: AiFurniture, design: Design, roomCenter: Point): Re
   if (wall) {
     const inward = inwardNormal(wall, pos, desired);
     rotationY = snap90(rotationForFront(inward));
-    // Snäpp ryggen dikt mot väggen: fot på vägglinjen + inåt halva djupet.
+    // Snap the back flush against the wall: foot on the wall line + half the depth inward.
     const foot = closestPointOnSegment(pos, wall.a, wall.b);
     const gap = 0.02;
     x = foot.x + inward.x * (f.size.depth / 2 + gap);
@@ -91,7 +92,7 @@ function resolveFurniture(f: AiFurniture, design: Design, roomCenter: Point): Re
   };
 }
 
-/** Löser upp alla förslags möbler (facing/againstWall → rotationY + x/z). */
+/** Resolves the furniture of all proposals (facing/againstWall → rotationY + x/z). */
 export function resolveProposals(data: AiProposals, design: Design): ResolvedProposals {
   const roomCenter = polygonCenter(floorPolygon(design.walls));
   return {

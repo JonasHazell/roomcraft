@@ -4,7 +4,7 @@ import { runValidation, type ValidationReport } from '../lib/validation/engine';
 import { useDesignStore } from './useDesignStore';
 
 export interface ValidationHighlight {
-  /** Nyckel för att kunna toggla samma rad i listan. */
+  /** Key so the same row in the list can be toggled. */
   key: string;
   furnitureIds: string[];
   zones: Point[][];
@@ -17,7 +17,7 @@ interface ValidationState {
   validate: () => void;
   setFengShui: (on: boolean) => void;
   setHighlight: (h: ValidationHighlight | null) => void;
-  /** Togglar: klick på redan markerad rad släcker markeringen. */
+  /** Toggles: clicking an already highlighted row clears the highlight. */
   toggleHighlight: (h: ValidationHighlight) => void;
 }
 
@@ -33,7 +33,7 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
 
   setFengShui: (fengShui) => {
     set({ fengShui });
-    // Uppdatera ett redan visat resultat direkt med det nya läget.
+    // Refresh an already displayed report immediately with the new setting.
     if (get().report) get().validate();
   },
 

@@ -3,12 +3,12 @@ import { FURNITURE_CATALOG } from '../src/lib/furnitureCatalog.ts';
 import { WALL_T, outwardNormal, wallDir } from '../src/lib/polygon.ts';
 import type { ResolvedFurniture } from './schema.ts';
 
-/** Fritt djup framför dörr (dörrsvep), meter. */
+/** Clear depth in front of a door (door swing), meters. */
 export const DOOR_CLEARANCE = 0.8;
 
 /**
- * Fotavtryckets fyra hörn i världskoordinater (three.js-rotationskonvention).
- * shrink krymper (eller, negativt, växer) rektangeln en aning.
+ * The footprint's four corners in world coordinates (three.js rotation convention).
+ * shrink shrinks (or, if negative, grows) the rectangle slightly.
  */
 export function footprint(
   f: Pick<ResolvedFurniture, 'x' | 'z' | 'rotationY' | 'size'>,
@@ -31,20 +31,21 @@ export function footprint(
   }));
 }
 
-/** Framsidans världsriktning (lokal +z roterad med rotationY). */
+/** World direction of the front (local +z rotated by rotationY). */
 export function frontDir(rotationY: number): Point {
   return { x: Math.sin(rotationY), z: Math.cos(rotationY) };
 }
 
 /**
- * Åtkomstzonen: rektangeln direkt framför framsidan, lika bred som möbeln och
- * `accessDepth` djup. Null om möbeltypen inte kräver egen åtkomstzon.
+ * The access zone: the rectangle directly in front of the front side, as wide as
+ * the furniture and `accessDepth` deep. Null if the furniture type requires no
+ * access zone of its own.
  */
 export function accessZone(f: ResolvedFurniture): Point[] | null {
   const depth = FURNITURE_CATALOG[f.kind].accessDepth;
   if (depth <= 0) return null;
   const fwd = frontDir(f.rotationY);
-  const right = { x: fwd.z, z: -fwd.x }; // lokal +x
+  const right = { x: fwd.z, z: -fwd.x }; // local +x
   const hw = f.size.width / 2;
   const faceX = f.x + fwd.x * (f.size.depth / 2);
   const faceZ = f.z + fwd.z * (f.size.depth / 2);
@@ -55,7 +56,7 @@ export function accessZone(f: ResolvedFurniture): Point[] | null {
   return [corner(-1, 0), corner(1, 0), corner(1, depth), corner(-1, depth)];
 }
 
-/** Innerväggens solid som rektangel i golvplanet (centrerad, tjocklek WALL_T). */
+/** The interior wall's solid as a rectangle in the floor plane (centered, thickness WALL_T). */
 export function interiorWallQuad(w: Wall): Point[] {
   const n = outwardNormal(w);
   const t = WALL_T / 2;
@@ -67,12 +68,12 @@ export function interiorWallQuad(w: Wall): Point[] {
   ];
 }
 
-/** Yttervägg: bara insidan (−utåtnormal). Innervägg: båda sidor. */
+/** Exterior wall: inside only (−outward normal). Interior wall: both sides. */
 function sidesIntoRoom(wall: Wall): number[] {
   return wall.kind === 'exterior' ? [-1] : [-1, 1];
 }
 
-/** Frizoner framför dörrar: en rektangel per sida som vetter mot rummet. */
+/** Clearance zones in front of doors: one rectangle per side facing the room. */
 export function doorClearanceZones(
   design: Design,
 ): { label: string; quad: Point[]; doorTop: number }[] {
@@ -88,7 +89,7 @@ export function doorClearanceZones(
     for (const sign of sidesIntoRoom(wall)) {
       const n = { x: out.x * sign, z: out.z * sign };
       zones.push({
-        label: `dörren på vägg ${o.wallId}`,
+        label: `the door on wall ${o.wallId}`,
         doorTop: o.elevation + o.height,
         quad: [
           s,
@@ -102,7 +103,7 @@ export function doorClearanceZones(
   return zones;
 }
 
-/** Konvexa polygoners separationsaxlar (kantnormaler). */
+/** Separation axes for convex polygons (edge normals). */
 function edgeAxes(poly: Point[]): Point[] {
   const axes: Point[] = [];
   for (let i = 0; i < poly.length; i++) {
@@ -114,7 +115,7 @@ function edgeAxes(poly: Point[]): Point[] {
   return axes;
 }
 
-/** Separating Axis Theorem för två konvexa polygoner. eps < 0 tolererar beröring. */
+/** Separating Axis Theorem for two convex polygons. eps < 0 tolerates touching. */
 export function convexOverlap(a: Point[], b: Point[], eps = 0): boolean {
   for (const axis of [...edgeAxes(a), ...edgeAxes(b)]) {
     let minA = Infinity;
@@ -131,7 +132,7 @@ export function convexOverlap(a: Point[], b: Point[], eps = 0): boolean {
       minB = Math.min(minB, d);
       maxB = Math.max(maxB, d);
     }
-    if (maxA - eps <= minB || maxB - eps <= minA) return false; // separationsgap → ingen överlapp
+    if (maxA - eps <= minB || maxB - eps <= minA) return false; // separation gap → no overlap
   }
   return true;
 }

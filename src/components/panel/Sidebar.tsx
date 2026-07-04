@@ -16,37 +16,37 @@ export function Sidebar() {
     <aside className="sidebar">
       <header className="brand">
         <h1>Roomcraft</h1>
-        <p>Rita ditt rum &amp; möblera det i 3D</p>
+        <p>Draw your room &amp; furnish it in 3D</p>
       </header>
-      <Section title="Rum">
+      <Section title="Room">
         <RoomForm />
       </Section>
-      <Section title="Dörrar & fönster">
+      <Section title="Doors & windows">
         <OpeningsEditor />
       </Section>
       {mode === '3d' && (
         <>
-          <Section title="Möbler">
+          <Section title="Furniture">
             <FurniturePalette />
           </Section>
-          <Section title="Mitt bibliotek">
+          <Section title="My library">
             <FurnitureLibrary />
           </Section>
-          <Section title="AI-förslag">
+          <Section title="AI suggestions">
             <AiProposalsPanel />
           </Section>
-          <Section title="Validering">
+          <Section title="Validation">
             <ValidationPanel />
           </Section>
-          <Section title="Vald möbel">
+          <Section title="Selected furniture">
             <PropertiesPanel />
           </Section>
         </>
       )}
-      <Section title="Spara & ladda">
+      <Section title="Save & load">
         <SaveLoadPanel />
       </Section>
-      <footer className="sidebar-foot">Allt sparas lokalt i din webbläsare.</footer>
+      <footer className="sidebar-foot">Everything is saved locally in your browser.</footer>
     </aside>
   );
 }

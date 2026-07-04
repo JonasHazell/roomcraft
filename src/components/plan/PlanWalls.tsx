@@ -61,8 +61,9 @@ function WallShape({
   const d = wallDir(w);
   const n = outwardNormal(w);
   const exterior = w.kind === 'exterior';
-  // Yttervägg ritas utanför ritlinjen (innerkanten på linjen), innervägg centrerad —
-  // samma placering som i 3D. Ändförlängningen tätar hörnen som i 3D.
+  // Exterior walls are drawn outside the drawing line (inner edge on the line),
+  // interior walls centered — same placement as in 3D. The end extension seals
+  // the corners as in 3D.
   const off = exterior ? WALL_T / 2 : 0;
   const ext = exterior ? exteriorEndExtension(walls, index) : 0;
   const x1 = w.a.x + n.x * off;
@@ -117,7 +118,7 @@ function WallShape({
       )}
       {selected && (
         <>
-          {/* Startpunkt (offset 0) och pil i slutänden — änden som flyttas vid längdändring. */}
+          {/* Start point (offset 0) and arrow at the end — the end that moves when the length changes. */}
           <circle cx={w.a.x + n.x * off} cy={w.a.z + n.z * off} r={0.08} className="wall-end-start" />
           <polygon
             className="wall-end-arrow"

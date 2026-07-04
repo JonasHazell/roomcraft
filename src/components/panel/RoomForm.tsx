@@ -9,7 +9,7 @@ export function RoomForm() {
     <div className="stack">
       <div className="field-grid">
         <NumberField
-          label="Takhöjd"
+          label="Ceiling height"
           value={Math.round(room.height * 100)}
           min={200}
           max={600}
@@ -17,17 +17,17 @@ export function RoomForm() {
           onChange={(v) => setRoom({ height: v / 100 })}
         />
         <ColorField
-          label="Golv"
+          label="Floor"
           value={room.floorColor}
           onChange={(floorColor) => setRoom({ floorColor })}
         />
         <ColorField
-          label="Väggar"
+          label="Walls"
           value={room.wallColor}
           onChange={(wallColor) => setRoom({ wallColor })}
         />
       </div>
-      <p className="hint">Rummets form ritas i planritningen.</p>
+      <p className="hint">The room's shape is drawn in the floor plan.</p>
     </div>
   );
 }

@@ -7,17 +7,17 @@ export function Plant({ size, color, selected }: FurnitureProps) {
   const foliageH = h - potH;
   return (
     <group>
-      {/* kruka */}
+      {/* pot */}
       <mesh castShadow position={[0, potH / 2, 0]}>
         <cylinderGeometry args={[r * 0.7, r * 0.55, potH, 16]} />
         <Mat color="#a5623f" selected={selected} />
       </mesh>
-      {/* stam */}
+      {/* trunk */}
       <mesh castShadow position={[0, potH + foliageH * 0.25, 0]}>
         <cylinderGeometry args={[0.02, 0.03, foliageH * 0.5, 8]} />
         <Mat color={shade('#6b4a2e', 0.1)} selected={selected} />
       </mesh>
-      {/* bladverk */}
+      {/* foliage */}
       <mesh castShadow position={[0, potH + foliageH * 0.65, 0]}>
         <sphereGeometry args={[r, 16, 12]} />
         <Mat color={color} selected={selected} />

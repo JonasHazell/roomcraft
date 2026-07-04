@@ -5,7 +5,7 @@ import { SCHEMA_VERSION } from '../types';
 import { isAxisParallel, validateExteriorLoop } from './polygon';
 import { FURNITURE_KINDS } from './furnitureCatalog';
 
-const color = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'ogiltig färgkod (förväntar #rrggbb)');
+const color = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'invalid color code (expected #rrggbb)');
 const meters = (max: number) => z.number().min(0).max(max);
 
 const furnitureSchema = z.object({
@@ -19,12 +19,12 @@ const furnitureSchema = z.object({
     depth: z.number().min(0.01).max(100),
     height: z.number().min(0.01).max(20),
   }),
-  /** Saknas i sparningar gjorda före fältet fanns — faller tillbaka till golvet. */
+  /** Missing in saves made before the field existed — falls back to the floor. */
   elevation: meters(20).default(0),
   color,
 });
 
-// ---- v1 (äldre format: rektangulärt rum, väggar per väderstreck) ----
+// ---- v1 (older format: rectangular room, walls by compass direction) ----
 
 const openingSchemaV1 = z.object({
   id: z.string().min(1),
@@ -53,7 +53,7 @@ const designSchemaV1 = z.object({
 
 type DesignV1 = z.infer<typeof designSchemaV1>;
 
-// ---- v2 (aktuellt format: väggar som segment) ----
+// ---- v2 (current format: walls as segments) ----
 
 const pointSchema = z.object({
   x: z.number().min(-100).max(100),
@@ -91,26 +91,26 @@ const designSchemaV2 = z.object({
   furniture: z.array(furnitureSchema).max(500),
 });
 
-/** Strukturell eftervalidering som zod-schemat inte kan uttrycka. */
+/** Structural post-validation that the zod schema cannot express. */
 function validateDesign(d: Design): Design {
   const exterior = d.walls.filter((w) => w.kind === 'exterior');
   const loop = validateExteriorLoop(exterior);
-  if (!loop.ok) throw new Error(`Ogiltig rumsform: ${loop.reason}`);
+  if (!loop.ok) throw new Error(`Invalid room shape: ${loop.reason}`);
   for (const w of d.walls) {
     if (w.kind === 'interior' && !isAxisParallel(w.a, w.b)) {
-      throw new Error('Ogiltig rumsform: Väggarna måste vara vågräta eller lodräta.');
+      throw new Error('Invalid room shape: Walls must be horizontal or vertical.');
     }
   }
   const wallIds = new Set(d.walls.map((w) => w.id));
   for (const o of d.openings) {
     if (!wallIds.has(o.wallId)) {
-      throw new Error('En dörr eller ett fönster pekar på en vägg som inte finns.');
+      throw new Error('A door or window points to a wall that does not exist.');
     }
   }
   return d;
 }
 
-/** v1-rummet blir fyra ytterväggar i kanonisk slingordning; offset-semantiken bevaras. */
+/** The v1 room becomes four exterior walls in canonical loop order; offset semantics are preserved. */
 export function migrateV1toV2(d: DesignV1): Design {
   const { width: w, length: l, height, floorColor, wallColor } = d.room;
   const mkWall = (a: Wall['a'], b: Wall['b']): Wall => ({
@@ -135,13 +135,13 @@ export function migrateV1toV2(d: DesignV1): Design {
   };
 }
 
-/** Enda vägen in för all opålitlig designdata (import, sparningar, rehydrering). */
+/** The single entry point for all untrusted design data (import, saves, rehydration). */
 export function parseDesign(raw: unknown): Design {
   const version = (raw as { schemaVersion?: unknown } | null)?.schemaVersion;
   if (version === 1) return validateDesign(migrateV1toV2(designSchemaV1.parse(raw)));
   if (version === SCHEMA_VERSION) return validateDesign(designSchemaV2.parse(raw));
   throw new Error(
-    `Filen har schemaversion ${String(version)}, men appen stöder version ${SCHEMA_VERSION}.`,
+    `The file has schema version ${String(version)}, but the app supports version ${SCHEMA_VERSION}.`,
   );
 }
 
@@ -158,7 +158,7 @@ export async function importDesign(file: File): Promise<Design> {
   try {
     parsed = JSON.parse(await file.text());
   } catch {
-    throw new Error('Filen är inte giltig JSON.');
+    throw new Error('The file is not valid JSON.');
   }
   try {
     return parseDesign(parsed);
@@ -166,9 +166,9 @@ export async function importDesign(file: File): Promise<Design> {
     if (e instanceof z.ZodError) {
       const issues = e.issues
         .slice(0, 3)
-        .map((i) => `${i.path.join('.') || '(rot)'}: ${i.message}`)
+        .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
         .join('; ');
-      throw new Error(`Filen kunde inte läsas som en rumsdesign — ${issues}`);
+      throw new Error(`The file could not be read as a room design — ${issues}`);
     }
     throw e;
   }
@@ -179,16 +179,16 @@ export function exportDesign(design: Design) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${design.name.trim() || 'rum'}.room.json`;
+  a.download = `${design.name.trim() || 'room'}.room.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
-// ---- Namngivna sparningar i localStorage ----
+// ---- Named saves in localStorage ----
 
 const SAVES_KEY = 'roomcraft:saves';
 
-/** Värdena kan vara äldre scheman; de valideras/migreras först i loadSave. */
+/** Values may be older schemas; they are validated/migrated first in loadSave. */
 type SavesMap = Record<string, { name: string; updatedAt: string }>;
 
 function readSaves(): SavesMap {
@@ -232,7 +232,7 @@ export function deleteSave(name: string) {
   writeSaves(saves);
 }
 
-// ---- Möbelbibliotek i localStorage ----
+// ---- Furniture library in localStorage ----
 
 const LIBRARY_KEY = 'roomcraft:furniture-library';
 
@@ -249,7 +249,7 @@ const libraryEntrySchema = z.object({
   color,
 });
 
-/** Läser biblioteket; ogiltiga poster sållas bort i stället för att kasta. */
+/** Reads the library; invalid entries are filtered out instead of throwing. */
 export function listFurnitureLibrary(): FurnitureLibraryEntry[] {
   try {
     const raw = localStorage.getItem(LIBRARY_KEY);

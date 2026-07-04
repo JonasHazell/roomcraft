@@ -1,9 +1,9 @@
 import type { Design, FurnitureItem } from '../types';
 
 /**
- * En enskild möbel i ett AI-förslag. Motsvarar serverns schema (server/schema.ts)
- * fast med platt x/z i stället för position — konverteras till FurnitureItem
- * via {@link toFurnitureItem} innan den läggs in i designen.
+ * A single furniture piece in an AI proposal. Matches the server's schema
+ * (server/schema.ts) but with flat x/z instead of position — converted to a
+ * FurnitureItem via {@link toFurnitureItem} before being added to the design.
  */
 export interface AiFurniture {
   kind: FurnitureItem['kind'];
@@ -14,7 +14,7 @@ export interface AiFurniture {
   size: FurnitureItem['size'];
   elevation: number;
   color: string;
-  /** En mening: varför möbeln står just här (regel/princip). */
+  /** One sentence: why the piece is placed right here (rule/principle). */
   reasoning: string;
 }
 
@@ -26,11 +26,11 @@ export interface AiProposal {
 
 export interface ProposalsResponse {
   proposals: AiProposal[];
-  /** Kvarvarande valideringsanmärkningar som modellen inte lyckades rätta. */
+  /** Remaining validation remarks the model failed to fix. */
   warnings: string[];
 }
 
-/** Gör om en AI-möbel till en FurnitureItem (utan id — storen sätter det). */
+/** Turns an AI furniture piece into a FurnitureItem (without id — the store sets it). */
 export function toFurnitureItem(f: AiFurniture): Omit<FurnitureItem, 'id'> {
   return {
     kind: f.kind,
@@ -44,8 +44,8 @@ export function toFurnitureItem(f: AiFurniture): Omit<FurnitureItem, 'id'> {
 }
 
 /**
- * Ber AI-servern (npm run server) om möbleringsförslag för rummet.
- * Kan ta upp mot någon minut — Claude Code kör i terminalen på baksidan.
+ * Asks the AI server (npm run server) for furnishing proposals for the room.
+ * Can take up to a minute — Claude Code runs in the terminal behind the scenes.
  */
 export async function fetchProposals(design: Design, needs: string): Promise<ProposalsResponse> {
   let res: Response;
@@ -57,14 +57,14 @@ export async function fetchProposals(design: Design, needs: string): Promise<Pro
     });
   } catch {
     throw new Error(
-      'Kunde inte nå AI-servern. Starta den med "npm run server" i en terminal och försök igen.',
+      'Could not reach the AI server. Start it with "npm run server" in a terminal and try again.',
     );
   }
   const payload = (await res.json().catch(() => null)) as
     | (ProposalsResponse & { error?: string })
     | null;
   if (!res.ok || !payload) {
-    throw new Error(payload?.error ?? `Servern svarade med fel (${res.status}).`);
+    throw new Error(payload?.error ?? `The server responded with an error (${res.status}).`);
   }
   return { proposals: payload.proposals ?? [], warnings: payload.warnings ?? [] };
 }

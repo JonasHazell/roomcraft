@@ -21,13 +21,13 @@ import { PlanWallPanel } from './PlanWallPanel';
 
 export type PlanTool = 'select' | 'exterior' | 'interior';
 
-/** Klick inom denna radie från startpunkten stänger konturen. */
+/** Clicks within this radius of the start point close the outline. */
 const CLOSE_RADIUS = 0.25;
 const PAD = 2;
-/** Zoomgränser: minsta/största synliga bredd i meter. */
+/** Zoom limits: smallest/largest visible width in meters. */
 const MIN_SPAN = 2;
 const MAX_SPAN = 400;
-/** Pekarrörelse i pixlar innan ett tryck räknas som panorering i stället för klick. */
+/** Pointer movement in pixels before a press counts as panning instead of a click. */
 const PAN_THRESHOLD = 4;
 
 export function PlanEditor() {
@@ -57,7 +57,7 @@ export function PlanEditor() {
     deselectOnTap: boolean;
   } | null>(null);
 
-  /** Användarens zoom/panorering; null = auto-anpassa vyn till innehållet. */
+  /** The user's zoom/pan; null = auto-fit the view to the content. */
   const [view, setView] = useState<Bounds | null>(null);
 
   const fitBounds: Bounds = useMemo(() => {
@@ -76,8 +76,8 @@ export function PlanEditor() {
   const boundsRef = useRef(bounds);
   boundsRef.current = bounds;
 
-  // Scrollhjul zoomar mot markören. Nativ listener: Reacts onWheel är passiv
-  // och kan inte hindra att sidan scrollar.
+  // Scroll wheel zooms toward the cursor. Native listener: React's onWheel is
+  // passive and cannot prevent the page from scrolling.
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
@@ -109,15 +109,15 @@ export function PlanEditor() {
   };
 
   /**
-   * Snappat, axellåst markörläge; den fria koordinaten snappar dessutom till
-   * redan utplacerade hörn så att konturen lätt hamnar i linje med sig själv.
+   * Snapped, axis-locked cursor position; the free coordinate also snaps to
+   * already placed corners so the outline easily lines up with itself.
    */
   const drawTarget = (raw: Point): { point: Point; guide: Point | null } => {
     const last = draft[draft.length - 1];
     if (!last) return { point: snapPoint(raw), guide: null };
     const p = snapPoint(axisLock(last, raw));
     const snapped = snapToCornerAxis(p, draft.slice(0, -1), p.z === last.z);
-    // Snapp som drar ihop punkten till föregående hörn hindrar korta väggar.
+    // A snap that collapses the point onto the previous corner prevents short walls.
     return pointsEqual(snapped.point, last) ? { point: p, guide: null } : snapped;
   };
 
@@ -142,7 +142,7 @@ export function PlanEditor() {
     const last = draft[draft.length - 1];
     if (last && pointsEqual(last, p)) return;
     if (draft.length >= 2) {
-      // Hindra kanter som viker tillbaka längs föregående kant.
+      // Prevent edges that fold back along the previous edge.
       const prev = draft[draft.length - 2];
       const d1 = wallDir({ a: prev, b: last });
       const d2 = wallDir({ a: last, b: p });
@@ -154,7 +154,7 @@ export function PlanEditor() {
     setError(null);
   };
 
-  /** Startar panorering; skalan (m/pixel) fångas vid start så att draget blir stabilt. */
+  /** Starts panning; the scale (m/pixel) is captured at start so the drag stays stable. */
   const startPan = (e: React.PointerEvent<SVGSVGElement>, deselectOnTap: boolean) => {
     const ctm = svgRef.current?.getScreenCTM();
     if (!ctm) return;
@@ -175,7 +175,7 @@ export function PlanEditor() {
 
   const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
     if (e.button === 1) {
-      // Mittenknapp panorerar i alla lägen.
+      // Middle button pans in all modes.
       e.preventDefault();
       startPan(e, false);
       return;
@@ -198,8 +198,8 @@ export function PlanEditor() {
         setDraft([p]);
       }
     } else {
-      // Markera-läge: drag på tom yta panorerar, klick utan drag avmarkerar
-      // vid släpp (väggar stoppar propagering).
+      // Select mode: dragging on empty space pans, a click without dragging
+      // deselects on release (walls stop propagation).
       startPan(e, true);
     }
   };
@@ -248,7 +248,7 @@ export function PlanEditor() {
     }
   };
 
-  // Esc avbryter pågående ritning, Enter/dubbelklick avslutar innerväggskedjan.
+  // Esc cancels the drawing in progress, Enter/double-click ends the interior wall chain.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && (draft.length > 0 || tool !== 'select')) {
@@ -264,8 +264,8 @@ export function PlanEditor() {
 
   const startExterior = () => {
     const message =
-      'Om du ritar om ytterväggarna tas dörrar och fönster på de nuvarande ' +
-      'ytterväggarna bort när den nya konturen är klar. Fortsätt?';
+      'If you redraw the exterior walls, doors and windows on the current ' +
+      'exterior walls will be removed once the new outline is complete. Continue?';
     if (walls.some((w) => w.kind === 'exterior') && !window.confirm(message)) return;
     select(null);
     cancelDraft();
@@ -287,9 +287,9 @@ export function PlanEditor() {
     selection?.kind === 'wall' ? walls.find((w) => w.id === selection.id) : undefined;
 
   const deleteDisabledReason = !selectedWall
-    ? 'Markera en innervägg för att ta bort den.'
+    ? 'Select an interior wall to delete it.'
     : selectedWall.kind === 'exterior'
-      ? 'Ytterväggar tas inte bort styckvis — använd "Rita om ytterväggar…".'
+      ? 'Exterior walls cannot be deleted individually — use "Redraw exterior walls…".'
       : undefined;
 
   return (

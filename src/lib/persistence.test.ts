@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { migrateV1toV2, parseDesign, parseDesignSafe } from './persistence';
 import { signedArea, validateExteriorLoop } from './polygon';
 
-/** Motsvarar den gamla default-designen (schema v1). */
+/** Matches the old default design (schema v1). */
 const V1_DESIGN = {
   schemaVersion: 1,
-  name: 'Mitt rum',
+  name: 'My room',
   updatedAt: '2026-01-01T00:00:00.000Z',
   room: {
     width: 4,
@@ -22,7 +22,7 @@ const V1_DESIGN = {
     {
       id: 'f1',
       kind: 'bed',
-      name: 'Säng',
+      name: 'Bed',
       position: { x: 0.5, z: 1 },
       rotationY: 0,
       size: { width: 1.6, depth: 2, height: 0.5 },
@@ -34,7 +34,7 @@ const V1_DESIGN = {
 describe('migrateV1toV2', () => {
   const d = parseDesign(V1_DESIGN);
 
-  it('bygger fyra kedjade ytterväggar med positiv winding', () => {
+  it('builds four chained exterior walls with positive winding', () => {
     expect(d.schemaVersion).toBe(2);
     expect(d.walls).toHaveLength(4);
     expect(d.walls.every((w) => w.kind === 'exterior')).toBe(true);
@@ -42,56 +42,56 @@ describe('migrateV1toV2', () => {
     expect(signedArea(d.walls.map((w) => w.a))).toBeCloseTo(20);
   });
 
-  it('behåller rummets mått via väggarna', () => {
-    // Norrväggen: (-2,-2.5) → (2,-2.5).
+  it('preserves the room dimensions via the walls', () => {
+    // The north wall: (-2,-2.5) → (2,-2.5).
     expect(d.walls[0].a).toEqual({ x: -2, z: -2.5 });
     expect(d.walls[0].b).toEqual({ x: 2, z: -2.5 });
   });
 
-  it('mappar öppningar till rätt vägg med bevarad offset', () => {
+  it('maps openings to the right wall with preserved offset', () => {
     const door = d.openings.find((o) => o.id === 'op-door');
     const win = d.openings.find((o) => o.id === 'op-win');
-    // Söder är vägg index 2 i kedjan norr→öster→söder→väster.
+    // South is wall index 2 in the chain north→east→south→west.
     expect(door?.wallId).toBe(d.walls[2].id);
     expect(door?.offset).toBe(0.7);
     expect(win?.wallId).toBe(d.walls[0].id);
     expect(win?.offset).toBe(1.2);
   });
 
-  it('behåller takhöjd, färger, möbler och namn', () => {
+  it('keeps ceiling height, colors, furniture and name', () => {
     expect(d.room).toEqual({ height: 2.5, floorColor: '#c9a878', wallColor: '#efe8da' });
     expect(d.furniture).toHaveLength(1);
-    expect(d.name).toBe('Mitt rum');
+    expect(d.name).toBe('My room');
   });
 });
 
 describe('parseDesign', () => {
-  it('accepterar v2 och överlever JSON-rundresa', () => {
+  it('accepts v2 and survives a JSON round trip', () => {
     const v2 = parseDesign(V1_DESIGN);
     const roundTripped = parseDesign(JSON.parse(JSON.stringify(v2)));
     expect(roundTripped).toEqual(v2);
   });
 
-  it('avvisar okänd schemaversion', () => {
-    expect(() => parseDesign({ ...V1_DESIGN, schemaVersion: 99 })).toThrow(/schemaversion 99/);
+  it('rejects unknown schema version', () => {
+    expect(() => parseDesign({ ...V1_DESIGN, schemaVersion: 99 })).toThrow(/schema version 99/);
   });
 
-  it('avvisar skräp och trasiga strukturer', () => {
+  it('rejects garbage and broken structures', () => {
     expect(parseDesignSafe(null)).toBeNull();
-    expect(parseDesignSafe('hej')).toBeNull();
+    expect(parseDesignSafe('hello')).toBeNull();
     expect(parseDesignSafe({ schemaVersion: 2 })).toBeNull();
   });
 
-  it('avvisar v2 med öppning mot obefintlig vägg', () => {
+  it('rejects v2 with an opening on a nonexistent wall', () => {
     const v2 = parseDesign(V1_DESIGN);
     const broken = {
       ...v2,
-      openings: [{ ...v2.openings[0], wallId: 'finns-inte' }],
+      openings: [{ ...v2.openings[0], wallId: 'does-not-exist' }],
     };
     expect(parseDesignSafe(broken)).toBeNull();
   });
 
-  it('avvisar v2 med bruten ytterväggskedja', () => {
+  it('rejects v2 with a broken exterior wall chain', () => {
     const v2 = parseDesign(V1_DESIGN);
     const broken = {
       ...v2,
@@ -101,7 +101,7 @@ describe('parseDesign', () => {
     expect(parseDesignSafe(broken)).toBeNull();
   });
 
-  it('migrerar direkt via migrateV1toV2 utan parse', () => {
+  it('migrates directly via migrateV1toV2 without parse', () => {
     const migrated = migrateV1toV2(structuredClone(V1_DESIGN) as never);
     expect(migrated.walls).toHaveLength(4);
     expect(migrated.openings).toHaveLength(2);

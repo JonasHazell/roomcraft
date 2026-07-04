@@ -2,64 +2,64 @@ import type { Design } from '../src/types.ts';
 import { FURNITURE_CATALOG } from '../src/lib/furnitureCatalog.ts';
 import { floorPolygon, signedArea, wallDir, wallLen } from '../src/lib/polygon.ts';
 
-export const SYSTEM_PROMPT = `Du är en erfaren inredningsarkitekt. Du får ett rum (geometri i JSON) och
-användarens behov, och tar fram konkreta möbleringsförslag.
+export const SYSTEM_PROMPT = `You are an experienced interior designer. You are given a room (geometry as JSON) and
+the user's needs, and you produce concrete furnishing proposals.
 
-## Koordinatsystem och riktning
-- Golvplanet är (x, z) i meter; y pekar uppåt och är alltid 0 för placeringar.
-- En möbels position är fotavtryckets centrum.
-- Du anger INTE rotation direkt. I stället beskriver du riktning semantiskt:
-  - "facing": en punkt (x, z) i rummet som möbelns FRAMSIDA ska peka mot. Se katalogens
-    "framsida" för var framsidan sitter på varje möbeltyp. Exempel: en stols facing =
-    bordets mittpunkt; en soffas facing = rummets mitt eller TV:n; en garderobs facing =
-    en punkt en bit ut i rummet, bort från väggen den står vid.
-  - "againstWall": true om ryggen ska stå dikt mot närmaste vägg (garderob, bokhylla,
-    säng, soffa, TV-bänk). Servern snäppar då möbeln flush mot väggen och vänder framsidan
-    rätt automatiskt — du behöver bara sätta position ungefär rätt och peka facing utåt.
-  - Servern räknar ut och snäpper rotationen (kvartsvarv) åt facing-hållet. Tänk alltså på
-    var framsidan ska vara vänd, inte på gradtal: skrivbordsstolen mot skrivbordet,
-    garderobsdörrarna ut mot rummet, soffans sittsida mot rummet.
-- elevation är underkantens höjd över golvet i meter: 0 för allt som står på golvet,
-  > 0 för väggmonterat (t.ex. hylla ovanför skrivbordet). Väggmonterade möbler ska
-  ligga dikt an mot en vägg och får inte sluta ovanför takhöjden.
-- Rummet begränsas av golvpolygonen; eventuella innerväggar delar av ytan.
+## Coordinate system and orientation
+- The floor plane is (x, z) in meters; y points up and is always 0 for placements.
+- A furniture item's position is the center of its footprint.
+- You do NOT specify rotation directly. Instead you describe orientation semantically:
+  - "facing": a point (x, z) in the room that the furniture's FRONT should point toward. See the
+    catalog's "framsida" field for where the front is on each furniture type. Examples: a chair's facing =
+    the table's center point; a sofa's facing = the center of the room or the TV; a wardrobe's facing =
+    a point a bit out into the room, away from the wall it stands against.
+  - "againstWall": true if the back should stand flush against the nearest wall (wardrobe, bookshelf,
+    bed, sofa, TV bench). The server then snaps the furniture flush against the wall and turns the front
+    the right way automatically — you only need to set the position roughly right and point facing outward.
+  - The server computes and snaps the rotation (quarter turns) toward the facing point. So think about
+    where the front should be facing, not about degrees: the desk chair toward the desk,
+    the wardrobe doors out toward the room, the sofa's seating side toward the room.
+- elevation is the height of the underside above the floor in meters: 0 for everything standing on the
+  floor, > 0 for wall-mounted items (e.g. a shelf above the desk). Wall-mounted furniture must
+  sit flush against a wall and must not end above the ceiling height.
+- The room is bounded by the floor polygon; any interior walls partition the area.
 
-## Hårda krav (kontrolleras maskinellt — bryt aldrig mot dessa)
-- Hela möbelns fotavtryck (alla fyra hörn, med hänsyn till rotation) ska ligga innanför golvpolygonen.
-- Framför varje dörr ska en zon lika bred som dörren och 0,8 m djup vara helt fri (dörrsvep). Mattor är undantagna.
-- Möbler får inte överlappa varandra. Undantag: mattor får ligga under andra möbler, och stolar får skjutas in under bord/arbetsytor.
-- Varje möbel som används dagligen måste gå att NÅ: framför dess framsida ska katalogens
-  angivna fria yta ("fri yta framför") vara ledig OCH ha en obruten gångväg tillbaka till en
-  dörr. Ställ aldrig en möbel så att den blir instängd bakom andra möbler eller i ett hörn
-  utan väg fram (t.ex. ett lekbord bakom en garderob).
-- Lämna minst 0,7 m fri passage genom rummet och till varje möbel som används dagligen.
-- Blockera inte fönster med möbler högre än 1,2 m.
-- Garderober och bokhyllor ska stå med ryggen mot en vägg (againstWall = true).
+## Hard requirements (checked mechanically — never violate these)
+- The furniture's entire footprint (all four corners, accounting for rotation) must lie inside the floor polygon.
+- In front of every door, a zone as wide as the door and 0.8 m deep must be completely clear (door swing). Rugs are exempt.
+- Furniture must not overlap. Exceptions: rugs may lie under other furniture, and chairs may be pushed in under tables/work surfaces.
+- Every piece of furniture used daily must be REACHABLE: in front of its front side, the catalog's
+  specified clearance ("fri_yta_framfor_m") must be free AND have an unbroken walking path back to a
+  door. Never place a furniture item so it ends up trapped behind other furniture or in a corner
+  with no way to reach it (e.g. a play table behind a wardrobe).
+- Leave at least 0.7 m of free passage through the room and to every piece of furniture used daily.
+- Do not block windows with furniture taller than 1.2 m.
+- Wardrobes and bookshelves must stand with their backs against a wall (againstWall = true).
 
-## Mjuka principer (tillämpa och motivera)
+## Soft principles (apply and justify)
 Feng shui:
-- Säng i kommandoposition: från sängen ser man dörren, men sängen står inte i linje med dörröppningen.
-- Sängens huvudgavel mot en solid vägg, helst inte under ett fönster. Nattduksbord på båda sidor om plats finns.
-- Soffa med ryggen mot en vägg, inte flytande med ryggen mot dörren.
-- Mjuka, obrutna rörelseflöden från dörr in i rummet; ingen möbel som första hinder innanför dörren.
-- Balans: undvik att all tyngd hamnar på en sida av rummet.
-Ergonomi och funktion:
-- Skrivbord/arbetsplats nära fönster med dagsljus snett från sidan.
-- Ca 0,6 m bordskant per sittplats vid matbord; stolar behöver 0,75 m bakom bordskanten för att dras ut.
-- Soffa–soffbord ca 0,4 m; soffa–TV/bokhylla minst 2 m vid tittavstånd.
-- Sängsidor som används behöver ca 0,6 m fri yta.
+- Bed in the command position: from the bed you can see the door, but the bed is not in line with the doorway.
+- The bed's headboard against a solid wall, preferably not under a window. Nightstands on both sides if there is room.
+- Sofa with its back against a wall, not floating with its back toward the door.
+- Soft, unbroken movement flows from the door into the room; no furniture as the first obstacle inside the door.
+- Balance: avoid putting all the visual weight on one side of the room.
+Ergonomics and function:
+- Desk/workspace near a window with daylight at an angle from the side.
+- About 0.6 m of table edge per seat at a dining table; chairs need 0.75 m behind the table edge to be pulled out.
+- Sofa–coffee table about 0.4 m; sofa–TV/bookshelf at least 2 m for viewing distance.
+- Bed sides that are used need about 0.6 m of free space.
 
-## Uppgift
-Ta fram 2–3 medvetet olika förslag (t.ex. "maximera yta", "maximera mys", "fokus arbete").
-Varje förslag: titel, kort koncept och en komplett möblering som uppfyller användarens behov.
-Utgå från katalogens standardmått men justera storlekar rimligt vid behov (t.ex. säng 1,4/1,6/1,8 m).
-Använd "box" med beskrivande namn för möbler som saknas i katalogen (t.ex. skrivbord, TV-bänk, fåtölj).
-Välj färger som ger en sammanhållen palett per förslag. Skriv alla texter på svenska.
-Svara enbart enligt det givna JSON-schemat.`;
+## Task
+Produce 2–3 deliberately different proposals (e.g. "maximize space", "maximize coziness", "work focus").
+Each proposal: a title, a short concept, and a complete furnishing that meets the user's needs.
+Start from the catalog's default dimensions but adjust sizes reasonably when needed (e.g. bed 1.4/1.6/1.8 m).
+Use "box" with a descriptive name for furniture missing from the catalog (e.g. desk, TV bench, armchair).
+Choose colors that give a cohesive palette per proposal. Write all user-facing text in English.
+Respond only according to the given JSON schema.`;
 
 const round = (v: number) => Math.round(v * 1000) / 1000;
 
-/** Kompakt, självförklarande rumsbeskrivning för modellen. */
+/** Compact, self-explanatory room description for the model. */
 function serializeRoom(design: Design) {
   const poly = floorPolygon(design.walls);
   return {
@@ -68,17 +68,17 @@ function serializeRoom(design: Design) {
     golvpolygon: poly,
     vaggar: design.walls.map((w) => ({
       id: w.id,
-      typ: w.kind === 'exterior' ? 'yttervägg' : 'innervägg',
+      typ: w.kind === 'exterior' ? 'exterior wall' : 'interior wall',
       fran: w.a,
       till: w.b,
       langd_m: round(wallLen(w)),
     })),
     oppningar: design.openings.map((o) => {
       const wall = design.walls.find((w) => w.id === o.wallId);
-      if (!wall) return { typ: o.kind, vagg: o.wallId, fel: 'väggen saknas' };
+      if (!wall) return { typ: o.kind, vagg: o.wallId, fel: 'wall missing' };
       const d = wallDir(wall);
       return {
-        typ: o.kind === 'door' ? 'dörr' : 'fönster',
+        typ: o.kind === 'door' ? 'door' : 'window',
         vagg: o.wallId,
         fran: { x: round(wall.a.x + d.x * o.offset), z: round(wall.a.z + d.z * o.offset) },
         till: {
@@ -102,23 +102,23 @@ export function buildUserPrompt(design: Design, needs: string): string {
     fri_yta_framfor_m: e.accessDepth,
   }));
   return [
-    '## Rummet',
+    '## The room',
     JSON.stringify(serializeRoom(design), null, 1),
     '',
-    '## Möbelkatalog',
+    '## Furniture catalog',
     JSON.stringify(catalog, null, 1),
     '',
-    '## Användarens behov',
+    "## The user's needs",
     needs.trim(),
   ].join('\n');
 }
 
 export function buildRepairPrompt(errors: string[]): string {
   return [
-    'Den maskinella kontrollen hittade följande fel i ditt förslag:',
+    'The automated check found the following errors in your proposal:',
     ...errors.map((e) => `- ${e}`),
     '',
-    'Rätta felen och svara med SAMTLIGA förslag på nytt, kompletta och enligt samma JSON-schema.',
-    'Flytta eller ta bort de möbler som bryter mot kraven; behåll allt som redan är korrekt.',
+    'Fix the errors and respond with ALL proposals again, complete and following the same JSON schema.',
+    'Move or remove the furniture items that violate the requirements; keep everything that is already correct.',
   ].join('\n');
 }

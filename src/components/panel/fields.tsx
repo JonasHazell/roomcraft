@@ -17,8 +17,8 @@ export function NumberField({
   step?: number;
   suffix?: string;
 }) {
-  // Lokal text medan fältet är fokuserat, så att halvskrivna tal ("1.") inte
-  // studsar tillbaka från storens klampade värde.
+  // Local text while the field is focused, so that half-typed numbers ("1.")
+  // don't bounce back from the store's clamped value.
   const [text, setText] = useState<string | null>(null);
   const shown = text ?? String(Number(value.toFixed(2)));
 

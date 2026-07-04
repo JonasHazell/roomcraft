@@ -17,7 +17,7 @@ export interface RuleResult {
 
 export interface CategoryScore {
   category: RuleCategory;
-  /** 0–100, null om inga tillämpliga regler i kategorin. */
+  /** 0–100, null if the category has no applicable rules. */
   score: number | null;
   applicable: number;
   violated: number;
@@ -28,17 +28,17 @@ export interface ValidationReport {
   fengShui: boolean;
   roomTypes: RoomType[];
   results: RuleResult[];
-  /** 0–100, null om inga regler var tillämpliga. */
+  /** 0–100, null if no rules were applicable. */
   total: number | null;
   byCategory: CategoryScore[];
 }
 
 /**
- * Kör hela regelkatalogen mot designen. Regler vars rumstyp inte matchar den
- * härledda möbleringen redovisas som ej tillämpliga; med feng shui avslaget
- * utesluts FEN-reglerna helt (och tvillingregler räknas bara i sin
- * primärkategori). Länkade tvillingpar räknas en gång i totalbetyget men
- * redovisas i båda kategorierna, enligt regelkatalogens bilaga.
+ * Runs the entire rule catalog against the design. Rules whose room type does
+ * not match the inferred furnishing are reported as not applicable; with feng
+ * shui disabled the FEN rules are excluded entirely (and twin rules count only
+ * in their primary category). Linked twin pairs are counted once in the total
+ * score but reported in both categories, per the rule catalog appendix.
  */
 export function runValidation(design: Design, fengShui: boolean): ValidationReport {
   const ctx = buildCtx(design);
@@ -55,7 +55,7 @@ export function runValidation(design: Design, fengShui: boolean): ValidationRepo
     results.push({ rule, outcome });
   }
 
-  // Totalbetyg: varje regel en gång, viktad enligt viktighetsskalan.
+  // Total score: each rule counted once, weighted by the importance scale.
   let wPassed = 0;
   let wApplicable = 0;
   for (const { rule, outcome } of results) {
@@ -65,7 +65,7 @@ export function runValidation(design: Design, fengShui: boolean): ValidationRepo
     if (outcome.status === 'passed') wPassed += w;
   }
 
-  // Delbetyg: tvillingregler bidrar till båda sina kategorier.
+  // Category scores: twin rules contribute to both of their categories.
   const byCategory: CategoryScore[] = CATEGORY_ORDER.filter(
     (cat) => fengShui || cat !== 'Feng shui',
   ).map((category) => {

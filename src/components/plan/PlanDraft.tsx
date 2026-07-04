@@ -4,12 +4,12 @@ import { dist, formatCm } from '../../lib/polygon';
 interface Props {
   draft: Point[];
   hover: Point | null;
-  /** Hörn vars koordinat markören snappat i linje med. */
+  /** Corner whose coordinate the cursor has snapped in line with. */
   guide: Point | null;
   closable: boolean;
 }
 
-/** Pågående ritning: placerade hörn, gummiband till markören och live-mått. */
+/** Drawing in progress: placed corners, rubber band to the cursor and live measurements. */
 export function PlanDraft({ draft, hover, guide, closable }: Props) {
   const last = draft[draft.length - 1];
   const rubber = last && hover && !closable ? { a: last, b: hover } : null;

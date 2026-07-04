@@ -20,8 +20,8 @@ export function OpeningsEditor() {
     <div className="stack">
       {!wall && (
         <p className="hint">
-          Välj en vägg (klicka i 3D-vyn eller planritningen) för att lägga till dörrar och
-          fönster.
+          Select a wall (click in the 3D view or the floor plan) to add doors and
+          windows.
         </p>
       )}
       {wall && (
@@ -44,7 +44,7 @@ export function OpeningsEditor() {
                 })
               }
             >
-              + Dörr
+              + Door
             </button>
             <button
               type="button"
@@ -60,11 +60,11 @@ export function OpeningsEditor() {
                 })
               }
             >
-              + Fönster
+              + Window
             </button>
           </div>
           {wallOpenings.length === 0 && (
-            <p className="hint">Inga dörrar eller fönster på den här väggen ännu.</p>
+            <p className="hint">No doors or windows on this wall yet.</p>
           )}
           {wallOpenings.map((o) => (
             <OpeningCard key={o.id} opening={o} wall={wall} />
@@ -73,16 +73,16 @@ export function OpeningsEditor() {
       )}
       {otherOpenings.length > 0 && (
         <>
-          <p className="hint">{wall ? 'Övriga öppningar:' : 'Alla öppningar:'}</p>
+          <p className="hint">{wall ? 'Other openings:' : 'All openings:'}</p>
           <ul className="opening-list">
             {otherOpenings.map((o) => (
               <li key={o.id}>
                 <button
                   type="button"
                   onClick={() => select({ kind: 'wall', id: o.wallId })}
-                  title="Markera väggen"
+                  title="Select the wall"
                 >
-                  {o.kind === 'door' ? 'Dörr' : 'Fönster'} · {wallLabel(walls, o.wallId)}
+                  {o.kind === 'door' ? 'Door' : 'Window'} · {wallLabel(walls, o.wallId)}
                 </button>
               </li>
             ))}
@@ -102,11 +102,11 @@ function OpeningCard({ opening: o, wall }: { opening: WallOpening; wall: Wall })
   return (
     <div className="card">
       <div className="card-head">
-        <span className={`chip ${o.kind}`}>{o.kind === 'door' ? 'Dörr' : 'Fönster'}</span>
+        <span className={`chip ${o.kind}`}>{o.kind === 'door' ? 'Door' : 'Window'}</span>
         <button
           type="button"
           className="btn-icon"
-          title="Ta bort"
+          title="Delete"
           onClick={() => removeOpening(o.id)}
         >
           ✕
@@ -121,7 +121,7 @@ function OpeningCard({ opening: o, wall }: { opening: WallOpening; wall: Wall })
           onChange={(v) => updateOpening(o.id, { offset: v / 100 })}
         />
         <NumberField
-          label="Bredd"
+          label="Width"
           value={Math.round(o.width * 100)}
           min={10}
           max={Math.round(len * 100)}
@@ -129,7 +129,7 @@ function OpeningCard({ opening: o, wall }: { opening: WallOpening; wall: Wall })
           onChange={(v) => updateOpening(o.id, { width: v / 100 })}
         />
         <NumberField
-          label="Höjd"
+          label="Height"
           value={Math.round(o.height * 100)}
           min={10}
           max={Math.round(room.height * 100)}
@@ -138,7 +138,7 @@ function OpeningCard({ opening: o, wall }: { opening: WallOpening; wall: Wall })
         />
         {o.kind === 'window' && (
           <NumberField
-            label="Över golv"
+            label="Above floor"
             value={Math.round(o.elevation * 100)}
             max={Math.round(room.height * 100)}
             step={1}
@@ -146,7 +146,7 @@ function OpeningCard({ opening: o, wall }: { opening: WallOpening; wall: Wall })
           />
         )}
       </div>
-      <p className="hint">Position mäts från väggens startpunkt sett inifrån rummet.</p>
+      <p className="hint">Position is measured from the wall's start point, seen from inside the room.</p>
     </div>
   );
 }

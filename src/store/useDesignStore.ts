@@ -35,14 +35,14 @@ export type FurniturePatch = Partial<Omit<FurnitureItem, 'id' | 'size' | 'positi
 };
 
 export function createDefaultDesign(): Design {
-  // Samma 4×5 m-rum som tidigare versioner, uttryckt som ytterväggskedja.
+  // The same 4×5 m room as earlier versions, expressed as an exterior wall chain.
   const north: Wall = { id: nanoid(8), kind: 'exterior', a: { x: -2, z: -2.5 }, b: { x: 2, z: -2.5 } };
   const east: Wall = { id: nanoid(8), kind: 'exterior', a: { x: 2, z: -2.5 }, b: { x: 2, z: 2.5 } };
   const south: Wall = { id: nanoid(8), kind: 'exterior', a: { x: 2, z: 2.5 }, b: { x: -2, z: 2.5 } };
   const west: Wall = { id: nanoid(8), kind: 'exterior', a: { x: -2, z: 2.5 }, b: { x: -2, z: -2.5 } };
   return {
     schemaVersion: SCHEMA_VERSION,
-    name: 'Mitt rum',
+    name: 'My room',
     updatedAt: new Date().toISOString(),
     room: {
       height: 2.5,
@@ -87,13 +87,13 @@ interface DesignState {
   updateOpening: (id: string, patch: Partial<Omit<WallOpening, 'id'>>) => void;
   removeOpening: (id: string) => void;
   addFurniture: (kind: FurnitureKind) => string;
-  /** Lägger en sparad biblioteksmöbel i rummets mitt och returnerar dess id. */
+  /** Places a saved library furniture piece at the center of the room and returns its id. */
   addFurnitureFromLibrary: (entry: FurnitureLibraryEntry) => string;
   duplicateFurniture: (id: string) => string | null;
   updateFurniture: (id: string, patch: FurniturePatch) => void;
   moveFurniture: (id: string, x: number, z: number) => void;
   removeFurniture: (id: string) => void;
-  /** Ersätter hela möbleringen (t.ex. när ett AI-förslag används). */
+  /** Replaces the entire furnishing (e.g. when an AI proposal is applied). */
   setFurniture: (items: Omit<FurnitureItem, 'id'>[]) => void;
   loadDesign: (d: Design) => void;
   newDesign: () => void;
@@ -107,7 +107,7 @@ function wallById(d: Design, id: string): Wall | undefined {
   return d.walls.find((w) => w.id === id);
 }
 
-/** Klampar en öppning mot sin vägg; öppningar utan vägg lämnas åt valideringen. */
+/** Clamps an opening to its wall; openings without a wall are left to validation. */
 function clampOpeningIn(d: Design, o: WallOpening): WallOpening {
   const wall = wallById(d, o.wallId);
   return wall ? clampOpening(o, wall, d.room.height) : o;
@@ -124,7 +124,7 @@ export const useDesignStore = create<DesignState>()(
         const d = get().design;
         const room = { ...d.room, ...patch };
         const next = { ...d, room };
-        // Om-klampa öppningarna så att en sänkt takhöjd aldrig lämnar något utanför.
+        // Re-clamp the openings so a lowered ceiling never leaves anything outside.
         set({
           design: touch({
             ...next,
@@ -164,7 +164,7 @@ export const useDesignStore = create<DesignState>()(
       removeWall: (id) => {
         const d = get().design;
         const wall = wallById(d, id);
-        if (!wall || wall.kind !== 'interior') return; // ytterväggar ritas om som kontur
+        if (!wall || wall.kind !== 'interior') return; // exterior walls are redrawn as an outline
         set({
           design: touch({
             ...d,
@@ -187,7 +187,7 @@ export const useDesignStore = create<DesignState>()(
         if (wall.kind === 'interior') {
           walls = d.walls.map((w) => (w.id === id ? moved : w));
         } else {
-          // Grannväggarna följer med i sina ändpunkter så att slingan förblir sluten.
+          // The neighboring walls follow at their endpoints so the loop stays closed.
           walls = d.walls.map((w) => {
             if (w.id === id) return moved;
             if (w.kind !== 'exterior') return w;
@@ -196,7 +196,7 @@ export const useDesignStore = create<DesignState>()(
             return a === w.a && b === w.b ? w : { ...w, a, b };
           });
           const check = validateExteriorLoop(walls.filter((w) => w.kind === 'exterior'));
-          if (!check.ok) return; // avvisa drag som förstör konturen
+          if (!check.ok) return; // reject drags that break the outline
         }
 
         const poly = floorPolygon(walls);
@@ -219,7 +219,7 @@ export const useDesignStore = create<DesignState>()(
         if (Math.abs(delta) < 0.0005) return;
         const dir = wallDir(wall);
         if (wall.kind === 'interior') {
-          // Längden ändras i slutänden (b); starten och offset-nollan ligger fast.
+          // The length changes at the end (b); the start and the offset zero stay fixed.
           const b = {
             x: Math.round((wall.b.x + dir.x * delta) * 1000) / 1000,
             z: Math.round((wall.b.z + dir.z * delta) * 1000) / 1000,
@@ -233,9 +233,9 @@ export const useDesignStore = create<DesignState>()(
           });
           return;
         }
-        // Yttervägg: slutänden flyttas genom att nästa vägg i kedjan skjuts
-        // vinkelrätt — exakt samma operation som att dra den väggen, så
-        // slingvalidering och om-klampning återanvänds.
+        // Exterior wall: the end is moved by pushing the next wall in the chain
+        // perpendicularly — exactly the same operation as dragging that wall, so
+        // loop validation and re-clamping are reused.
         const exterior = d.walls.filter((w) => w.kind === 'exterior');
         const i = exterior.findIndex((w) => w.id === id);
         const nextWall = exterior[(i + 1) % exterior.length];
@@ -276,7 +276,7 @@ export const useDesignStore = create<DesignState>()(
         const center = polygonCenter(poly);
         const entry = FURNITURE_CATALOG[kind];
         const id = nanoid(8);
-        // Liten slumpad nudge så att flera nyskapade möbler inte döljer varandra helt.
+        // Small random nudge so several newly created pieces don't hide each other completely.
         const nudge = () => (Math.random() - 0.5) * 0.6;
         const item: FurnitureItem = clampFurniture(
           {
@@ -300,7 +300,7 @@ export const useDesignStore = create<DesignState>()(
         const poly = floorPolygon(d.walls);
         const center = polygonCenter(poly);
         const id = nanoid(8);
-        // Liten slumpad nudge så att flera tillagda möbler inte döljer varandra helt.
+        // Small random nudge so several added pieces don't hide each other completely.
         const nudge = () => (Math.random() - 0.5) * 0.6;
         const item: FurnitureItem = clampFurniture(
           {
@@ -325,7 +325,7 @@ export const useDesignStore = create<DesignState>()(
         if (!src) return null;
         const poly = floorPolygon(d.walls);
         const newId = nanoid(8);
-        // Liten slumpad nudge så att kopian inte hamnar exakt ovanpå originalet.
+        // Small random nudge so the copy doesn't land exactly on top of the original.
         const nudge = () => (Math.random() - 0.5) * 0.6;
         const copy: FurnitureItem = clampFurniture(
           {
@@ -370,8 +370,8 @@ export const useDesignStore = create<DesignState>()(
             furniture: d.furniture.map((f) => {
               if (f.id !== id) return f;
               const target = clampToPolygon({ x, z }, poly);
-              // Redan fast i en vägg (äldre design, rotation nära vägg)?
-              // Fall tillbaka till fri centrumklampning så att möbeln går att lossa.
+              // Already stuck in a wall (older design, rotation near a wall)?
+              // Fall back to free center clamping so the piece can be freed.
               if (!furnitureFits(f, poly, d.walls)) return { ...f, position: target };
               return { ...f, position: slideFurniture(f, target, poly, d.walls) };
             }),
@@ -392,7 +392,7 @@ export const useDesignStore = create<DesignState>()(
       },
 
       loadDesign: (loaded) => {
-        // Defensiv om-klampning, t.ex. efter import av redigerad fil.
+        // Defensive re-clamping, e.g. after importing an edited file.
         const poly = floorPolygon(loaded.walls);
         const design: Design = {
           ...loaded,
@@ -409,8 +409,8 @@ export const useDesignStore = create<DesignState>()(
       version: SCHEMA_VERSION,
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({ design: s.design }),
-      // Äldre blobbar (zustand-version 0) routas genom samma zod+migreringsväg
-      // som import; trasig data faller tillbaka till default i stället för krasch.
+      // Older blobs (zustand version 0) are routed through the same zod+migration
+      // path as import; broken data falls back to the default instead of crashing.
       migrate: (persisted) => {
         const raw = (persisted as { design?: unknown } | undefined)?.design;
         return { design: parseDesignSafe(raw) ?? createDefaultDesign() };

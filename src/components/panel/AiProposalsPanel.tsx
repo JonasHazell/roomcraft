@@ -28,7 +28,7 @@ export function AiProposalsPanel() {
     try {
       setResult(await fetchProposals(design, needs));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Något gick fel.');
+      setError(e instanceof Error ? e.message : 'Something went wrong.');
     } finally {
       setLoading(false);
     }
@@ -43,16 +43,16 @@ export function AiProposalsPanel() {
   return (
     <div className="stack">
       <p className="hint">
-        Beskriv vad rummet ska användas till, så föreslår Claude 2–3 möbleringar med motivering
-        (bl.a. feng shui). Kräver att AI-servern körs (<code>npm run server</code>).
+        Describe what the room will be used for and Claude will suggest 2–3 furnishing layouts
+        with reasoning (including feng shui). Requires the AI server to be running (<code>npm run server</code>).
       </p>
       <label className="field">
-        <span className="field-label">Behov &amp; önskemål</span>
+        <span className="field-label">Needs &amp; wishes</span>
         <span className="field-input">
           <textarea
             rows={3}
             value={needs}
-            placeholder="T.ex. sovrum för två med läshörna och plats för garderob"
+            placeholder="E.g. bedroom for two with a reading nook and room for a wardrobe"
             onChange={(e) => setNeeds(e.target.value)}
           />
         </span>
@@ -64,24 +64,24 @@ export function AiProposalsPanel() {
           disabled={loading || needs.trim().length === 0}
           onClick={generate}
         >
-          {loading ? 'Claude tänker …' : 'Föreslå möblering'}
+          {loading ? 'Claude is thinking …' : 'Suggest furnishing'}
         </button>
       </div>
 
       {loading && (
-        <p className="hint">Detta kan ta ett par minuter. Claude Code kör förslaget i terminalen.</p>
+        <p className="hint">This can take a couple of minutes. Claude Code runs the proposal in the terminal.</p>
       )}
       {error && <p className="ai-error">{error}</p>}
 
       {result && result.proposals.length === 0 && !error && (
-        <p className="hint">Inga förslag kom tillbaka. Prova att beskriva behovet lite tydligare.</p>
+        <p className="hint">No proposals came back. Try describing your needs a bit more clearly.</p>
       )}
 
       {result?.proposals.map((p) => (
         <article className="ai-proposal" key={p.title}>
           <header className="ai-proposal-head">
             <h4>{p.title}</h4>
-            {appliedTitle === p.title && <span className="ai-applied">Används</span>}
+            {appliedTitle === p.title && <span className="ai-applied">In use</span>}
           </header>
           <p className="ai-concept">{p.concept}</p>
           <ul className="ai-furniture">
@@ -100,7 +100,7 @@ export function AiProposalsPanel() {
           </ul>
           <div className="button-row">
             <button type="button" className="btn" onClick={() => apply(p)}>
-              Använd denna möblering
+              Use this furnishing
             </button>
           </div>
         </article>
@@ -108,7 +108,7 @@ export function AiProposalsPanel() {
 
       {result && result.warnings.length > 0 && (
         <div className="ai-warnings">
-          <p className="field-label">Kvarstående anmärkningar</p>
+          <p className="field-label">Remaining remarks</p>
           <ul>
             {result.warnings.map((w, i) => (
               <li key={i}>{w}</li>

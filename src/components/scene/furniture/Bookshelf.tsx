@@ -6,14 +6,14 @@ export function Bookshelf({ size, color, selected }: FurnitureProps) {
   const shelves = [0.25, 0.5, 0.75];
   return (
     <group>
-      {/* sidor */}
+      {/* sides */}
       {[-1, 1].map((s) => (
         <mesh key={s} castShadow position={[s * (w / 2 - t / 2), h / 2, 0]}>
           <boxGeometry args={[t, h, d]} />
           <Mat color={color} selected={selected} />
         </mesh>
       ))}
-      {/* topp + botten */}
+      {/* top + bottom */}
       <mesh castShadow position={[0, h - t / 2, 0]}>
         <boxGeometry args={[w, t, d]} />
         <Mat color={color} selected={selected} />
@@ -22,12 +22,12 @@ export function Bookshelf({ size, color, selected }: FurnitureProps) {
         <boxGeometry args={[w, 0.05, d]} />
         <Mat color={color} selected={selected} />
       </mesh>
-      {/* rygg */}
+      {/* back */}
       <mesh position={[0, h / 2, -d / 2 + 0.01]}>
         <boxGeometry args={[w, h, 0.02]} />
         <Mat color={color} selected={selected} />
       </mesh>
-      {/* hyllplan */}
+      {/* shelves */}
       {shelves.map((f) => (
         <mesh key={f} castShadow position={[0, h * f, 0.01]}>
           <boxGeometry args={[Math.max(w - t * 2, 0.05), 0.025, Math.max(d - 0.04, 0.03)]} />

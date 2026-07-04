@@ -41,7 +41,7 @@ body {
   display: flex;
 }
 
-/* ---------- Sidopanel ---------- */
+/* ---------- Sidebar ---------- */
 
 .sidebar {
   width: 342px;
@@ -129,7 +129,7 @@ body {
   font-size: 12px;
 }
 
-/* ---------- Fält ---------- */
+/* ---------- Fields ---------- */
 
 .stack {
   display: flex;
@@ -225,7 +225,7 @@ select {
   padding: 5px 6px;
 }
 
-/* ---------- Knappar ---------- */
+/* ---------- Buttons ---------- */
 
 .button-row {
   display: flex;
@@ -233,7 +233,7 @@ select {
   gap: 8px;
 }
 
-/* Wrapper runt en disabled-knapp så att title-tooltipen fångas på hover. */
+/* Wrapper around a disabled button so the title tooltip is caught on hover. */
 .btn-tooltip-wrap {
   display: inline-flex;
 }
@@ -292,7 +292,7 @@ select {
   background: rgba(163, 58, 42, 0.08);
 }
 
-/* ---------- Kort (öppningar) ---------- */
+/* ---------- Cards (openings) ---------- */
 
 .card {
   background: var(--card);
@@ -348,7 +348,7 @@ select {
   padding: 8px 10px;
 }
 
-/* ---------- Möbelpalett ---------- */
+/* ---------- Furniture palette ---------- */
 
 .palette {
   display: grid;
@@ -388,7 +388,7 @@ select {
   flex: 0 0 auto;
 }
 
-/* ---------- Sparlista ---------- */
+/* ---------- Save list ---------- */
 
 .save-list {
   list-style: none;
@@ -442,7 +442,7 @@ select {
   gap: 8px;
 }
 
-/* ---------- 3D-vy ---------- */
+/* ---------- 3D view ---------- */
 
 .viewport {
   position: relative;
@@ -467,7 +467,7 @@ select {
   pointer-events: none;
 }
 
-/* ---------- Lägestabbar ---------- */
+/* ---------- Mode tabs ---------- */
 
 .mode-tabs {
   position: absolute;
@@ -497,7 +497,7 @@ select {
   color: var(--card);
 }
 
-/* ---------- Planritning (2D) ---------- */
+/* ---------- Floor plan (2D) ---------- */
 
 .plan-editor {
   position: absolute;
@@ -674,7 +674,7 @@ select {
   fill: var(--select);
 }
 
-/* ---------- AI-förslag ---------- */
+/* ---------- AI proposals ---------- */
 
 .ai-error {
   font-size: 13px;
@@ -770,7 +770,7 @@ select {
   padding-left: 18px;
 }
 
-/* ---------- Validering ---------- */
+/* ---------- Validation ---------- */
 
 .check-field {
   display: flex;

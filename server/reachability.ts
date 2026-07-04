@@ -4,12 +4,12 @@ import { floorPolygon, pointInPolygon, polygonBounds } from '../src/lib/polygon.
 import { accessZone, convexOverlap, doorClearanceZones, footprint, interiorWallQuad } from './geom.ts';
 import type { ResolvedFurniture } from './schema.ts';
 
-/** Rutstorlek för nåbarhetsrastret, meter. */
+/** Cell size for the reachability grid, meters. */
 const CELL = 0.1;
 
 /**
- * Möbler som får överlappa varandra utan att flaggas:
- * mattor får ligga under allt, och stolar får skjutas in under bord/arbetsytor.
+ * Furniture allowed to overlap without being flagged:
+ * rugs may lie under anything, and chairs may be pushed in under tables/work surfaces.
  */
 function overlapAllowed(a: ResolvedFurniture, b: ResolvedFurniture): boolean {
   if (a.kind === 'rug' || b.kind === 'rug') return true;
@@ -18,7 +18,7 @@ function overlapAllowed(a: ResolvedFurniture, b: ResolvedFurniture): boolean {
   return false;
 }
 
-/** Fel för möbler som överlappar varandra (utöver tillåtna undantag). */
+/** Errors for furniture items that overlap each other (beyond the allowed exceptions). */
 export function overlapErrors(furniture: ResolvedFurniture[], title: string): string[] {
   const errors: string[] = [];
   for (let i = 0; i < furniture.length; i++) {
@@ -28,7 +28,7 @@ export function overlapErrors(furniture: ResolvedFurniture[], title: string): st
       if (overlapAllowed(a, b)) continue;
       if (convexOverlap(footprint(a, 0.03), footprint(b, 0.03))) {
         errors.push(
-          `Förslag "${title}": "${a.name}" och "${b.name}" överlappar varandra.`,
+          `Proposal "${title}": "${a.name}" and "${b.name}" overlap each other.`,
         );
       }
     }
@@ -37,10 +37,10 @@ export function overlapErrors(furniture: ResolvedFurniture[], title: string): st
 }
 
 /**
- * Fel för möbler vars åtkomstzon inte går att nå till fots från en dörr.
- * Rastrerar golvet, blockerar celler under solida möbler och innerväggar, och
- * flood-fillar det fria golvet från dörrarnas frizoner. En daglig-möbel är OK om
- * någon cell i dess åtkomstzon nås av flödet.
+ * Errors for furniture whose access zone cannot be reached on foot from a door.
+ * Rasterizes the floor, blocks cells under solid furniture and interior walls, and
+ * flood-fills the free floor from the door clearance zones. A daily-use item is OK
+ * if any cell in its access zone is reached by the flood.
  */
 export function reachabilityErrors(
   furniture: ResolvedFurniture[],
@@ -49,7 +49,7 @@ export function reachabilityErrors(
 ): string[] {
   const floor = floorPolygon(design.walls);
   const zones = doorClearanceZones(design);
-  if (zones.length === 0) return []; // Ingen dörr att gå in genom — hoppa över.
+  if (zones.length === 0) return []; // No door to enter through — skip.
 
   const b = polygonBounds(floor);
   const cols = Math.max(1, Math.ceil((b.maxX - b.minX) / CELL));
@@ -75,7 +75,7 @@ export function reachabilityErrors(
     }
   }
 
-  // Flödet startar i alla fria celler inne i en dörrs frizon.
+  // The flood starts in every free cell inside a door clearance zone.
   const reached = new Uint8Array(cols * rows);
   const queue: number[] = [];
   for (let c = 0; c < cols; c++) {
@@ -88,7 +88,7 @@ export function reachabilityErrors(
       }
     }
   }
-  if (queue.length === 0) return []; // Dörrsvep blockerat — flaggas separat i validate.
+  if (queue.length === 0) return []; // Door swing blocked — flagged separately in validate.
 
   for (let head = 0; head < queue.length; head++) {
     const cell = queue[head];
@@ -123,9 +123,9 @@ export function reachabilityErrors(
     }
     if (!ok) {
       errors.push(
-        `Förslag "${title}": "${f.name}" går inte att nå — framför den saknas ` +
-          `${FURNITURE_CATALOG[f.kind].accessDepth} m fri yta med gångväg från en dörr ` +
-          `(den är instängd bakom andra möbler eller väggar).`,
+        `Proposal "${title}": "${f.name}" cannot be reached — in front of it there is no ` +
+          `${FURNITURE_CATALOG[f.kind].accessDepth} m of free space with a walking path from a door ` +
+          `(it is trapped behind other furniture or walls).`,
       );
     }
   }

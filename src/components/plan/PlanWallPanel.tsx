@@ -9,7 +9,7 @@ import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { NumberField } from '../panel/fields';
 
-/** Finjustering i cm för den markerade väggen i planritningen. */
+/** Fine-tuning in cm for the selected wall in the floor plan. */
 export function PlanWallPanel() {
   const walls = useDesignStore((s) => s.design.walls);
   const resizeWall = useDesignStore((s) => s.resizeWall);
@@ -31,7 +31,7 @@ export function PlanWallPanel() {
       </p>
       <div className="field-grid">
         <NumberField
-          label="Längd"
+          label="Length"
           value={lenCm}
           min={10}
           max={3000}
@@ -41,7 +41,7 @@ export function PlanWallPanel() {
         />
         {wall.kind === 'interior' && (
           <NumberField
-            label={vertical ? 'Från vänster' : 'Uppifrån'}
+            label={vertical ? 'From left' : 'From top'}
             value={distCm}
             min={0}
             max={3000}
@@ -53,13 +53,13 @@ export function PlanWallPanel() {
       </div>
       <p className="plan-hint">
         {wall.kind === 'exterior'
-          ? 'Längden ändras i väggens slutände (pilen); väggen intill följer med.'
-          : 'Längden ändras i väggens slutände (pilen).'}
+          ? 'The length changes at the wall’s end (the arrow); the adjacent wall follows.'
+          : 'The length changes at the wall’s end (the arrow).'}
       </p>
       {wall.kind === 'exterior' && (
         <p className="plan-hint">
-          Ytterväggar tas inte bort en och en — konturen måste vara sluten. Använd
-          ”Rita om ytterväggar…” för att ändra rummets form.
+          Exterior walls cannot be deleted one by one — the outline must stay closed. Use
+          &ldquo;Redraw exterior walls…&rdquo; to change the shape of the room.
         </p>
       )}
     </div>

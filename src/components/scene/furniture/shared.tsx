@@ -11,7 +11,7 @@ export const SELECT_EMISSIVE = '#2f6fdd';
 
 const scratch = new THREE.Color();
 
-/** Ljusare nyans av en hexfärg (amt 0–1 mot vitt). */
+/** Lighter shade of a hex color (amt 0–1 toward white). */
 export function shade(color: string, amt: number): string {
   return `#${scratch.set(color).lerp(new THREE.Color('#ffffff'), amt).getHexString()}`;
 }

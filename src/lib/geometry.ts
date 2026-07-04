@@ -17,12 +17,12 @@ export interface WallTransform {
 }
 
 /**
- * Placering av väggens grupp i världen. Lokalt går u-axeln (+x) längs a→b och
- * extruderingen (+z, tjocklek WALL_T) mot rummets insida.
+ * Placement of the wall's group in the world. Locally the u axis (+x) runs along
+ * a→b and the extrusion (+z, thickness WALL_T) toward the inside of the room.
  *
- * Yttervägg: origin på det yttre skalplanet vid a, så att extruderingen slutar
- * exakt på den ritade linjen (rummets innermått). Innervägg: solid centrerad
- * på det ritade segmentet.
+ * Exterior wall: origin on the outer shell plane at a, so that the extrusion ends
+ * exactly on the drawn line (the room's inner dimensions). Interior wall: solid
+ * centered on the drawn segment.
  */
 export function wallTransform(w: Wall): WallTransform {
   const n = outwardNormal(w);
@@ -46,7 +46,7 @@ export function buildWallGeometry(
   shape.closePath();
 
   for (const o of openings) {
-    // Hålens winding normaliseras av ShapeUtils; ingen manuell reversering behövs.
+    // The holes' winding is normalized by ShapeUtils; no manual reversal needed.
     const x0 = Math.max(0, o.offset);
     const x1 = Math.min(o.offset + o.width, wallLength);
     const y0 = Math.max(0, o.elevation);
@@ -64,21 +64,21 @@ export function buildWallGeometry(
   return new THREE.ExtrudeGeometry(shape, { depth: thickness, bevelEnabled: false });
 }
 
-/** Klampar en möbels centrum till golvpolygonen (medvetet centrum-baserat). */
+/** Clamps a furniture piece's center to the floor polygon (deliberately center-based). */
 export function clampFurniture(item: FurnitureItem, floorPoly: Point[]): FurnitureItem {
   const p = clampToPolygon(item.position, floorPoly);
   if (p === item.position) return item;
   return { ...item, position: p };
 }
 
-// ---- Fotavtryckskollision (drag mot väggar) ----
+// ---- Footprint collision (dragging against walls) ----
 
 type Footprint = Pick<FurnitureItem, 'position' | 'rotationY' | 'size'>;
 
-/** Krymper fotavtrycket så att dikt-an mot vägg inte räknas som kollision. */
+/** Shrinks the footprint so that flush against a wall does not count as a collision. */
 const FIT_SHRINK = 0.015;
 
-/** Fotavtryckets fyra hörn i världen (samma rotationskonvention som three.js). */
+/** The footprint's four corners in the world (same rotation convention as three.js). */
 export function furnitureCorners(item: Footprint, shrink = FIT_SHRINK): Point[] {
   const hw = Math.max(item.size.width / 2 - shrink, 0.005);
   const hd = Math.max(item.size.depth / 2 - shrink, 0.005);
@@ -111,7 +111,7 @@ function quadsOverlap(a: Point[], b: Point[]): boolean {
   return false;
 }
 
-/** Innerväggens solid som rektangel i golvplanet (centrerad, tjocklek WALL_T). */
+/** The interior wall's solid as a rectangle in the floor plane (centered, thickness WALL_T). */
 function interiorWallQuad(w: Wall): Point[] {
   const n = outwardNormal(w);
   const t = WALL_T / 2;
@@ -124,9 +124,9 @@ function interiorWallQuad(w: Wall): Point[] {
 }
 
 /**
- * Sant om hela fotavtrycket ligger i golvpolygonen utan att korsa någon vägg.
- * Hörn-i-polygon räcker inte ensamt i t.ex. L-rum (kanten kan gena över en
- * nisch), därför testas även kant-mot-kant-korsningar.
+ * True if the whole footprint lies in the floor polygon without crossing any wall.
+ * Corner-in-polygon alone is not enough in e.g. L-shaped rooms (an edge can cut
+ * across a notch), so edge-to-edge intersections are tested as well.
  */
 export function furnitureFits(item: Footprint, floorPoly: Point[], walls: Wall[]): boolean {
   const corners = furnitureCorners(item);
@@ -147,9 +147,10 @@ export function furnitureFits(item: Footprint, floorPoly: Point[], walls: Wall[]
 }
 
 /**
- * Sant om möbeln får plats längs hela sträckan from→to. Slutpunkten ensam
- * räcker inte — vid snabba pekarrörelser kan målet ligga på andra sidan en
- * tunn innervägg (tunnling). Steget 0,05 m är mindre än väggtjockleken.
+ * True if the furniture fits along the entire path from→to. The end point alone
+ * is not enough — with fast pointer movements the target can end up on the other
+ * side of a thin interior wall (tunneling). The 0.05 m step is smaller than the
+ * wall thickness.
  */
 function pathFits(
   item: Footprint,
@@ -168,9 +169,9 @@ function pathFits(
 }
 
 /**
- * Flyttar en möbel mot target så långt det går utan väggkollision.
- * Per axel (x först, sedan z) binärsöks den längsta biten som får plats,
- * vilket ger naturlig glidning längs väggar under drag.
+ * Moves a furniture piece toward target as far as possible without wall collision.
+ * Per axis (x first, then z) the longest fitting stretch is found by binary
+ * search, giving natural sliding along walls while dragging.
  */
 export function slideFurniture(
   item: Footprint,

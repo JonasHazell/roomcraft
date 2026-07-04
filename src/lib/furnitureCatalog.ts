@@ -5,65 +5,66 @@ export interface CatalogEntry {
   defaultSize: FurnitureSize;
   defaultColor: string;
   /**
-   * Var möbelns framsida sitter (lokal +z), i klartext — används i AI-prompten så
-   * att `facing`-punkten pekar åt rätt håll. Framsidan är alltid lokal +z i modellen.
+   * Where the furniture's front is (local +z), in plain language — used in the AI
+   * prompt so the `facing` point aims the right way. The front is always local +z
+   * in the model.
    */
   front: string;
   /**
-   * Fri yta (meter) som måste finnas framför framsidan och gå att nå från en dörr
-   * för att möbeln ska vara användbar. 0 = ingen egen åtkomstzon krävs.
+   * Clear space (meters) that must exist in front of the front side and be
+   * reachable from a door for the piece to be usable. 0 = no access zone needed.
    */
   accessDepth: number;
-  /** Hindrar passage: räknas som hinder i nåbarhetsanalysen (höga/solida möbler). */
+  /** Blocks passage: counts as an obstacle in the reachability analysis (tall/solid pieces). */
   blocks: boolean;
 }
 
 export const FURNITURE_CATALOG: Record<FurnitureKind, CatalogEntry> = {
   bed: {
-    label: 'Säng',
+    label: 'Bed',
     defaultSize: { width: 1.6, depth: 2.0, height: 0.5 },
     defaultColor: '#7d8c72',
-    front: 'fotändan (huvudgaveln sitter på baksidan, mot vägg)',
+    front: 'the foot end (the headboard is at the back, against a wall)',
     accessDepth: 0.6,
     blocks: true,
   },
   sofa: {
-    label: 'Soffa',
+    label: 'Sofa',
     defaultSize: { width: 2.2, depth: 0.9, height: 0.8 },
     defaultColor: '#b06a45',
-    front: 'sittsidan (ryggen sitter på baksidan)',
+    front: 'the seating side (the backrest is at the back)',
     accessDepth: 0.5,
     blocks: true,
   },
   table: {
-    label: 'Bord',
+    label: 'Table',
     defaultSize: { width: 1.4, depth: 0.8, height: 0.75 },
     defaultColor: '#9b7350',
-    front: 'långsidan man sitter vid',
+    front: 'the long side you sit at',
     accessDepth: 0.6,
     blocks: true,
   },
   chair: {
-    label: 'Stol',
+    label: 'Chair',
     defaultSize: { width: 0.45, depth: 0.45, height: 0.9 },
     defaultColor: '#4a453c',
-    front: 'sittsidan (ryggstödet sitter på baksidan)',
+    front: 'the seating side (the backrest is at the back)',
     accessDepth: 0,
     blocks: false,
   },
   desk: {
-    label: 'Skrivbord',
+    label: 'Desk',
     defaultSize: { width: 1.2, depth: 0.7, height: 0.74 },
     defaultColor: '#8f7a5e',
-    front: 'sittsidan (skärmen står mot baksidan)',
+    front: 'the seating side (the screen faces the back)',
     accessDepth: 0.8,
     blocks: true,
   },
   nightstand: {
-    label: 'Nattduksbord',
+    label: 'Nightstand',
     defaultSize: { width: 0.45, depth: 0.4, height: 0.55 },
     defaultColor: '#a08b6f',
-    front: 'lådsidan (ställs intill sängens huvudända)',
+    front: 'the drawer side (placed next to the head of the bed)',
     accessDepth: 0,
     blocks: true,
   },
@@ -71,61 +72,61 @@ export const FURNITURE_CATALOG: Record<FurnitureKind, CatalogEntry> = {
     label: 'TV',
     defaultSize: { width: 1.3, depth: 0.35, height: 0.85 },
     defaultColor: '#3a3a3d',
-    front: 'skärmsidan (ryggen mot vägg)',
+    front: 'the screen side (the back against a wall)',
     accessDepth: 0,
     blocks: true,
   },
   mirror: {
-    label: 'Spegel',
+    label: 'Mirror',
     defaultSize: { width: 0.6, depth: 0.05, height: 1.7 },
     defaultColor: '#b9c4c9',
-    front: 'glassidan (ryggen mot vägg)',
+    front: 'the glass side (the back against a wall)',
     accessDepth: 0,
     blocks: true,
   },
   plant: {
-    label: 'Växt',
+    label: 'Plant',
     defaultSize: { width: 0.4, depth: 0.4, height: 1.2 },
     defaultColor: '#5d7a4e',
-    front: 'ingen riktning (kruka på golvet)',
+    front: 'no direction (pot on the floor)',
     accessDepth: 0,
     blocks: true,
   },
   wardrobe: {
-    label: 'Garderob',
+    label: 'Wardrobe',
     defaultSize: { width: 1.2, depth: 0.6, height: 2.0 },
     defaultColor: '#ded5c2',
-    front: 'dörrsidan (ryggen sitter på baksidan, mot vägg)',
+    front: 'the door side (the back is at the rear, against a wall)',
     accessDepth: 0.9,
     blocks: true,
   },
   bookshelf: {
-    label: 'Bokhylla',
+    label: 'Bookshelf',
     defaultSize: { width: 0.9, depth: 0.35, height: 1.9 },
     defaultColor: '#8a6f52',
-    front: 'den öppna hyllsidan (ryggen sitter på baksidan, mot vägg)',
+    front: 'the open shelf side (the back is at the rear, against a wall)',
     accessDepth: 0.6,
     blocks: true,
   },
   rug: {
-    label: 'Matta',
+    label: 'Rug',
     defaultSize: { width: 2.0, depth: 1.4, height: 0.02 },
     defaultColor: '#a5502f',
-    front: 'ingen riktning (platt på golvet)',
+    front: 'no direction (flat on the floor)',
     accessDepth: 0,
     blocks: false,
   },
   box: {
-    label: 'Egen låda',
+    label: 'Custom box',
     defaultSize: { width: 1.0, depth: 1.0, height: 1.0 },
     defaultColor: '#b0a795',
-    front: 'användningssidan (t.ex. skrivbordets sittsida eller TV-bänkens framsida)',
+    front: 'the usage side (e.g. the seating side of a desk or the front of a TV bench)',
     accessDepth: 0.6,
     blocks: true,
   },
 };
 
-// Tuple-typ så att listan kan mata z.enum direkt (persistence, AI-schema).
+// Tuple type so the list can feed z.enum directly (persistence, AI schema).
 export const FURNITURE_KINDS = Object.keys(FURNITURE_CATALOG) as [
   FurnitureKind,
   ...FurnitureKind[],

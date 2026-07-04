@@ -26,43 +26,43 @@ import {
 } from './geo';
 
 export type RuleCategory =
-  | 'Säkerhet'
-  | 'Tillgänglighet'
-  | 'Ergonomi & mått'
+  | 'Safety'
+  | 'Accessibility'
+  | 'Ergonomics & dimensions'
   | 'Feng shui'
-  | 'Ljus'
-  | 'Färg & textil'
-  | 'Akustik'
-  | 'Estetik';
+  | 'Light'
+  | 'Color & textiles'
+  | 'Acoustics'
+  | 'Aesthetics';
 
 export const CATEGORY_ORDER: RuleCategory[] = [
-  'Säkerhet',
-  'Tillgänglighet',
-  'Ergonomi & mått',
+  'Safety',
+  'Accessibility',
+  'Ergonomics & dimensions',
   'Feng shui',
-  'Ljus',
-  'Färg & textil',
-  'Akustik',
-  'Estetik',
+  'Light',
+  'Color & textiles',
+  'Acoustics',
+  'Aesthetics',
 ];
 
 export type RoomType = 'sovrum' | 'vardagsrum' | 'hemmakontor' | 'matplats';
 
 export const ROOM_TYPE_LABEL: Record<RoomType, string> = {
-  sovrum: 'Sovrum',
-  vardagsrum: 'Vardagsrum',
-  hemmakontor: 'Hemmakontor',
-  matplats: 'Matplats',
+  sovrum: 'Bedroom',
+  vardagsrum: 'Living room',
+  hemmakontor: 'Home office',
+  matplats: 'Dining area',
 };
 
-/** Poängvikt per viktighetsnivå enligt regelkatalogen. */
+/** Score weight per importance level according to the rule catalog. */
 export const IMPORTANCE_WEIGHT: Record<number, number> = { 5: 16, 4: 8, 3: 4, 2: 2, 1: 1 };
 
 export interface Violation {
   message: string;
-  /** Möbler som markeras i 3D-vyn när felet väljs. */
+  /** Furniture highlighted in the 3D view when the issue is selected. */
   furnitureIds: string[];
-  /** Golvzoner (polygoner) som markeras i 3D-vyn. */
+  /** Floor zones (polygons) highlighted in the 3D view. */
   zones?: Point[][];
 }
 
@@ -86,14 +86,14 @@ export interface RuleDef {
   category: RuleCategory;
   importance: 1 | 2 | 3 | 4 | 5;
   source: string;
-  /** Länkad dubblettregel (t.ex. FEN-03 för ERG-08): redovisas i båda kategorierna, räknas en gång i totalen. */
+  /** Linked twin rule (e.g. FEN-03 for ERG-08): reported in both categories, counted once in the total. */
   twin?: { id: string; category: RuleCategory };
-  /** Rumstyper regeln kräver; utelämnad = alla rum. */
+  /** Room types the rule requires; omitted = all rooms. */
   appliesTo?: RoomType[];
   check: (ctx: RuleCtx) => RuleOutcome;
 }
 
-/** Härleder rumstyper från möbleringen (blandrum kan ge flera). */
+/** Infers room types from the furnishing (mixed rooms can yield several). */
 export function inferRoomTypes(design: Design): Set<RoomType> {
   const kinds = new Set(design.furniture.map((f) => f.kind));
   const types = new Set<RoomType>();
@@ -122,18 +122,18 @@ function topOf(f: FurnitureItem): number {
   return f.elevation + f.size.height;
 }
 
-/** Bakkantens mittpunkt (motsatt framsidan). */
+/** Midpoint of the back edge (opposite the front). */
 function backEdgeMid(f: FurnitureItem): Point {
   return add(f.position, frontDir(f.rotationY), -f.size.depth / 2);
 }
 
-/** Sant om möbelns baksida står dikt an (≤ tol) mot en vägg. */
+/** True if the back of the furniture sits flush (≤ tol) against a wall. */
 function backAgainstWall(design: Design, f: FurnitureItem, tol = 0.18) {
   const hit = nearestWall(design, backEdgeMid(f));
   return hit && hit.distance <= tol ? hit.wall : null;
 }
 
-/** Zon längs en av möbelns långsidor (side = ±1 längs höger-axeln), depth utåt. */
+/** Zone along one of the furniture's long sides (side = ±1 along the right axis), depth outward. */
 function sideZone(f: FurnitureItem, side: 1 | -1, depth: number): Point[] {
   const fwd = frontDir(f.rotationY);
   const right = rightDir(f.rotationY);
@@ -144,7 +144,7 @@ function sideZone(f: FurnitureItem, side: 1 | -1, depth: number): Point[] {
   return stripZone(s, e, n, depth);
 }
 
-/** Zon framför möbelns framsida, lika bred som möbeln. */
+/** Zone in front of the furniture's front face, as wide as the piece. */
 function frontZone(f: FurnitureItem, depth: number): Point[] {
   const fwd = frontDir(f.rotationY);
   const right = rightDir(f.rotationY);
@@ -154,7 +154,7 @@ function frontZone(f: FurnitureItem, depth: number): Point[] {
   return stripZone(s, e, fwd, depth);
 }
 
-/** Blockerande möbler som överlappar zonen. */
+/** Blocking furniture that overlaps the zone. */
 function blockersInZone(
   ctx: RuleCtx,
   zone: Point[],
@@ -171,15 +171,15 @@ function names(items: FurnitureItem[]): string {
 }
 
 // ---------------------------------------------------------------------------
-// Regler
+// Rules
 // ---------------------------------------------------------------------------
 
 export const RULES: RuleDef[] = [
-  // ---- Nivå 5: Säkerhet ----
+  // ---- Level 5: Safety ----
   {
     id: 'SAK-02',
-    title: 'Dörrar ska kunna öppnas helt',
-    category: 'Säkerhet',
+    title: 'Doors must be able to open fully',
+    category: 'Safety',
     importance: 5,
     source: 'BBR 5:3',
     check(ctx) {
@@ -195,7 +195,7 @@ export const RULES: RuleDef[] = [
           );
           if (inWay.length > 0) {
             violations.push({
-              message: `${names(inWay)} står i dörrens svepyta — flytta så att dörren kan öppnas helt (80 cm fritt).`,
+              message: `${names(inWay)} is in the door's swing area — move it so the door can open fully (80 cm clear).`,
               furnitureIds: inWay.map((f) => f.id),
               zones: [zone],
             });
@@ -207,8 +207,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'SAK-01',
-    title: 'Utrymningsväg får inte blockeras',
-    category: 'Säkerhet',
+    title: 'Escape route must not be blocked',
+    category: 'Safety',
     importance: 5,
     source: 'BBR 5:3, MSB',
     check(ctx) {
@@ -217,7 +217,7 @@ export const RULES: RuleDef[] = [
         (f) => f.kind === 'bed' || f.kind === 'sofa' || f.kind === 'desk' || isDiningTable(f),
       );
       if (spots.length === 0) return na;
-      // 0,4 m erosion ⇒ fri passage ≈ 80 cm bred.
+      // 0.4 m erosion ⇒ free passage ≈ 80 cm wide.
       const grid = erodedGrid(ctx.design, 0.4);
       const doorZones = ctx.doors.flatMap((d) => clearanceZones(d, 0.9));
       const reached = floodFill(grid, (p) => doorZones.some((z) => pointInPolygon(p, z)));
@@ -234,7 +234,7 @@ export const RULES: RuleDef[] = [
         }
         if (!okPath) {
           violations.push({
-            message: `Från "${f.name}" finns ingen fri väg (minst 80 cm bred) till en dörr — flytta möblerna som stänger inne den.`,
+            message: `There is no clear path (at least 80 cm wide) from "${f.name}" to a door — move the furniture boxing it in.`,
             furnitureIds: [f.id],
           });
         }
@@ -244,8 +244,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'SAK-03',
-    title: 'Utrymningsfönster ska vara åtkomligt',
-    category: 'Säkerhet',
+    title: 'Escape window must be reachable',
+    category: 'Safety',
     importance: 5,
     source: 'BBR 5:323',
     appliesTo: ['sovrum', 'vardagsrum'],
@@ -258,7 +258,7 @@ export const RULES: RuleDef[] = [
           const inWay = blockersInZone(ctx, zone, new Set(), win.sill);
           if (inWay.length > 0) {
             violations.push({
-              message: `${names(inWay)} blockerar utrymningsfönstret — håll 60 cm golvyta fri framför fönstret.`,
+              message: `${names(inWay)} blocks the escape window — keep 60 cm of floor space clear in front of the window.`,
               furnitureIds: inWay.map((f) => f.id),
               zones: [zone],
             });
@@ -270,10 +270,10 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'SAK-10',
-    title: 'Tunga föremål inte ovanför liggande/sittande',
-    category: 'Säkerhet',
+    title: 'No heavy objects above where people lie or sit',
+    category: 'Safety',
     importance: 5,
-    source: 'Best practice barnsäkerhet; Feng shui',
+    source: 'Best practice child safety; Feng shui',
     twin: { id: 'FEN-06', category: 'Feng shui' },
     appliesTo: ['sovrum', 'vardagsrum'],
     check(ctx) {
@@ -286,7 +286,7 @@ export const RULES: RuleDef[] = [
         for (const h of hanging) {
           if (convexOverlap(footprint(h), footprint(rest))) {
             violations.push({
-              message: `"${h.name}" hänger rakt ovanför "${rest.name}" — flytta den till en vägg utan säng/soffa under.`,
+              message: `"${h.name}" hangs directly above "${rest.name}" — move it to a wall without a bed or sofa below.`,
               furnitureIds: [h.id, rest.id],
             });
           }
@@ -296,11 +296,11 @@ export const RULES: RuleDef[] = [
     },
   },
 
-  // ---- Nivå 4: Tillgänglighet ----
+  // ---- Level 4: Accessibility ----
   {
     id: 'TIL-02',
-    title: 'Vändyta för rullstol (130 cm)',
-    category: 'Tillgänglighet',
+    title: 'Wheelchair turning space (130 cm)',
+    category: 'Accessibility',
     importance: 4,
     source: 'SS 91 42 21, BBR 3:146',
     check(ctx) {
@@ -312,7 +312,7 @@ export const RULES: RuleDef[] = [
       return fail([
         {
           message:
-            'Ingen fri vändcirkel på 130 cm ryms i rummet — flytta eller ta bort möbler för att öppna en sammanhängande golvyta.',
+            'No clear 130 cm turning circle fits in the room — move or remove furniture to open up a contiguous floor area.',
           furnitureIds: [],
         },
       ]);
@@ -320,8 +320,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'TIL-05',
-    title: 'Åtkomst runt sängen',
-    category: 'Tillgänglighet',
+    title: 'Access around the bed',
+    category: 'Accessibility',
     importance: 4,
     source: 'SS 91 42 21',
     appliesTo: ['sovrum'],
@@ -342,8 +342,8 @@ export const RULES: RuleDef[] = [
         if ((double && blockedCount > 0) || (!double && blockedCount === 2)) {
           violations.push({
             message: double
-              ? `Dubbelsängen "${bed.name}" behöver 60 cm fritt längs båda långsidorna — nu är ${blockedCount === 2 ? 'båda sidorna' : 'ena sidan'} blockerad.`
-              : `Sängen "${bed.name}" behöver 60 cm fritt längs minst en långsida.`,
+              ? `The double bed "${bed.name}" needs 60 cm clear along both long sides — currently ${blockedCount === 2 ? 'both sides are' : 'one side is'} blocked.`
+              : `The bed "${bed.name}" needs 60 cm clear along at least one long side.`,
             furnitureIds: [bed.id],
             zones: sideFree.filter((z): z is Point[] => z !== null),
           });
@@ -354,8 +354,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'TIL-06',
-    title: 'Fri yta framför förvaring',
-    category: 'Tillgänglighet',
+    title: 'Clear space in front of storage',
+    category: 'Accessibility',
     importance: 4,
     source: 'SS 91 42 21',
     check(ctx) {
@@ -368,8 +368,8 @@ export const RULES: RuleDef[] = [
         const wallHit = wallsHitQuad(ctx.design, zone);
         if (inWay.length > 0 || wallHit) {
           violations.push({
-            message: `Framför "${w.name}" behövs 110 cm fri yta (öppen dörr + person) — ${
-              inWay.length > 0 ? `${names(inWay)} står i vägen` : 'väggen är för nära'
+            message: `110 cm of clear space is needed in front of "${w.name}" (open door + person) — ${
+              inWay.length > 0 ? `${names(inWay)} is in the way` : 'the wall is too close'
             }.`,
             furnitureIds: [w.id, ...inWay.map((f) => f.id)],
             zones: [zone],
@@ -381,8 +381,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'TIL-07',
-    title: 'Utrymme vid matplatsen',
-    category: 'Tillgänglighet',
+    title: 'Space around the dining area',
+    category: 'Accessibility',
     importance: 4,
     source: 'SS 91 42 21, NKBA',
     appliesTo: ['matplats'],
@@ -394,9 +394,9 @@ export const RULES: RuleDef[] = [
       for (const table of tables) {
         const tQuad = footprint(table);
         for (const chair of chairs) {
-          if (quadGap(footprint(chair), tQuad) > 0.35) continue; // inte vid det här bordet
+          if (quadGap(footprint(chair), tQuad) > 0.35) continue; // not at this table
           const away = norm(sub(chair.position, table.position));
-          // Från bordskanten ska det finnas 70 cm bakåt (stol + resa sig).
+          // From the table edge there should be 70 cm back (chair + standing up).
           const edgeReach = support(tQuad.map((p) => sub(p, table.position)), away);
           const s1 = add(add(table.position, away, edgeReach), rightDir(chair.rotationY), -0.3);
           const s2 = add(add(table.position, away, edgeReach), rightDir(chair.rotationY), 0.3);
@@ -404,9 +404,9 @@ export const RULES: RuleDef[] = [
           const inWay = blockersInZone(ctx, zone, new Set([table.id, ...chairs.map((c) => c.id)]));
           if (wallsHitQuad(ctx.design, zone) || inWay.length > 0) {
             violations.push({
-              message: `Bakom stolen "${chair.name}" finns mindre än 70 cm till ${
-                inWay.length > 0 ? names(inWay) : 'väggen'
-              } — dra bordet åt andra hållet eller ta bort sittplatsen.`,
+              message: `Behind the chair "${chair.name}" there is less than 70 cm to ${
+                inWay.length > 0 ? names(inWay) : 'the wall'
+              } — pull the table the other way or remove the seat.`,
               furnitureIds: [chair.id, ...inWay.map((f) => f.id)],
               zones: [zone],
             });
@@ -418,8 +418,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'TIL-11',
-    title: 'Fönster ska kunna öppnas och nås',
-    category: 'Tillgänglighet',
+    title: 'Windows must be reachable and openable',
+    category: 'Accessibility',
     importance: 4,
     source: 'BBR 6:253',
     check(ctx) {
@@ -436,7 +436,7 @@ export const RULES: RuleDef[] = [
           );
           if (inWay.length > 0) {
             violations.push({
-              message: `${names(inWay)} står dikt an mot fönstret — djupa möbler hindrar att det öppnas för vädring.`,
+              message: `${names(inWay)} sits flush against the window — deep furniture prevents opening it for ventilation.`,
               furnitureIds: inWay.map((f) => f.id),
               zones: [zone],
             });
@@ -448,10 +448,10 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'TIL-13',
-    title: 'Rummet får inte övermöbleras',
-    category: 'Tillgänglighet',
+    title: 'The room must not be over-furnished',
+    category: 'Accessibility',
     importance: 4,
-    source: 'Best practice; feng shui (fritt chi-flöde)',
+    source: 'Best practice; feng shui (free flow of chi)',
     check(ctx) {
       if (ctx.design.furniture.length === 0) return na;
       const roomArea = Math.abs(signedArea(ctx.poly));
@@ -463,18 +463,18 @@ export const RULES: RuleDef[] = [
       if (freePct >= 40) return ok;
       return fail([
         {
-          message: `Rummet har bara ca ${freePct} % fri golvyta (riktvärde ≥ 40 %) — ta bort eller förminska möbler.`,
+          message: `The room has only about ${freePct}% free floor area (guideline ≥ 40%) — remove or downsize furniture.`,
           furnitureIds: [],
         },
       ]);
     },
   },
 
-  // ---- Nivå 3: Ergonomi & feng shui-placering ----
+  // ---- Level 3: Ergonomics & feng shui placement ----
   {
     id: 'ERG-01',
-    title: 'Avstånd soffa–soffbord',
-    category: 'Ergonomi & mått',
+    title: 'Sofa to coffee table distance',
+    category: 'Ergonomics & dimensions',
     importance: 3,
     source: 'Best practice (NKBA)',
     appliesTo: ['vardagsrum'],
@@ -493,7 +493,7 @@ export const RULES: RuleDef[] = [
         if (!near) continue;
         if (near.gap < 0.3 || near.gap > 0.45) {
           violations.push({
-            message: `Justera "${near.t.name}" till 30–45 cm från soffans framkant (nu ${formatCm(near.gap)}).`,
+            message: `Adjust "${near.t.name}" to 30–45 cm from the front edge of the sofa (currently ${formatCm(near.gap)}).`,
             furnitureIds: [sofa.id, near.t.id],
           });
         }
@@ -503,8 +503,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'ERG-02',
-    title: 'TV-avstånd',
-    category: 'Ergonomi & mått',
+    title: 'TV viewing distance',
+    category: 'Ergonomics & dimensions',
     importance: 3,
     source: 'SMPTE/THX',
     appliesTo: ['vardagsrum', 'sovrum'],
@@ -514,15 +514,15 @@ export const RULES: RuleDef[] = [
       if (tvs.length === 0 || seats.length === 0) return na;
       const violations: Violation[] = [];
       for (const tv of tvs) {
-        const diagonal = (tv.size.width * 0.92) / 0.87; // skärmbredd → diagonal (16:9)
+        const diagonal = (tv.size.width * 0.92) / 0.87; // screen width → diagonal (16:9)
         const min = 1.2 * diagonal;
-        const max = 2.6 * diagonal; // 1,6× för 4K, upp till ~2,5× för HD
+        const max = 2.6 * diagonal; // 1.6× for 4K, up to ~2.5× for HD
         const nearest = seats
           .map((s) => ({ s, d: Math.hypot(s.position.x - tv.position.x, s.position.z - tv.position.z) }))
           .sort((a, b) => a.d - b.d)[0];
         if (nearest.d < min || nearest.d > max) {
           violations.push({
-            message: `Sittplatsen "${nearest.s.name}" står ${nearest.d.toFixed(1)} m från TV:n — riktvärdet för skärmbredden är ${min.toFixed(1)}–${max.toFixed(1)} m.`,
+            message: `The seat "${nearest.s.name}" is ${nearest.d.toFixed(1)} m from the TV — the guideline for this screen size is ${min.toFixed(1)}–${max.toFixed(1)} m.`,
             furnitureIds: [tv.id, nearest.s.id],
           });
         }
@@ -532,8 +532,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'ERG-05',
-    title: 'Soffans placering i rummet',
-    category: 'Ergonomi & mått',
+    title: 'Sofa placement in the room',
+    category: 'Ergonomics & dimensions',
     importance: 3,
     source: 'Best practice; Feng shui',
     twin: { id: 'FEN-13', category: 'Feng shui' },
@@ -544,7 +544,7 @@ export const RULES: RuleDef[] = [
       const violations: Violation[] = [];
       for (const sofa of sofas) {
         if (backAgainstWall(ctx.design, sofa)) continue;
-        // Fri passage bakom (rumsavdelare) accepteras också.
+        // A free passage behind (room divider) is also accepted.
         const behind = stripZone(
           add(add(backEdgeMid(sofa), rightDir(sofa.rotationY), -sofa.size.width / 2), frontDir(sofa.rotationY), 0),
           add(add(backEdgeMid(sofa), rightDir(sofa.rotationY), sofa.size.width / 2), frontDir(sofa.rotationY), 0),
@@ -555,7 +555,7 @@ export const RULES: RuleDef[] = [
           continue;
         }
         violations.push({
-          message: `"${sofa.name}" flyter fritt utan ryggstöd — ställ den mot en vägg eller ge den 60 cm fri passage bakom.`,
+          message: `"${sofa.name}" floats freely with no backing — place it against a wall or give it 60 cm of free passage behind.`,
           furnitureIds: [sofa.id],
         });
       }
@@ -564,8 +564,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'ERG-08',
-    title: 'Huvudgärd mot stabil vägg',
-    category: 'Ergonomi & mått',
+    title: 'Headboard against a solid wall',
+    category: 'Ergonomics & dimensions',
     importance: 3,
     source: 'Best practice; Feng shui',
     twin: { id: 'FEN-03', category: 'Feng shui' },
@@ -578,12 +578,12 @@ export const RULES: RuleDef[] = [
         const wall = backAgainstWall(ctx.design, bed);
         if (!wall) {
           violations.push({
-            message: `Huvudgärden på "${bed.name}" saknar väggstöd — vänd sängen så att huvudändan står mot en vägg.`,
+            message: `The headboard of "${bed.name}" has no wall support — turn the bed so the head end is against a wall.`,
             furnitureIds: [bed.id],
           });
           continue;
         }
-        // Fönster på väggen bakom huvudgärden?
+        // Window on the wall behind the headboard?
         const headMid = backEdgeMid(bed);
         const underWindow = ctx.windows.find(
           (w) =>
@@ -593,7 +593,7 @@ export const RULES: RuleDef[] = [
         );
         if (underWindow) {
           violations.push({
-            message: `"${bed.name}" står med huvudgärden under ett fönster — flytta till en hel vägg, eller kompensera med hög huvudgärd och tjocka gardiner.`,
+            message: `"${bed.name}" has its headboard under a window — move it to a solid wall, or compensate with a tall headboard and thick curtains.`,
             furnitureIds: [bed.id],
             zones: [stripZone(underWindow.s, underWindow.e, underWindow.normals[0], 0.8)],
           });
@@ -604,8 +604,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'ERG-09',
-    title: 'Nattduksbord i sänghöjd',
-    category: 'Ergonomi & mått',
+    title: 'Nightstands at bed height',
+    category: 'Ergonomics & dimensions',
     importance: 3,
     source: 'Best practice',
     twin: { id: 'FEN-20', category: 'Feng shui' },
@@ -623,12 +623,12 @@ export const RULES: RuleDef[] = [
           stands.find((ns) => {
             const v = sub(ns.position, bed.position);
             return (
-              dot(v, fwd) < 0 && // huvudändans halva
+              dot(v, fwd) < 0 && // the head-end half
               dot(v, right) * side > bed.size.width / 2 - 0.1 &&
               quadGap(footprint(bed), footprint(ns)) <= 0.35
             );
           });
-        // Sidor som står mot vägg behöver inget nattduksbord.
+        // Sides against a wall do not need a nightstand.
         const sideUsable = ([-1, 1] as const).map(
           (side) => !wallsHitQuad(ctx.design, sideZone(bed, side, 0.45)),
         );
@@ -641,8 +641,8 @@ export const RULES: RuleDef[] = [
         if (double ? foundCount < usableCount : foundCount < Math.min(1, usableCount)) {
           violations.push({
             message: double
-              ? `Dubbelsängen "${bed.name}" bör ha nattduksbord på båda använda sidorna (parsymmetri) — ${usableCount - foundCount === 1 ? 'en sida saknar' : 'sidorna saknar'} bord.`
-              : `Sängen "${bed.name}" saknar nattduksbord vid huvudändan.`,
+              ? `The double bed "${bed.name}" should have nightstands on both usable sides (couple symmetry) — ${usableCount - foundCount === 1 ? 'one side is missing' : 'both sides are missing'} a table.`
+              : `The bed "${bed.name}" is missing a nightstand at the head end.`,
             furnitureIds: [bed.id],
             zones: missing.map((side) => sideZone(bed, side, 0.45)),
           });
@@ -651,7 +651,7 @@ export const RULES: RuleDef[] = [
         for (const ns of found) {
           if (ns && Math.abs(topOf(ns) - topOf(bed)) > 0.1) {
             violations.push({
-              message: `"${ns.name}" (${formatCm(topOf(ns))}) bör ligga inom ±5 cm från sängens överkant (${formatCm(topOf(bed))}).`,
+              message: `"${ns.name}" (${formatCm(topOf(ns))}) should be within ±5 cm of the top of the bed (${formatCm(topOf(bed))}).`,
               furnitureIds: [ns.id, bed.id],
             });
           }
@@ -662,8 +662,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'ERG-13',
-    title: 'Skrivbordets mått',
-    category: 'Ergonomi & mått',
+    title: 'Desk dimensions',
+    category: 'Ergonomics & dimensions',
     importance: 3,
     source: 'AFS 2020:1, SS-EN 527',
     appliesTo: ['hemmakontor'],
@@ -674,7 +674,7 @@ export const RULES: RuleDef[] = [
       for (const d of desks) {
         if (d.size.width < 1.0 || d.size.depth < 0.6) {
           violations.push({
-            message: `"${d.name}" (${Math.round(d.size.width * 100)}×${Math.round(d.size.depth * 100)} cm) är mindre än riktvärdet 100×60 cm för en arbetsplats.`,
+            message: `"${d.name}" (${Math.round(d.size.width * 100)}×${Math.round(d.size.depth * 100)} cm) is smaller than the 100×60 cm guideline for a workstation.`,
             furnitureIds: [d.id],
           });
         }
@@ -684,8 +684,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'ERG-14',
-    title: 'Arbetsplatsen vinkelrätt mot fönster',
-    category: 'Ergonomi & mått',
+    title: 'Workstation perpendicular to the window',
+    category: 'Ergonomics & dimensions',
     importance: 3,
     source: 'AFS 2020:1',
     appliesTo: ['hemmakontor'],
@@ -704,8 +704,8 @@ export const RULES: RuleDef[] = [
             violations.push({
               message:
                 alignment < 0
-                  ? `"${d.name}" står med skärmen framför fönstret (motljus) — vrid skrivbordet 90° så att dagsljuset faller in från sidan.`
-                  : `"${d.name}" har fönstret rakt i ryggen (reflexer i skärmen) — vrid skrivbordet 90°.`,
+                  ? `"${d.name}" has its screen facing the window (backlighting) — rotate the desk 90° so daylight comes in from the side.`
+                  : `"${d.name}" has the window directly behind it (screen reflections) — rotate the desk 90°.`,
               furnitureIds: [d.id],
               zones: [stripZone(win.s, win.e, win.normals[0], 0.5)],
             });
@@ -718,10 +718,10 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'FEN-01',
-    title: 'Sängen i kommandoposition',
+    title: 'Bed in the command position',
     category: 'Feng shui',
     importance: 3,
-    source: 'Feng shui (formskolan)',
+    source: 'Feng shui (form school)',
     appliesTo: ['sovrum'],
     check(ctx) {
       const beds = ctx.byKind('bed');
@@ -732,7 +732,7 @@ export const RULES: RuleDef[] = [
         const head = backEdgeMid(bed);
         const eye = add(head, frontDir(bed.rotationY), 0.3);
         const seesADoor = ctx.doors.some((door) => {
-          if (dot(sub(door.center, eye), frontDir(bed.rotationY)) < -0.1) return false; // bakom huvudgärden
+          if (dot(sub(door.center, eye), frontDir(bed.rotationY)) < -0.1) return false; // behind the headboard
           const blockedByWall = ctx.design.walls.some(
             (w) => w.kind === 'interior' && segmentsCross(eye, door.center, w.a, w.b),
           );
@@ -743,7 +743,7 @@ export const RULES: RuleDef[] = [
         });
         if (!seesADoor) {
           violations.push({
-            message: `Från "${bed.name}" syns ingen dörr — flytta sängen så att dörren är synlig diagonalt från liggande position.`,
+            message: `No door is visible from "${bed.name}" — move the bed so the door can be seen diagonally from a lying position.`,
             furnitureIds: [bed.id],
           });
         }
@@ -753,7 +753,7 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'FEN-02',
-    title: 'Undvik kistpositionen',
+    title: 'Avoid the coffin position',
     category: 'Feng shui',
     importance: 3,
     source: 'Feng shui',
@@ -769,7 +769,7 @@ export const RULES: RuleDef[] = [
           const v = sub(door.center, bed.position);
           if (dot(v, fwd) > 0 && Math.abs(dot(v, right)) <= bed.size.width / 2) {
             violations.push({
-              message: `Fotänden på "${bed.name}" pekar rakt mot dörren (kistpositionen) — vrid eller förskjut sängen ur dörrlinjen.`,
+              message: `The foot of "${bed.name}" points straight at the door (the coffin position) — rotate or shift the bed out of the door line.`,
               furnitureIds: [bed.id],
               zones: [stripZone(door.s, door.e, door.normals[0], 0.6)],
             });
@@ -782,7 +782,7 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'FEN-04',
-    title: 'Säng inte i dörr–fönster-linjen',
+    title: 'Bed not in the door–window line',
     category: 'Feng shui',
     importance: 3,
     source: 'Feng shui',
@@ -797,7 +797,7 @@ export const RULES: RuleDef[] = [
           const win = ctx.windows.find((w) => segmentHitsQuad(door.center, w.center, quad));
           if (win) {
             violations.push({
-              message: `"${bed.name}" ligger i den raka linjen mellan dörren och fönstret (drag av chi över sängen) — förskjut sängen ur linjen.`,
+              message: `"${bed.name}" lies in the straight line between the door and the window (chi drafting across the bed) — shift the bed out of the line.`,
               furnitureIds: [bed.id],
             });
             break;
@@ -809,7 +809,7 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'FEN-05',
-    title: 'Ingen spegel mot sängen',
+    title: 'No mirror facing the bed',
     category: 'Feng shui',
     importance: 3,
     source: 'Feng shui',
@@ -826,7 +826,7 @@ export const RULES: RuleDef[] = [
           const d = Math.hypot(v.x, v.z);
           if (d <= 4 && dot(norm(v), f) > 0.34) {
             violations.push({
-              message: `"${m.name}" reflekterar sängen "${bed.name}" — flytta eller vinkla spegeln bort från sängen.`,
+              message: `"${m.name}" reflects the bed "${bed.name}" — move or angle the mirror away from the bed.`,
               furnitureIds: [m.id, bed.id],
             });
           }
@@ -837,7 +837,7 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'FEN-07',
-    title: 'Skrivbord i kommandoposition',
+    title: 'Desk in the command position',
     category: 'Feng shui',
     importance: 3,
     source: 'Feng shui',
@@ -849,11 +849,11 @@ export const RULES: RuleDef[] = [
       for (const d of desks) {
         const fwd = frontDir(d.rotationY);
         const seat = add(d.position, fwd, d.size.depth / 2 + 0.3);
-        // Den som sitter blickar mot -fwd; en dörr i +fwd-halvan är i ryggen.
+        // The sitter faces -fwd; a door in the +fwd half is behind their back.
         const doorInBack = ctx.doors.some((door) => dot(sub(door.center, seat), fwd) > 0.2);
         if (doorInBack) {
           violations.push({
-            message: `Den som sitter vid "${d.name}" har ryggen mot dörren — vrid skrivbordet så att dörren syns snett framför.`,
+            message: `Whoever sits at "${d.name}" has their back to the door — rotate the desk so the door is visible diagonally in front.`,
             furnitureIds: [d.id],
           });
         }
@@ -863,7 +863,7 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'FEN-10',
-    title: 'Spegel inte rakt mot dörren',
+    title: 'Mirror not directly facing the door',
     category: 'Feng shui',
     importance: 3,
     source: 'Feng shui',
@@ -878,7 +878,7 @@ export const RULES: RuleDef[] = [
             const corridor = stripZone(add(door.s, { x: -n.z, z: n.x }, -0.3), add(door.e, { x: -n.z, z: n.x }, 0.3), n, 3.5);
             if (pointInPolygon(m.position, corridor) && dot(f, n) < -0.5) {
               violations.push({
-                message: `"${m.name}" hänger rakt framför dörren — flytta spegeln till en vägg vinkelrät mot dörren.`,
+                message: `"${m.name}" hangs directly opposite the door — move the mirror to a wall perpendicular to the door.`,
                 furnitureIds: [m.id],
                 zones: [stripZone(door.s, door.e, n, 0.6)],
               });
@@ -891,7 +891,7 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'FEN-12',
-    title: 'Ingen pilrak chi-korridor',
+    title: 'No arrow-straight chi corridor',
     category: 'Feng shui',
     importance: 3,
     source: 'Feng shui',
@@ -900,9 +900,9 @@ export const RULES: RuleDef[] = [
       const violations: Violation[] = [];
       for (const door of ctx.doors) {
         for (const win of ctx.windows) {
-          if (win.sill > 1.0) continue; // högt fönster räknas inte som stor öppning
+          if (win.sill > 1.0) continue; // a high window does not count as a large opening
           const dir = norm(sub(win.center, door.center));
-          if (Math.abs(dot(dir, door.normals[0])) < 0.7) continue; // inte rakt igenom
+          if (Math.abs(dot(dir, door.normals[0])) < 0.7) continue; // not straight through
           const broken = ctx.design.furniture.some((f) =>
             segmentHitsQuad(door.center, win.center, footprint(f)),
           );
@@ -910,7 +910,7 @@ export const RULES: RuleDef[] = [
             const perp = { x: -dir.z, z: dir.x };
             violations.push({
               message:
-                'Dörren ligger i rak, obruten siktlinje med fönstret — bryt linjen med en matta, möbel eller växt längs vägen.',
+                'The door is in a straight, unbroken sightline with the window — break the line with a rug, piece of furniture or plant along the way.',
               furnitureIds: [],
               zones: [
                 [
@@ -929,10 +929,10 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'FEN-22',
-    title: 'Minimalt med elektronik i sovrummet',
+    title: 'Minimal electronics in the bedroom',
     category: 'Feng shui',
     importance: 2,
-    source: 'Feng shui; sömn-best practice',
+    source: 'Feng shui; sleep best practice',
     appliesTo: ['sovrum'],
     check(ctx) {
       if (ctx.byKind('bed').length === 0) return na;
@@ -940,18 +940,18 @@ export const RULES: RuleDef[] = [
       if (tvs.length === 0) return ok;
       return fail(
         tvs.map((tv) => ({
-          message: `"${tv.name}" står i sovrummet — flytta den eller dölj skärmen i stängd förvaring nattetid.`,
+          message: `"${tv.name}" is in the bedroom — move it out or hide the screen in closed storage at night.`,
           furnitureIds: [tv.id],
         })),
       );
     },
   },
 
-  // ---- Nivå 2: Ljus, färg, akustik ----
+  // ---- Level 2: Light, color, acoustics ----
   {
     id: 'LJS-05',
-    title: 'Ta vara på dagsljuset',
-    category: 'Ljus',
+    title: 'Make the most of daylight',
+    category: 'Light',
     importance: 2,
     source: 'BBR 6:322',
     check(ctx) {
@@ -964,7 +964,7 @@ export const RULES: RuleDef[] = [
           );
           if (tallInWay.length > 0) {
             violations.push({
-              message: `${names(tallInWay)} skymmer dagsljuset framför fönstret — flytta höga möbler från fönsterväggen.`,
+              message: `${names(tallInWay)} blocks daylight in front of the window — move tall furniture away from the window wall.`,
               furnitureIds: tallInWay.map((f) => f.id),
               zones: [zone],
             });
@@ -976,8 +976,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'FRG-05',
-    title: 'Mattans storlek i sittgruppen',
-    category: 'Färg & textil',
+    title: 'Rug size in the seating group',
+    category: 'Color & textiles',
     importance: 2,
     source: 'Best practice',
     appliesTo: ['vardagsrum'],
@@ -990,7 +990,7 @@ export const RULES: RuleDef[] = [
         const rug = rugs
           .map((r) => ({ r, gap: quadGap(footprint(sofa), footprint(r)) }))
           .sort((a, b) => a.gap - b.gap)[0];
-        if (rug.gap > 1.5) continue; // ingen matta hör till den här sittgruppen
+        if (rug.gap > 1.5) continue; // no rug belongs to this seating group
         const fwd = frontDir(sofa.rotationY);
         const right = rightDir(sofa.rotationY);
         const frontEdge = add(sofa.position, fwd, sofa.size.depth / 2 - 0.05);
@@ -1000,7 +1000,7 @@ export const RULES: RuleDef[] = [
         ];
         if (!frontCorners.every((p) => pointInPolygon(p, footprint(rug.r)))) {
           violations.push({
-            message: `"${rug.r.name}" är för liten för sittgruppen — minst soffans främre ben ska stå på mattan.`,
+            message: `"${rug.r.name}" is too small for the seating group — at least the sofa's front legs should stand on the rug.`,
             furnitureIds: [rug.r.id, sofa.id],
           });
         }
@@ -1010,8 +1010,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'FRG-06',
-    title: 'Mattan under matbordet',
-    category: 'Färg & textil',
+    title: 'Rug under the dining table',
+    category: 'Color & textiles',
     importance: 2,
     source: 'Best practice',
     appliesTo: ['matplats'],
@@ -1022,7 +1022,7 @@ export const RULES: RuleDef[] = [
       const violations: Violation[] = [];
       for (const table of tables) {
         const rug = rugs.find((r) => pointInPolygon(table.position, footprint(r)));
-        if (!rug) continue; // ingen matta under bordet → regeln gäller inte det bordet
+        if (!rug) continue; // no rug under the table → the rule does not apply to that table
         const tQuad = footprint(table);
         const rQuad = footprint(rug);
         const dirs = [
@@ -1034,7 +1034,7 @@ export const RULES: RuleDef[] = [
         const margin = Math.min(...dirs.map((d) => support(rQuad, d) - support(tQuad, d)));
         if (margin < 0.6) {
           violations.push({
-            message: `"${rug.name}" sticker bara ut ${formatCm(Math.max(0, margin))} runt matbordet — den behöver 60–70 cm så att stolarna står kvar på mattan utdragna.`,
+            message: `"${rug.name}" extends only ${formatCm(Math.max(0, margin))} beyond the dining table — it needs 60–70 cm so the chairs stay on the rug when pulled out.`,
             furnitureIds: [rug.id, table.id],
           });
         }
@@ -1044,40 +1044,40 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'AKU-03',
-    title: 'Växter för luft och trivsel',
-    category: 'Akustik',
+    title: 'Plants for air and comfort',
+    category: 'Acoustics',
     importance: 2,
-    source: 'Best practice; feng shui (träelementet)',
+    source: 'Best practice; feng shui (the wood element)',
     check(ctx) {
       if (ctx.design.furniture.length === 0) return na;
       if (ctx.byKind('plant').length > 0) return ok;
       return fail([
         {
-          message: 'Rummet saknar levande växter — ställ in minst en växt anpassad till ljusläget.',
+          message: 'The room has no living plants — add at least one plant suited to the light conditions.',
           furnitureIds: [],
         },
       ]);
     },
   },
 
-  // ---- Nivå 1: Estetik ----
+  // ---- Level 1: Aesthetics ----
   {
     id: 'EST-04',
-    title: 'Skala och höjdvariation',
-    category: 'Estetik',
+    title: 'Scale and height variation',
+    category: 'Aesthetics',
     importance: 1,
-    source: 'Best practice (proportionslära)',
+    source: 'Best practice (proportion theory)',
     check(ctx) {
       const pieces = ctx.design.furniture.filter((f) => f.kind !== 'rug');
       if (pieces.length < 5) return na;
       const bands = new Set(
-        pieces.map((f) => (topOf(f) < 0.5 ? 'låg' : topOf(f) < 1.2 ? 'mellan' : 'hög')),
+        pieces.map((f) => (topOf(f) < 0.5 ? 'low' : topOf(f) < 1.2 ? 'medium' : 'high')),
       );
       if (bands.size >= 3) return ok;
-      const missing = (['låg', 'mellan', 'hög'] as const).filter((b) => !bands.has(b));
+      const missing = (['low', 'medium', 'high'] as const).filter((b) => !bands.has(b));
       return fail([
         {
-          message: `Rummet saknar möbler i höjdled (${missing.join(' och ')}) — blanda lågt, mellan och högt så att blicken vandrar.`,
+          message: `The room lacks furniture at some heights (${missing.join(' and ')}) — mix low, medium and high so the eye wanders.`,
           furnitureIds: [],
         },
       ]);
@@ -1085,8 +1085,8 @@ export const RULES: RuleDef[] = [
   },
   {
     id: 'EST-05',
-    title: 'Visuell balans i rummet',
-    category: 'Estetik',
+    title: 'Visual balance in the room',
+    category: 'Aesthetics',
     importance: 1,
     source: 'Best practice',
     check(ctx) {
@@ -1110,7 +1110,7 @@ export const RULES: RuleDef[] = [
       return fail([
         {
           message:
-            'Den visuella vikten samlas på ena sidan av rummet — balansera med en möbel, bokhylla eller mörk textil på motstående sida.',
+            'The visual weight gathers on one side of the room — balance it with a piece of furniture, a bookshelf or dark textiles on the opposite side.',
           furnitureIds: [],
         },
       ]);
@@ -1118,7 +1118,7 @@ export const RULES: RuleDef[] = [
   },
 ];
 
-/** Segmentkorsning utan beröringstolerans (sikt genom dörröppning ska inte stoppas av väggens ändpunkter). */
+/** Segment crossing without touch tolerance (sight through a doorway should not be stopped by the wall's endpoints). */
 function segmentsCross(a: Point, b: Point, c: Point, d: Point): boolean {
   const o = (p: Point, q: Point, r: Point) => Math.sign((q.x - p.x) * (r.z - p.z) - (q.z - p.z) * (r.x - p.x));
   return o(a, b, c) !== o(a, b, d) && o(c, d, a) !== o(c, d, b) && o(a, b, c) !== 0 && o(c, d, a) !== 0;

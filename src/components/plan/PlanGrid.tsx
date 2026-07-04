@@ -1,8 +1,8 @@
 import type { Bounds } from '../../lib/polygon';
 
-/** Rutnät med 1 m-linjer (snappningen är 0,1 m men det ritas inte — visuellt brus). */
+/** Grid with 1 m lines (snapping is 0.1 m but that isn't drawn — visual noise). */
 export function PlanGrid({ bounds }: { bounds: Bounds }) {
-  // Glesare linjer när vyn är utzoomad, annars blir rutnätet en grå massa.
+  // Sparser lines when the view is zoomed out, otherwise the grid becomes a gray blur.
   const span = Math.max(bounds.maxX - bounds.minX, bounds.maxZ - bounds.minZ);
   const step = span > 60 ? 10 : 1;
   const xs: number[] = [];

@@ -4,9 +4,9 @@ interface Props {
   tool: PlanTool;
   error: string | null;
   canDelete: boolean;
-  /** Förklaring till varför borttagning är avstängd; visas som tooltip. */
+  /** Explanation of why deletion is disabled; shown as a tooltip. */
   deleteDisabledReason?: string;
-  /** Sant när användaren zoomat/panorerat bort från den auto-anpassade vyn. */
+  /** True when the user has zoomed/panned away from the auto-fitted view. */
   canResetView: boolean;
   onSelectTool: () => void;
   onExteriorTool: () => void;
@@ -17,11 +17,11 @@ interface Props {
 
 const HINTS: Record<PlanTool, string> = {
   select:
-    'Klicka på en vägg för att markera · dra vinkelrätt för att flytta · scrolla zoomar, dra på tom yta panorerar',
+    'Click a wall to select it · drag perpendicular to move · scroll to zoom, drag on empty space to pan',
   exterior:
-    'Klicka för att placera hörn · klicka på startpunkten för att stänga · scrolla zoomar, mittenknappen panorerar · Esc avbryter',
+    'Click to place corners · click the start point to close · scroll to zoom, middle button pans · Esc cancels',
   interior:
-    'Klicka för att placera väggpunkter · Enter eller dubbelklick avslutar · scrolla zoomar, mittenknappen panorerar · Esc avbryter',
+    'Click to place wall points · Enter or double-click to finish · scroll to zoom, middle button pans · Esc cancels',
 };
 
 export function PlanToolbar({
@@ -44,41 +44,41 @@ export function PlanToolbar({
           className={`btn ${tool === 'select' ? 'btn-accent' : ''}`}
           onClick={onSelectTool}
         >
-          Markera
+          Select
         </button>
         <button
           type="button"
           className={`btn ${tool === 'exterior' ? 'btn-accent' : ''}`}
           onClick={onExteriorTool}
         >
-          Rita om ytterväggar…
+          Redraw exterior walls…
         </button>
         <button
           type="button"
           className={`btn ${tool === 'interior' ? 'btn-accent' : ''}`}
           onClick={onInteriorTool}
         >
-          Rita innervägg
+          Draw interior wall
         </button>
-        {/* Wrapper bär tooltipen: disabled-knappar tar inte emot hover-events själva. */}
+        {/* The wrapper carries the tooltip: disabled buttons don't receive hover events themselves. */}
         <span
           className="btn-tooltip-wrap"
-          title={canDelete ? 'Ta bort den markerade innerväggen' : deleteDisabledReason}
+          title={canDelete ? 'Delete the selected interior wall' : deleteDisabledReason}
         >
           <button type="button" className="btn" disabled={!canDelete} onClick={onDelete}>
-            Ta bort vägg
+            Delete wall
           </button>
         </span>
         <span
           className="btn-tooltip-wrap"
           title={
             canResetView
-              ? 'Återställ zoom och panorering så att hela ritningen syns.'
-              : 'Vyn följer redan ritningen — scrolla eller dra för att zooma och panorera.'
+              ? 'Reset zoom and panning so the whole drawing is visible.'
+              : 'The view already follows the drawing — scroll or drag to zoom and pan.'
           }
         >
           <button type="button" className="btn" disabled={!canResetView} onClick={onResetView}>
-            Anpassa vy
+            Fit view
           </button>
         </span>
       </div>
