@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#f5efe2"/>
+  <!-- Rumskontur med dörröppning i övre väggen -->
+  <path d="M30 16 H16 V48 H48 V26" fill="none" stroke="#2b261d" stroke-width="4" stroke-linecap="square"/>
+  <path d="M40 16 H48" fill="none" stroke="#2b261d" stroke-width="4" stroke-linecap="square"/>
+  <!-- Dörrblad och sving -->
+  <path d="M40 17 V26" fill="none" stroke="#2b261d" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M30 16 A10 10 0 0 0 40 26" fill="none" stroke="#82785f" stroke-width="1.75" stroke-dasharray="2.5 2.5"/>
+  <!-- Säng -->
+  <rect x="20" y="27" width="13" height="17" rx="1.5" fill="#b4532f"/>
+  <rect x="22" y="29.5" width="9" height="4" rx="1" fill="#f5efe2" opacity="0.85"/>
+  <!-- Litet bord -->
+  <rect x="38.5" y="37.5" width="6.5" height="6.5" rx="1" fill="#82785f" opacity="0.6"/>
+</svg>
