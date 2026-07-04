@@ -15,7 +15,7 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <header className="brand">
-        <h1>Rumskiss</h1>
+        <h1>Roomcraft</h1>
         <p>Rita ditt rum &amp; möblera det i 3D</p>
       </header>
       <Section title="Rum">
