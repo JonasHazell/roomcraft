@@ -405,7 +405,7 @@ export const useDesignStore = create<DesignState>()(
       newDesign: () => set({ design: createDefaultDesign() }),
     }),
     {
-      name: 'room-sketcher:current',
+      name: 'roomcraft:current',
       version: SCHEMA_VERSION,
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({ design: s.design }),

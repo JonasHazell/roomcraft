@@ -186,7 +186,7 @@ export function exportDesign(design: Design) {
 
 // ---- Namngivna sparningar i localStorage ----
 
-const SAVES_KEY = 'room-sketcher:saves';
+const SAVES_KEY = 'roomcraft:saves';
 
 /** Värdena kan vara äldre scheman; de valideras/migreras först i loadSave. */
 type SavesMap = Record<string, { name: string; updatedAt: string }>;
@@ -234,7 +234,7 @@ export function deleteSave(name: string) {
 
 // ---- Möbelbibliotek i localStorage ----
 
-const LIBRARY_KEY = 'room-sketcher:furniture-library';
+const LIBRARY_KEY = 'roomcraft:furniture-library';
 
 const libraryEntrySchema = z.object({
   id: z.string().min(1),
