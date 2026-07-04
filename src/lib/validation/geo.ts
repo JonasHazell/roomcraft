@@ -1,0 +1,316 @@
+import type { Design, FurnitureItem, Point, Wall, WallOpening } from '../../types';
+import { FURNITURE_CATALOG } from '../furnitureCatalog';
+import {
+  closestPointOnSegment,
+  dist,
+  floorPolygon,
+  outwardNormal,
+  pointInPolygon,
+  polygonBounds,
+  segmentsIntersect,
+  wallDir,
+  WALL_T,
+} from '../polygon';
+import { furnitureCorners } from '../geometry';
+
+/** Fotavtryckets hörn utan krympning — reglerna mäter verkliga mått. */
+export function footprint(f: FurnitureItem): Point[] {
+  return furnitureCorners(f, 0);
+}
+
+/** Framsidans världsriktning (lokal +z roterad med rotationY). */
+export function frontDir(rotationY: number): Point {
+  return { x: Math.sin(rotationY), z: Math.cos(rotationY) };
+}
+
+/** Höger i möbelns koordinatsystem (lokal +x i världen). */
+export function rightDir(rotationY: number): Point {
+  const f = frontDir(rotationY);
+  return { x: f.z, z: -f.x };
+}
+
+export function add(p: Point, d: Point, k: number): Point {
+  return { x: p.x + d.x * k, z: p.z + d.z * k };
+}
+
+export function dot(a: Point, b: Point): number {
+  return a.x * b.x + a.z * b.z;
+}
+
+export function sub(a: Point, b: Point): Point {
+  return { x: a.x - b.x, z: a.z - b.z };
+}
+
+export function norm(p: Point): Point {
+  const l = Math.hypot(p.x, p.z) || 1;
+  return { x: p.x / l, z: p.z / l };
+}
+
+/** Stödfunktion: största utsträckning av quad i riktning d, relativt origo. */
+export function support(quad: Point[], d: Point): number {
+  return Math.max(...quad.map((p) => dot(p, d)));
+}
+
+/** Konvexa polygoners separationsaxlar (kantnormaler). */
+function edgeAxes(poly: Point[]): Point[] {
+  const axes: Point[] = [];
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i];
+    const b = poly[(i + 1) % poly.length];
+    const len = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+    axes.push({ x: -(b.z - a.z) / len, z: (b.x - a.x) / len });
+  }
+  return axes;
+}
+
+/** Separating Axis Theorem för två konvexa polygoner. eps > 0 tolererar beröring. */
+export function convexOverlap(a: Point[], b: Point[], eps = 0.01): boolean {
+  for (const axis of [...edgeAxes(a), ...edgeAxes(b)]) {
+    let minA = Infinity;
+    let maxA = -Infinity;
+    let minB = Infinity;
+    let maxB = -Infinity;
+    for (const p of a) {
+      const d = dot(p, axis);
+      minA = Math.min(minA, d);
+      maxA = Math.max(maxA, d);
+    }
+    for (const p of b) {
+      const d = dot(p, axis);
+      minB = Math.min(minB, d);
+      maxB = Math.max(maxB, d);
+    }
+    if (maxA - eps <= minB || maxB - eps <= minA) return false;
+  }
+  return true;
+}
+
+/** Avstånd punkt→konvex quad; 0 om punkten ligger inuti. */
+export function distToQuad(p: Point, quad: Point[]): number {
+  if (pointInPolygon(p, quad)) return 0;
+  let best = Infinity;
+  for (let i = 0; i < quad.length; i++) {
+    const c = closestPointOnSegment(p, quad[i], quad[(i + 1) % quad.length]);
+    best = Math.min(best, dist(p, c));
+  }
+  return best;
+}
+
+/** Minsta avstånd mellan två konvexa quads; 0 vid överlapp. */
+export function quadGap(a: Point[], b: Point[]): number {
+  if (convexOverlap(a, b, 0)) return 0;
+  let best = Infinity;
+  for (const p of a) best = Math.min(best, distToQuad(p, b));
+  for (const p of b) best = Math.min(best, distToQuad(p, a));
+  return best;
+}
+
+/** Sant om segmentet a–b skär quaden (kant eller helt inuti). */
+export function segmentHitsQuad(a: Point, b: Point, quad: Point[]): boolean {
+  if (pointInPolygon(a, quad) || pointInPolygon(b, quad)) return true;
+  for (let i = 0; i < quad.length; i++) {
+    if (segmentsIntersect(a, b, quad[i], quad[(i + 1) % quad.length])) return true;
+  }
+  return false;
+}
+
+/** Rektangel som utgår från linjen s–e och sträcker sig depth längs n. */
+export function stripZone(s: Point, e: Point, n: Point, depth: number, inset = 0.02): Point[] {
+  const d = norm(sub(e, s));
+  const s2 = add(add(s, d, inset), n, inset);
+  const e2 = add(add(e, d, -inset), n, inset);
+  return [s2, e2, add(e2, n, depth - inset), add(s2, n, depth - inset)];
+}
+
+// ---- Öppningar ----
+
+export interface OpeningInfo {
+  opening: WallOpening;
+  wall: Wall;
+  /** Öppningens ändpunkter längs väggens ritade linje. */
+  s: Point;
+  e: Point;
+  center: Point;
+  /** Riktningar in mot rummet: en för yttervägg, båda för innervägg. */
+  normals: Point[];
+  /** Överkant (elevation + höjd). */
+  top: number;
+  /** Underkant (fönsterbröstning; 0 för dörr). */
+  sill: number;
+}
+
+export function openingInfos(design: Design, kind: WallOpening['kind']): OpeningInfo[] {
+  const out: OpeningInfo[] = [];
+  for (const o of design.openings) {
+    if (o.kind !== kind) continue;
+    const wall = design.walls.find((w) => w.id === o.wallId);
+    if (!wall) continue;
+    const d = wallDir(wall);
+    const s = add(wall.a, d, o.offset);
+    const e = add(s, d, o.width);
+    const outN = outwardNormal(wall);
+    const normals =
+      wall.kind === 'exterior'
+        ? [{ x: -outN.x, z: -outN.z }]
+        : [outN, { x: -outN.x, z: -outN.z }];
+    out.push({
+      opening: o,
+      wall,
+      s,
+      e,
+      center: { x: (s.x + e.x) / 2, z: (s.z + e.z) / 2 },
+      normals,
+      top: o.elevation + o.height,
+      sill: o.elevation,
+    });
+  }
+  return out;
+}
+
+/** Frizoner (djup i meter) framför en öppning, en per rumsvänd sida. */
+export function clearanceZones(info: OpeningInfo, depth: number): Point[][] {
+  return info.normals.map((n) => stripZone(info.s, info.e, n, depth));
+}
+
+// ---- Väggar som hinder ----
+
+/** Alla väggsegment (ytterväggarnas ritade linjer + innerväggarnas mittlinjer). */
+export function wallSegments(design: Design): Wall[] {
+  return design.walls;
+}
+
+/** Innerväggens solid som quad (centrerad, tjocklek WALL_T). */
+export function interiorWallQuad(w: Wall): Point[] {
+  const n = outwardNormal(w);
+  const t = WALL_T / 2;
+  return [
+    add(w.a, n, t),
+    add(w.b, n, t),
+    add(w.b, n, -t),
+    add(w.a, n, -t),
+  ];
+}
+
+/** Sant om något väggsegment skär quaden. */
+export function wallsHitQuad(design: Design, quad: Point[]): boolean {
+  for (const w of design.walls) {
+    if (segmentHitsQuad(w.a, w.b, quad)) return true;
+  }
+  return false;
+}
+
+/** Minsta avstånd från en punkt till någon vägglinje. */
+export function distToNearestWall(design: Design, p: Point): number {
+  let best = Infinity;
+  for (const w of design.walls) {
+    best = Math.min(best, dist(p, closestPointOnSegment(p, w.a, w.b)));
+  }
+  return best;
+}
+
+/** Närmsta vägg till punkten (för "står mot vägg"-kontroller). */
+export function nearestWall(design: Design, p: Point): { wall: Wall; distance: number } | null {
+  let best: { wall: Wall; distance: number } | null = null;
+  for (const w of design.walls) {
+    const d = dist(p, closestPointOnSegment(p, w.a, w.b));
+    if (!best || d < best.distance) best = { wall: w, distance: d };
+  }
+  return best;
+}
+
+/** Möbler som blockerar passage (solida/höga enligt katalogen), på golvnivå. */
+export function blockers(furniture: FurnitureItem[], except: Set<string> = new Set()): FurnitureItem[] {
+  return furniture.filter(
+    (f) => !except.has(f.id) && FURNITURE_CATALOG[f.kind].blocks && f.elevation < 0.9,
+  );
+}
+
+// ---- Eroderat nåbarhetsraster ----
+
+const CELL = 0.1;
+
+export interface Grid {
+  cols: number;
+  rows: number;
+  minX: number;
+  minZ: number;
+  free: Uint8Array;
+  center: (c: number, r: number) => Point;
+  idx: (c: number, r: number) => number;
+}
+
+/**
+ * Raster över golvet där en cell är fri om en cirkel med radien `erode` ryms
+ * utan att röra vägg eller blockerande möbel — dvs. golvets "framkomliga" del
+ * för en passage med bredden 2×erode.
+ */
+export function erodedGrid(design: Design, erode: number, except: Set<string> = new Set()): Grid {
+  const poly = floorPolygon(design.walls);
+  const b = polygonBounds(poly);
+  const cols = Math.max(1, Math.ceil((b.maxX - b.minX) / CELL));
+  const rows = Math.max(1, Math.ceil((b.maxZ - b.minZ) / CELL));
+  const center = (c: number, r: number): Point => ({
+    x: b.minX + (c + 0.5) * CELL,
+    z: b.minZ + (r + 0.5) * CELL,
+  });
+  const idx = (c: number, r: number) => r * cols + c;
+
+  const solids = [
+    ...blockers(design.furniture, except).map(footprint),
+    ...design.walls.filter((w) => w.kind === 'interior').map(interiorWallQuad),
+  ];
+
+  const free = new Uint8Array(cols * rows);
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r++) {
+      const p = center(c, r);
+      if (!pointInPolygon(p, poly)) continue;
+      // Avstånd till golvkanten (ytterväggens insida).
+      let edgeDist = Infinity;
+      for (let i = 0; i < poly.length; i++) {
+        const cp = closestPointOnSegment(p, poly[i], poly[(i + 1) % poly.length]);
+        edgeDist = Math.min(edgeDist, dist(p, cp));
+      }
+      if (edgeDist < erode) continue;
+      if (solids.some((q) => distToQuad(p, q) < erode)) continue;
+      free[idx(c, r)] = 1;
+    }
+  }
+  return { cols, rows, minX: b.minX, minZ: b.minZ, free, center, idx };
+}
+
+/** Flood fill från fröceller; returnerar nådda celler. */
+export function floodFill(grid: Grid, seed: (p: Point) => boolean): Uint8Array {
+  const { cols, rows, free, center, idx } = grid;
+  const reached = new Uint8Array(cols * rows);
+  const queue: number[] = [];
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r++) {
+      if (free[idx(c, r)] && seed(center(c, r))) {
+        reached[idx(c, r)] = 1;
+        queue.push(idx(c, r));
+      }
+    }
+  }
+  for (let head = 0; head < queue.length; head++) {
+    const cell = queue[head];
+    const c = cell % cols;
+    const r = (cell - c) / cols;
+    for (const [dc, dr] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ] as const) {
+      const nc = c + dc;
+      const nr = r + dr;
+      if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+      const ni = grid.idx(nc, nr);
+      if (free[ni] && !reached[ni]) {
+        reached[ni] = 1;
+        queue.push(ni);
+      }
+    }
+  }
+  return reached;
+}

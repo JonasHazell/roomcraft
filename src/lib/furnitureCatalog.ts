@@ -51,6 +51,46 @@ export const FURNITURE_CATALOG: Record<FurnitureKind, CatalogEntry> = {
     accessDepth: 0,
     blocks: false,
   },
+  desk: {
+    label: 'Skrivbord',
+    defaultSize: { width: 1.2, depth: 0.7, height: 0.74 },
+    defaultColor: '#8f7a5e',
+    front: 'sittsidan (skärmen står mot baksidan)',
+    accessDepth: 0.8,
+    blocks: true,
+  },
+  nightstand: {
+    label: 'Nattduksbord',
+    defaultSize: { width: 0.45, depth: 0.4, height: 0.55 },
+    defaultColor: '#a08b6f',
+    front: 'lådsidan (ställs intill sängens huvudända)',
+    accessDepth: 0,
+    blocks: true,
+  },
+  tv: {
+    label: 'TV',
+    defaultSize: { width: 1.3, depth: 0.35, height: 0.85 },
+    defaultColor: '#3a3a3d',
+    front: 'skärmsidan (ryggen mot vägg)',
+    accessDepth: 0,
+    blocks: true,
+  },
+  mirror: {
+    label: 'Spegel',
+    defaultSize: { width: 0.6, depth: 0.05, height: 1.7 },
+    defaultColor: '#b9c4c9',
+    front: 'glassidan (ryggen mot vägg)',
+    accessDepth: 0,
+    blocks: true,
+  },
+  plant: {
+    label: 'Växt',
+    defaultSize: { width: 0.4, depth: 0.4, height: 1.2 },
+    defaultColor: '#5d7a4e',
+    front: 'ingen riktning (kruka på golvet)',
+    accessDepth: 0,
+    blocks: true,
+  },
   wardrobe: {
     label: 'Garderob',
     defaultSize: { width: 1.2, depth: 0.6, height: 2.0 },
@@ -85,4 +125,8 @@ export const FURNITURE_CATALOG: Record<FurnitureKind, CatalogEntry> = {
   },
 };
 
-export const FURNITURE_KINDS = Object.keys(FURNITURE_CATALOG) as FurnitureKind[];
+// Tuple-typ så att listan kan mata z.enum direkt (persistence, AI-schema).
+export const FURNITURE_KINDS = Object.keys(FURNITURE_CATALOG) as [
+  FurnitureKind,
+  ...FurnitureKind[],
+];

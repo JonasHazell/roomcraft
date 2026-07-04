@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FURNITURE_KINDS } from '../src/lib/furnitureCatalog.ts';
 
 /**
  * Svarschema för AI-genererade inredningsförslag. Skickas som --json-schema
@@ -8,7 +9,7 @@ import { z } from 'zod';
  */
 const aiFurnitureSchema = z.strictObject({
   kind: z
-    .enum(['bed', 'sofa', 'table', 'chair', 'wardrobe', 'bookshelf', 'rug', 'box'])
+    .enum(FURNITURE_KINDS)
     .describe('Möbeltyp ur katalogen; "box" för möbler som saknar egen typ.'),
   name: z.string().describe('Kort svenskt namn, t.ex. "Dubbelsäng" eller "Skrivbord".'),
   x: z.number().describe('Fotavtryckets centrum, x i meter i rummets koordinatsystem.'),

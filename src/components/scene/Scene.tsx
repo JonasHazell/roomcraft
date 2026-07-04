@@ -7,6 +7,7 @@ import { useUiStore } from '../../store/useUiStore';
 import { deselectOnStillClick, Floor } from './Floor';
 import { Walls } from './Walls';
 import { FurnitureLayer } from './FurnitureLayer';
+import { ValidationOverlay } from './ValidationOverlay';
 
 export function Scene() {
   const roomHeight = useDesignStore((s) => s.design.room.height);
@@ -50,6 +51,7 @@ export function Scene() {
       <Floor />
       <Walls />
       <FurnitureLayer />
+      <ValidationOverlay />
 
       <OrbitControls
         makeDefault

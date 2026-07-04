@@ -13,12 +13,22 @@ import { Chair } from './furniture/Chair';
 import { Wardrobe } from './furniture/Wardrobe';
 import { Bookshelf } from './furniture/Bookshelf';
 import { GenericBox } from './furniture/GenericBox';
+import { Desk } from './furniture/Desk';
+import { Nightstand } from './furniture/Nightstand';
+import { Tv } from './furniture/Tv';
+import { Mirror } from './furniture/Mirror';
+import { Plant } from './furniture/Plant';
 
 const COMPONENTS: Record<FurnitureKind, ComponentType<FurnitureProps>> = {
   bed: Bed,
   sofa: Sofa,
   table: Table,
   chair: Chair,
+  desk: Desk,
+  nightstand: Nightstand,
+  tv: Tv,
+  mirror: Mirror,
+  plant: Plant,
   wardrobe: Wardrobe,
   bookshelf: Bookshelf,
   rug: GenericBox,

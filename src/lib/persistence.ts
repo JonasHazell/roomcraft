@@ -3,13 +3,14 @@ import { nanoid } from 'nanoid';
 import type { Design, FurnitureLibraryEntry, Wall } from '../types';
 import { SCHEMA_VERSION } from '../types';
 import { isAxisParallel, validateExteriorLoop } from './polygon';
+import { FURNITURE_KINDS } from './furnitureCatalog';
 
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'ogiltig färgkod (förväntar #rrggbb)');
 const meters = (max: number) => z.number().min(0).max(max);
 
 const furnitureSchema = z.object({
   id: z.string().min(1),
-  kind: z.enum(['bed', 'sofa', 'table', 'chair', 'wardrobe', 'bookshelf', 'rug', 'box']),
+  kind: z.enum(FURNITURE_KINDS),
   name: z.string().max(100),
   position: z.object({ x: z.number().min(-100).max(100), z: z.number().min(-100).max(100) }),
   rotationY: z.number().min(-100).max(100),
@@ -238,7 +239,7 @@ const LIBRARY_KEY = 'room-sketcher:furniture-library';
 const libraryEntrySchema = z.object({
   id: z.string().min(1),
   name: z.string().max(100),
-  kind: z.enum(['bed', 'sofa', 'table', 'chair', 'wardrobe', 'bookshelf', 'rug', 'box']),
+  kind: z.enum(FURNITURE_KINDS),
   size: z.object({
     width: z.number().min(0.01).max(100),
     depth: z.number().min(0.01).max(100),

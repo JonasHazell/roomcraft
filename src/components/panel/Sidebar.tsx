@@ -4,6 +4,7 @@ import { OpeningsEditor } from './OpeningsEditor';
 import { FurniturePalette } from './FurniturePalette';
 import { FurnitureLibrary } from './FurnitureLibrary';
 import { AiProposalsPanel } from './AiProposalsPanel';
+import { ValidationPanel } from './ValidationPanel';
 import { PropertiesPanel } from './PropertiesPanel';
 import { SaveLoadPanel } from './SaveLoadPanel';
 import { useUiStore } from '../../store/useUiStore';
@@ -33,6 +34,9 @@ export function Sidebar() {
           </Section>
           <Section title="AI-förslag">
             <AiProposalsPanel />
+          </Section>
+          <Section title="Validering">
+            <ValidationPanel />
           </Section>
           <Section title="Vald möbel">
             <PropertiesPanel />

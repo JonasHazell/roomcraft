@@ -769,3 +769,167 @@ select {
   margin: 4px 0 0;
   padding-left: 18px;
 }
+
+/* ---------- Validering ---------- */
+
+.check-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.check-field input {
+  accent-color: var(--accent);
+}
+
+.validation-stale {
+  color: var(--danger);
+}
+
+.validation-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.validation-total {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 64px;
+}
+
+.validation-total strong {
+  font-family: var(--display);
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.validation-total span {
+  font-size: 10.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.validation-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.score-good strong,
+.validation-score.score-good {
+  color: #4a7a3a;
+}
+
+.score-mid strong,
+.validation-score.score-mid {
+  color: #ad7615;
+}
+
+.score-bad strong,
+.validation-score.score-bad {
+  color: var(--danger);
+}
+
+.validation-categories {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.validation-categories li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  padding: 3px 4px;
+  border-bottom: 1px dashed var(--line);
+}
+
+.validation-score {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.validation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.validation-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.validation-item:hover {
+  border-color: var(--accent);
+}
+
+.validation-item.active {
+  border-color: #d9482b;
+  background: rgba(217, 72, 43, 0.08);
+}
+
+.validation-item-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.severity {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.severity-5 { background: #a33a2a; }
+.severity-4 { background: #c4652c; }
+.severity-3 { background: #ad7615; }
+.severity-2 { background: #6f7f43; }
+.severity-1 { background: #82785f; }
+
+.validation-rule {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.validation-message {
+  font-size: 12.5px;
+  line-height: 1.45;
+}
