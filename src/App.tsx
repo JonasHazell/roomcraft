@@ -99,8 +99,8 @@ function App() {
             Drag to orbit · scroll to zoom · drag a furniture piece to move it
           </div>
         )}
+        <SelectionBar />
       </main>
-      <SelectionBar />
     </div>
   );
 }
