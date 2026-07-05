@@ -1100,7 +1100,10 @@ select {
    surfaced over the scene so edits stay visible. */
 
 .selection-bar-wrap {
-  position: fixed;
+  /* Absolute within .viewport (like the Floor plan / 3D view tabs) so the bar
+     centres over the 3D view, not the whole window — otherwise on wide screens
+     the sidebar pushes it off-centre. */
+  position: absolute;
   left: 50%;
   bottom: calc(16px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
@@ -1109,7 +1112,7 @@ select {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  width: min(560px, calc(100vw - 24px));
+  width: min(560px, calc(100% - 24px));
   /* The wrap only positions; let the bar / panel capture pointer events so
      clicks between them fall through to the scene. */
   pointer-events: none;
