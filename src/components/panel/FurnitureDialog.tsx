@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
+import { useLibraryStore } from '../../store/useLibraryStore';
 import { useUiStore } from '../../store/useUiStore';
 import { FURNITURE_CATALOG, FURNITURE_KINDS } from '../../lib/furnitureCatalog';
-import type { FurnitureKind } from '../../types';
+import type { FurnitureKind, FurnitureLibraryEntry } from '../../types';
 import { FurnitureFields, type FurnitureDraft, type FurnitureFieldPatch } from './FurnitureFields';
 import { PropertiesPanel } from './PropertiesPanel';
+
+/** Which source the "Add furniture" picker is showing. */
+type Source = 'generic' | 'library';
+
+const cm = (m: number) => Math.round(m * 100);
 
 function draftFor(kind: FurnitureKind): FurnitureDraft {
   const entry = FURNITURE_CATALOG[kind];
@@ -14,6 +20,16 @@ function draftFor(kind: FurnitureKind): FurnitureDraft {
     size: { ...entry.defaultSize },
     elevation: 0,
     color: entry.defaultColor,
+  };
+}
+
+function draftFromLibrary(entry: FurnitureLibraryEntry): FurnitureDraft {
+  return {
+    kind: entry.kind,
+    name: entry.name,
+    size: { ...entry.size },
+    elevation: entry.elevation,
+    color: entry.color,
   };
 }
 
@@ -38,13 +54,19 @@ export function FurnitureDialog() {
   const close = useUiStore((s) => s.closeFurnitureDialog);
   const select = useUiStore((s) => s.select);
   const addFurnitureConfigured = useDesignStore((s) => s.addFurnitureConfigured);
+  const libraryEntries = useLibraryStore((s) => s.entries);
 
   // In create mode we hold a local draft; `null` means the type picker is showing.
   const [draft, setDraft] = useState<FurnitureDraft | null>(null);
+  // While picking, toggle between a fresh generic piece and one from the library.
+  const [source, setSource] = useState<Source>('generic');
 
   // Reset to the type picker each time the create dialog (re)opens.
   useEffect(() => {
-    if (dialog?.mode === 'create') setDraft(null);
+    if (dialog?.mode === 'create') {
+      setDraft(null);
+      setSource('generic');
+    }
   }, [dialog]);
 
   // Esc closes the dialog. App's global handler bails out while a dialog is open,
@@ -88,21 +110,72 @@ export function FurnitureDialog() {
           {dialog.mode === 'edit' ? (
             <PropertiesPanel />
           ) : picking ? (
-            <div className="palette">
-              {FURNITURE_KINDS.map((kind) => (
+            <div className="stack">
+              <div className="source-toggle" role="tablist" aria-label="Furniture source">
                 <button
                   type="button"
-                  key={kind}
-                  className="palette-btn"
-                  onClick={() => setDraft(draftFor(kind))}
+                  role="tab"
+                  aria-selected={source === 'generic'}
+                  className={source === 'generic' ? 'active' : ''}
+                  onClick={() => setSource('generic')}
                 >
-                  <span
-                    className="swatch"
-                    style={{ background: FURNITURE_CATALOG[kind].defaultColor }}
-                  />
-                  {FURNITURE_CATALOG[kind].label}
+                  Generic
                 </button>
-              ))}
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={source === 'library'}
+                  className={source === 'library' ? 'active' : ''}
+                  onClick={() => setSource('library')}
+                >
+                  From library
+                </button>
+              </div>
+
+              {source === 'generic' ? (
+                <div className="palette">
+                  {FURNITURE_KINDS.map((kind) => (
+                    <button
+                      type="button"
+                      key={kind}
+                      className="palette-btn"
+                      onClick={() => setDraft(draftFor(kind))}
+                    >
+                      <span
+                        className="swatch"
+                        style={{ background: FURNITURE_CATALOG[kind].defaultColor }}
+                      />
+                      {FURNITURE_CATALOG[kind].label}
+                    </button>
+                  ))}
+                </div>
+              ) : libraryEntries.length === 0 ? (
+                <p className="hint">
+                  No saved furniture yet. Select a piece in the room and choose “Save to
+                  library” to reuse it here.
+                </p>
+              ) : (
+                <ul className="save-list">
+                  {libraryEntries.map((entry) => (
+                    <li key={entry.id}>
+                      <button
+                        type="button"
+                        className="save-name"
+                        title={`Use “${entry.name}”`}
+                        onClick={() => setDraft(draftFromLibrary(entry))}
+                      >
+                        <span className="lib-name">
+                          <span className="swatch" style={{ background: entry.color }} />
+                          {entry.name}
+                        </span>
+                        <span className="save-date">
+                          {cm(entry.size.width)}×{cm(entry.size.depth)}×{cm(entry.size.height)} cm
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           ) : (
             draft && (
