@@ -20,6 +20,7 @@ export const useUiStore = create<UiState>()((set) => ({
   selection: null,
   draggingId: null,
   mode: '3d',
+  // Only affects the mobile drawer; on desktop the sidebar is always visible.
   drawerOpen: false,
   select: (selection) => set({ selection }),
   setDragging: (draggingId) => set({ draggingId }),
