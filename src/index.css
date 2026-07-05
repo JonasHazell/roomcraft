@@ -998,3 +998,23 @@ select {
   font-size: 12.5px;
   line-height: 1.45;
 }
+
+/* ---------- Mobile: keep the top-row overlays from colliding ----------
+   Placed after the base .mode-tabs / .plan-overlay rules so these
+   overrides win (equal specificity → later rule applies). */
+
+@media (max-width: 768px) {
+  /* Keep the view selector above the plan toolbar if they meet. */
+  .mode-tabs {
+    z-index: 40;
+  }
+
+  /* Drop the plan toolbar below the top row (hamburger + view selector)
+     so they no longer overlap; let its buttons wrap to the screen width. */
+  .plan-overlay {
+    top: 64px;
+    left: 12px;
+    right: 12px;
+    max-width: none;
+  }
+}
