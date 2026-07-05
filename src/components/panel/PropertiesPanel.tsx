@@ -9,15 +9,12 @@ import { ColorField, NumberField } from './fields';
 
 export function PropertiesPanel() {
   const selection = useUiStore((s) => s.selection);
-  const select = useUiStore((s) => s.select);
   const selected = useDesignStore((s) =>
     selection?.kind === 'furniture'
       ? s.design.furniture.find((f) => f.id === selection.id)
       : undefined,
   );
   const updateFurniture = useDesignStore((s) => s.updateFurniture);
-  const duplicateFurniture = useDesignStore((s) => s.duplicateFurniture);
-  const removeFurniture = useDesignStore((s) => s.removeFurniture);
   const saveToLibrary = useLibraryStore((s) => s.save);
   const coarse = useMediaQuery(COARSE_POINTER);
   const [savedForId, setSavedForId] = useState<string | null>(null);
@@ -95,40 +92,6 @@ export function PropertiesPanel() {
         <button
           type="button"
           className="btn"
-          title="Rotate 90° left"
-          aria-label="Rotate 90 degrees left"
-          onClick={() =>
-            updateFurniture(selected.id, { rotationY: selected.rotationY + Math.PI / 2 })
-          }
-        >
-          ⟲ Left
-        </button>
-        <button
-          type="button"
-          className="btn"
-          title="Rotate 90° right"
-          aria-label="Rotate 90 degrees right"
-          onClick={() =>
-            updateFurniture(selected.id, { rotationY: selected.rotationY - Math.PI / 2 })
-          }
-        >
-          ⟳ Right
-        </button>
-        <button
-          type="button"
-          className="btn"
-          title="Create an identical piece with the same dimensions"
-          aria-label="Duplicate"
-          onClick={() => {
-            const newId = duplicateFurniture(selected.id);
-            if (newId) select({ kind: 'furniture', id: newId });
-          }}
-        >
-          ⧉ Duplicate
-        </button>
-        <button
-          type="button"
-          className="btn"
           title="Save this piece with its dimensions and color so you can add it again"
           aria-label="Save to library"
           onClick={() => {
@@ -143,16 +106,6 @@ export function PropertiesPanel() {
           }}
         >
           ☆ Save to library
-        </button>
-        <button
-          type="button"
-          className="btn btn-danger"
-          onClick={() => {
-            removeFurniture(selected.id);
-            select(null);
-          }}
-        >
-          Delete
         </button>
       </div>
       {savedForId === selected.id && (

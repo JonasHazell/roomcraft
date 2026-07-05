@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Sidebar } from './components/panel/Sidebar';
-import { MobileSelectionSheet } from './components/panel/MobileSelectionSheet';
+import { SelectionBar } from './components/panel/SelectionBar';
 import { Scene } from './components/scene/Scene';
 import { PlanEditor } from './components/plan/PlanEditor';
 import { useDesignStore } from './store/useDesignStore';
@@ -100,7 +100,7 @@ function App() {
           </div>
         )}
       </main>
-      <MobileSelectionSheet />
+      <SelectionBar />
     </div>
   );
 }
