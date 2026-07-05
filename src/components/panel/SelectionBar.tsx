@@ -1,20 +1,19 @@
-import { useEffect, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
-import { PropertiesPanel } from './PropertiesPanel';
 
 /**
- * Action bar for the selected furniture piece. Instead of unfurling the whole
- * editor the moment something is selected, we surface only the most-used
- * actions (rotate, duplicate, delete) in a compact bar pinned to the bottom of
- * the viewport — on both desktop and mobile. A "More" toggle expands the full
- * editor (name, size, colour, save to library) in a panel above the bar, the
- * same controls that used to live in the sidebar / mobile sheet.
+ * Action bar for the selected furniture piece. It surfaces the most-used actions
+ * (rotate, duplicate, delete) in a compact pill pinned to the bottom of the
+ * viewport — on both desktop and mobile. "More" opens the full furniture dialog
+ * (name, size, colour) pre-filled with this piece's values — the same box used
+ * when the piece was added.
  */
 export function SelectionBar() {
   const mode = useUiStore((s) => s.mode);
   const selection = useUiStore((s) => s.selection);
   const select = useUiStore((s) => s.select);
+  const openEditFurniture = useUiStore((s) => s.openEditFurniture);
+  const dialog = useUiStore((s) => s.furnitureDialog);
   const selected = useDesignStore((s) =>
     selection?.kind === 'furniture'
       ? s.design.furniture.find((f) => f.id === selection.id)
@@ -23,37 +22,13 @@ export function SelectionBar() {
   const updateFurniture = useDesignStore((s) => s.updateFurniture);
   const duplicateFurniture = useDesignStore((s) => s.duplicateFurniture);
   const removeFurniture = useDesignStore((s) => s.removeFurniture);
-  const [expanded, setExpanded] = useState(false);
-
-  const selectedId = selection?.kind === 'furniture' ? selection.id : null;
-  // Collapse back to the bar whenever the selection changes or clears, so a
-  // freshly selected piece always starts in the compact state.
-  useEffect(() => {
-    setExpanded(false);
-  }, [selectedId]);
 
   if (mode !== '3d' || selection?.kind !== 'furniture' || !selected) return null;
 
+  const editing = dialog?.mode === 'edit' && dialog.id === selected.id;
+
   return (
     <div className="selection-bar-wrap">
-      {expanded && (
-        <div className="selection-panel" role="dialog" aria-label="Furniture settings">
-          <div className="selection-panel-head">
-            <span className="selection-panel-title">Selected furniture</span>
-            <button
-              type="button"
-              className="btn-icon"
-              aria-label="Close settings"
-              onClick={() => setExpanded(false)}
-            >
-              ✕
-            </button>
-          </div>
-          <div className="selection-panel-body">
-            <PropertiesPanel />
-          </div>
-        </div>
-      )}
       <div className="selection-bar" role="toolbar" aria-label="Furniture actions">
         <button
           type="button"
@@ -116,11 +91,11 @@ export function SelectionBar() {
         <span className="sel-divider" aria-hidden="true" />
         <button
           type="button"
-          className={`sel-action${expanded ? ' sel-active' : ''}`}
+          className={`sel-action${editing ? ' sel-active' : ''}`}
           title="More settings"
           aria-label="More settings"
-          aria-expanded={expanded}
-          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={editing}
+          onClick={() => openEditFurniture(selected.id)}
         >
           <span className="sel-icon" aria-hidden="true">
             ⋯

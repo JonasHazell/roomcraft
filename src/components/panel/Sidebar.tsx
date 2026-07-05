@@ -1,7 +1,6 @@
 import { Section } from './fields';
 import { RoomForm } from './RoomForm';
 import { OpeningsEditor } from './OpeningsEditor';
-import { FurniturePalette } from './FurniturePalette';
 import { FurnitureLibrary } from './FurnitureLibrary';
 import { AiProposalsPanel } from './AiProposalsPanel';
 import { ValidationPanel } from './ValidationPanel';
@@ -30,9 +29,6 @@ export function Sidebar() {
       </Section>
       {mode === '3d' && (
         <>
-          <Section title="Furniture">
-            <FurniturePalette />
-          </Section>
           <Section title="My library" defaultOpen={secondaryOpen}>
             <FurnitureLibrary />
           </Section>

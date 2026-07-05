@@ -1177,52 +1177,11 @@ select {
   background: var(--line);
 }
 
-.selection-panel {
-  pointer-events: auto;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-height: min(60vh, 460px);
-  overflow: hidden;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  box-shadow: 0 8px 28px rgba(43, 38, 29, 0.22);
-  animation: sheet-up 0.2s ease;
-}
-
-.selection-panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px 8px 18px;
-  border-bottom: 1px solid var(--line);
-}
-
-.selection-panel-title {
-  font-weight: 700;
-  font-size: 11.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.selection-panel-body {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 14px 18px 18px;
-}
-
 @media (max-width: 768px) {
   /* On phones keep the bar as a floating pill (like the Floor plan / 3D view
-     tabs) instead of a full-width bar pinned flush to the bottom edge. The
-     wrap stays centered; the bar is content-sized, so it reads as a floating
-     pill, while the expanded panel still gets the full wrap width. */
+     tabs) instead of a full-width bar pinned flush to the bottom edge. */
   .selection-bar-wrap {
     bottom: calc(12px + env(safe-area-inset-bottom));
-  }
-
-  .selection-panel {
-    max-height: min(52vh, 460px);
   }
 }
 
@@ -1244,6 +1203,127 @@ select {
   }
   to {
     transform: translateY(0);
+  }
+}
+
+/* ---------- Add-furniture toolbar ("+") ----------
+   A floating pill in the same family as the mode tabs and selection bar, pinned
+   to the bottom-right of the 3D viewport on desktop and mobile. */
+
+.add-furniture-btn {
+  position: absolute;
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 55;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(43, 38, 29, 0.18);
+  transition: background 0.12s, color 0.12s;
+}
+
+.add-furniture-btn:hover {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.add-furniture-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+@media (max-width: 480px) {
+  /* On narrow phones drop the label so it reads as a round "+" and stays clear
+     of the (icon-only) selection bar centred at the bottom. */
+  .add-furniture-btn {
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    padding: 11px;
+  }
+
+  .add-furniture-label {
+    display: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .add-furniture-btn {
+    min-height: 44px;
+  }
+}
+
+/* ---------- Furniture add/edit dialog ----------
+   Centred modal shared by the "+" flow (type picker → form) and "More" on a
+   selected piece (the same form, pre-filled). */
+
+.furniture-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(43, 38, 29, 0.35);
+  animation: dialog-fade 0.15s ease;
+}
+
+.furniture-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(440px, 100%);
+  max-height: min(82vh, 640px);
+  overflow: hidden;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(43, 38, 29, 0.3);
+  animation: sheet-up 0.2s ease;
+}
+
+.furniture-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 10px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.furniture-dialog-title {
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.furniture-dialog-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 18px;
+}
+
+.furniture-dialog-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 18px 16px;
+  border-top: 1px solid var(--line);
+}
+
+@keyframes dialog-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 

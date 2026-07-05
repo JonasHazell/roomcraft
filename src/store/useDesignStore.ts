@@ -6,6 +6,7 @@ import type {
   FurnitureItem,
   FurnitureKind,
   FurnitureLibraryEntry,
+  FurnitureSize,
   Point,
   Room,
   Wall,
@@ -87,6 +88,14 @@ interface DesignState {
   updateOpening: (id: string, patch: Partial<Omit<WallOpening, 'id'>>) => void;
   removeOpening: (id: string) => void;
   addFurniture: (kind: FurnitureKind) => string;
+  /** Places a piece with caller-supplied name/size/color at the room center (the "Add furniture" dialog). */
+  addFurnitureConfigured: (config: {
+    kind: FurnitureKind;
+    name: string;
+    size: FurnitureSize;
+    elevation: number;
+    color: string;
+  }) => string;
   /** Places a saved library furniture piece at the center of the room and returns its id. */
   addFurnitureFromLibrary: (entry: FurnitureLibraryEntry) => string;
   duplicateFurniture: (id: string) => string | null;
@@ -288,6 +297,30 @@ export const useDesignStore = create<DesignState>()(
             size: { ...entry.defaultSize },
             elevation: 0,
             color: entry.defaultColor,
+          },
+          poly,
+        );
+        set({ design: touch({ ...d, furniture: [...d.furniture, item] }) });
+        return id;
+      },
+
+      addFurnitureConfigured: (config) => {
+        const d = get().design;
+        const poly = floorPolygon(d.walls);
+        const center = polygonCenter(poly);
+        const id = nanoid(8);
+        // Small random nudge so several added pieces don't hide each other completely.
+        const nudge = () => (Math.random() - 0.5) * 0.6;
+        const item: FurnitureItem = clampFurniture(
+          {
+            id,
+            kind: config.kind,
+            name: config.name,
+            position: { x: center.x + nudge(), z: center.z + nudge() },
+            rotationY: 0,
+            size: { ...config.size },
+            elevation: config.elevation,
+            color: config.color,
           },
           poly,
         );
