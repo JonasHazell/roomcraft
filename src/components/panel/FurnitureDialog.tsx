@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { FURNITURE_CATALOG, FURNITURE_KINDS } from '../../lib/furnitureCatalog';
-import type { FurnitureKind } from '../../types';
+import type { FurnitureItem, FurnitureKind } from '../../types';
 import { FurnitureFields, type FurnitureDraft, type FurnitureFieldPatch } from './FurnitureFields';
 import { PropertiesPanel } from './PropertiesPanel';
 
@@ -38,6 +38,7 @@ export function FurnitureDialog() {
   const close = useUiStore((s) => s.closeFurnitureDialog);
   const select = useUiStore((s) => s.select);
   const addFurnitureConfigured = useDesignStore((s) => s.addFurnitureConfigured);
+  const updateFurniture = useDesignStore((s) => s.updateFurniture);
 
   // In create mode we hold a local draft; `null` means the type picker is showing.
   const [draft, setDraft] = useState<FurnitureDraft | null>(null);
@@ -47,16 +48,51 @@ export function FurnitureDialog() {
     if (dialog?.mode === 'create') setDraft(null);
   }, [dialog]);
 
-  // Esc closes the dialog. App's global handler bails out while a dialog is open,
-  // so closing here doesn't also clear the selection.
+  // Edits in edit mode go straight to the store (live 3D preview), so cancelling
+  // means rolling back. Snapshot the piece's original values once per open.
+  const editId = dialog?.mode === 'edit' ? dialog.id : null;
+  const snapshotRef = useRef<FurnitureItem | null>(null);
+  useEffect(() => {
+    if (!editId) {
+      snapshotRef.current = null;
+      return;
+    }
+    const item = useDesignStore.getState().design.furniture.find((f) => f.id === editId);
+    snapshotRef.current = item ? { ...item, size: { ...item.size }, position: { ...item.position } } : null;
+  }, [editId]);
+
+  // Restore the snapshot and close — used by ✕, Esc and the backdrop in edit
+  // mode so any change made while the box was open is undone.
+  const cancelEdit = useCallback(() => {
+    const snap = snapshotRef.current;
+    if (snap) {
+      updateFurniture(snap.id, {
+        name: snap.name,
+        color: snap.color,
+        size: { ...snap.size },
+        elevation: snap.elevation,
+        rotationY: snap.rotationY,
+      });
+    }
+    close();
+  }, [updateFurniture, close]);
+
+  // In create mode the draft is local, so a plain close already discards it.
+  const dismiss = useCallback(() => {
+    if (dialog?.mode === 'edit') cancelEdit();
+    else close();
+  }, [dialog, cancelEdit, close]);
+
+  // Esc dismisses the dialog. App's global handler bails out while a dialog is
+  // open, so closing here doesn't also clear the selection.
   useEffect(() => {
     if (!dialog) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape') dismiss();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dialog, close]);
+  }, [dialog, dismiss]);
 
   if (!dialog) return null;
 
@@ -69,7 +105,7 @@ export function FurnitureDialog() {
         : 'Add furniture';
 
   return (
-    <div className="furniture-dialog-backdrop" role="presentation" onClick={close}>
+    <div className="furniture-dialog-backdrop" role="presentation" onClick={dismiss}>
       <div
         className="furniture-dialog"
         role="dialog"
@@ -79,7 +115,7 @@ export function FurnitureDialog() {
       >
         <div className="furniture-dialog-head">
           <span className="furniture-dialog-title">{title}</span>
-          <button type="button" className="btn-icon" aria-label="Close" onClick={close}>
+          <button type="button" className="btn-icon" aria-label="Close" onClick={dismiss}>
             ✕
           </button>
         </div>
@@ -115,6 +151,14 @@ export function FurnitureDialog() {
             )
           )}
         </div>
+
+        {dialog.mode === 'edit' && (
+          <div className="furniture-dialog-foot" style={{ justifyContent: 'flex-end' }}>
+            <button type="button" className="btn btn-accent" onClick={close}>
+              OK
+            </button>
+          </div>
+        )}
 
         {dialog.mode === 'create' && draft !== null && (
           <div className="furniture-dialog-foot">
