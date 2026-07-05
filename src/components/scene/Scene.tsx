@@ -21,11 +21,11 @@ export function Scene() {
       <color attach="background" args={['#ece4d4']} />
       <fog attach="fog" args={['#ece4d4', 28, 60]} />
 
-      <ambientLight intensity={0.55} />
-      <hemisphereLight args={['#fff6e4', '#c9b795', 0.4]} />
+      <ambientLight intensity={0.72} />
+      <hemisphereLight args={['#fff6e4', '#c9b795', 0.52]} />
       <directionalLight
         position={[8, 12, 6]}
-        intensity={1.2}
+        intensity={1.05}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-14}
