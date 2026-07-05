@@ -56,23 +56,32 @@ export function FurnitureDialog() {
   const addFurnitureConfigured = useDesignStore((s) => s.addFurnitureConfigured);
   const updateFurniture = useDesignStore((s) => s.updateFurniture);
   const libraryEntries = useLibraryStore((s) => s.entries);
+  const saveToLibrary = useLibraryStore((s) => s.save);
 
   // In create mode we hold a local draft; `null` means the type picker is showing.
   const [draft, setDraft] = useState<FurnitureDraft | null>(null);
   // While picking, toggle between a fresh generic piece and one from the library.
   const [source, setSource] = useState<Source>('generic');
+  // Which piece we've just saved to the library — drives the footer's ✓ feedback.
+  const [savedForId, setSavedForId] = useState<string | null>(null);
 
-  // Reset to the type picker each time the create dialog (re)opens.
+  // Reset to the type picker each time the create dialog (re)opens; clear any
+  // "saved" feedback each time the dialog changes.
   useEffect(() => {
     if (dialog?.mode === 'create') {
       setDraft(null);
       setSource('generic');
     }
+    setSavedForId(null);
   }, [dialog]);
 
   // Edits in edit mode go straight to the store (live 3D preview), so cancelling
   // means rolling back. Snapshot the piece's original values once per open.
   const editId = dialog?.mode === 'edit' ? dialog.id : null;
+  // The live piece being edited — the footer's "Save to library" reads from it.
+  const editItem = useDesignStore((s) =>
+    editId ? s.design.furniture.find((f) => f.id === editId) : undefined,
+  );
   const snapshotRef = useRef<FurnitureItem | null>(null);
   useEffect(() => {
     if (!editId) {
@@ -226,7 +235,27 @@ export function FurnitureDialog() {
         </div>
 
         {dialog.mode === 'edit' && (
-          <div className="furniture-dialog-foot" style={{ justifyContent: 'flex-end' }}>
+          <div className="furniture-dialog-foot">
+            <button
+              type="button"
+              className="btn"
+              title="Save this piece with its dimensions and color so you can add it again"
+              aria-label="Save to library"
+              disabled={!editItem}
+              onClick={() => {
+                if (!editItem) return;
+                saveToLibrary({
+                  name: editItem.name,
+                  kind: editItem.kind,
+                  size: { ...editItem.size },
+                  elevation: editItem.elevation,
+                  color: editItem.color,
+                });
+                setSavedForId(editItem.id);
+              }}
+            >
+              {savedForId && savedForId === editItem?.id ? '✓ Saved to library' : '☆ Save to library'}
+            </button>
             <button type="button" className="btn btn-accent" onClick={close}>
               OK
             </button>
