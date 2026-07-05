@@ -8,9 +8,14 @@ import { ValidationPanel } from './ValidationPanel';
 import { PropertiesPanel } from './PropertiesPanel';
 import { SaveLoadPanel } from './SaveLoadPanel';
 import { useUiStore } from '../../store/useUiStore';
+import { MOBILE_WIDTH, useMediaQuery } from '../../lib/useMediaQuery';
 
 export function Sidebar() {
   const mode = useUiStore((s) => s.mode);
+  // On phones the drawer is a long scroll, so secondary sections start collapsed
+  // and only the primary ones (Room, Furniture) are open by default.
+  const mobile = useMediaQuery(MOBILE_WIDTH);
+  const secondaryOpen = !mobile;
 
   return (
     <aside className="sidebar">
@@ -21,7 +26,7 @@ export function Sidebar() {
       <Section title="Room">
         <RoomForm />
       </Section>
-      <Section title="Doors & windows">
+      <Section title="Doors & windows" defaultOpen={secondaryOpen}>
         <OpeningsEditor />
       </Section>
       {mode === '3d' && (
@@ -29,21 +34,21 @@ export function Sidebar() {
           <Section title="Furniture">
             <FurniturePalette />
           </Section>
-          <Section title="My library">
+          <Section title="My library" defaultOpen={secondaryOpen}>
             <FurnitureLibrary />
           </Section>
-          <Section title="AI suggestions">
+          <Section title="AI suggestions" defaultOpen={secondaryOpen}>
             <AiProposalsPanel />
           </Section>
-          <Section title="Validation">
+          <Section title="Validation" defaultOpen={secondaryOpen}>
             <ValidationPanel />
           </Section>
-          <Section title="Selected furniture">
+          <Section title="Selected furniture" defaultOpen={secondaryOpen}>
             <PropertiesPanel />
           </Section>
         </>
       )}
-      <Section title="Save & load">
+      <Section title="Save & load" defaultOpen={secondaryOpen}>
         <SaveLoadPanel />
       </Section>
       <footer className="sidebar-foot">Everything is saved locally in your browser.</footer>

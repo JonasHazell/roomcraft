@@ -147,8 +147,8 @@ body {
     align-items: center;
     justify-content: center;
     position: fixed;
-    top: 12px;
-    left: 12px;
+    top: calc(12px + env(safe-area-inset-top));
+    left: calc(12px + env(safe-area-inset-left));
     z-index: 60;
     width: 42px;
     height: 42px;
@@ -357,6 +357,15 @@ select {
   background: rgba(163, 58, 42, 0.08);
 }
 
+/* Square +/− zoom buttons in the plan toolbar. */
+.btn-zoom {
+  min-width: 38px;
+  padding: 7px 0;
+  font-size: 18px;
+  line-height: 1;
+  text-align: center;
+}
+
 /* ---------- Cards (openings) ---------- */
 
 .card {
@@ -536,7 +545,7 @@ select {
 
 .mode-tabs {
   position: absolute;
-  top: 12px;
+  top: calc(12px + env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -1012,9 +1021,147 @@ select {
   /* Drop the plan toolbar below the top row (hamburger + view selector)
      so they no longer overlap; let its buttons wrap to the screen width. */
   .plan-overlay {
-    top: 64px;
-    left: 12px;
-    right: 12px;
+    top: calc(64px + env(safe-area-inset-top));
+    left: calc(12px + env(safe-area-inset-left));
+    right: calc(12px + env(safe-area-inset-right));
     max-width: none;
+  }
+
+  /* The floor-plan hint ("scroll to zoom …") is mouse-centric; the toolbar's
+     touch hint covers mobile, so hide the persistent 3D hint on small screens. */
+  .viewport-hint {
+    display: none;
+  }
+}
+
+/* ---------- Touch: larger hit areas & no iOS focus-zoom ----------
+   Targets touch-first devices regardless of width so tablets benefit too. */
+
+@media (pointer: coarse) {
+  .btn,
+  .palette-btn,
+  select,
+  .mode-tabs button {
+    min-height: 44px;
+  }
+
+  .btn {
+    padding: 10px 15px;
+  }
+
+  .btn-zoom {
+    min-width: 48px;
+  }
+
+  .mode-tabs button {
+    padding: 10px 20px;
+  }
+
+  /* Give the icon buttons (e.g. delete-save ✕) a real 44px tap target. */
+  .btn-icon {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .section summary {
+    padding: 16px 20px;
+  }
+
+  .save-name {
+    padding: 13px 12px;
+  }
+
+  .opening-list button,
+  .save-name {
+    min-height: 44px;
+  }
+
+  /* 16px prevents Safari/iOS from auto-zooming when a field gains focus. */
+  .field-input input[type='number'],
+  .field-input input[type='text'],
+  .field-input textarea,
+  select {
+    font-size: 16px;
+  }
+
+  .color-input input[type='color'] {
+    width: 44px;
+    height: 32px;
+  }
+}
+
+/* ---------- Mobile: selected-furniture bottom sheet ----------
+   Surfaces the piece editor over the 3D view so edits are visible live,
+   instead of being buried at the bottom of the off-canvas drawer. */
+
+.mobile-sheet {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-sheet {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 55;
+    max-height: min(52vh, 460px);
+    background: var(--paper);
+    border-top: 1px solid var(--line);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -6px 24px rgba(43, 38, 29, 0.22);
+    padding-bottom: env(safe-area-inset-bottom);
+    animation: sheet-up 0.2s ease;
+  }
+
+  .mobile-sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px 8px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .mobile-sheet-title {
+    font-weight: 700;
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .mobile-sheet-close {
+    font-size: 18px;
+  }
+
+  .mobile-sheet-body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 14px 18px 18px;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Respect reduced-motion preferences ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

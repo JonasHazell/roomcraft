@@ -13,6 +13,7 @@ import {
 } from '../../lib/polygon';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
+import { COARSE_POINTER, useMediaQuery } from '../../lib/useMediaQuery';
 import { PlanGrid } from './PlanGrid';
 import { PlanWalls } from './PlanWalls';
 import { PlanDraft } from './PlanDraft';
@@ -40,6 +41,7 @@ export function PlanEditor() {
   const select = useUiStore((s) => s.select);
 
   const svgRef = useRef<SVGSVGElement>(null);
+  const coarse = useMediaQuery(COARSE_POINTER);
   const [tool, setTool] = useState<PlanTool>('select');
   const [draft, setDraft] = useState<Point[]>([]);
   const [hover, setHover] = useState<Point | null>(null);
@@ -56,6 +58,10 @@ export function PlanEditor() {
     moved: boolean;
     deselectOnTap: boolean;
   } | null>(null);
+  /** Active touch/pen pointers on the canvas, tracked so two of them pinch-zoom. */
+  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  /** Previous pinch distance/midpoint (screen px) while a two-finger gesture runs. */
+  const pinchRef = useRef<{ dist: number; mid: { x: number; y: number } } | null>(null);
 
   /** The user's zoom/pan; null = auto-fit the view to the content. */
   const [view, setView] = useState<Bounds | null>(null);
@@ -100,6 +106,56 @@ export function PlanEditor() {
     svg.addEventListener('wheel', onWheel, { passive: false });
     return () => svg.removeEventListener('wheel', onWheel);
   }, []);
+
+  /** Zooms around the centre of the current view; used by the +/− buttons. */
+  const zoomBy = (factor: number) => {
+    const b = boundsRef.current;
+    const span = (b.maxX - b.minX) * factor;
+    if ((span < MIN_SPAN && factor < 1) || (span > MAX_SPAN && factor > 1)) return;
+    const cx = (b.minX + b.maxX) / 2;
+    const cz = (b.minZ + b.maxZ) / 2;
+    setView({
+      minX: cx - (cx - b.minX) * factor,
+      maxX: cx + (b.maxX - cx) * factor,
+      minZ: cz - (cz - b.minZ) * factor,
+      maxZ: cz + (b.maxZ - cz) * factor,
+    });
+  };
+
+  /**
+   * Two-finger pinch: scale toward the fingers' midpoint and pan with it.
+   * Applied incrementally against the previous frame so it stays stable as the
+   * view (and thus the SVG's screen CTM) changes underneath.
+   */
+  const applyPinch = () => {
+    const pts = [...pointersRef.current.values()];
+    if (pts.length < 2) return;
+    const [a, b] = pts;
+    const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    const prev = pinchRef.current;
+    pinchRef.current = { dist, mid };
+    if (!prev) return;
+
+    const factor = prev.dist / dist;
+    const bnds = boundsRef.current;
+    const span = (bnds.maxX - bnds.minX) * factor;
+    if ((span < MIN_SPAN && factor < 1) || (span > MAX_SPAN && factor > 1)) return;
+    const ctm = svgRef.current?.getScreenCTM();
+    if (!ctm) return;
+    const inv = ctm.inverse();
+    const wp = new DOMPoint(mid.x, mid.y).matrixTransform(inv);
+    const wPrev = new DOMPoint(prev.mid.x, prev.mid.y).matrixTransform(inv);
+    // Scale around the current midpoint, then translate by how far it moved.
+    const dx = wp.x - wPrev.x;
+    const dz = wp.y - wPrev.y;
+    setView({
+      minX: wp.x - (wp.x - bnds.minX) * factor - dx,
+      maxX: wp.x + (bnds.maxX - wp.x) * factor - dx,
+      minZ: wp.y - (wp.y - bnds.minZ) * factor - dz,
+      maxZ: wp.y + (bnds.maxZ - wp.y) * factor - dz,
+    });
+  };
 
   const toWorld = (e: { clientX: number; clientY: number }): Point => {
     const ctm = svgRef.current?.getScreenCTM();
@@ -181,6 +237,16 @@ export function PlanEditor() {
       return;
     }
     if (e.button !== 0) return;
+    // Track the pointer so a second contact turns the gesture into a pinch-zoom.
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointersRef.current.size >= 2) {
+      // Second finger down: abandon any in-progress pan/drag and start pinching.
+      panRef.current = null;
+      dragRef.current = null;
+      pinchRef.current = null;
+      (e.currentTarget as Element).setPointerCapture(e.pointerId);
+      return;
+    }
     const raw = toWorld(e);
     if (tool === 'exterior') {
       if (draft.length >= 4 && dist(raw, draft[0]) <= CLOSE_RADIUS) {
@@ -215,6 +281,13 @@ export function PlanEditor() {
   };
 
   const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (pointersRef.current.has(e.pointerId)) {
+      pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+    if (pointersRef.current.size >= 2) {
+      applyPinch();
+      return;
+    }
     const pan = panRef.current;
     if (pan) {
       if (!pan.moved && Math.hypot(e.clientX - pan.x, e.clientY - pan.y) < PAN_THRESHOLD) return;
@@ -239,13 +312,23 @@ export function PlanEditor() {
     setClosable(tool === 'exterior' && draft.length >= 4 && dist(raw, draft[0]) <= CLOSE_RADIUS);
   };
 
-  const onPointerUp = () => {
+  const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
+    pointersRef.current.delete(e.pointerId);
+    if (pointersRef.current.size < 2) pinchRef.current = null;
     dragRef.current = null;
     const pan = panRef.current;
     if (pan) {
       if (!pan.moved && pan.deselectOnTap) select(null);
       panRef.current = null;
     }
+  };
+
+  // A cancelled pointer (e.g. the OS taking over) must not deselect on tap.
+  const onPointerCancel = (e: React.PointerEvent<SVGSVGElement>) => {
+    pointersRef.current.delete(e.pointerId);
+    if (pointersRef.current.size < 2) pinchRef.current = null;
+    dragRef.current = null;
+    panRef.current = null;
   };
 
   // Esc cancels the drawing in progress, Enter/double-click ends the interior wall chain.
@@ -301,6 +384,7 @@ export function PlanEditor() {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
         onPointerLeave={() => {
           setHover(null);
           setGuide(null);
@@ -321,6 +405,8 @@ export function PlanEditor() {
         <PlanToolbar
           tool={tool}
           error={error}
+          coarse={coarse}
+          draftActive={draft.length > 0}
           canDelete={selectedWall?.kind === 'interior'}
           deleteDisabledReason={deleteDisabledReason}
           canResetView={view !== null}
@@ -328,6 +414,10 @@ export function PlanEditor() {
           onExteriorTool={startExterior}
           onInteriorTool={startInterior}
           onResetView={() => setView(null)}
+          onZoomIn={() => zoomBy(0.8)}
+          onZoomOut={() => zoomBy(1.25)}
+          onFinishDraft={cancelDraft}
+          onCancelDraft={startSelect}
           onDelete={() => {
             if (selectedWall) {
               removeWall(selectedWall.id);

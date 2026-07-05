@@ -98,6 +98,7 @@ export function SaveLoadPanel() {
                 type="button"
                 className="btn-icon"
                 title="Delete save"
+                aria-label={`Delete save ${s.name}`}
                 onClick={() => {
                   if (window.confirm(`Delete the save “${s.name}”?`)) {
                     deleteSave(s.name);
