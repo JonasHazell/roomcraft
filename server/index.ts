@@ -1,4 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { extname, join, normalize } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { Design } from '../src/types.ts';
 import { runClaude } from './claude.ts';
 import { resolveProposals } from './orient.ts';
@@ -9,6 +12,58 @@ import { validateProposals } from './validate.ts';
 const PORT = Number(process.env.PORT ?? 8787);
 const MODEL = process.env.AI_MODEL ?? 'sonnet';
 const MAX_BODY = 2 * 1024 * 1024;
+
+// Built frontend (npm run build → dist/). Only present in production images;
+// in local dev the Vite server serves the app and proxies /api here instead.
+const DIST_DIR = fileURLToPath(new URL('../dist', import.meta.url));
+
+const MIME: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.map': 'application/json; charset=utf-8',
+};
+
+/**
+ * Serves the built SPA from dist/. Real files are returned as-is; anything else
+ * falls back to index.html so client-side routing/deep links work. Returns 404
+ * only when no build is present (e.g. running the server without `npm run build`).
+ */
+async function serveStatic(req: IncomingMessage, res: ServerResponse) {
+  const urlPath = decodeURIComponent((req.url ?? '/').split('?')[0]);
+  // Block path traversal: normalise and keep the result inside dist/.
+  const safePath = normalize(join(DIST_DIR, urlPath === '/' ? '/index.html' : urlPath));
+  if (!safePath.startsWith(DIST_DIR)) return json(res, 403, { error: 'Forbidden.' });
+
+  const tryFiles = [safePath];
+  if (!extname(safePath)) tryFiles.push(join(DIST_DIR, 'index.html'));
+
+  for (const file of tryFiles) {
+    try {
+      const body = await readFile(file);
+      const type = MIME[extname(file)] ?? 'application/octet-stream';
+      const immutable = file.includes(`${DIST_DIR}/assets/`);
+      res.writeHead(200, {
+        'content-type': type,
+        'cache-control': immutable ? 'public, max-age=31536000, immutable' : 'no-cache',
+      });
+      return res.end(req.method === 'HEAD' ? undefined : body);
+    } catch {
+      // try next candidate
+    }
+  }
+  return json(res, 404, { error: 'Not found. Build the frontend with `npm run build`.' });
+}
 
 interface ProposalRequest {
   design: Design;
@@ -83,6 +138,9 @@ async function generateProposals(design: Design, needs: string) {
 
 const server = createServer((req, res) => {
   void (async () => {
+    if (req.method === 'GET' || req.method === 'HEAD') {
+      return serveStatic(req, res);
+    }
     if (req.method !== 'POST' || req.url !== '/api/proposals') {
       return json(res, 404, { error: 'Unknown endpoint. Use POST /api/proposals.' });
     }
@@ -105,6 +163,7 @@ const server = createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Room sketch AI server listening on http://localhost:${PORT} (model: ${MODEL})`);
-  console.log('Requests are made via the Claude Code CLI using your local login.');
+  console.log(`Roomcraft server listening on port ${PORT} (model: ${MODEL})`);
+  console.log('Serves the built frontend from dist/ and AI proposals on POST /api/proposals.');
+  console.log('AI requests run through the Claude Code CLI using its stored login.');
 });

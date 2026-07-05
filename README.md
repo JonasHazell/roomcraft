@@ -66,6 +66,47 @@ Optional environment variables:
 - `PORT` — backend port (default `8787`)
 - `AI_MODEL` — Claude model to use (default `sonnet`)
 
+## Deployment (Railway)
+
+In production the whole app runs as a **single always-on container**: the Node
+server serves the built frontend (`dist/`) and the `/api/proposals` endpoint
+from the same port, so there is no separate static host to configure. The
+container ships the Claude Code CLI, which powers the AI suggestions.
+
+The repo includes a `Dockerfile` and `railway.json`; Railway builds from the
+Dockerfile automatically.
+
+1. **Create the project** — on [railway.app](https://railway.app), *New Project
+   → Deploy from GitHub repo* and pick this repo. Railway detects the
+   `Dockerfile` and builds it.
+2. **Authenticate the Claude Code CLI** — the server logs in non-interactively
+   via an OAuth token. On your own machine run:
+
+   ```bash
+   claude setup-token
+   ```
+
+   Copy the token and, in the Railway service's *Variables* tab, add:
+
+   - `CLAUDE_CODE_OAUTH_TOKEN` — the token from the step above (**required**)
+   - `AI_MODEL` — optional, e.g. `sonnet` (default) or `opus`
+
+   Do **not** set `PORT` — Railway injects it and the server reads it.
+3. **Expose it** — in *Settings → Networking*, click *Generate Domain*. That URL
+   serves the app; the AI feature works out of the box because the API lives on
+   the same origin.
+
+Redeploys happen automatically on every push to the deployed branch.
+
+Notes:
+
+- The AI calls are long-running (up to a few minutes), which is why the backend
+  needs an always-on container rather than a serverless/edge function — those
+  time out well before Claude responds.
+- The OAuth token authenticates as **your** Claude account. That is fine for
+  personal use or a demo; for a public multi-user service, switch the backend to
+  the Anthropic API with an API key instead.
+
 ## Development
 
 - `npm test` — run the test suite (vitest)
