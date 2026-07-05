@@ -4,6 +4,7 @@ import { useDesignStore } from '../../store/useDesignStore';
 import { useLibraryStore } from '../../store/useLibraryStore';
 import { useUiStore } from '../../store/useUiStore';
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
+import { COARSE_POINTER, useMediaQuery } from '../../lib/useMediaQuery';
 import { ColorField, NumberField } from './fields';
 
 export function PropertiesPanel() {
@@ -18,6 +19,7 @@ export function PropertiesPanel() {
   const duplicateFurniture = useDesignStore((s) => s.duplicateFurniture);
   const removeFurniture = useDesignStore((s) => s.removeFurniture);
   const saveToLibrary = useLibraryStore((s) => s.save);
+  const coarse = useMediaQuery(COARSE_POINTER);
   const [savedForId, setSavedForId] = useState<string | null>(null);
 
   if (!selected) {
@@ -94,6 +96,7 @@ export function PropertiesPanel() {
           type="button"
           className="btn"
           title="Rotate 90° left"
+          aria-label="Rotate 90 degrees left"
           onClick={() =>
             updateFurniture(selected.id, { rotationY: selected.rotationY + Math.PI / 2 })
           }
@@ -104,6 +107,7 @@ export function PropertiesPanel() {
           type="button"
           className="btn"
           title="Rotate 90° right"
+          aria-label="Rotate 90 degrees right"
           onClick={() =>
             updateFurniture(selected.id, { rotationY: selected.rotationY - Math.PI / 2 })
           }
@@ -114,6 +118,7 @@ export function PropertiesPanel() {
           type="button"
           className="btn"
           title="Create an identical piece with the same dimensions"
+          aria-label="Duplicate"
           onClick={() => {
             const newId = duplicateFurniture(selected.id);
             if (newId) select({ kind: 'furniture', id: newId });
@@ -125,6 +130,7 @@ export function PropertiesPanel() {
           type="button"
           className="btn"
           title="Save this piece with its dimensions and color so you can add it again"
+          aria-label="Save to library"
           onClick={() => {
             saveToLibrary({
               name: selected.name,
@@ -152,10 +158,12 @@ export function PropertiesPanel() {
       {savedForId === selected.id && (
         <p className="hint">Saved to the library — you'll find it under “My library”.</p>
       )}
-      <p className="hint">
-        Shortcuts: R rotates right · Shift+R left · Ctrl+D duplicates · Delete removes · Esc
-        deselects
-      </p>
+      {!coarse && (
+        <p className="hint">
+          Shortcuts: R rotates right · Shift+R left · Ctrl+D duplicates · Delete removes · Esc
+          deselects
+        </p>
+      )}
     </div>
   );
 }
