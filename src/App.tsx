@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { Sidebar } from './components/panel/Sidebar';
 import { SelectionBar } from './components/panel/SelectionBar';
+import { AddFurnitureButton } from './components/panel/AddFurnitureButton';
+import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { Scene } from './components/scene/Scene';
 import { PlanEditor } from './components/plan/PlanEditor';
 import { useDesignStore } from './store/useDesignStore';
@@ -25,6 +27,9 @@ function App() {
       ) {
         return;
       }
+      // While the furniture dialog is open it owns the keyboard (Esc closes it),
+      // so don't also deselect or rotate behind it.
+      if (useUiStore.getState().furnitureDialog) return;
       const { selection, select } = useUiStore.getState();
       if (e.key === 'Escape') {
         select(null);
@@ -99,8 +104,10 @@ function App() {
             Drag to orbit · scroll to zoom · drag a furniture piece to move it
           </div>
         )}
+        {mode === '3d' && <AddFurnitureButton />}
         <SelectionBar />
       </main>
+      <FurnitureDialog />
     </div>
   );
 }
