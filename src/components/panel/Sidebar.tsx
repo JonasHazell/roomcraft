@@ -11,12 +11,24 @@ import { useUiStore } from '../../store/useUiStore';
 
 export function Sidebar() {
   const mode = useUiStore((s) => s.mode);
+  const setDrawerOpen = useUiStore((s) => s.setDrawerOpen);
 
   return (
     <aside className="sidebar">
       <header className="brand">
-        <h1>Roomcraft</h1>
-        <p>Draw your room &amp; furnish it in 3D</p>
+        <div className="brand-text">
+          <h1>Roomcraft</h1>
+          <p>Draw your room &amp; furnish it in 3D</p>
+        </div>
+        {/* Mobile-only: closes the drawer. Hidden on desktop via CSS. */}
+        <button
+          type="button"
+          className="drawer-close"
+          aria-label="Close panel"
+          onClick={() => setDrawerOpen(false)}
+        >
+          ✕
+        </button>
       </header>
       <Section title="Room">
         <RoomForm />

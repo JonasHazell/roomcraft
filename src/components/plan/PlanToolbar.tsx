@@ -17,11 +17,11 @@ interface Props {
 
 const HINTS: Record<PlanTool, string> = {
   select:
-    'Click a wall to select it · drag perpendicular to move · scroll to zoom, drag on empty space to pan',
+    'Tap a wall to select it · drag perpendicular to move · pinch or scroll to zoom, drag empty space to pan',
   exterior:
-    'Click to place corners · click the start point to close · scroll to zoom, middle button pans · Esc cancels',
+    'Tap to place corners · tap the start point to close · pinch or scroll to zoom, two fingers pan · Esc cancels',
   interior:
-    'Click to place wall points · Enter or double-click to finish · scroll to zoom, middle button pans · Esc cancels',
+    'Tap to place wall points · double-tap or Enter to finish · pinch or scroll to zoom, two fingers pan · Esc cancels',
 };
 
 export function PlanToolbar({

@@ -56,6 +56,11 @@ export function PlanEditor() {
     moved: boolean;
     deselectOnTap: boolean;
   } | null>(null);
+  // Active touch points, keyed by pointerId, so two fingers can pinch-zoom/pan.
+  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchRef = useRef<{ dist: number; midX: number; midY: number; view: Bounds } | null>(
+    null,
+  );
 
   /** The user's zoom/pan; null = auto-fit the view to the content. */
   const [view, setView] = useState<Bounds | null>(null);
@@ -106,6 +111,52 @@ export function PlanEditor() {
     if (!ctm) return { x: 0, z: 0 };
     const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
     return { x: p.x, z: p.y };
+  };
+
+  /**
+   * Maps a screen point to world coordinates for a given view, accounting for
+   * the SVG's default (uniform, centered) viewBox letterboxing. Returns the
+   * pixels-per-world-unit scale so pinch panning can convert pixel deltas.
+   */
+  const screenToWorld = (v: Bounds, sx: number, sy: number) => {
+    const r = svgRef.current!.getBoundingClientRect();
+    const vbW = v.maxX - v.minX;
+    const vbH = v.maxZ - v.minZ;
+    const scale = Math.min(r.width / vbW, r.height / vbH);
+    const offX = r.left + (r.width - vbW * scale) / 2;
+    const offY = r.top + (r.height - vbH * scale) / 2;
+    return { x: v.minX + (sx - offX) / scale, z: v.minZ + (sy - offY) / scale, scale };
+  };
+
+  /** Two-finger pinch: zoom toward the midpoint and pan by its movement. */
+  const onPinchMove = () => {
+    const pts = [...pointersRef.current.values()];
+    const pinch = pinchRef.current;
+    if (pts.length < 2 || !pinch) return;
+    const [p1, p2] = pts;
+    const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y) || 1;
+    const midX = (p1.x + p2.x) / 2;
+    const midY = (p1.y + p2.y) / 2;
+    const b = pinch.view;
+    const w = screenToWorld(b, midX, midY);
+    const spanX = b.maxX - b.minX;
+    let ratio = pinch.dist / dist;
+    const span = spanX * ratio;
+    if (span < MIN_SPAN) ratio = MIN_SPAN / spanX;
+    else if (span > MAX_SPAN) ratio = MAX_SPAN / spanX;
+    const dxWorld = (midX - pinch.midX) / w.scale;
+    const dyWorld = (midY - pinch.midY) / w.scale;
+    const next: Bounds = {
+      minX: w.x - (w.x - b.minX) * ratio - dxWorld,
+      maxX: w.x + (b.maxX - w.x) * ratio - dxWorld,
+      minZ: w.z - (w.z - b.minZ) * ratio - dyWorld,
+      maxZ: w.z + (b.maxZ - w.z) * ratio - dyWorld,
+    };
+    pinch.dist = dist;
+    pinch.midX = midX;
+    pinch.midY = midY;
+    pinch.view = next;
+    setView(next);
   };
 
   /**
@@ -174,6 +225,22 @@ export function PlanEditor() {
   };
 
   const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointersRef.current.size === 2) {
+      // A second finger starts a pinch; abandon any in-progress pan/draw drag.
+      panRef.current = null;
+      dragRef.current = null;
+      const [p1, p2] = [...pointersRef.current.values()];
+      pinchRef.current = {
+        dist: Math.hypot(p1.x - p2.x, p1.y - p2.y) || 1,
+        midX: (p1.x + p2.x) / 2,
+        midY: (p1.y + p2.y) / 2,
+        view: boundsRef.current,
+      };
+      (e.currentTarget as Element).setPointerCapture(e.pointerId);
+      return;
+    }
+    if (pointersRef.current.size > 2) return;
     if (e.button === 1) {
       // Middle button pans in all modes.
       e.preventDefault();
@@ -215,6 +282,13 @@ export function PlanEditor() {
   };
 
   const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (pointersRef.current.has(e.pointerId)) {
+      pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+    if (pinchRef.current) {
+      onPinchMove();
+      return;
+    }
     const pan = panRef.current;
     if (pan) {
       if (!pan.moved && Math.hypot(e.clientX - pan.x, e.clientY - pan.y) < PAN_THRESHOLD) return;
@@ -239,7 +313,9 @@ export function PlanEditor() {
     setClosable(tool === 'exterior' && draft.length >= 4 && dist(raw, draft[0]) <= CLOSE_RADIUS);
   };
 
-  const onPointerUp = () => {
+  const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
+    pointersRef.current.delete(e.pointerId);
+    if (pointersRef.current.size < 2) pinchRef.current = null;
     dragRef.current = null;
     const pan = panRef.current;
     if (pan) {
@@ -301,6 +377,7 @@ export function PlanEditor() {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
         onPointerLeave={() => {
           setHover(null);
           setGuide(null);

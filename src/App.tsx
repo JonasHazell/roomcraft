@@ -8,6 +8,9 @@ import { useUiStore } from './store/useUiStore';
 function App() {
   const mode = useUiStore((s) => s.mode);
   const setMode = useUiStore((s) => s.setMode);
+  const drawerOpen = useUiStore((s) => s.drawerOpen);
+  const toggleDrawer = useUiStore((s) => s.toggleDrawer);
+  const setDrawerOpen = useUiStore((s) => s.setDrawerOpen);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -56,7 +59,25 @@ function App() {
   }, []);
 
   return (
-    <div className="app">
+    <div className={`app${drawerOpen ? ' drawer-open' : ''}`}>
+      {/* Mobile-only: toggles the sidebar drawer. Hidden on desktop via CSS. */}
+      <button
+        type="button"
+        className="drawer-toggle"
+        aria-label={drawerOpen ? 'Close panel' : 'Open panel'}
+        aria-expanded={drawerOpen}
+        onClick={toggleDrawer}
+      >
+        <span className="drawer-toggle-icon" aria-hidden="true">
+          {drawerOpen ? '✕' : '☰'}
+        </span>
+      </button>
+      {/* Backdrop closes the drawer when tapping outside it (mobile only). */}
+      <div
+        className="drawer-backdrop"
+        onClick={() => setDrawerOpen(false)}
+        aria-hidden="true"
+      />
       <Sidebar />
       <main className="viewport">
         {mode === '2d' ? <PlanEditor /> : <Scene />}
@@ -78,7 +99,7 @@ function App() {
         </nav>
         {mode === '3d' && (
           <div className="viewport-hint">
-            Drag to orbit · scroll to zoom · drag a furniture piece to move it
+            Drag to orbit · pinch or scroll to zoom · drag a furniture piece to move it
           </div>
         )}
       </main>
