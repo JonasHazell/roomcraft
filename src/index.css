@@ -462,6 +462,34 @@ select {
   flex: 0 0 auto;
 }
 
+/* Segmented control for choosing the furniture source (generic vs. library). */
+.source-toggle {
+  display: flex;
+  gap: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.source-toggle button {
+  flex: 1 1 0;
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 7px 14px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.source-toggle button.active {
+  background: var(--ink);
+  color: var(--card);
+}
+
 /* ---------- Save list ---------- */
 
 .save-list {
