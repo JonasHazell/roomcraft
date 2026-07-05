@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import type { FurnitureKind, FurnitureSize } from '../../types';
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { ColorField, NumberField } from './fields';
@@ -10,8 +9,6 @@ export interface FurnitureDraft {
   size: FurnitureSize;
   elevation: number;
   color: string;
-  /** Only present when editing an existing piece; the rotation field shows when set. */
-  rotationY?: number;
 }
 
 export type FurnitureFieldPatch = {
@@ -19,13 +16,13 @@ export type FurnitureFieldPatch = {
   size?: Partial<FurnitureSize>;
   elevation?: number;
   color?: string;
-  rotationY?: number;
 };
 
 /**
  * Name / dimensions / colour controls for a furniture piece. Rendered identically
  * in the "Add furniture" dialog (bound to a local draft) and in the "More" editor
- * (bound to the store), so both surfaces look and behave the same.
+ * (bound to the store), so both surfaces look and behave the same. Rotation is not
+ * edited here — it's done with the Left/Right buttons in the selection bar.
  */
 export function FurnitureFields({
   value,
@@ -34,11 +31,6 @@ export function FurnitureFields({
   value: FurnitureDraft;
   onChange: (patch: FurnitureFieldPatch) => void;
 }) {
-  const hasRotation = typeof value.rotationY === 'number';
-  const degrees = hasRotation
-    ? Math.round(THREE.MathUtils.radToDeg(value.rotationY as number)) % 360
-    : 0;
-
   return (
     <>
       <label className="field">
@@ -77,17 +69,6 @@ export function FurnitureFields({
           step={1}
           onChange={(v) => onChange({ size: { height: v / 100 } })}
         />
-        {hasRotation && (
-          <NumberField
-            label="Rotation"
-            value={degrees}
-            min={-360}
-            max={360}
-            step={5}
-            suffix="°"
-            onChange={(deg) => onChange({ rotationY: THREE.MathUtils.degToRad(deg) })}
-          />
-        )}
         <NumberField
           label="Height above floor"
           value={Math.round(value.elevation * 100)}
