@@ -8,6 +8,9 @@ import { useUiStore } from './store/useUiStore';
 function App() {
   const mode = useUiStore((s) => s.mode);
   const setMode = useUiStore((s) => s.setMode);
+  const sidebarOpen = useUiStore((s) => s.sidebarOpen);
+  const toggleSidebar = useUiStore((s) => s.toggleSidebar);
+  const setSidebarOpen = useUiStore((s) => s.setSidebarOpen);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -56,8 +59,22 @@ function App() {
   }, []);
 
   return (
-    <div className="app">
+    <div className={`app${sidebarOpen ? ' sidebar-open' : ''}`}>
+      <button
+        type="button"
+        className="menu-toggle"
+        aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+        aria-expanded={sidebarOpen}
+        onClick={toggleSidebar}
+      >
+        {sidebarOpen ? '✕' : '☰'}
+      </button>
       <Sidebar />
+      <div
+        className="sidebar-backdrop"
+        role="presentation"
+        onClick={() => setSidebarOpen(false)}
+      />
       <main className="viewport">
         {mode === '2d' ? <PlanEditor /> : <Scene />}
         <nav className="mode-tabs">
