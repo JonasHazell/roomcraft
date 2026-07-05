@@ -5,7 +5,6 @@ import { FurniturePalette } from './FurniturePalette';
 import { FurnitureLibrary } from './FurnitureLibrary';
 import { AiProposalsPanel } from './AiProposalsPanel';
 import { ValidationPanel } from './ValidationPanel';
-import { PropertiesPanel } from './PropertiesPanel';
 import { SaveLoadPanel } from './SaveLoadPanel';
 import { useUiStore } from '../../store/useUiStore';
 import { MOBILE_WIDTH, useMediaQuery } from '../../lib/useMediaQuery';
@@ -42,9 +41,6 @@ export function Sidebar() {
           </Section>
           <Section title="Validation" defaultOpen={secondaryOpen}>
             <ValidationPanel />
-          </Section>
-          <Section title="Selected furniture" defaultOpen={secondaryOpen}>
-            <PropertiesPanel />
           </Section>
         </>
       )}

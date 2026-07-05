@@ -1041,7 +1041,8 @@ select {
   .btn,
   .palette-btn,
   select,
-  .mode-tabs button {
+  .mode-tabs button,
+  .sel-action {
     min-height: 44px;
   }
 
@@ -1093,55 +1094,162 @@ select {
   }
 }
 
-/* ---------- Mobile: selected-furniture bottom sheet ----------
-   Surfaces the piece editor over the 3D view so edits are visible live,
-   instead of being buried at the bottom of the off-canvas drawer. */
+/* ---------- Selected-furniture action bar ----------
+   A compact bar pinned to the bottom of the viewport (desktop + mobile) with
+   the most-used actions. "More" expands the full editor in a panel above it,
+   surfaced over the scene so edits stay visible. */
 
-.mobile-sheet {
-  display: none;
+.selection-bar-wrap {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(560px, calc(100vw - 24px));
+  /* The wrap only positions; let the bar / panel capture pointer events so
+     clicks between them fall through to the scene. */
+  pointer-events: none;
+}
+
+.selection-bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--card);
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  padding: 6px 8px;
+  box-shadow: 0 6px 20px rgba(43, 38, 29, 0.18);
+  animation: sheet-up 0.2s ease;
+}
+
+.sel-action {
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+
+.sel-action:hover {
+  background: var(--paper-2);
+}
+
+.sel-action.sel-danger {
+  color: var(--danger);
+}
+
+.sel-action.sel-danger:hover {
+  background: rgba(163, 58, 42, 0.1);
+}
+
+.sel-action.sel-active {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.sel-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.sel-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 2px;
+  background: var(--line);
+}
+
+.selection-panel {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: min(60vh, 460px);
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(43, 38, 29, 0.22);
+  animation: sheet-up 0.2s ease;
+}
+
+.selection-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 8px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.selection-panel-title {
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.selection-panel-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 18px 18px;
 }
 
 @media (max-width: 768px) {
-  .mobile-sheet {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
+  /* On phones the bar and its panel span the full width and sit flush against
+     the bottom edge, like the previous bottom sheet. */
+  .selection-bar-wrap {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 55;
+    transform: none;
+    width: auto;
+    gap: 0;
+  }
+
+  .selection-bar {
+    width: 100%;
+    justify-content: space-around;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+  }
+
+  .selection-panel {
     max-height: min(52vh, 460px);
-    background: var(--paper);
-    border-top: 1px solid var(--line);
     border-radius: 16px 16px 0 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
     box-shadow: 0 -6px 24px rgba(43, 38, 29, 0.22);
-    padding-bottom: env(safe-area-inset-bottom);
-    animation: sheet-up 0.2s ease;
+  }
+}
+
+/* Narrow phones: drop the labels and keep icon-only actions so five buttons
+   still fit on one row. */
+@media (max-width: 480px) {
+  .sel-label {
+    display: none;
   }
 
-  .mobile-sheet-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px 8px 18px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .mobile-sheet-title {
-    font-weight: 700;
-    font-size: 11.5px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-  }
-
-  .mobile-sheet-close {
-    font-size: 18px;
-  }
-
-  .mobile-sheet-body {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 14px 18px 18px;
+  .sel-action {
+    padding: 8px 10px;
   }
 }
 
