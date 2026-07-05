@@ -1210,34 +1210,16 @@ select {
 }
 
 @media (max-width: 768px) {
-  /* On phones the bar and its panel span the full width and sit flush against
-     the bottom edge, like the previous bottom sheet. */
+  /* On phones keep the bar as a floating pill (like the Floor plan / 3D view
+     tabs) instead of a full-width bar pinned flush to the bottom edge. The
+     wrap stays centered; the bar is content-sized, so it reads as a floating
+     pill, while the expanded panel still gets the full wrap width. */
   .selection-bar-wrap {
-    left: 0;
-    right: 0;
-    bottom: 0;
-    transform: none;
-    width: auto;
-    gap: 0;
-  }
-
-  .selection-bar {
-    width: 100%;
-    justify-content: space-around;
-    border-radius: 0;
-    border-left: 0;
-    border-right: 0;
-    border-bottom: 0;
-    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+    bottom: calc(12px + env(safe-area-inset-bottom));
   }
 
   .selection-panel {
     max-height: min(52vh, 460px);
-    border-radius: 16px 16px 0 0;
-    border-left: 0;
-    border-right: 0;
-    border-bottom: 0;
-    box-shadow: 0 -6px 24px rgba(43, 38, 29, 0.22);
   }
 }
 

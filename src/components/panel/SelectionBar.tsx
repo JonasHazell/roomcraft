@@ -109,7 +109,7 @@ export function SelectionBar() {
           }}
         >
           <span className="sel-icon" aria-hidden="true">
-            🗑
+            ✕
           </span>
           <span className="sel-label">Delete</span>
         </button>
