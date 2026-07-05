@@ -1274,10 +1274,14 @@ select {
 
 @media (max-width: 480px) {
   /* On narrow phones drop the label so it reads as a round "+" and stays clear
-     of the (icon-only) selection bar centred at the bottom. */
+     of the (icon-only) selection bar centred at the bottom. Keep it as tall as
+     the selection bar (a perfect circle) so the two pills align. */
   .add-furniture-btn {
     bottom: calc(12px + env(safe-area-inset-bottom));
-    padding: 11px;
+    justify-content: center;
+    padding: 0;
+    width: 58px;
+    height: 58px;
   }
 
   .add-furniture-label {
@@ -1286,8 +1290,11 @@ select {
 }
 
 @media (pointer: coarse) {
+  /* Match the selection bar's touch height: its .sel-action tap targets are
+     min 44px, plus the pill's 6px padding and 1.5px border on each side = 58px.
+     Mirror that here so the "+" lines up with the selection bar on touch. */
   .add-furniture-btn {
-    min-height: 44px;
+    min-height: 58px;
   }
 }
 
