@@ -1249,7 +1249,10 @@ select {
   font: inherit;
   font-weight: 600;
   font-size: 13px;
-  padding: 8px 14px;
+  /* Match the height of the selection bar it sits beside on the bottom row: its
+     pill wrap padding (6px) plus each action's padding (8px) totals 14px of
+     vertical padding around 13px text, so mirror that here. */
+  padding: 14px 14px;
   border: 1.5px solid var(--ink);
   border-radius: 999px;
   background: var(--card);
