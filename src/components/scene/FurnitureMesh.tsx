@@ -58,7 +58,12 @@ export function FurnitureMesh({ id }: { id: string }) {
   const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
     if (e.button !== 0) return; // right button is left to camera panning
     e.stopPropagation();
-    select({ kind: 'furniture', id });
+    // A piece must be selected before it can be dragged: the first click only
+    // selects it, and a subsequent drag (while already selected) moves it.
+    if (!selected) {
+      select({ kind: 'furniture', id });
+      return;
+    }
     (e.target as Element).setPointerCapture(e.pointerId);
     if (e.ray.intersectPlane(FLOOR_PLANE, hit)) {
       dragOffset.current = { x: item.position.x - hit.x, z: item.position.z - hit.z };
