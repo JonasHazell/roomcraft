@@ -55,13 +55,18 @@ export function ColorField({
   value: string;
   onChange: (v: string) => void;
 }) {
+  // Matches the wall/floor colour swatches in the selection bar: a round colour
+  // chip with the label beside it, rather than a boxed field with a hex readout.
   return (
-    <label className="field">
-      <span className="field-label">{label}</span>
-      <span className="field-input color-input">
-        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} />
-        <code>{value}</code>
-      </span>
+    <label className="color-field" title={label}>
+      <input
+        type="color"
+        className="color-field-chip"
+        value={value}
+        aria-label={label}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <span className="color-field-label">{label}</span>
     </label>
   );
 }
