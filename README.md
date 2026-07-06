@@ -1,13 +1,18 @@
 # Roomcraft
 
-A tool for furnishing a room: sketch the room with measurements, doors and
-windows, then furnish it in a 3D view.
+A tool for furnishing rooms: sketch each room with measurements, doors and
+windows, then furnish it in a 3D view. A project can hold several rooms, each
+with its own floor plan and its own furnishing options.
 
 ## Features
 
+- Multiple rooms per project — switch between them, create new ones and rename
+  or delete them from the sidebar; each room keeps its own floor plan and its
+  own furnishing proposals
 - 2D floor plan where the room shape is drawn freely: outer walls as a closed
   outline (L-shape, T-shape, etc.) and optional interior walls — 90° angles with
-  snapping to 0.1 m
+  snapping to 0.1 m. Enter the floor-plan editor for a room with **Edit floor
+  plan** in the sidebar; **Done** returns to the 3D view
 - Doors and windows per wall with position, width, height and height above the
   floor — select a wall in the 3D view or floor plan and add one
 - 3D view with an orbit camera — the outer walls closest to the camera are
@@ -18,8 +23,9 @@ windows, then furnish it in a 3D view.
 - Colors for floor, walls and each piece of furniture
 - AI furnishing suggestions: describe your needs and the backend asks Claude to
   propose a furniture layout for the room
-- Autosave, named saves (localStorage) and export/import as a JSON file — older
-  saves (schema v1) are migrated automatically
+- Autosave, named project saves (localStorage) and export/import as a JSON file
+  — older saves (schema v1–v3, including single-room designs) are migrated to the
+  current multi-room format automatically
 
 ## Keyboard shortcuts
 

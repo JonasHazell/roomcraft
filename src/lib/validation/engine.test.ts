@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import type { Design, FurnitureItem, FurnitureKind, WallOpening } from '../../types';
-import { SCHEMA_VERSION } from '../../types';
 import { wallsFromPolygon } from '../polygon';
 import { runValidation } from './engine';
 import { inferRoomTypes } from './rules';
@@ -27,7 +26,7 @@ function makeDesign(furniture: FurnitureItem[], openings?: Omit<WallOpening, 'id
     { kind: 'window', wallId: north.id, offset: 1.2, width: 1.4, height: 1.2, elevation: 0.9 },
   ];
   return {
-    schemaVersion: SCHEMA_VERSION,
+    id: 'r0',
     name: 'Test',
     updatedAt: '2026-01-01T00:00:00.000Z',
     room: { height: 2.5, floorColor: '#c9a878', wallColor: '#efe8da' },

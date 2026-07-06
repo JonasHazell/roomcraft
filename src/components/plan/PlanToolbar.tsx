@@ -12,6 +12,8 @@ interface Props {
   deleteDisabledReason?: string;
   /** True when the user has zoomed/panned away from the auto-fitted view. */
   canResetView: boolean;
+  /** Leaves the floor-plan editor and returns to the 3D view. */
+  onDone: () => void;
   onSelectTool: () => void;
   onExteriorTool: () => void;
   onInteriorTool: () => void;
@@ -48,6 +50,7 @@ export function PlanToolbar({
   canDelete,
   deleteDisabledReason,
   canResetView,
+  onDone,
   onSelectTool,
   onExteriorTool,
   onInteriorTool,
@@ -61,6 +64,9 @@ export function PlanToolbar({
   return (
     <div className="plan-toolbar">
       <div className="button-row">
+        <button type="button" className="btn btn-done" onClick={onDone}>
+          ✓ Done · 3D view
+        </button>
         <button
           type="button"
           className={`btn ${tool === 'select' ? 'btn-accent' : ''}`}

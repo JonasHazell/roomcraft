@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { migrateV1toV2, parseDesign, parseDesignSafe } from './persistence';
+import {
+  activeRoom,
+  migrateV1toV2,
+  parseProject,
+  parseProjectSafe,
+  syncActiveRoom,
+} from './persistence';
 import { signedArea, validateExteriorLoop } from './polygon';
 
 /** Matches the old default design (schema v1). */
@@ -31,114 +37,159 @@ const V1_DESIGN = {
   ],
 } as const;
 
-describe('migrateV1toV2', () => {
-  const d = parseDesign(V1_DESIGN);
+describe('migration to the project schema', () => {
+  const p = parseProject(V1_DESIGN);
+  const room = activeRoom(p);
+
+  it('wraps a legacy single design into a one-room project', () => {
+    expect(p.schemaVersion).toBe(4);
+    expect(p.rooms).toHaveLength(1);
+    expect(p.activeRoomId).toBe(room.id);
+    expect(room.id).toBeTruthy();
+  });
 
   it('builds four chained exterior walls with positive winding', () => {
-    expect(d.schemaVersion).toBe(3);
-    expect(d.walls).toHaveLength(4);
-    expect(d.walls.every((w) => w.kind === 'exterior')).toBe(true);
-    expect(validateExteriorLoop(d.walls)).toEqual({ ok: true });
-    expect(signedArea(d.walls.map((w) => w.a))).toBeCloseTo(20);
+    expect(room.walls).toHaveLength(4);
+    expect(room.walls.every((w) => w.kind === 'exterior')).toBe(true);
+    expect(validateExteriorLoop(room.walls)).toEqual({ ok: true });
+    expect(signedArea(room.walls.map((w) => w.a))).toBeCloseTo(20);
   });
 
   it('preserves the room dimensions via the walls', () => {
-    // The north wall: (-2,-2.5) → (2,-2.5).
-    expect(d.walls[0].a).toEqual({ x: -2, z: -2.5 });
-    expect(d.walls[0].b).toEqual({ x: 2, z: -2.5 });
+    expect(room.walls[0].a).toEqual({ x: -2, z: -2.5 });
+    expect(room.walls[0].b).toEqual({ x: 2, z: -2.5 });
   });
 
   it('maps openings to the right wall with preserved offset', () => {
-    const door = d.openings.find((o) => o.id === 'op-door');
-    const win = d.openings.find((o) => o.id === 'op-win');
+    const door = room.openings.find((o) => o.id === 'op-door');
+    const win = room.openings.find((o) => o.id === 'op-win');
     // South is wall index 2 in the chain north→east→south→west.
-    expect(door?.wallId).toBe(d.walls[2].id);
+    expect(door?.wallId).toBe(room.walls[2].id);
     expect(door?.offset).toBe(0.7);
-    expect(win?.wallId).toBe(d.walls[0].id);
+    expect(win?.wallId).toBe(room.walls[0].id);
     expect(win?.offset).toBe(1.2);
   });
 
   it('keeps ceiling height, colors, furniture and name', () => {
-    expect(d.room).toEqual({ height: 2.5, floorColor: '#c9a878', wallColor: '#efe8da' });
-    expect(d.furniture).toHaveLength(1);
-    expect(d.name).toBe('My room');
+    expect(room.room).toEqual({ height: 2.5, floorColor: '#c9a878', wallColor: '#efe8da' });
+    expect(room.furniture).toHaveLength(1);
+    expect(room.name).toBe('My room');
+    expect(p.name).toBe('My room');
   });
 
   it('wraps the furnishing into a single active proposal', () => {
-    expect(d.proposals).toHaveLength(1);
-    expect(d.activeProposalId).toBe(d.proposals[0].id);
-    // The active furnishing mirrors the active proposal.
-    expect(d.proposals[0].furniture).toEqual(d.furniture);
+    expect(room.proposals).toHaveLength(1);
+    expect(room.activeProposalId).toBe(room.proposals[0].id);
+    expect(room.proposals[0].furniture).toEqual(room.furniture);
   });
 });
 
-describe('proposals', () => {
+describe('rooms', () => {
+  it('round-trips several rooms and keeps design in sync with the active one', () => {
+    const base = parseProject(V1_DESIGN);
+    const roomB = { ...base.rooms[0], id: 'r2', name: 'Bedroom' };
+    const withTwo = { ...base, rooms: [base.rooms[0], roomB], activeRoomId: 'r2' };
+    const parsed = parseProject(JSON.parse(JSON.stringify(withTwo)));
+    expect(parsed.rooms).toHaveLength(2);
+    expect(parsed.activeRoomId).toBe('r2');
+    expect(activeRoom(parsed).name).toBe('Bedroom');
+  });
+
+  it('falls back to the first room when the active id is unknown', () => {
+    const base = parseProject(V1_DESIGN);
+    const broken = { ...base, activeRoomId: 'nope' };
+    const parsed = parseProjectSafe(JSON.parse(JSON.stringify(broken)));
+    expect(parsed?.activeRoomId).toBe(base.rooms[0].id);
+  });
+
+  it('rejects a project with no rooms', () => {
+    const base = parseProject(V1_DESIGN);
+    const broken = { ...base, rooms: [] };
+    expect(parseProjectSafe(JSON.parse(JSON.stringify(broken)))).toBeNull();
+  });
+
+  it('syncActiveRoom folds the live room back into the project', () => {
+    const base = parseProject(V1_DESIGN);
+    const edited = { ...base.rooms[0], name: 'Renamed live' };
+    const synced = syncActiveRoom(base, edited);
+    expect(activeRoom(synced).name).toBe('Renamed live');
+  });
+});
+
+describe('proposals within a room', () => {
   it('round-trips several proposals and keeps furniture in sync with the active one', () => {
-    const base = parseDesign(V1_DESIGN);
+    const base = parseProject(V1_DESIGN);
+    const room = base.rooms[0];
     const withTwo = {
       ...base,
-      proposals: [
-        base.proposals[0],
-        { id: 'p2', name: 'Empty', furniture: [] },
+      rooms: [
+        {
+          ...room,
+          proposals: [room.proposals[0], { id: 'p2', name: 'Empty', furniture: [] }],
+          activeProposalId: 'p2',
+          furniture: [],
+        },
       ],
-      activeProposalId: 'p2',
-      furniture: [], // active is the empty proposal
     };
-    const parsed = parseDesign(JSON.parse(JSON.stringify(withTwo)));
-    expect(parsed.proposals).toHaveLength(2);
-    expect(parsed.activeProposalId).toBe('p2');
-    expect(parsed.furniture).toHaveLength(0);
+    const parsed = parseProject(JSON.parse(JSON.stringify(withTwo)));
+    const parsedRoom = activeRoom(parsed);
+    expect(parsedRoom.proposals).toHaveLength(2);
+    expect(parsedRoom.activeProposalId).toBe('p2');
+    expect(parsedRoom.furniture).toHaveLength(0);
   });
 
   it('falls back to the first proposal when the active id is unknown', () => {
-    const base = parseDesign(V1_DESIGN);
-    const broken = { ...base, activeProposalId: 'nope' };
-    const parsed = parseDesignSafe(JSON.parse(JSON.stringify(broken)));
-    expect(parsed?.activeProposalId).toBe(base.proposals[0].id);
-    expect(parsed?.furniture).toEqual(base.proposals[0].furniture);
+    const base = parseProject(V1_DESIGN);
+    const room = base.rooms[0];
+    const broken = { ...base, rooms: [{ ...room, activeProposalId: 'nope' }] };
+    const parsed = parseProjectSafe(JSON.parse(JSON.stringify(broken)));
+    const parsedRoom = parsed ? activeRoom(parsed) : null;
+    expect(parsedRoom?.activeProposalId).toBe(room.proposals[0].id);
+    expect(parsedRoom?.furniture).toEqual(room.proposals[0].furniture);
   });
 
-  it('rejects a design with no proposals', () => {
-    const base = parseDesign(V1_DESIGN);
-    const broken = { ...base, proposals: [] };
-    expect(parseDesignSafe(JSON.parse(JSON.stringify(broken)))).toBeNull();
+  it('rejects a room with no proposals', () => {
+    const base = parseProject(V1_DESIGN);
+    const broken = { ...base, rooms: [{ ...base.rooms[0], proposals: [] }] };
+    expect(parseProjectSafe(JSON.parse(JSON.stringify(broken)))).toBeNull();
   });
 });
 
-describe('parseDesign', () => {
-  it('accepts v2 and survives a JSON round trip', () => {
-    const v2 = parseDesign(V1_DESIGN);
-    const roundTripped = parseDesign(JSON.parse(JSON.stringify(v2)));
-    expect(roundTripped).toEqual(v2);
+describe('parseProject', () => {
+  it('accepts a v4 project and survives a JSON round trip', () => {
+    const v4 = parseProject(V1_DESIGN);
+    const roundTripped = parseProject(JSON.parse(JSON.stringify(v4)));
+    expect(roundTripped).toEqual(v4);
   });
 
   it('rejects unknown schema version', () => {
-    expect(() => parseDesign({ ...V1_DESIGN, schemaVersion: 99 })).toThrow(/schema version 99/);
+    expect(() => parseProject({ ...V1_DESIGN, schemaVersion: 99 })).toThrow(/schema version 99/);
   });
 
   it('rejects garbage and broken structures', () => {
-    expect(parseDesignSafe(null)).toBeNull();
-    expect(parseDesignSafe('hello')).toBeNull();
-    expect(parseDesignSafe({ schemaVersion: 2 })).toBeNull();
+    expect(parseProjectSafe(null)).toBeNull();
+    expect(parseProjectSafe('hello')).toBeNull();
+    expect(parseProjectSafe({ schemaVersion: 4 })).toBeNull();
   });
 
-  it('rejects v2 with an opening on a nonexistent wall', () => {
-    const v2 = parseDesign(V1_DESIGN);
+  it('rejects a room with an opening on a nonexistent wall', () => {
+    const base = parseProject(V1_DESIGN);
+    const room = base.rooms[0];
     const broken = {
-      ...v2,
-      openings: [{ ...v2.openings[0], wallId: 'does-not-exist' }],
+      ...base,
+      rooms: [{ ...room, openings: [{ ...room.openings[0], wallId: 'does-not-exist' }] }],
     };
-    expect(parseDesignSafe(broken)).toBeNull();
+    expect(parseProjectSafe(broken)).toBeNull();
   });
 
-  it('rejects v2 with a broken exterior wall chain', () => {
-    const v2 = parseDesign(V1_DESIGN);
+  it('rejects a room with a broken exterior wall chain', () => {
+    const base = parseProject(V1_DESIGN);
+    const room = base.rooms[0];
     const broken = {
-      ...v2,
-      walls: v2.walls.slice(0, 3),
-      openings: [],
+      ...base,
+      rooms: [{ ...room, walls: room.walls.slice(0, 3), openings: [] }],
     };
-    expect(parseDesignSafe(broken)).toBeNull();
+    expect(parseProjectSafe(broken)).toBeNull();
   });
 
   it('migrates directly via migrateV1toV2 without parse', () => {

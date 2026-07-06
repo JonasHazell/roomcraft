@@ -365,6 +365,19 @@ select {
   color: #fff;
 }
 
+/* Leaves the floor-plan editor — filled so it reads as the primary way back. */
+.btn-done {
+  border-color: var(--select);
+  background: var(--select);
+  color: #fff;
+}
+
+.btn-done:hover {
+  background: #245bc0;
+  border-color: #245bc0;
+  color: #fff;
+}
+
 .btn-icon {
   font: inherit;
   border: 0;
@@ -567,6 +580,70 @@ select {
   gap: 8px;
 }
 
+/* ---------- Rooms (sidebar) ---------- */
+
+.room-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.room-list li {
+  display: flex;
+  align-items: center;
+}
+
+.room-list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.room-list li.is-active {
+  background: rgba(47, 111, 221, 0.08);
+}
+
+.room-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.room-name:hover {
+  color: var(--accent);
+}
+
+.room-check {
+  font-size: 10px;
+  color: var(--select);
+}
+
+.room-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-count {
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
 /* ---------- 3D view ---------- */
 
 .viewport {
@@ -590,36 +667,6 @@ select {
   border-radius: 999px;
   padding: 5px 12px;
   pointer-events: none;
-}
-
-/* ---------- Mode tabs ---------- */
-
-.mode-tabs {
-  position: absolute;
-  top: calc(12px + env(safe-area-inset-top));
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 0;
-  border: 1.5px solid var(--ink);
-  border-radius: 999px;
-  overflow: hidden;
-  background: var(--card);
-}
-
-.mode-tabs button {
-  font: inherit;
-  font-size: 13px;
-  padding: 6px 16px;
-  border: none;
-  background: transparent;
-  color: var(--ink);
-  cursor: pointer;
-}
-
-.mode-tabs button.active {
-  background: var(--ink);
-  color: var(--card);
 }
 
 /* ---------- Proposal switcher (furnishing variants) ---------- */
@@ -1209,12 +1256,7 @@ select {
    overrides win (equal specificity → later rule applies). */
 
 @media (max-width: 768px) {
-  /* Keep the view selector above the plan toolbar if they meet. */
-  .mode-tabs {
-    z-index: 40;
-  }
-
-  /* Drop the plan toolbar below the top row (hamburger + view selector)
+  /* Drop the plan toolbar below the top row (hamburger + proposal switcher)
      so they no longer overlap; let its buttons wrap to the screen width. */
   .plan-overlay {
     top: calc(64px + env(safe-area-inset-top));
@@ -1237,7 +1279,6 @@ select {
   .btn,
   .palette-btn,
   select,
-  .mode-tabs button,
   .sel-action {
     min-height: 44px;
   }
@@ -1248,10 +1289,6 @@ select {
 
   .btn-zoom {
     min-width: 48px;
-  }
-
-  .mode-tabs button {
-    padding: 10px 20px;
   }
 
   /* Give the icon buttons (e.g. delete-save ✕) a real 44px tap target. */

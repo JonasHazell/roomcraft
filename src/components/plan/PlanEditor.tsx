@@ -40,6 +40,7 @@ export function PlanEditor() {
   const removeWall = useDesignStore((s) => s.removeWall);
   const selection = useUiStore((s) => s.selection);
   const select = useUiStore((s) => s.select);
+  const setMode = useUiStore((s) => s.setMode);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const coarse = useMediaQuery(COARSE_POINTER);
@@ -411,6 +412,11 @@ export function PlanEditor() {
           canDelete={selectedWall?.kind === 'interior'}
           deleteDisabledReason={deleteDisabledReason}
           canResetView={view !== null}
+          onDone={() => {
+            cancelDraft();
+            setTool('select');
+            setMode('3d');
+          }}
           onSelectTool={startSelect}
           onExteriorTool={startExterior}
           onInteriorTool={startInterior}
