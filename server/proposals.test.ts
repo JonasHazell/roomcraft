@@ -20,7 +20,7 @@ function makeRoom(): Design {
     b: pts[(i + 1) % pts.length],
   }));
   return {
-    schemaVersion: 3,
+    id: 'r0',
     name: 'test',
     updatedAt: '',
     room: { height: 2.4, floorColor: '#fff', wallColor: '#fff' },

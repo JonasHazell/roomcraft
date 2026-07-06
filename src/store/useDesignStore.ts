@@ -8,6 +8,7 @@ import type {
   FurnitureLibraryEntry,
   FurnitureSize,
   Point,
+  Project,
   Proposal,
   Room,
   Wall,
@@ -28,7 +29,13 @@ import {
   wallsFromPolygon,
   type LoopValidation,
 } from '../lib/polygon';
-import { normalizeProposals, parseDesignSafe, syncActiveProposal } from '../lib/persistence';
+import {
+  activeRoom,
+  normalizeProject,
+  parseProjectSafe,
+  syncActiveProposal,
+  syncActiveRoom,
+} from '../lib/persistence';
 import { FURNITURE_CATALOG } from '../lib/furnitureCatalog';
 
 /** First free "Proposal N" name for a fresh proposal. */
@@ -37,6 +44,14 @@ function nextProposalName(proposals: Proposal[]): string {
   let n = proposals.length + 1;
   while (taken.has(`Proposal ${n}`)) n++;
   return `Proposal ${n}`;
+}
+
+/** First free "Room N" name for a fresh room. */
+function nextRoomName(rooms: Design[]): string {
+  const taken = new Set(rooms.map((r) => r.name));
+  let n = rooms.length + 1;
+  while (taken.has(`Room ${n}`)) n++;
+  return `Room ${n}`;
 }
 
 /** Deep-copies furniture with fresh ids — used when a new proposal starts from an existing one. */
@@ -54,7 +69,7 @@ export type FurniturePatch = Partial<Omit<FurnitureItem, 'id' | 'size' | 'positi
   position?: Partial<FurnitureItem['position']>;
 };
 
-export function createDefaultDesign(): Design {
+export function createDefaultRoom(name = 'Room 1'): Design {
   // The same 4×5 m room as earlier versions, expressed as an exterior wall chain.
   const north: Wall = { id: nanoid(8), kind: 'exterior', a: { x: -2, z: -2.5 }, b: { x: 2, z: -2.5 } };
   const east: Wall = { id: nanoid(8), kind: 'exterior', a: { x: 2, z: -2.5 }, b: { x: 2, z: 2.5 } };
@@ -62,8 +77,8 @@ export function createDefaultDesign(): Design {
   const west: Wall = { id: nanoid(8), kind: 'exterior', a: { x: -2, z: 2.5 }, b: { x: -2, z: -2.5 } };
   const proposalId = nanoid(8);
   return {
-    schemaVersion: SCHEMA_VERSION,
-    name: 'My room',
+    id: nanoid(8),
+    name,
     updatedAt: new Date().toISOString(),
     room: {
       height: 2.5,
@@ -97,8 +112,71 @@ export function createDefaultDesign(): Design {
   };
 }
 
+/** A fresh project holding a single default room. */
+export function createDefaultProject(): Project {
+  const room = createDefaultRoom('Room 1');
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    name: 'My project',
+    updatedAt: room.updatedAt,
+    rooms: [room],
+    activeRoomId: room.id,
+  };
+}
+
+/**
+ * Deep-copies a room with fresh ids — used when a new room starts from an
+ * existing one. Wall ids are remapped so openings keep pointing at their wall,
+ * and every proposal (and its furniture) gets new ids too.
+ */
+function cloneRoom(src: Design, name: string): Design {
+  const wallIdMap = new Map<string, string>();
+  const walls = src.walls.map((w) => {
+    const id = nanoid(8);
+    wallIdMap.set(w.id, id);
+    return { ...w, id, a: { ...w.a }, b: { ...w.b } };
+  });
+  const openings = src.openings.map((o) => ({
+    ...o,
+    id: nanoid(8),
+    wallId: wallIdMap.get(o.wallId) ?? o.wallId,
+  }));
+  const proposals = src.proposals.map((p) => ({
+    id: nanoid(8),
+    name: p.name,
+    furniture: cloneFurniture(p.id === src.activeProposalId ? src.furniture : p.furniture),
+  }));
+  const activeIdx = Math.max(0, src.proposals.findIndex((p) => p.id === src.activeProposalId));
+  const active = proposals[activeIdx] ?? proposals[0];
+  return {
+    id: nanoid(8),
+    name,
+    updatedAt: new Date().toISOString(),
+    room: { ...src.room },
+    walls,
+    openings,
+    proposals,
+    activeProposalId: active.id,
+    furniture: active.furniture,
+  };
+}
+
 interface DesignState {
+  /** The whole document: all rooms + which one is active. */
+  project: Project;
+  /** The live active room; every wall/opening/furniture action reads and writes it. */
   design: Design;
+  setProjectName: (name: string) => void;
+  /**
+   * Creates a new room and makes it active. `copyCurrent` duplicates the active
+   * room (shape + furnishings); otherwise a fresh default room is added.
+   */
+  addRoom: (opts: { name?: string; copyCurrent: boolean }) => string;
+  /** Activates another room; its floor plan and furnishings replace the live ones. */
+  setActiveRoom: (id: string) => void;
+  renameRoom: (id: string, name: string) => void;
+  /** Removes a room; a project always keeps at least one. */
+  removeRoom: (id: string) => void;
   setName: (name: string) => void;
   setRoom: (patch: Partial<Room>) => void;
   commitExteriorPolygon: (points: Point[]) => LoopValidation;
@@ -138,8 +216,8 @@ interface DesignState {
   renameProposal: (id: string, name: string) => void;
   /** Removes a proposal; a room always keeps at least one. */
   removeProposal: (id: string) => void;
-  loadDesign: (d: Design) => void;
-  newDesign: () => void;
+  loadProject: (p: Project) => void;
+  newProject: () => void;
 }
 
 function touch(design: Design): Design {
@@ -156,10 +234,67 @@ function clampOpeningIn(d: Design, o: WallOpening): WallOpening {
   return wall ? clampOpening(o, wall, d.room.height) : o;
 }
 
+const bootProject = createDefaultProject();
+
 export const useDesignStore = create<DesignState>()(
   persist(
     (set, get) => ({
-      design: createDefaultDesign(),
+      project: bootProject,
+      design: activeRoom(bootProject),
+
+      setProjectName: (name) =>
+        set({ project: { ...get().project, name, updatedAt: new Date().toISOString() } }),
+
+      addRoom: ({ name, copyCurrent }) => {
+        // Snapshot the current room into the project before adding a sibling.
+        const project = syncActiveRoom(get().project, syncActiveProposal(get().design));
+        const room = copyCurrent
+          ? cloneRoom(get().design, name?.trim() || nextRoomName(project.rooms))
+          : createDefaultRoom(name?.trim() || nextRoomName(project.rooms));
+        set({
+          project: { ...project, rooms: [...project.rooms, room], activeRoomId: room.id },
+          design: room,
+        });
+        return room.id;
+      },
+
+      setActiveRoom: (id) => {
+        const cur = get();
+        if (id === cur.project.activeRoomId) return;
+        // Persist the on-screen room before swapping in the target's.
+        const project = syncActiveRoom(cur.project, syncActiveProposal(cur.design));
+        const target = project.rooms.find((r) => r.id === id);
+        if (!target) return;
+        set({ project: { ...project, activeRoomId: id }, design: target });
+      },
+
+      renameRoom: (id, name) => {
+        const { project, design } = get();
+        const trimmed = name.trim() || nextRoomName(project.rooms.filter((r) => r.id !== id));
+        set({
+          project: {
+            ...project,
+            rooms: project.rooms.map((r) => (r.id === id ? { ...r, name: trimmed } : r)),
+          },
+          design: design.id === id ? { ...design, name: trimmed } : design,
+        });
+      },
+
+      removeRoom: (id) => {
+        const cur = get();
+        if (cur.project.rooms.length <= 1) return; // keep at least one room per project
+        const project = syncActiveRoom(cur.project, syncActiveProposal(cur.design));
+        const idx = project.rooms.findIndex((r) => r.id === id);
+        if (idx === -1) return;
+        const rooms = project.rooms.filter((r) => r.id !== id);
+        if (id !== project.activeRoomId) {
+          set({ project: { ...project, rooms } });
+          return;
+        }
+        // Removing the active room: fall back to the previous room in the list.
+        const nextActive = rooms[Math.max(0, idx - 1)];
+        set({ project: { ...project, rooms, activeRoomId: nextActive.id }, design: nextActive });
+      },
 
       setName: (name) => set({ design: touch({ ...get().design, name }) }),
 
@@ -544,30 +679,52 @@ export const useDesignStore = create<DesignState>()(
         });
       },
 
-      loadDesign: (loaded) => {
-        // Defensive re-clamping and proposal normalization, e.g. after importing an edited file.
-        const normalized = normalizeProposals(loaded);
-        const poly = floorPolygon(normalized.walls);
-        const design: Design = {
-          ...normalized,
-          openings: normalized.openings.map((o) => clampOpeningIn(normalized, o)),
-          furniture: normalized.furniture.map((f) => clampFurniture(f, poly)),
-        };
-        set({ design });
+      loadProject: (loaded) => {
+        // Defensive re-clamping and normalization, e.g. after importing an edited file.
+        const normalized = normalizeProject(loaded);
+        const rooms = normalized.rooms.map((r) => {
+          const poly = floorPolygon(r.walls);
+          return {
+            ...r,
+            openings: r.openings.map((o) => clampOpeningIn(r, o)),
+            furniture: r.furniture.map((f) => clampFurniture(f, poly)),
+            proposals: r.proposals.map((p) => ({
+              ...p,
+              furniture: p.furniture.map((f) => clampFurniture(f, poly)),
+            })),
+          };
+        });
+        const project = { ...normalized, rooms };
+        set({ project, design: activeRoom(project) });
       },
 
-      newDesign: () => set({ design: createDefaultDesign() }),
+      newProject: () => {
+        const project = createDefaultProject();
+        set({ project, design: activeRoom(project) });
+      },
     }),
     {
       name: 'roomcraft:current',
       version: SCHEMA_VERSION,
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ design: syncActiveProposal(s.design) }),
-      // Older blobs (zustand version 0) are routed through the same zod+migration
-      // path as import; broken data falls back to the default instead of crashing.
+      // Only the project is persisted; the live `design` is rebuilt from it as
+      // the active room on rehydrate (see merge). The active room is synced back
+      // into the project first so the stored snapshot matches the screen.
+      partialize: (s) => ({ project: syncActiveRoom(s.project, syncActiveProposal(s.design)) }),
+      // Older blobs (a single design, zustand versions < 4) are routed through
+      // the same zod+migration path as import; broken data falls back to the
+      // default instead of crashing.
       migrate: (persisted) => {
-        const raw = (persisted as { design?: unknown } | undefined)?.design;
-        return { design: parseDesignSafe(raw) ?? createDefaultDesign() };
+        const raw = persisted as { project?: unknown; design?: unknown } | undefined;
+        const source = raw?.project ?? raw?.design;
+        return { project: parseProjectSafe(source) ?? createDefaultProject() };
+      },
+      // `design` isn't persisted, so reconstruct it from the (re-validated)
+      // project as the active room on every rehydrate.
+      merge: (persisted, current) => {
+        const raw = (persisted as { project?: unknown } | undefined)?.project;
+        const project = parseProjectSafe(raw) ?? current.project;
+        return { ...current, project, design: activeRoom(project) };
       },
     },
   ),

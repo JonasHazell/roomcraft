@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
-import type { Design, FurnitureLibraryEntry, Proposal, Wall } from '../types';
+import type { Design, FurnitureLibraryEntry, Project, Proposal, Wall } from '../types';
 import { SCHEMA_VERSION } from '../types';
 import { isAxisParallel, validateExteriorLoop } from './polygon';
 import { FURNITURE_KINDS } from './furnitureCatalog';
@@ -95,7 +95,7 @@ const designSchemaV2 = z.object({
 
 type DesignV2 = z.infer<typeof designSchemaV2>;
 
-// ---- v3 (current format: several furnishing proposals per room) ----
+// ---- v3 (single room with several furnishing proposals) ----
 
 const proposalSchema = z.object({
   id: z.string().min(1),
@@ -115,8 +115,33 @@ const designSchemaV3 = z.object({
   activeProposalId: z.string().min(1),
 });
 
-/** Structural post-validation that the zod schema cannot express. */
-function validateDesign(d: Design): Design {
+type DesignV3 = z.infer<typeof designSchemaV3>;
+
+// ---- v4 (current format: a project holding several rooms) ----
+
+/** One room inside a project — the v3 room body plus a stable id. */
+const roomSchemaV4 = z.object({
+  id: z.string().min(1).default(() => nanoid(8)),
+  name: z.string().max(200),
+  updatedAt: z.string().default(''),
+  room: roomSchema,
+  walls: z.array(wallSchema).max(400),
+  openings: z.array(openingSchemaV2).max(200),
+  furniture: z.array(furnitureSchema).max(500),
+  proposals: z.array(proposalSchema).min(1).max(50),
+  activeProposalId: z.string().min(1),
+});
+
+const projectSchemaV4 = z.object({
+  schemaVersion: z.literal(4),
+  name: z.string().max(200),
+  updatedAt: z.string(),
+  rooms: z.array(roomSchemaV4).min(1).max(50),
+  activeRoomId: z.string().min(1),
+});
+
+/** Structural post-validation of a single room that the zod schema cannot express. */
+function validateRoom(d: Design): Design {
   const exterior = d.walls.filter((w) => w.kind === 'exterior');
   const loop = validateExteriorLoop(exterior);
   if (!loop.ok) throw new Error(`Invalid room shape: ${loop.reason}`);
@@ -160,13 +185,35 @@ export function migrateV1toV2(d: DesignV1): DesignV2 {
 }
 
 /** The single furnishing of a v2 design becomes the room's first proposal. */
-export function migrateV2toV3(d: DesignV2): Design {
+export function migrateV2toV3(d: DesignV2): DesignV3 {
   const proposal: Proposal = { id: nanoid(8), name: 'Proposal 1', furniture: d.furniture };
   return {
     ...d,
-    schemaVersion: SCHEMA_VERSION,
+    schemaVersion: 3,
     proposals: [proposal],
     activeProposalId: proposal.id,
+  };
+}
+
+/** A single (v3) room design becomes a project holding just that one room. */
+export function migrateV3toV4(d: DesignV3): Project {
+  const room: Design = {
+    id: nanoid(8),
+    name: d.name,
+    updatedAt: d.updatedAt,
+    room: d.room,
+    walls: d.walls,
+    openings: d.openings,
+    furniture: d.furniture,
+    proposals: d.proposals,
+    activeProposalId: d.activeProposalId,
+  };
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    name: d.name,
+    updatedAt: d.updatedAt,
+    rooms: [room],
+    activeRoomId: room.id,
   };
 }
 
@@ -187,7 +234,7 @@ export function syncActiveProposal(d: Design): Design {
 /**
  * Guarantees the proposal invariants: at least one proposal, a valid active id,
  * and `furniture` mirroring the active proposal. Runs after every load so older
- * or hand-edited data can't leave the design in an inconsistent state.
+ * or hand-edited data can't leave the room in an inconsistent state.
  */
 export function normalizeProposals(d: Design): Design {
   if (d.proposals.length === 0) {
@@ -198,32 +245,72 @@ export function normalizeProposals(d: Design): Design {
   return { ...d, activeProposalId: active.id, furniture: active.furniture };
 }
 
-/** The single entry point for all untrusted design data (import, saves, rehydration). */
-export function parseDesign(raw: unknown): Design {
-  const version = (raw as { schemaVersion?: unknown } | null)?.schemaVersion;
-  if (version === 1) {
-    return normalizeProposals(validateDesign(migrateV2toV3(migrateV1toV2(designSchemaV1.parse(raw)))));
-  }
-  if (version === 2) {
-    return normalizeProposals(validateDesign(migrateV2toV3(designSchemaV2.parse(raw))));
-  }
-  if (version === SCHEMA_VERSION) {
-    return normalizeProposals(validateDesign(designSchemaV3.parse(raw)));
-  }
-  throw new Error(
-    `The file has schema version ${String(version)}, but the app supports version ${SCHEMA_VERSION}.`,
-  );
+/** The active room — the one the store's live `design` mirrors. */
+export function activeRoom(p: Project): Design {
+  return p.rooms.find((r) => r.id === p.activeRoomId) ?? p.rooms[0];
 }
 
-export function parseDesignSafe(raw: unknown): Design | null {
+/**
+ * Writes the live active room back into the project's `rooms` so the stored
+ * snapshot matches what is on screen. Called before persisting/exporting and
+ * before switching rooms — the room counterpart of {@link syncActiveProposal}.
+ */
+export function syncActiveRoom(p: Project, room: Design): Project {
+  return {
+    ...p,
+    updatedAt: new Date().toISOString(),
+    rooms: p.rooms.map((r) => (r.id === p.activeRoomId ? room : r)),
+  };
+}
+
+/**
+ * Guarantees the project invariants: at least one room, unique room ids, a
+ * valid active room id, and every room's proposals normalized. Runs after every
+ * load so older or hand-edited data can't leave the project inconsistent.
+ */
+export function normalizeProject(p: Project): Project {
+  const seen = new Set<string>();
+  const rooms = p.rooms.map((r) => {
+    let id = r.id;
+    while (seen.has(id)) id = nanoid(8);
+    seen.add(id);
+    const room = normalizeProposals(id === r.id ? r : { ...r, id });
+    return room.updatedAt ? room : { ...room, updatedAt: p.updatedAt };
+  });
+  const active = rooms.find((r) => r.id === p.activeRoomId) ?? rooms[0];
+  return { ...p, rooms, activeRoomId: active.id };
+}
+
+/** The single entry point for all untrusted project data (import, saves, rehydration). */
+export function parseProject(raw: unknown): Project {
+  const version = (raw as { schemaVersion?: unknown } | null)?.schemaVersion;
+  let project: Project;
+  if (version === 1) {
+    project = migrateV3toV4(migrateV2toV3(migrateV1toV2(designSchemaV1.parse(raw))));
+  } else if (version === 2) {
+    project = migrateV3toV4(migrateV2toV3(designSchemaV2.parse(raw)));
+  } else if (version === 3) {
+    project = migrateV3toV4(designSchemaV3.parse(raw));
+  } else if (version === SCHEMA_VERSION) {
+    project = projectSchemaV4.parse(raw);
+  } else {
+    throw new Error(
+      `The file has schema version ${String(version)}, but the app supports version ${SCHEMA_VERSION}.`,
+    );
+  }
+  project.rooms.forEach(validateRoom);
+  return normalizeProject(project);
+}
+
+export function parseProjectSafe(raw: unknown): Project | null {
   try {
-    return parseDesign(raw);
+    return parseProject(raw);
   } catch {
     return null;
   }
 }
 
-export async function importDesign(file: File): Promise<Design> {
+export async function importProject(file: File): Promise<Project> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(await file.text());
@@ -231,7 +318,7 @@ export async function importDesign(file: File): Promise<Design> {
     throw new Error('The file is not valid JSON.');
   }
   try {
-    return parseDesign(parsed);
+    return parseProject(parsed);
   } catch (e) {
     if (e instanceof z.ZodError) {
       const issues = e.issues
@@ -244,14 +331,14 @@ export async function importDesign(file: File): Promise<Design> {
   }
 }
 
-export function exportDesign(design: Design) {
-  const blob = new Blob([JSON.stringify(syncActiveProposal(design), null, 2)], {
+export function exportProject(project: Project) {
+  const blob = new Blob([JSON.stringify(project, null, 2)], {
     type: 'application/json',
   });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${design.name.trim() || 'room'}.room.json`;
+  a.download = `${project.name.trim() || 'project'}.room.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -287,15 +374,15 @@ export function listSaves(): SaveInfo[] {
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
-export function saveAs(name: string, design: Design) {
+export function saveAs(name: string, project: Project) {
   const saves = readSaves();
-  saves[name] = { ...syncActiveProposal(design), name, updatedAt: new Date().toISOString() };
+  saves[name] = { ...project, name, updatedAt: new Date().toISOString() };
   writeSaves(saves);
 }
 
-export function loadSave(name: string): Design | null {
+export function loadSave(name: string): Project | null {
   const raw = readSaves()[name];
-  return raw ? parseDesignSafe(raw) : null;
+  return raw ? parseProjectSafe(raw) : null;
 }
 
 export function deleteSave(name: string) {

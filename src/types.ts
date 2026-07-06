@@ -87,10 +87,17 @@ export interface Proposal {
   furniture: FurnitureItem[];
 }
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
+/**
+ * One room within a {@link Project}: its floor plan (walls, openings), its
+ * colours/height (`room`) and its furnishing variants (`proposals`). This is
+ * also the live editing surface exposed by the store as `design` — every
+ * furniture/wall/opening action reads and writes the active room.
+ */
 export interface Design {
-  schemaVersion: number;
+  /** Stable id of the room inside its project. */
+  id: string;
   name: string;
   updatedAt: string; // ISO
   room: Room;
@@ -108,4 +115,20 @@ export interface Design {
   proposals: Proposal[];
   /** Which proposal `furniture` currently mirrors. */
   activeProposalId: string;
+}
+
+/**
+ * The whole document: several rooms, each with its own floor plan and
+ * furnishing proposals. The active room is the live `design` in the store; the
+ * matching entry in `rooms` is refreshed from it whenever the project is
+ * persisted, exported or a different room is activated.
+ */
+export interface Project {
+  schemaVersion: number;
+  name: string;
+  updatedAt: string; // ISO
+  /** The rooms in this project; always at least one. */
+  rooms: Design[];
+  /** Which room the store's live `design` currently mirrors. */
+  activeRoomId: string;
 }

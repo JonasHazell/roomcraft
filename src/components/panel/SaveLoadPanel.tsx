@@ -3,19 +3,27 @@ import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import {
   deleteSave,
-  exportDesign,
-  importDesign,
+  exportProject,
+  importProject,
   listSaves,
   loadSave,
   saveAs,
+  syncActiveProposal,
+  syncActiveRoom,
   type SaveInfo,
 } from '../../lib/persistence';
 
+/** The live project with the on-screen room and furnishing folded back in. */
+function currentProject() {
+  const s = useDesignStore.getState();
+  return syncActiveRoom(s.project, syncActiveProposal(s.design));
+}
+
 export function SaveLoadPanel() {
-  const name = useDesignStore((s) => s.design.name);
-  const setName = useDesignStore((s) => s.setName);
-  const loadDesign = useDesignStore((s) => s.loadDesign);
-  const newDesign = useDesignStore((s) => s.newDesign);
+  const name = useDesignStore((s) => s.project.name);
+  const setProjectName = useDesignStore((s) => s.setProjectName);
+  const loadProject = useDesignStore((s) => s.loadProject);
+  const newProject = useDesignStore((s) => s.newProject);
   const select = useUiStore((s) => s.select);
 
   const [saves, setSaves] = useState<SaveInfo[]>(() => listSaves());
@@ -26,8 +34,8 @@ export function SaveLoadPanel() {
   const refresh = () => setSaves(listSaves());
 
   const onSave = () => {
-    const trimmed = name.trim() || 'My room';
-    saveAs(trimmed, useDesignStore.getState().design);
+    const trimmed = name.trim() || 'My project';
+    saveAs(trimmed, currentProject());
     refresh();
     setError(null);
     setNotice(`Saved “${trimmed}”.`);
@@ -35,11 +43,11 @@ export function SaveLoadPanel() {
 
   const onImport = async (file: File) => {
     try {
-      const design = await importDesign(file);
-      loadDesign(design);
+      const project = await importProject(file);
+      loadProject(project);
       select(null);
       setError(null);
-      setNotice(`Imported “${design.name}”.`);
+      setNotice(`Imported “${project.name}”.`);
     } catch (e) {
       setNotice(null);
       setError(e instanceof Error ? e.message : 'Import failed.');
@@ -49,9 +57,9 @@ export function SaveLoadPanel() {
   return (
     <div className="stack">
       <label className="field">
-        <span className="field-label">Design name</span>
+        <span className="field-label">Project name</span>
         <span className="field-input">
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
+          <input type="text" value={name} onChange={(e) => setProjectName(e.target.value)} />
         </span>
       </label>
       <div className="button-row">
@@ -62,13 +70,13 @@ export function SaveLoadPanel() {
           type="button"
           className="btn"
           onClick={() => {
-            if (window.confirm('Start over with a new design? Unsaved changes will be lost.')) {
-              newDesign();
+            if (window.confirm('Start over with a new project? Unsaved changes will be lost.')) {
+              newProject();
               select(null);
             }
           }}
         >
-          New design
+          New project
         </button>
       </div>
 
@@ -81,9 +89,9 @@ export function SaveLoadPanel() {
                 className="save-name"
                 title={`Load “${s.name}”`}
                 onClick={() => {
-                  const d = loadSave(s.name);
-                  if (d) {
-                    loadDesign(d);
+                  const p = loadSave(s.name);
+                  if (p) {
+                    loadProject(p);
                     select(null);
                     setNotice(`Loaded “${s.name}”.`);
                   }
@@ -114,11 +122,7 @@ export function SaveLoadPanel() {
       )}
 
       <div className="button-row">
-        <button
-          type="button"
-          className="btn"
-          onClick={() => exportDesign(useDesignStore.getState().design)}
-        >
+        <button type="button" className="btn" onClick={() => exportProject(currentProject())}>
           Export JSON
         </button>
         <button type="button" className="btn" onClick={() => fileRef.current?.click()}>

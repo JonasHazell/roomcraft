@@ -14,7 +14,6 @@ import { useUiStore } from './store/useUiStore';
 
 function App() {
   const mode = useUiStore((s) => s.mode);
-  const setMode = useUiStore((s) => s.setMode);
   const sidebarOpen = useUiStore((s) => s.sidebarOpen);
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
   const setSidebarOpen = useUiStore((s) => s.setSidebarOpen);
@@ -89,22 +88,6 @@ function App() {
       <main className="viewport">
         {mode === '2d' ? <PlanEditor /> : <Scene />}
         <ProposalSwitcher />
-        <nav className="mode-tabs">
-          <button
-            type="button"
-            className={mode === '2d' ? 'active' : ''}
-            onClick={() => setMode('2d')}
-          >
-            Floor plan
-          </button>
-          <button
-            type="button"
-            className={mode === '3d' ? 'active' : ''}
-            onClick={() => setMode('3d')}
-          >
-            3D view
-          </button>
-        </nav>
         {mode === '3d' && (
           <div className="viewport-hint">
             Drag to orbit · scroll to zoom · drag a furniture piece to move it
