@@ -137,22 +137,22 @@ export function FurnitureDialog() {
         : 'Add furniture';
 
   return (
-    <div className="furniture-dialog-backdrop" role="presentation" onClick={dismiss}>
+    <div className="modal-backdrop" role="presentation" onClick={dismiss}>
       <div
-        className="furniture-dialog"
+        className="modal"
         role="dialog"
         aria-modal="true"
         aria-label={dialog.mode === 'edit' ? 'Furniture settings' : 'Add furniture'}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="furniture-dialog-head">
-          <span className="furniture-dialog-title">{title}</span>
+        <div className="modal-head">
+          <span className="modal-title">{title}</span>
           <button type="button" className="btn-icon" aria-label="Close" onClick={dismiss}>
             ✕
           </button>
         </div>
 
-        <div className="furniture-dialog-body">
+        <div className="modal-body">
           {dialog.mode === 'edit' ? (
             <PropertiesPanel />
           ) : picking ? (
@@ -245,7 +245,7 @@ export function FurnitureDialog() {
         </div>
 
         {dialog.mode === 'edit' && (
-          <div className="furniture-dialog-foot">
+          <div className="modal-foot">
             <button
               type="button"
               className="btn"
@@ -264,7 +264,15 @@ export function FurnitureDialog() {
                 setSavedForId(editItem.id);
               }}
             >
-              {savedForId && savedForId === editItem?.id ? '✓ Saved to library' : '☆ Save to library'}
+              {savedForId && savedForId === editItem?.id ? (
+                <>
+                  <span aria-hidden="true">✓</span> Saved to library
+                </>
+              ) : (
+                <>
+                  <span aria-hidden="true">☆</span> Save to library
+                </>
+              )}
             </button>
             <button type="button" className="btn btn-accent" onClick={close}>
               OK
@@ -273,9 +281,9 @@ export function FurnitureDialog() {
         )}
 
         {dialog.mode === 'create' && draft !== null && (
-          <div className="furniture-dialog-foot">
+          <div className="modal-foot">
             <button type="button" className="btn" onClick={() => setDraft(null)}>
-              ← Back
+              <span aria-hidden="true">←</span> Back
             </button>
             <button
               type="button"

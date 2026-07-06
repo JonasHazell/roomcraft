@@ -62,10 +62,10 @@ export function PlanToolbar({
   onCancelDraft,
 }: Props) {
   return (
-    <div className="plan-toolbar">
+    <div className="plan-toolbar" role="toolbar" aria-label="Floor plan tools">
       <div className="button-row">
         <button type="button" className="btn btn-done" onClick={onDone}>
-          ✓ Done · 3D view
+          <span aria-hidden="true">✓</span> Done · 3D view
         </button>
         <button
           type="button"
@@ -130,7 +130,7 @@ export function PlanToolbar({
         </span>
       </div>
       <p className="plan-hint">{(coarse ? TOUCH_HINTS : HINTS)[tool]}</p>
-      {error && <p className="plan-error">{error}</p>}
+      {error && <p className="error">{error}</p>}
     </div>
   );
 }

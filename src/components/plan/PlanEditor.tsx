@@ -13,6 +13,7 @@ import {
 } from '../../lib/polygon';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
+import { confirmDialog } from '../../store/useDialogStore';
 import { COARSE_POINTER, useMediaQuery } from '../../lib/useMediaQuery';
 import { PlanGrid } from './PlanGrid';
 import { PlanWalls } from './PlanWalls';
@@ -347,11 +348,18 @@ export function PlanEditor() {
     return () => window.removeEventListener('keydown', onKey);
   }, [draft.length, tool]);
 
-  const startExterior = () => {
-    const message =
-      'If you redraw the exterior walls, doors and windows on the current ' +
-      'exterior walls will be removed once the new outline is complete. Continue?';
-    if (walls.some((w) => w.kind === 'exterior') && !window.confirm(message)) return;
+  const startExterior = async () => {
+    if (walls.some((w) => w.kind === 'exterior')) {
+      const ok = await confirmDialog({
+        title: 'Redraw exterior walls',
+        message:
+          'If you redraw the exterior walls, doors and windows on the current ' +
+          'exterior walls will be removed once the new outline is complete. Continue?',
+        confirmLabel: 'Redraw',
+        danger: true,
+      });
+      if (!ok) return;
+    }
     select(null);
     cancelDraft();
     setTool('exterior');

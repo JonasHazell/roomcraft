@@ -35,14 +35,14 @@ export function OpeningsEditor() {
               className="btn"
               onClick={() => addOpening(defaultOpening('door', wall.id))}
             >
-              {OPENING_ICON.door} Door
+              <span aria-hidden="true">{OPENING_ICON.door}</span> Door
             </button>
             <button
               type="button"
               className="btn"
               onClick={() => addOpening(defaultOpening('window', wall.id))}
             >
-              {OPENING_ICON.window} Window
+              <span aria-hidden="true">{OPENING_ICON.window}</span> Window
             </button>
           </div>
           {wallOpenings.length === 0 && (

@@ -73,7 +73,7 @@ export function AiProposalsPanel() {
       {loading && (
         <p className="hint">This can take a couple of minutes. Claude Code runs the proposal in the terminal.</p>
       )}
-      {error && <p className="ai-error">{error}</p>}
+      {error && <p className="error">{error}</p>}
 
       {result && result.proposals.length === 0 && !error && (
         <p className="hint">No proposals came back. Try describing your needs a bit more clearly.</p>

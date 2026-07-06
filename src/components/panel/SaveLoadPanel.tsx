@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
+import { confirmDialog } from '../../store/useDialogStore';
 import {
   deleteSave,
   exportProject,
@@ -69,8 +70,14 @@ export function SaveLoadPanel() {
         <button
           type="button"
           className="btn"
-          onClick={() => {
-            if (window.confirm('Start over with a new project? Unsaved changes will be lost.')) {
+          onClick={async () => {
+            const ok = await confirmDialog({
+              title: 'New project',
+              message: 'Start over with a new project? Unsaved changes will be lost.',
+              confirmLabel: 'Start over',
+              danger: true,
+            });
+            if (ok) {
               newProject();
               select(null);
             }
@@ -107,8 +114,14 @@ export function SaveLoadPanel() {
                 className="btn-icon"
                 title="Delete save"
                 aria-label={`Delete save ${s.name}`}
-                onClick={() => {
-                  if (window.confirm(`Delete the save “${s.name}”?`)) {
+                onClick={async () => {
+                  const ok = await confirmDialog({
+                    title: 'Delete save',
+                    message: `Delete the save “${s.name}”?`,
+                    confirmLabel: 'Delete',
+                    danger: true,
+                  });
+                  if (ok) {
                     deleteSave(s.name);
                     refresh();
                   }
