@@ -1339,6 +1339,11 @@ select {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  /* Shared control height so every pill bar (room / furniture / wall / floor)
+     is the same overall height, whether its actions hold a glyph, a label or a
+     taller colour swatch. Without this the swatch bars sit a few px taller than
+     the icon-only bars and the pill jumps size as the selection changes. */
+  min-height: 38px;
   padding: 8px 12px;
   border: 0;
   border-radius: 999px;
