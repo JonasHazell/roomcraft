@@ -1199,6 +1199,12 @@ select {
   line-height: 1;
 }
 
+/* Bump the icon size slightly in the furniture selection bar so the action
+   glyphs read a touch larger than in the other pill bars. */
+.selection-bar .sel-icon {
+  font-size: 18px;
+}
+
 .sel-divider {
   width: 1px;
   align-self: stretch;
