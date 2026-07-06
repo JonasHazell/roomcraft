@@ -751,7 +751,9 @@ select {
   border: 1.5px solid var(--ink);
   border-radius: 14px;
   box-shadow: 0 14px 40px rgba(43, 38, 29, 0.24);
-  animation: sheet-up 0.2s ease;
+  /* Dedicated keyframe keeps the -50% X offset so the menu slides up centred
+     rather than drifting in from the right, like the furniture dialog. */
+  animation: sheet-up-center 0.2s ease;
 }
 
 .proposal-menu-head {
@@ -1498,6 +1500,16 @@ select {
   }
   to {
     transform: translateY(0);
+  }
+}
+
+/* Same slide-up as sheet-up but preserves a horizontal centring offset. */
+@keyframes sheet-up-center {
+  from {
+    transform: translateX(-50%) translateY(100%);
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
   }
 }
 
