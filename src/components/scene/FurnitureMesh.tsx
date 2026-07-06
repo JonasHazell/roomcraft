@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import type { FurnitureKind } from '../../types';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
+import { useHistoryStore } from '../../store/useHistoryStore';
 import { SELECT_EMISSIVE, type FurnitureProps } from './furniture/shared';
 import { Bed } from './furniture/Bed';
 import { Sofa } from './furniture/Sofa';
@@ -68,6 +69,8 @@ export function FurnitureMesh({ id }: { id: string }) {
     if (e.ray.intersectPlane(FLOOR_PLANE, hit)) {
       dragOffset.current = { x: item.position.x - hit.x, z: item.position.z - hit.z };
       setDragging(id);
+      // Fold the whole drag into a single undo step.
+      useHistoryStore.getState().beginBatch();
     }
   };
 
@@ -77,10 +80,11 @@ export function FurnitureMesh({ id }: { id: string }) {
     moveFurniture(id, hit.x + dragOffset.current.x, hit.z + dragOffset.current.z);
   };
 
-  const onPointerUp = (e: ThreeEvent<PointerEvent>) => {
+  const endDrag = (e: ThreeEvent<PointerEvent>) => {
     if (useUiStore.getState().draggingId !== id) return;
     (e.target as Element).releasePointerCapture(e.pointerId);
     setDragging(null);
+    useHistoryStore.getState().endBatch();
   };
 
   return (
@@ -89,7 +93,8 @@ export function FurnitureMesh({ id }: { id: string }) {
       rotation-y={item.rotationY}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
       onClick={(e) => {
         // Stop the click so the floor behind the furniture doesn't deselect it.
         e.stopPropagation();

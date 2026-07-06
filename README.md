@@ -23,6 +23,10 @@ with its own floor plan and its own furnishing options.
 - Colors for floor, walls and each piece of furniture
 - AI furnishing suggestions: describe your needs and the backend asks Claude to
   propose a furniture layout for the room
+- Undo/redo for every editing step — moving and editing furniture, walls, doors,
+  windows, colours and more. Use the ↶/↷ buttons in the bottom-right corner (they
+  work on mobile too) or the keyboard shortcuts below; a whole drag counts as a
+  single step
 - Autosave, named project saves (localStorage) and export/import as a JSON file
   — older saves (schema v1–v3, including single-room designs) are migrated to the
   current multi-room format automatically
@@ -33,6 +37,7 @@ with its own floor plan and its own furnishing options.
 - **Delete/Backspace** — delete the selected furniture or interior wall
 - **Esc** — deselect / cancel an in-progress drawing
 - **Enter** — finish an interior-wall chain in the floor plan
+- **Ctrl/Cmd+Z** — undo · **Ctrl/Cmd+Shift+Z** or **Ctrl/Cmd+Y** — redo
 
 ## Getting started
 
