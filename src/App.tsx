@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
 import { Sidebar } from './components/panel/Sidebar';
 import { SelectionBar } from './components/panel/SelectionBar';
-import { AddFurnitureButton } from './components/panel/AddFurnitureButton';
+import { ActionBar } from './components/panel/ActionBar';
+import { WallBar } from './components/panel/WallBar';
+import { FloorBar } from './components/panel/FloorBar';
+import { SidePanel } from './components/panel/SidePanel';
 import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { Scene } from './components/scene/Scene';
 import { PlanEditor } from './components/plan/PlanEditor';
@@ -47,11 +50,12 @@ function App() {
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (selection.kind === 'furniture') {
           useDesignStore.getState().removeFurniture(selection.id);
-        } else {
+          select(null);
+        } else if (selection.kind === 'wall') {
           // Only interior walls can be removed; the store ignores exterior walls.
           useDesignStore.getState().removeWall(selection.id);
+          select(null);
         }
-        select(null);
       } else if ((e.key === 'r' || e.key === 'R') && selection.kind === 'furniture') {
         const { design, updateFurniture } = useDesignStore.getState();
         const item = design.furniture.find((f) => f.id === selection.id);
@@ -104,8 +108,11 @@ function App() {
             Drag to orbit · scroll to zoom · drag a furniture piece to move it
           </div>
         )}
-        {mode === '3d' && <AddFurnitureButton />}
+        {mode === '3d' && <SidePanel />}
+        <ActionBar />
         <SelectionBar />
+        <WallBar />
+        <FloorBar />
       </main>
       <FurnitureDialog />
     </div>

@@ -19,6 +19,7 @@ import { PlanWalls } from './PlanWalls';
 import { PlanDraft } from './PlanDraft';
 import { PlanToolbar } from './PlanToolbar';
 import { PlanWallPanel } from './PlanWallPanel';
+import { PlanRoomPanel } from './PlanRoomPanel';
 
 export type PlanTool = 'select' | 'exterior' | 'interior';
 
@@ -425,6 +426,7 @@ export function PlanEditor() {
             }
           }}
         />
+        {tool === 'select' && <PlanRoomPanel />}
         {tool === 'select' && <PlanWallPanel />}
       </div>
     </div>
