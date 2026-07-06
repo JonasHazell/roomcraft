@@ -10,6 +10,12 @@
   --select: #2f6fdd;
   --danger: #a33a2a;
 
+  /* Shared chrome for every floating surface (modal, side panel, dropdown menu)
+     so they read as one family. */
+  --popup-radius: 14px;
+  --popup-border: 1.5px solid var(--ink);
+  --popup-shadow: 0 14px 40px rgba(43, 38, 29, 0.24);
+
   --display: 'Fraunces Variable', Georgia, serif;
   --body: 'Karla', 'Segoe UI', sans-serif;
 
@@ -355,14 +361,16 @@ select {
   border-color: var(--accent-dark);
 }
 
+/* Filled destructive button — the confirm action in a delete dialog. */
 .btn-danger {
   border-color: var(--danger);
-  color: var(--danger);
+  background: var(--danger);
+  color: #fff;
 }
 
 .btn-danger:hover {
-  background: var(--danger);
-  color: #fff;
+  background: #8c2f21;
+  border-color: #8c2f21;
 }
 
 /* Leaves the floor-plan editor — filled so it reads as the primary way back. */
@@ -449,11 +457,14 @@ select {
   color: var(--muted);
 }
 
+/* The single error style, shared by the sidebar, the AI panel and the floor-plan
+   toolbar so every failure message looks the same. */
 .error {
   margin: 0;
   font-size: 12.5px;
   color: var(--danger);
   background: rgba(163, 58, 42, 0.08);
+  border: 1px solid rgba(163, 58, 42, 0.25);
   border-radius: 4px;
   padding: 8px 10px;
 }
@@ -580,9 +591,12 @@ select {
   gap: 8px;
 }
 
-/* ---------- Rooms (sidebar) ---------- */
+/* ---------- Switcher list (rooms & furnishing proposals) ----------
+   One list style shared by the sidebar's room list and the proposal dropdown:
+   an active dot, a name, a count, then rename/delete icon buttons. Both are the
+   same control, so they use the same markup (see SwitcherList) and CSS. */
 
-.room-list {
+.switch-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -592,20 +606,20 @@ select {
   overflow: hidden;
 }
 
-.room-list li {
+.switch-list li {
   display: flex;
   align-items: center;
 }
 
-.room-list li + li {
+.switch-list li + li {
   border-top: 1px solid var(--line);
 }
 
-.room-list li.is-active {
+.switch-list li.is-active {
   background: rgba(47, 111, 221, 0.08);
 }
 
-.room-name {
+.switch-name {
   flex: 1;
   display: flex;
   align-items: center;
@@ -622,26 +636,32 @@ select {
   cursor: pointer;
 }
 
-.room-name:hover {
+.switch-name:hover {
   color: var(--accent);
 }
 
-.room-check {
+.switch-check {
   font-size: 10px;
   color: var(--select);
 }
 
-.room-label {
+.switch-label {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.room-count {
+.switch-count {
   font-weight: 400;
   font-size: 11.5px;
   color: var(--muted);
+}
+
+/* In the proposal dropdown the list needs breathing room before the actions
+   below it; in the sidebar the surrounding .stack handles spacing. */
+.proposal-menu .switch-list {
+  margin-bottom: 10px;
 }
 
 /* ---------- 3D view ---------- */
@@ -748,79 +768,21 @@ select {
   width: min(300px, 80vw);
   padding: 10px;
   background: var(--paper);
-  border: 1.5px solid var(--ink);
-  border-radius: 14px;
-  box-shadow: 0 14px 40px rgba(43, 38, 29, 0.24);
+  border: var(--popup-border);
+  border-radius: var(--popup-radius);
+  box-shadow: var(--popup-shadow);
   /* Dedicated keyframe keeps the -50% X offset so the menu slides up centred
      rather than drifting in from the right, like the furniture dialog. */
   animation: sheet-up-center 0.2s ease;
 }
 
+/* Matches the modal / side-panel title so every pop-up header reads the same. */
 .proposal-menu-head {
   margin: 2px 2px 8px;
-  font-size: 11.5px;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.proposal-list {
-  list-style: none;
-  margin: 0 0 10px;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: #fff;
-  overflow: hidden;
-}
-
-.proposal-list li {
-  display: flex;
-  align-items: center;
-}
-
-.proposal-list li + li {
-  border-top: 1px solid var(--line);
-}
-
-.proposal-list li.is-active {
-  background: rgba(47, 111, 221, 0.08);
-}
-
-.proposal-name {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  font: inherit;
-  font-weight: 600;
-  font-size: 13px;
-  text-align: left;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  padding: 9px 12px;
-  cursor: pointer;
-}
-
-.proposal-check {
-  font-size: 10px;
-  color: var(--select);
-}
-
-.proposal-label {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.proposal-count {
-  font-weight: 400;
   font-size: 11.5px;
-  color: var(--muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .proposal-menu-actions {
@@ -837,10 +799,6 @@ select {
      the top-left menu button. */
   .proposal-pill {
     max-width: 38vw;
-  }
-
-  .proposal-name {
-    min-height: 44px;
   }
 }
 
@@ -972,13 +930,6 @@ select {
   color: var(--muted);
 }
 
-.plan-error {
-  margin: 0;
-  font-size: 12px;
-  color: var(--danger);
-  font-weight: 600;
-}
-
 .opening-list {
   list-style: none;
   margin: 0;
@@ -1023,16 +974,6 @@ select {
 }
 
 /* ---------- AI proposals ---------- */
-
-.ai-error {
-  font-size: 13px;
-  color: var(--danger);
-  background: rgba(163, 58, 42, 0.08);
-  border: 1px solid rgba(163, 58, 42, 0.25);
-  border-radius: 4px;
-  padding: 8px 10px;
-  margin: 0;
-}
 
 .ai-proposal {
   background: var(--card);
@@ -1340,7 +1281,8 @@ select {
   }
 
   .opening-list button,
-  .save-name {
+  .save-name,
+  .switch-name {
     min-height: 44px;
   }
 
@@ -1513,75 +1455,12 @@ select {
   }
 }
 
-/* ---------- Add-furniture toolbar ("+") ----------
-   A floating pill in the same family as the mode tabs and selection bar, pinned
-   to the bottom-right of the 3D viewport on desktop and mobile. */
+/* ---------- Modal dialog (centred, over a dimmed backdrop) ----------
+   The shared base for every centred pop-up: the furniture add/edit dialog and
+   the confirm/prompt dialogs. One look and one set of mechanics (backdrop click,
+   Esc, focusable buttons) so they all behave the same. */
 
-.add-furniture-btn {
-  position: absolute;
-  right: calc(16px + env(safe-area-inset-right));
-  bottom: calc(16px + env(safe-area-inset-bottom));
-  z-index: 55;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font: inherit;
-  font-weight: 600;
-  font-size: 13px;
-  /* Match the height of the selection bar it sits beside on the bottom row: its
-     pill wrap padding (6px) plus each action's padding (8px) totals 14px of
-     vertical padding around 13px text, so mirror that here. */
-  padding: 14px 14px;
-  border: 1.5px solid var(--ink);
-  border-radius: 999px;
-  background: var(--card);
-  color: var(--ink);
-  cursor: pointer;
-  box-shadow: 0 6px 20px rgba(43, 38, 29, 0.18);
-  transition: background 0.12s, color 0.12s;
-}
-
-.add-furniture-btn:hover {
-  background: var(--ink);
-  color: var(--card);
-}
-
-.add-furniture-icon {
-  font-size: 16px;
-  line-height: 1;
-}
-
-@media (max-width: 480px) {
-  /* On narrow phones drop the label so it reads as a round "+" and stays clear
-     of the (icon-only) selection bar centred at the bottom. Keep it as tall as
-     the selection bar (a perfect circle) so the two pills align. */
-  .add-furniture-btn {
-    bottom: calc(12px + env(safe-area-inset-bottom));
-    justify-content: center;
-    padding: 0;
-    width: 58px;
-    height: 58px;
-  }
-
-  .add-furniture-label {
-    display: none;
-  }
-}
-
-@media (pointer: coarse) {
-  /* Match the selection bar's touch height: its .sel-action tap targets are
-     min 44px, plus the pill's 6px padding and 1.5px border on each side = 58px.
-     Mirror that here so the "+" lines up with the selection bar on touch. */
-  .add-furniture-btn {
-    min-height: 58px;
-  }
-}
-
-/* ---------- Furniture add/edit dialog ----------
-   Centred modal shared by the "+" flow (type picker → form) and "More" on a
-   selected piece (the same form, pre-filled). */
-
-.furniture-dialog-backdrop {
+.modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 70;
@@ -1593,46 +1472,67 @@ select {
   animation: dialog-fade 0.15s ease;
 }
 
-.furniture-dialog {
+.modal {
   display: flex;
   flex-direction: column;
   width: min(440px, 100%);
   max-height: min(82vh, 640px);
   overflow: hidden;
   background: var(--paper);
-  border: 1.5px solid var(--ink);
-  border-radius: 16px;
-  box-shadow: 0 18px 50px rgba(43, 38, 29, 0.3);
+  border: var(--popup-border);
+  border-radius: var(--popup-radius);
+  box-shadow: var(--popup-shadow);
   animation: sheet-up 0.2s ease;
 }
 
-.furniture-dialog-head {
+/* A tighter modal for short confirm/prompt dialogs. */
+.modal-sm {
+  width: min(380px, 100%);
+}
+
+/* Head / title / body are shared by the modal and the side panel so the two
+   surfaces match exactly. */
+.modal-head,
+.side-panel-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px 10px 18px;
+  padding: 12px 12px 10px 16px;
   border-bottom: 1px solid var(--line);
 }
 
-.furniture-dialog-title {
+.modal-title,
+.side-panel-title {
   font-weight: 700;
   font-size: 11.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
-.furniture-dialog-body {
+.modal-body,
+.side-panel-body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 16px 18px;
+  padding: 14px 16px;
 }
 
-.furniture-dialog-foot {
+.modal-foot {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  padding: 12px 18px 16px;
+  padding: 12px 16px 16px;
   border-top: 1px solid var(--line);
+}
+
+/* Confirm/prompt message text inside a modal. */
+.modal-message {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.modal-message:last-child {
+  margin-bottom: 0;
 }
 
 @keyframes dialog-fade {
@@ -1660,32 +1560,11 @@ select {
   /* Leave room for the bottom action bar. */
   max-height: calc(100% - 60px - 96px - env(safe-area-inset-top));
   background: var(--paper);
-  border: 1.5px solid var(--ink);
-  border-radius: 14px;
-  box-shadow: 0 14px 40px rgba(43, 38, 29, 0.24);
+  border: var(--popup-border);
+  border-radius: var(--popup-radius);
+  box-shadow: var(--popup-shadow);
   overflow: hidden;
   animation: sheet-up 0.2s ease;
-}
-
-.side-panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 12px 10px 16px;
-  border-bottom: 1px solid var(--line);
-}
-
-.side-panel-title {
-  font-weight: 700;
-  font-size: 11.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.side-panel-body {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 14px 16px;
 }
 
 @media (max-width: 768px) {

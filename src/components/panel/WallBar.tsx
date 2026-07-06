@@ -1,3 +1,4 @@
+import { defaultOpening, OPENING_ICON } from '../../lib/polygon';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 
@@ -45,19 +46,10 @@ export function WallBar() {
           className="sel-action"
           title="Add a door to this wall"
           aria-label="Add door"
-          onClick={() =>
-            addOpening({
-              kind: 'door',
-              wallId: wall.id,
-              offset: 0.5,
-              width: 0.9,
-              height: 2.1,
-              elevation: 0,
-            })
-          }
+          onClick={() => addOpening(defaultOpening('door', wall.id))}
         >
           <span className="sel-icon" aria-hidden="true">
-            ⌷
+            {OPENING_ICON.door}
           </span>
           <span className="sel-label">Door</span>
         </button>
@@ -66,19 +58,10 @@ export function WallBar() {
           className="sel-action"
           title="Add a window to this wall"
           aria-label="Add window"
-          onClick={() =>
-            addOpening({
-              kind: 'window',
-              wallId: wall.id,
-              offset: 0.8,
-              width: 1.2,
-              height: 1.2,
-              elevation: 0.9,
-            })
-          }
+          onClick={() => addOpening(defaultOpening('window', wall.id))}
         >
           <span className="sel-icon" aria-hidden="true">
-            ⊞
+            {OPENING_ICON.window}
           </span>
           <span className="sel-label">Window</span>
         </button>

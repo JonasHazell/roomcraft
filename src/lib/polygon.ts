@@ -1,4 +1,4 @@
-import type { Point, Wall } from '../types';
+import type { OpeningKind, Point, Wall, WallOpening } from '../types';
 
 /** Snap grid in the 2D editor, meters. */
 export const GRID = 0.1;
@@ -303,4 +303,21 @@ export function wallLabel(walls: Wall[], id: string): string {
 
 export function formatCm(v: number): string {
   return `${Math.round(v * 100).toLocaleString('sv-SE')} cm`;
+}
+
+/** Icon glyph for a door/window, shared by every "add opening" control. */
+export const OPENING_ICON: Record<OpeningKind, string> = {
+  door: '⌷',
+  window: '⊞',
+};
+
+/**
+ * The opening a fresh "Add door/window" control creates, in meters. A single
+ * source of truth so the wall selection bar and the doors-&-windows editor add
+ * identical openings.
+ */
+export function defaultOpening(kind: OpeningKind, wallId: string): Omit<WallOpening, 'id'> {
+  return kind === 'door'
+    ? { kind, wallId, offset: 0.5, width: 0.9, height: 2.1, elevation: 0 }
+    : { kind, wallId, offset: 0.8, width: 1.2, height: 1.2, elevation: 0.9 };
 }

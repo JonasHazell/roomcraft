@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
+import { confirmDialog, promptDialog } from '../../store/useDialogStore';
+import { SwitcherList } from './SwitcherList';
 
 /**
  * Centred pill (on the hamburger row of the 3D view) that switches between a
@@ -65,14 +67,24 @@ export function ProposalSwitcher() {
     setOpen(false);
   };
 
-  const rename = (id: string, current: string) => {
-    const next = window.prompt('Rename proposal', current);
+  const rename = async (id: string, current: string) => {
+    const next = await promptDialog({
+      title: 'Rename proposal',
+      label: 'Proposal name',
+      initial: current,
+    });
     if (next !== null) renameProposal(id, next);
   };
 
-  const remove = (id: string, name: string) => {
+  const remove = async (id: string, name: string) => {
     if (proposals.length <= 1) return;
-    if (window.confirm(`Delete the proposal “${name}”?`)) removeProposal(id);
+    const ok = await confirmDialog({
+      title: 'Delete proposal',
+      message: `Delete the proposal “${name}”?`,
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (ok) removeProposal(id);
   };
 
   return (
@@ -119,50 +131,25 @@ export function ProposalSwitcher() {
       {open && (
         <div className="proposal-menu" role="menu" aria-label="Furnishing proposals">
           <p className="proposal-menu-head">Furnishing proposals</p>
-          <ul className="proposal-list">
-            {proposals.map((p) => (
-              <li key={p.id} className={p.id === activeId ? 'is-active' : ''}>
-                <button
-                  type="button"
-                  className="proposal-name"
-                  aria-current={p.id === activeId}
-                  title={`Switch to “${p.name}”`}
-                  onClick={() => switchTo(p.id)}
-                >
-                  <span className="proposal-check" aria-hidden="true">
-                    {p.id === activeId ? '●' : '○'}
-                  </span>
-                  <span className="proposal-label">{p.name}</span>
-                  <span className="proposal-count">{p.furniture.length}</span>
-                </button>
-                <button
-                  type="button"
-                  className="btn-icon"
-                  title="Rename"
-                  aria-label={`Rename proposal ${p.name}`}
-                  onClick={() => rename(p.id, p.name)}
-                >
-                  ✎
-                </button>
-                <button
-                  type="button"
-                  className="btn-icon"
-                  title="Delete proposal"
-                  aria-label={`Delete proposal ${p.name}`}
-                  disabled={proposals.length <= 1}
-                  onClick={() => remove(p.id, p.name)}
-                >
-                  ✕
-                </button>
-              </li>
-            ))}
-          </ul>
+          <SwitcherList
+            entries={proposals.map((p) => ({
+              id: p.id,
+              name: p.name,
+              count: p.furniture.length,
+              countTitle: `${p.furniture.length} piece(s) of furniture`,
+            }))}
+            activeId={activeId}
+            noun="proposal"
+            onSelect={switchTo}
+            onRename={rename}
+            onDelete={remove}
+          />
           <div className="proposal-menu-actions">
             <button type="button" className="btn btn-accent" onClick={() => create(true)}>
-              ＋ New from current
+              <span aria-hidden="true">＋</span> New from current
             </button>
             <button type="button" className="btn" onClick={() => create(false)}>
-              ＋ New empty
+              <span aria-hidden="true">＋</span> New empty
             </button>
           </div>
         </div>

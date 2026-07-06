@@ -1,5 +1,7 @@
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
+import { confirmDialog, promptDialog } from '../../store/useDialogStore';
+import { SwitcherList } from './SwitcherList';
 
 /**
  * The sidebar's room manager: switch between the project's rooms, create or
@@ -30,14 +32,20 @@ export function RoomSwitcher() {
     select(null);
   };
 
-  const rename = (id: string, current: string) => {
-    const next = window.prompt('Rename room', current);
+  const rename = async (id: string, current: string) => {
+    const next = await promptDialog({ title: 'Rename room', label: 'Room name', initial: current });
     if (next !== null) renameRoom(id, next);
   };
 
-  const remove = (id: string, name: string) => {
+  const remove = async (id: string, name: string) => {
     if (rooms.length <= 1) return;
-    if (window.confirm(`Delete the room “${name}”? Its furnishings are removed too.`)) {
+    const ok = await confirmDialog({
+      title: 'Delete room',
+      message: `Delete the room “${name}”? Its furnishings are removed too.`,
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (ok) {
       removeRoom(id);
       select(null);
     }
@@ -51,58 +59,33 @@ export function RoomSwitcher() {
     setSidebarOpen(false);
   };
 
+  const entries = rooms.map((r) => {
+    const proposals = r.id === activeRoomId ? activeProposals : r.proposals.length;
+    return {
+      id: r.id,
+      name: r.name,
+      count: proposals,
+      countTitle: `${proposals} furnishing option(s)`,
+    };
+  });
+
   return (
     <div className="stack">
-      <ul className="room-list">
-        {rooms.map((r) => {
-          const proposals = r.id === activeRoomId ? activeProposals : r.proposals.length;
-          return (
-            <li key={r.id} className={r.id === activeRoomId ? 'is-active' : ''}>
-              <button
-                type="button"
-                className="room-name"
-                aria-current={r.id === activeRoomId}
-                title={`Switch to “${r.name}”`}
-                onClick={() => switchTo(r.id)}
-              >
-                <span className="room-check" aria-hidden="true">
-                  {r.id === activeRoomId ? '●' : '○'}
-                </span>
-                <span className="room-label">{r.name}</span>
-                <span className="room-count" title={`${proposals} furnishing option(s)`}>
-                  {proposals}
-                </span>
-              </button>
-              <button
-                type="button"
-                className="btn-icon"
-                title="Rename room"
-                aria-label={`Rename room ${r.name}`}
-                onClick={() => rename(r.id, r.name)}
-              >
-                ✎
-              </button>
-              <button
-                type="button"
-                className="btn-icon"
-                title="Delete room"
-                aria-label={`Delete room ${r.name}`}
-                disabled={rooms.length <= 1}
-                onClick={() => remove(r.id, r.name)}
-              >
-                ✕
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      <SwitcherList
+        entries={entries}
+        activeId={activeRoomId}
+        noun="room"
+        onSelect={switchTo}
+        onRename={rename}
+        onDelete={remove}
+      />
 
       <div className="button-row">
         <button type="button" className="btn btn-accent" onClick={() => create(false)}>
-          ＋ New room
+          <span aria-hidden="true">＋</span> New room
         </button>
         <button type="button" className="btn" onClick={() => create(true)}>
-          ⧉ Duplicate
+          <span aria-hidden="true">⧉</span> Duplicate
         </button>
       </div>
 
@@ -111,7 +94,15 @@ export function RoomSwitcher() {
         className={`btn ${mode === '2d' ? 'btn-accent' : ''}`}
         onClick={mode === '2d' ? () => setMode('3d') : editFloorPlan}
       >
-        {mode === '2d' ? '✓ Done editing plan' : '✎ Edit floor plan'}
+        {mode === '2d' ? (
+          <>
+            <span aria-hidden="true">✓</span> Done editing plan
+          </>
+        ) : (
+          <>
+            <span aria-hidden="true">✎</span> Edit floor plan
+          </>
+        )}
       </button>
     </div>
   );
