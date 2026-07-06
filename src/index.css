@@ -753,9 +753,11 @@ select {
 }
 
 @media (max-width: 768px) {
-  /* Clear the fixed hamburger toggle at the top-left. */
+  /* Drop the proposal switcher below the top row (hamburger + view selector)
+     so the centred view tabs no longer cover it — mirrors the plan toolbar. */
   .proposal-switcher {
-    left: calc(64px + env(safe-area-inset-left));
+    top: calc(64px + env(safe-area-inset-top));
+    left: calc(12px + env(safe-area-inset-left));
     z-index: 40;
   }
 
