@@ -1,5 +1,5 @@
 import type { Wall, WallOpening } from '../../types';
-import { formatCm, wallLabel, wallLen } from '../../lib/polygon';
+import { defaultOpening, formatCm, OPENING_ICON, wallLabel, wallLen } from '../../lib/polygon';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { NumberField } from './fields';
@@ -33,34 +33,16 @@ export function OpeningsEditor() {
             <button
               type="button"
               className="btn"
-              onClick={() =>
-                addOpening({
-                  kind: 'door',
-                  wallId: wall.id,
-                  offset: 0.5,
-                  width: 0.9,
-                  height: 2.1,
-                  elevation: 0,
-                })
-              }
+              onClick={() => addOpening(defaultOpening('door', wall.id))}
             >
-              + Door
+              {OPENING_ICON.door} Door
             </button>
             <button
               type="button"
               className="btn"
-              onClick={() =>
-                addOpening({
-                  kind: 'window',
-                  wallId: wall.id,
-                  offset: 0.8,
-                  width: 1.2,
-                  height: 1.2,
-                  elevation: 0.9,
-                })
-              }
+              onClick={() => addOpening(defaultOpening('window', wall.id))}
             >
-              + Window
+              {OPENING_ICON.window} Window
             </button>
           </div>
           {wallOpenings.length === 0 && (
