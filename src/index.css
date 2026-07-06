@@ -711,11 +711,13 @@ select {
   align-items: center;
   justify-content: center;
   flex: none;
-  width: 32px;
-  height: 32px;
+  /* Match the 52px height of the bottom pill bars so the whole 3D-view pill
+     family reads at one size. */
+  width: 52px;
+  height: 52px;
   padding: 0;
   font: inherit;
-  font-size: 18px;
+  font-size: 22px;
   line-height: 1;
   border: 1.5px solid var(--ink);
   border-radius: 999px;
@@ -736,7 +738,9 @@ select {
   max-width: 46vw;
   font: inherit;
   font-size: 13px;
-  padding: 6px 12px;
+  /* Same 52px height as the arrows and the bottom pill bars. */
+  min-height: 52px;
+  padding: 6px 16px;
   border: 1.5px solid var(--ink);
   border-radius: 999px;
   background: var(--card);
@@ -1339,6 +1343,11 @@ select {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  /* Shared control height so every pill bar (room / furniture / wall / floor)
+     is the same overall height, whether its actions hold a glyph, a label or a
+     taller colour swatch. Without this the swatch bars sit a few px taller than
+     the icon-only bars and the pill jumps size as the selection changes. */
+  min-height: 38px;
   padding: 8px 12px;
   border: 0;
   border-radius: 999px;
