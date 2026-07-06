@@ -5,6 +5,7 @@ import { ActionBar } from './components/panel/ActionBar';
 import { WallBar } from './components/panel/WallBar';
 import { FloorBar } from './components/panel/FloorBar';
 import { SidePanel } from './components/panel/SidePanel';
+import { ProposalSwitcher } from './components/panel/ProposalSwitcher';
 import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { Scene } from './components/scene/Scene';
 import { PlanEditor } from './components/plan/PlanEditor';
@@ -87,6 +88,7 @@ function App() {
       />
       <main className="viewport">
         {mode === '2d' ? <PlanEditor /> : <Scene />}
+        <ProposalSwitcher />
         <nav className="mode-tabs">
           <button
             type="button"

@@ -34,6 +34,8 @@ function makeDesign(furniture: FurnitureItem[], openings?: Omit<WallOpening, 'id
     walls,
     openings: (openings ?? defaultOpenings).map((o, i) => ({ ...o, id: `o${i}` })),
     furniture,
+    proposals: [{ id: 'p0', name: 'Proposal 1', furniture }],
+    activeProposalId: 'p0',
   };
 }
 
