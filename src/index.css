@@ -674,8 +674,38 @@ select {
 .proposal-switcher {
   position: absolute;
   top: calc(12px + env(safe-area-inset-top));
-  left: calc(14px + env(safe-area-inset-left));
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 55;
+}
+
+.proposal-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.proposal-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.proposal-arrow:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .proposal-pill {
@@ -713,7 +743,8 @@ select {
 .proposal-menu {
   position: absolute;
   top: calc(100% + 8px);
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: min(300px, 80vw);
   padding: 10px;
   background: var(--paper);
@@ -800,12 +831,10 @@ select {
 }
 
 @media (max-width: 768px) {
-  /* Drop the proposal switcher below the top row (hamburger + view selector)
-     so the centred view tabs no longer cover it — mirrors the plan toolbar. */
-  .proposal-switcher {
-    top: calc(64px + env(safe-area-inset-top));
-    left: calc(12px + env(safe-area-inset-left));
-    z-index: 40;
+  /* Keep the switcher centred on the hamburger row; narrow the pill so it clears
+     the top-left menu button. */
+  .proposal-pill {
+    max-width: 38vw;
   }
 
   .proposal-name {

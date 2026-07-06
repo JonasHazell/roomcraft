@@ -3,10 +3,11 @@ import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 
 /**
- * Top-left pill that switches between a room's furnishing proposals — the same
- * room shape, different furniture. Sits next to the Floor plan / 3D view tabs.
- * Open the menu to switch, rename, delete, or create a new proposal (starting
- * either from the current furnishing or an empty room).
+ * Centred pill (on the hamburger row of the 3D view) that switches between a
+ * room's furnishing proposals — the same room shape, different furniture. The
+ * flanking ‹ / › arrows step through proposals without opening the menu; open
+ * the menu to switch, rename, delete, or create a new proposal (starting either
+ * from the current furnishing or an empty room).
  */
 export function ProposalSwitcher() {
   const proposals = useDesignStore((s) => s.design.proposals);
@@ -49,6 +50,15 @@ export function ProposalSwitcher() {
     setOpen(false);
   };
 
+  // Step to the previous/next proposal without opening the menu; wraps around.
+  const step = (dir: 1 | -1) => {
+    if (proposals.length <= 1) return;
+    const i = proposals.findIndex((p) => p.id === active?.id);
+    const next = proposals[(i + dir + proposals.length) % proposals.length];
+    setActiveProposal(next.id);
+    select(null);
+  };
+
   const create = (copyCurrent: boolean) => {
     addProposal({ copyCurrent });
     select(null);
@@ -67,22 +77,44 @@ export function ProposalSwitcher() {
 
   return (
     <div className="proposal-switcher" ref={rootRef}>
-      <button
-        type="button"
-        className="proposal-pill"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        title="Switch furnishing proposal"
-        onClick={() => setOpen((o) => !o)}
-      >
-        <span className="proposal-pill-icon" aria-hidden="true">
-          ◗
-        </span>
-        <span className="proposal-pill-name">{active?.name ?? 'Proposal'}</span>
-        <span className="proposal-pill-caret" aria-hidden="true">
-          ▾
-        </span>
-      </button>
+      <div className="proposal-nav">
+        <button
+          type="button"
+          className="proposal-arrow"
+          title="Previous proposal"
+          aria-label="Previous proposal"
+          disabled={proposals.length <= 1}
+          onClick={() => step(-1)}
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          className="proposal-pill"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          title="Switch furnishing proposal"
+          onClick={() => setOpen((o) => !o)}
+        >
+          <span className="proposal-pill-icon" aria-hidden="true">
+            ◗
+          </span>
+          <span className="proposal-pill-name">{active?.name ?? 'Proposal'}</span>
+          <span className="proposal-pill-caret" aria-hidden="true">
+            ▾
+          </span>
+        </button>
+        <button
+          type="button"
+          className="proposal-arrow"
+          title="Next proposal"
+          aria-label="Next proposal"
+          disabled={proposals.length <= 1}
+          onClick={() => step(1)}
+        >
+          ›
+        </button>
+      </div>
 
       {open && (
         <div className="proposal-menu" role="menu" aria-label="Furnishing proposals">
