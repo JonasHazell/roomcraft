@@ -711,11 +711,13 @@ select {
   align-items: center;
   justify-content: center;
   flex: none;
-  width: 32px;
-  height: 32px;
+  /* Match the 52px height of the bottom pill bars so the whole 3D-view pill
+     family reads at one size. */
+  width: 52px;
+  height: 52px;
   padding: 0;
   font: inherit;
-  font-size: 18px;
+  font-size: 22px;
   line-height: 1;
   border: 1.5px solid var(--ink);
   border-radius: 999px;
@@ -736,7 +738,9 @@ select {
   max-width: 46vw;
   font: inherit;
   font-size: 13px;
-  padding: 6px 12px;
+  /* Same 52px height as the arrows and the bottom pill bars. */
+  min-height: 52px;
+  padding: 6px 16px;
   border: 1.5px solid var(--ink);
   border-radius: 999px;
   background: var(--card);
