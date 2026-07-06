@@ -155,7 +155,9 @@ body {
     position: fixed;
     top: calc(12px + env(safe-area-inset-top));
     left: calc(12px + env(safe-area-inset-left));
-    z-index: 60;
+    /* Above the drawer (and its backdrop) so the ✕ close button stays clickable
+       while the menu is open. */
+    z-index: 64;
     width: 42px;
     height: 42px;
     padding: 0;
@@ -174,7 +176,10 @@ body {
     top: 0;
     left: 0;
     bottom: 0;
-    z-index: 50;
+    /* Sit above the 3D-view overlays (bottom action bars z:55, side panel z:60),
+       which share a stacking context with the drawer, so the open menu covers
+       them instead of the buttons floating on top of it. */
+    z-index: 63;
     width: min(342px, 86vw);
     flex-basis: auto;
     transform: translateX(-100%);
@@ -195,7 +200,9 @@ body {
     display: block;
     position: fixed;
     inset: 0;
-    z-index: 45;
+    /* Between the viewport overlays and the drawer: covers the 3D-view buttons
+       (z:55) and side panel (z:60) so they can't be tapped behind the menu. */
+    z-index: 62;
     background: rgba(43, 38, 29, 0.4);
   }
 }
