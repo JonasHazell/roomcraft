@@ -130,20 +130,32 @@ export function ProposalSwitcher() {
 
       {open && (
         <div className="proposal-menu" role="menu" aria-label="Furnishing proposals">
-          <p className="proposal-menu-head">Furnishing proposals</p>
-          <SwitcherList
-            entries={proposals.map((p) => ({
-              id: p.id,
-              name: p.name,
-              count: p.furniture.length,
-              countTitle: `${p.furniture.length} piece(s) of furniture`,
-            }))}
-            activeId={activeId}
-            noun="proposal"
-            onSelect={switchTo}
-            onRename={rename}
-            onDelete={remove}
-          />
+          <div className="proposal-menu-head">
+            <span className="proposal-menu-title">Furnishing proposals</span>
+            <button
+              type="button"
+              className="btn-icon"
+              aria-label="Close"
+              onClick={() => setOpen(false)}
+            >
+              ✕
+            </button>
+          </div>
+          <div className="proposal-menu-body">
+            <SwitcherList
+              entries={proposals.map((p) => ({
+                id: p.id,
+                name: p.name,
+                count: p.furniture.length,
+                countTitle: `${p.furniture.length} piece(s) of furniture`,
+              }))}
+              activeId={activeId}
+              noun="proposal"
+              onSelect={switchTo}
+              onRename={rename}
+              onDelete={remove}
+            />
+          </div>
           <div className="proposal-menu-actions">
             <button type="button" className="btn btn-accent" onClick={() => create(true)}>
               <span aria-hidden="true">＋</span> New from current
