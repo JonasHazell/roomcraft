@@ -20,7 +20,7 @@ function makeRoom(): Design {
     b: pts[(i + 1) % pts.length],
   }));
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 'test',
     updatedAt: '',
     room: { height: 2.4, floorColor: '#fff', wallColor: '#fff' },
@@ -29,6 +29,8 @@ function makeRoom(): Design {
       { id: 'd0', kind: 'door', wallId: 'w0', offset: 1.5, width: 1.0, height: 2.0, elevation: 0 },
     ],
     furniture: [],
+    proposals: [{ id: 'p0', name: 'Proposal 1', furniture: [] }],
+    activeProposalId: 'p0',
   };
 }
 

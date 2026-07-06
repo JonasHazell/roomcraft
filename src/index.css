@@ -622,6 +622,148 @@ select {
   color: var(--card);
 }
 
+/* ---------- Proposal switcher (furnishing variants) ---------- */
+
+.proposal-switcher {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  left: calc(14px + env(safe-area-inset-left));
+  z-index: 55;
+}
+
+.proposal-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 46vw;
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 12px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.proposal-pill-icon {
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.proposal-pill-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.proposal-pill-caret {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.proposal-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(300px, 80vw);
+  padding: 10px;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(43, 38, 29, 0.24);
+  animation: sheet-up 0.2s ease;
+}
+
+.proposal-menu-head {
+  margin: 2px 2px 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.proposal-list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.proposal-list li {
+  display: flex;
+  align-items: center;
+}
+
+.proposal-list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.proposal-list li.is-active {
+  background: rgba(47, 111, 221, 0.08);
+}
+
+.proposal-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.proposal-check {
+  font-size: 10px;
+  color: var(--select);
+}
+
+.proposal-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.proposal-count {
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.proposal-menu-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.proposal-menu-actions .btn {
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  /* Clear the fixed hamburger toggle at the top-left. */
+  .proposal-switcher {
+    left: calc(64px + env(safe-area-inset-left));
+    z-index: 40;
+  }
+
+  .proposal-name {
+    min-height: 44px;
+  }
+}
+
 /* ---------- Floor plan (2D) ---------- */
 
 .plan-editor {

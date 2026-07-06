@@ -79,7 +79,15 @@ export interface FurnitureLibraryEntry {
   color: string;
 }
 
-export const SCHEMA_VERSION = 2;
+/** A named furnishing variant of one room. The room shape (walls, openings,
+ *  colours) is shared across all proposals; only the furniture differs. */
+export interface Proposal {
+  id: string;
+  name: string;
+  furniture: FurnitureItem[];
+}
+
+export const SCHEMA_VERSION = 3;
 
 export interface Design {
   schemaVersion: number;
@@ -89,5 +97,15 @@ export interface Design {
   /** Exterior walls first, in loop order (walls[i].b === walls[i+1].a); then interior walls. */
   walls: Wall[];
   openings: WallOpening[];
+  /**
+   * The active proposal's furnishing — the single live source of truth while
+   * editing. Every furniture action reads and writes this array; the matching
+   * entry in `proposals` is refreshed from it whenever the design is persisted,
+   * exported or a different proposal is activated.
+   */
   furniture: FurnitureItem[];
+  /** Named furnishing variants of this room; always at least one. */
+  proposals: Proposal[];
+  /** Which proposal `furniture` currently mirrors. */
+  activeProposalId: string;
 }

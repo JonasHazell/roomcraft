@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
-import type { Design, FurnitureLibraryEntry, Wall } from '../types';
+import type { Design, FurnitureLibraryEntry, Proposal, Wall } from '../types';
 import { SCHEMA_VERSION } from '../types';
 import { isAxisParallel, validateExteriorLoop } from './polygon';
 import { FURNITURE_KINDS } from './furnitureCatalog';
@@ -77,18 +77,42 @@ const openingSchemaV2 = z.object({
   elevation: meters(20),
 });
 
+const roomSchema = z.object({
+  height: z.number().min(1).max(20),
+  floorColor: color,
+  wallColor: color,
+});
+
 const designSchemaV2 = z.object({
   schemaVersion: z.literal(2),
   name: z.string().max(200),
   updatedAt: z.string(),
-  room: z.object({
-    height: z.number().min(1).max(20),
-    floorColor: color,
-    wallColor: color,
-  }),
+  room: roomSchema,
   walls: z.array(wallSchema).max(400),
   openings: z.array(openingSchemaV2).max(200),
   furniture: z.array(furnitureSchema).max(500),
+});
+
+type DesignV2 = z.infer<typeof designSchemaV2>;
+
+// ---- v3 (current format: several furnishing proposals per room) ----
+
+const proposalSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().max(100),
+  furniture: z.array(furnitureSchema).max(500),
+});
+
+const designSchemaV3 = z.object({
+  schemaVersion: z.literal(3),
+  name: z.string().max(200),
+  updatedAt: z.string(),
+  room: roomSchema,
+  walls: z.array(wallSchema).max(400),
+  openings: z.array(openingSchemaV2).max(200),
+  furniture: z.array(furnitureSchema).max(500),
+  proposals: z.array(proposalSchema).min(1).max(50),
+  activeProposalId: z.string().min(1),
 });
 
 /** Structural post-validation that the zod schema cannot express. */
@@ -111,7 +135,7 @@ function validateDesign(d: Design): Design {
 }
 
 /** The v1 room becomes four exterior walls in canonical loop order; offset semantics are preserved. */
-export function migrateV1toV2(d: DesignV1): Design {
+export function migrateV1toV2(d: DesignV1): DesignV2 {
   const { width: w, length: l, height, floorColor, wallColor } = d.room;
   const mkWall = (a: Wall['a'], b: Wall['b']): Wall => ({
     id: nanoid(8),
@@ -125,7 +149,7 @@ export function migrateV1toV2(d: DesignV1): Design {
   const west = mkWall({ x: -w / 2, z: l / 2 }, { x: -w / 2, z: -l / 2 });
   const idByCompass = { north: north.id, east: east.id, south: south.id, west: west.id };
   return {
-    schemaVersion: SCHEMA_VERSION,
+    schemaVersion: 2,
     name: d.name,
     updatedAt: d.updatedAt,
     room: { height, floorColor, wallColor },
@@ -135,11 +159,57 @@ export function migrateV1toV2(d: DesignV1): Design {
   };
 }
 
+/** The single furnishing of a v2 design becomes the room's first proposal. */
+export function migrateV2toV3(d: DesignV2): Design {
+  const proposal: Proposal = { id: nanoid(8), name: 'Proposal 1', furniture: d.furniture };
+  return {
+    ...d,
+    schemaVersion: SCHEMA_VERSION,
+    proposals: [proposal],
+    activeProposalId: proposal.id,
+  };
+}
+
+/**
+ * Writes the live `furniture` back into its proposal so the stored proposal
+ * snapshot matches what is on screen. Called before persisting/exporting and
+ * before switching proposals.
+ */
+export function syncActiveProposal(d: Design): Design {
+  return {
+    ...d,
+    proposals: d.proposals.map((p) =>
+      p.id === d.activeProposalId ? { ...p, furniture: d.furniture } : p,
+    ),
+  };
+}
+
+/**
+ * Guarantees the proposal invariants: at least one proposal, a valid active id,
+ * and `furniture` mirroring the active proposal. Runs after every load so older
+ * or hand-edited data can't leave the design in an inconsistent state.
+ */
+export function normalizeProposals(d: Design): Design {
+  if (d.proposals.length === 0) {
+    const proposal: Proposal = { id: nanoid(8), name: 'Proposal 1', furniture: d.furniture ?? [] };
+    return { ...d, proposals: [proposal], activeProposalId: proposal.id, furniture: proposal.furniture };
+  }
+  const active = d.proposals.find((p) => p.id === d.activeProposalId) ?? d.proposals[0];
+  return { ...d, activeProposalId: active.id, furniture: active.furniture };
+}
+
 /** The single entry point for all untrusted design data (import, saves, rehydration). */
 export function parseDesign(raw: unknown): Design {
   const version = (raw as { schemaVersion?: unknown } | null)?.schemaVersion;
-  if (version === 1) return validateDesign(migrateV1toV2(designSchemaV1.parse(raw)));
-  if (version === SCHEMA_VERSION) return validateDesign(designSchemaV2.parse(raw));
+  if (version === 1) {
+    return normalizeProposals(validateDesign(migrateV2toV3(migrateV1toV2(designSchemaV1.parse(raw)))));
+  }
+  if (version === 2) {
+    return normalizeProposals(validateDesign(migrateV2toV3(designSchemaV2.parse(raw))));
+  }
+  if (version === SCHEMA_VERSION) {
+    return normalizeProposals(validateDesign(designSchemaV3.parse(raw)));
+  }
   throw new Error(
     `The file has schema version ${String(version)}, but the app supports version ${SCHEMA_VERSION}.`,
   );
@@ -175,7 +245,9 @@ export async function importDesign(file: File): Promise<Design> {
 }
 
 export function exportDesign(design: Design) {
-  const blob = new Blob([JSON.stringify(design, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(syncActiveProposal(design), null, 2)], {
+    type: 'application/json',
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -217,7 +289,7 @@ export function listSaves(): SaveInfo[] {
 
 export function saveAs(name: string, design: Design) {
   const saves = readSaves();
-  saves[name] = { ...design, name, updatedAt: new Date().toISOString() };
+  saves[name] = { ...syncActiveProposal(design), name, updatedAt: new Date().toISOString() };
   writeSaves(saves);
 }
 

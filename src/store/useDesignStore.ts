@@ -8,6 +8,7 @@ import type {
   FurnitureLibraryEntry,
   FurnitureSize,
   Point,
+  Proposal,
   Room,
   Wall,
   WallOpening,
@@ -27,8 +28,26 @@ import {
   wallsFromPolygon,
   type LoopValidation,
 } from '../lib/polygon';
-import { parseDesignSafe } from '../lib/persistence';
+import { normalizeProposals, parseDesignSafe, syncActiveProposal } from '../lib/persistence';
 import { FURNITURE_CATALOG } from '../lib/furnitureCatalog';
+
+/** First free "Proposal N" name for a fresh proposal. */
+function nextProposalName(proposals: Proposal[]): string {
+  const taken = new Set(proposals.map((p) => p.name));
+  let n = proposals.length + 1;
+  while (taken.has(`Proposal ${n}`)) n++;
+  return `Proposal ${n}`;
+}
+
+/** Deep-copies furniture with fresh ids — used when a new proposal starts from an existing one. */
+function cloneFurniture(items: FurnitureItem[]): FurnitureItem[] {
+  return items.map((f) => ({
+    ...f,
+    id: nanoid(8),
+    size: { ...f.size },
+    position: { ...f.position },
+  }));
+}
 
 export type FurniturePatch = Partial<Omit<FurnitureItem, 'id' | 'size' | 'position'>> & {
   size?: Partial<FurnitureItem['size']>;
@@ -41,6 +60,7 @@ export function createDefaultDesign(): Design {
   const east: Wall = { id: nanoid(8), kind: 'exterior', a: { x: 2, z: -2.5 }, b: { x: 2, z: 2.5 } };
   const south: Wall = { id: nanoid(8), kind: 'exterior', a: { x: 2, z: 2.5 }, b: { x: -2, z: 2.5 } };
   const west: Wall = { id: nanoid(8), kind: 'exterior', a: { x: -2, z: 2.5 }, b: { x: -2, z: -2.5 } };
+  const proposalId = nanoid(8);
   return {
     schemaVersion: SCHEMA_VERSION,
     name: 'My room',
@@ -51,6 +71,8 @@ export function createDefaultDesign(): Design {
       wallColor: '#efe8da',
     },
     walls: [north, east, south, west],
+    proposals: [{ id: proposalId, name: 'Proposal 1', furniture: [] }],
+    activeProposalId: proposalId,
     openings: [
       {
         id: nanoid(8),
@@ -102,8 +124,20 @@ interface DesignState {
   updateFurniture: (id: string, patch: FurniturePatch) => void;
   moveFurniture: (id: string, x: number, z: number) => void;
   removeFurniture: (id: string) => void;
-  /** Replaces the entire furnishing (e.g. when an AI proposal is applied). */
+  /** Replaces the entire furnishing of the active proposal. */
   setFurniture: (items: Omit<FurnitureItem, 'id'>[]) => void;
+  /**
+   * Creates a new furnishing proposal for the room and makes it active.
+   * `copyCurrent` starts it from the active proposal's furniture; otherwise empty.
+   */
+  addProposal: (opts: { name?: string; copyCurrent: boolean }) => string;
+  /** Creates a new proposal from a given furnishing (e.g. an applied AI layout) and activates it. */
+  addProposalFromFurniture: (name: string, items: Omit<FurnitureItem, 'id'>[]) => string;
+  /** Activates another proposal; the room shape stays, only the furnishing swaps. */
+  setActiveProposal: (id: string) => void;
+  renameProposal: (id: string, name: string) => void;
+  /** Removes a proposal; a room always keeps at least one. */
+  removeProposal: (id: string) => void;
   loadDesign: (d: Design) => void;
   newDesign: () => void;
 }
@@ -424,13 +458,100 @@ export const useDesignStore = create<DesignState>()(
         set({ design: touch({ ...d, furniture }) });
       },
 
+      addProposal: ({ name, copyCurrent }) => {
+        // Snapshot the current furnishing into its proposal before adding a sibling.
+        const d = syncActiveProposal(get().design);
+        const id = nanoid(8);
+        const furniture = copyCurrent ? cloneFurniture(d.furniture) : [];
+        const proposal: Proposal = { id, name: name?.trim() || nextProposalName(d.proposals), furniture };
+        set({
+          design: touch({
+            ...d,
+            proposals: [...d.proposals, proposal],
+            activeProposalId: id,
+            furniture,
+          }),
+        });
+        return id;
+      },
+
+      addProposalFromFurniture: (name, items) => {
+        const d = syncActiveProposal(get().design);
+        const poly = floorPolygon(d.walls);
+        const furniture = items.map((it) => clampFurniture({ ...it, id: nanoid(8) }, poly));
+        const id = nanoid(8);
+        const proposal: Proposal = { id, name: name.trim() || nextProposalName(d.proposals), furniture };
+        set({
+          design: touch({
+            ...d,
+            proposals: [...d.proposals, proposal],
+            activeProposalId: id,
+            furniture,
+          }),
+        });
+        return id;
+      },
+
+      setActiveProposal: (id) => {
+        const current = get().design;
+        if (id === current.activeProposalId) return;
+        // Persist the on-screen furnishing before swapping in the target's.
+        const d = syncActiveProposal(current);
+        const target = d.proposals.find((p) => p.id === id);
+        if (!target) return;
+        const poly = floorPolygon(d.walls);
+        set({
+          design: touch({
+            ...d,
+            activeProposalId: id,
+            furniture: target.furniture.map((f) => clampFurniture(f, poly)),
+          }),
+        });
+      },
+
+      renameProposal: (id, name) => {
+        const d = get().design;
+        const trimmed = name.trim() || nextProposalName(d.proposals.filter((p) => p.id !== id));
+        set({
+          design: touch({
+            ...d,
+            proposals: d.proposals.map((p) => (p.id === id ? { ...p, name: trimmed } : p)),
+          }),
+        });
+      },
+
+      removeProposal: (id) => {
+        const current = get().design;
+        if (current.proposals.length <= 1) return; // keep at least one proposal per room
+        const d = syncActiveProposal(current);
+        const idx = d.proposals.findIndex((p) => p.id === id);
+        if (idx === -1) return;
+        const proposals = d.proposals.filter((p) => p.id !== id);
+        if (id !== d.activeProposalId) {
+          set({ design: touch({ ...d, proposals }) });
+          return;
+        }
+        // Removing the active one: fall back to the previous proposal in the list.
+        const nextActive = proposals[Math.max(0, idx - 1)];
+        const poly = floorPolygon(d.walls);
+        set({
+          design: touch({
+            ...d,
+            proposals,
+            activeProposalId: nextActive.id,
+            furniture: nextActive.furniture.map((f) => clampFurniture(f, poly)),
+          }),
+        });
+      },
+
       loadDesign: (loaded) => {
-        // Defensive re-clamping, e.g. after importing an edited file.
-        const poly = floorPolygon(loaded.walls);
+        // Defensive re-clamping and proposal normalization, e.g. after importing an edited file.
+        const normalized = normalizeProposals(loaded);
+        const poly = floorPolygon(normalized.walls);
         const design: Design = {
-          ...loaded,
-          openings: loaded.openings.map((o) => clampOpeningIn(loaded, o)),
-          furniture: loaded.furniture.map((f) => clampFurniture(f, poly)),
+          ...normalized,
+          openings: normalized.openings.map((o) => clampOpeningIn(normalized, o)),
+          furniture: normalized.furniture.map((f) => clampFurniture(f, poly)),
         };
         set({ design });
       },
@@ -441,7 +562,7 @@ export const useDesignStore = create<DesignState>()(
       name: 'roomcraft:current',
       version: SCHEMA_VERSION,
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ design: s.design }),
+      partialize: (s) => ({ design: syncActiveProposal(s.design) }),
       // Older blobs (zustand version 0) are routed through the same zod+migration
       // path as import; broken data falls back to the default instead of crashing.
       migrate: (persisted) => {

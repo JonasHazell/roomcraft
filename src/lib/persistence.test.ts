@@ -35,7 +35,7 @@ describe('migrateV1toV2', () => {
   const d = parseDesign(V1_DESIGN);
 
   it('builds four chained exterior walls with positive winding', () => {
-    expect(d.schemaVersion).toBe(2);
+    expect(d.schemaVersion).toBe(3);
     expect(d.walls).toHaveLength(4);
     expect(d.walls.every((w) => w.kind === 'exterior')).toBe(true);
     expect(validateExteriorLoop(d.walls)).toEqual({ ok: true });
@@ -62,6 +62,46 @@ describe('migrateV1toV2', () => {
     expect(d.room).toEqual({ height: 2.5, floorColor: '#c9a878', wallColor: '#efe8da' });
     expect(d.furniture).toHaveLength(1);
     expect(d.name).toBe('My room');
+  });
+
+  it('wraps the furnishing into a single active proposal', () => {
+    expect(d.proposals).toHaveLength(1);
+    expect(d.activeProposalId).toBe(d.proposals[0].id);
+    // The active furnishing mirrors the active proposal.
+    expect(d.proposals[0].furniture).toEqual(d.furniture);
+  });
+});
+
+describe('proposals', () => {
+  it('round-trips several proposals and keeps furniture in sync with the active one', () => {
+    const base = parseDesign(V1_DESIGN);
+    const withTwo = {
+      ...base,
+      proposals: [
+        base.proposals[0],
+        { id: 'p2', name: 'Empty', furniture: [] },
+      ],
+      activeProposalId: 'p2',
+      furniture: [], // active is the empty proposal
+    };
+    const parsed = parseDesign(JSON.parse(JSON.stringify(withTwo)));
+    expect(parsed.proposals).toHaveLength(2);
+    expect(parsed.activeProposalId).toBe('p2');
+    expect(parsed.furniture).toHaveLength(0);
+  });
+
+  it('falls back to the first proposal when the active id is unknown', () => {
+    const base = parseDesign(V1_DESIGN);
+    const broken = { ...base, activeProposalId: 'nope' };
+    const parsed = parseDesignSafe(JSON.parse(JSON.stringify(broken)));
+    expect(parsed?.activeProposalId).toBe(base.proposals[0].id);
+    expect(parsed?.furniture).toEqual(base.proposals[0].furniture);
+  });
+
+  it('rejects a design with no proposals', () => {
+    const base = parseDesign(V1_DESIGN);
+    const broken = { ...base, proposals: [] };
+    expect(parseDesignSafe(JSON.parse(JSON.stringify(broken)))).toBeNull();
   });
 });
 

@@ -10,7 +10,7 @@ import {
 
 export function AiProposalsPanel() {
   const design = useDesignStore((s) => s.design);
-  const setFurniture = useDesignStore((s) => s.setFurniture);
+  const addProposalFromFurniture = useDesignStore((s) => s.addProposalFromFurniture);
   const select = useUiStore((s) => s.select);
 
   const [needs, setNeeds] = useState('');
@@ -35,7 +35,9 @@ export function AiProposalsPanel() {
   }
 
   function apply(proposal: AiProposal) {
-    setFurniture(proposal.furniture.map(toFurnitureItem));
+    // Keep the AI layout as its own switchable proposal instead of overwriting
+    // the current furnishing.
+    addProposalFromFurniture(proposal.title, proposal.furniture.map(toFurnitureItem));
     select(null);
     setAppliedTitle(proposal.title);
   }
@@ -100,7 +102,7 @@ export function AiProposalsPanel() {
           </ul>
           <div className="button-row">
             <button type="button" className="btn" onClick={() => apply(p)}>
-              Use this furnishing
+              Save as proposal
             </button>
           </div>
         </article>
