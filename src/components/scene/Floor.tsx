@@ -11,6 +11,13 @@ export function deselectOnStillClick(e: ThreeEvent<MouseEvent>) {
   useUiStore.getState().select(null);
 }
 
+/** A still click on the floor selects it, surfacing the floor-colour bar. */
+function selectFloorOnStillClick(e: ThreeEvent<MouseEvent>) {
+  if (e.delta > 3) return;
+  e.stopPropagation();
+  useUiStore.getState().select({ kind: 'floor' });
+}
+
 export function Floor() {
   const walls = useDesignStore((s) => s.design.walls);
   const floorColor = useDesignStore((s) => s.design.room.floorColor);
@@ -30,7 +37,7 @@ export function Floor() {
       rotation-x={-Math.PI / 2}
       geometry={geometry}
       receiveShadow
-      onClick={deselectOnStillClick}
+      onClick={selectFloorOnStillClick}
     >
       <meshStandardMaterial color={floorColor} roughness={0.9} />
     </mesh>

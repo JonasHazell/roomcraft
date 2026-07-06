@@ -710,7 +710,8 @@ select {
 }
 
 .plan-toolbar,
-.plan-wall-panel {
+.plan-wall-panel,
+.plan-room-panel {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1205,6 +1206,37 @@ select {
   background: var(--line);
 }
 
+/* A colour swatch that sits inside a pill bar (wall/floor colour). The native
+   colour input is styled down to a round chip so it reads like the other icons. */
+.sel-color {
+  cursor: pointer;
+}
+
+.sel-color-input {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: none;
+  cursor: pointer;
+  flex: none;
+}
+
+.sel-color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.sel-color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 999px;
+}
+
+.sel-color-input::-moz-color-swatch {
+  border: none;
+  border-radius: 999px;
+}
+
 @media (max-width: 768px) {
   /* On phones keep the bar as a floating pill (like the Floor plan / 3D view
      tabs) instead of a full-width bar pinned flush to the bottom edge. */
@@ -1362,6 +1394,61 @@ select {
   }
   to {
     opacity: 1;
+  }
+}
+
+/* ---------- Side panel (AI / validation / openings) ----------
+   A floating card on the right of the 3D viewport. Unlike the furniture dialog
+   it doesn't cover the scene, so validation highlights and opening edits stay
+   visible while the panel is open. */
+
+.side-panel {
+  position: absolute;
+  top: calc(60px + env(safe-area-inset-top));
+  right: calc(14px + env(safe-area-inset-right));
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  width: min(360px, calc(100% - 28px));
+  /* Leave room for the bottom action bar. */
+  max-height: calc(100% - 60px - 96px - env(safe-area-inset-top));
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(43, 38, 29, 0.24);
+  overflow: hidden;
+  animation: sheet-up 0.2s ease;
+}
+
+.side-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 12px 10px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.side-panel-title {
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.side-panel-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 16px;
+}
+
+@media (max-width: 768px) {
+  /* On phones widen to a near-full-width sheet on the right, still clear of the
+     mode tabs above and the action bar below. */
+  .side-panel {
+    left: calc(12px + env(safe-area-inset-left));
+    right: calc(12px + env(safe-area-inset-right));
+    width: auto;
+    max-height: calc(100% - 56px - 92px - env(safe-area-inset-top));
   }
 }
 

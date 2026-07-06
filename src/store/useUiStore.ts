@@ -1,7 +1,17 @@
 import { create } from 'zustand';
 
-export type Selection = { kind: 'furniture' | 'wall'; id: string } | null;
+export type Selection =
+  | { kind: 'furniture' | 'wall'; id: string }
+  | { kind: 'floor' }
+  | null;
 export type EditorMode = '2d' | '3d';
+
+/**
+ * A global side panel opened from the bottom action bar (AI, validation) or the
+ * wall action bar (openings). Independent of the current selection, except
+ * `openings`, which reads whichever wall is selected.
+ */
+export type Panel = 'ai' | 'validation' | 'openings' | null;
 
 /**
  * The furniture add/edit dialog. `create` starts on the type picker and commits
@@ -16,6 +26,7 @@ interface UiState {
   mode: EditorMode;
   sidebarOpen: boolean;
   furnitureDialog: FurnitureDialog;
+  panel: Panel;
   select: (selection: Selection) => void;
   setDragging: (id: string | null) => void;
   setMode: (mode: EditorMode) => void;
@@ -24,6 +35,8 @@ interface UiState {
   openAddFurniture: () => void;
   openEditFurniture: (id: string) => void;
   closeFurnitureDialog: () => void;
+  openPanel: (panel: Exclude<Panel, null>) => void;
+  closePanel: () => void;
 }
 
 export const useUiStore = create<UiState>()((set) => ({
@@ -33,6 +46,7 @@ export const useUiStore = create<UiState>()((set) => ({
   // Only affects the mobile drawer; on desktop the sidebar is always visible.
   sidebarOpen: false,
   furnitureDialog: null,
+  panel: null,
   select: (selection) => set({ selection }),
   setDragging: (draggingId) => set({ draggingId }),
   setMode: (mode) => set({ mode }),
@@ -42,4 +56,6 @@ export const useUiStore = create<UiState>()((set) => ({
   openEditFurniture: (id) =>
     set({ selection: { kind: 'furniture', id }, furnitureDialog: { mode: 'edit', id } }),
   closeFurnitureDialog: () => set({ furnitureDialog: null }),
+  openPanel: (panel) => set({ panel }),
+  closePanel: () => set({ panel: null }),
 }));

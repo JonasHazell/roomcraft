@@ -57,6 +57,7 @@ export function FurnitureDialog() {
   const updateFurniture = useDesignStore((s) => s.updateFurniture);
   const libraryEntries = useLibraryStore((s) => s.entries);
   const saveToLibrary = useLibraryStore((s) => s.save);
+  const removeFromLibrary = useLibraryStore((s) => s.remove);
 
   // In create mode we hold a local draft; `null` means the type picker is showing.
   const [draft, setDraft] = useState<FurnitureDraft | null>(null);
@@ -216,6 +217,15 @@ export function FurnitureDialog() {
                         <span className="save-date">
                           {cm(entry.size.width)}×{cm(entry.size.depth)}×{cm(entry.size.height)} cm
                         </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        title="Remove from library"
+                        aria-label={`Remove ${entry.name} from library`}
+                        onClick={() => removeFromLibrary(entry.id)}
+                      >
+                        ✕
                       </button>
                     </li>
                   ))}
