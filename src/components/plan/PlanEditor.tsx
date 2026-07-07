@@ -13,6 +13,7 @@ import {
 } from '../../lib/polygon';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
+import { useHistoryStore } from '../../store/useHistoryStore';
 import { confirmDialog } from '../../store/useDialogStore';
 import { COARSE_POINTER, useMediaQuery } from '../../lib/useMediaQuery';
 import { PlanGrid } from './PlanGrid';
@@ -245,6 +246,7 @@ export function PlanEditor() {
     if (pointersRef.current.size >= 2) {
       // Second finger down: abandon any in-progress pan/drag and start pinching.
       panRef.current = null;
+      if (dragRef.current) useHistoryStore.getState().endBatch();
       dragRef.current = null;
       pinchRef.current = null;
       (e.currentTarget as Element).setPointerCapture(e.pointerId);
@@ -280,6 +282,8 @@ export function PlanEditor() {
     const wall = walls.find((w) => w.id === id);
     if (!wall) return;
     dragRef.current = { id, horizontal: wall.a.z === wall.b.z };
+    // Fold the whole wall drag into a single undo step.
+    useHistoryStore.getState().beginBatch();
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
   };
 
@@ -318,6 +322,7 @@ export function PlanEditor() {
   const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
     pointersRef.current.delete(e.pointerId);
     if (pointersRef.current.size < 2) pinchRef.current = null;
+    if (dragRef.current) useHistoryStore.getState().endBatch();
     dragRef.current = null;
     const pan = panRef.current;
     if (pan) {
@@ -330,6 +335,7 @@ export function PlanEditor() {
   const onPointerCancel = (e: React.PointerEvent<SVGSVGElement>) => {
     pointersRef.current.delete(e.pointerId);
     if (pointersRef.current.size < 2) pinchRef.current = null;
+    if (dragRef.current) useHistoryStore.getState().endBatch();
     dragRef.current = null;
     panRef.current = null;
   };

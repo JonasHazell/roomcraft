@@ -690,6 +690,58 @@ select {
   pointer-events: none;
 }
 
+/* Undo/redo cluster, bottom-right of the viewport — clear of the centred
+   bottom action bar (z:55) and the top row, and thumb-reachable on mobile. */
+.history-controls {
+  position: absolute;
+  right: calc(14px + env(safe-area-inset-right));
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 56;
+  display: flex;
+  gap: 6px;
+}
+
+.history-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(245, 239, 226, 0.92);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(43, 38, 29, 0.15);
+}
+
+.history-btn:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+
+.history-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@media (pointer: coarse) {
+  .history-btn {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* On phones the bottom-centre action/selection bar and the history cluster
+   share the bottom edge, so lift the cluster above the bar to clear it. */
+@media (max-width: 768px) {
+  .history-controls {
+    bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+}
+
 /* ---------- Proposal switcher (furnishing variants) ---------- */
 
 .proposal-switcher {

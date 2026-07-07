@@ -8,11 +8,13 @@ import { SidePanel } from './components/panel/SidePanel';
 import { ProposalSwitcher } from './components/panel/ProposalSwitcher';
 import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { DialogHost } from './components/panel/DialogHost';
+import { HistoryControls } from './components/panel/HistoryControls';
 import { Scene } from './components/scene/Scene';
 import { PlanEditor } from './components/plan/PlanEditor';
 import { useDesignStore } from './store/useDesignStore';
 import { useUiStore } from './store/useUiStore';
 import { useDialogStore } from './store/useDialogStore';
+import { useHistoryStore } from './store/useHistoryStore';
 
 function App() {
   const mode = useUiStore((s) => s.mode);
@@ -35,6 +37,18 @@ function App() {
       // While the furniture dialog or a confirm/prompt dialog is open it owns the
       // keyboard (Esc closes it), so don't also deselect or rotate behind it.
       if (useUiStore.getState().furnitureDialog || useDialogStore.getState().active) return;
+      // Undo/redo work regardless of the current selection.
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault();
+        if (e.shiftKey) useHistoryStore.getState().redo();
+        else useHistoryStore.getState().undo();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) {
+        e.preventDefault();
+        useHistoryStore.getState().redo();
+        return;
+      }
       const { selection, select } = useUiStore.getState();
       if (e.key === 'Escape') {
         select(null);
@@ -100,6 +114,7 @@ function App() {
         <SelectionBar />
         <WallBar />
         <FloorBar />
+        <HistoryControls />
       </main>
       <FurnitureDialog />
       <DialogHost />
