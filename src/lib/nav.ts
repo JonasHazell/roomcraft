@@ -15,6 +15,7 @@ export function openRoomToFurnish(id: string): void {
   useDesignStore.getState().setActiveRoom(id);
   useHistoryStore.getState().clear();
   useUiStore.getState().select(null);
+  useUiStore.getState().setPendingRoomId(null);
   useUiStore.getState().setAppView('furnish');
 }
 
@@ -24,6 +25,8 @@ export function openRoomToPlan(id: string): void {
   useHistoryStore.getState().clear();
   useUiStore.getState().select(null);
   useUiStore.getState().setPlanStartTool('select');
+  // An existing room is never provisional — leaving keeps it even if undrawn.
+  useUiStore.getState().setPendingRoomId(null);
   useUiStore.getState().setAppView('plan');
 }
 
@@ -33,13 +36,23 @@ export function createRoomAndDraw(): string {
   useHistoryStore.getState().clear();
   useUiStore.getState().select(null);
   useUiStore.getState().setPlanStartTool('exterior');
+  // Remember it as provisional: if the user leaves without drawing an outline,
+  // backToLobby discards it so no empty room is left behind.
+  useUiStore.getState().setPendingRoomId(id);
   useUiStore.getState().setAppView('plan');
   return id;
 }
 
 /** Return to the lobby, folding the on-screen room back into the workspace. */
 export function backToLobby(): void {
-  useDesignStore.getState().exitToLobby();
+  const pendingId = useUiStore.getState().pendingRoomId;
+  if (pendingId) {
+    // A provisional "New room": keep it only if it was drawn, otherwise drop it.
+    useDesignStore.getState().discardRoomIfUndrawn(pendingId);
+    useUiStore.getState().setPendingRoomId(null);
+  } else {
+    useDesignStore.getState().exitToLobby();
+  }
   useHistoryStore.getState().clear();
   useUiStore.getState().select(null);
   useUiStore.getState().setAppView('lobby');

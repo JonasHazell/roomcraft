@@ -47,3 +47,51 @@ describe('per-proposal floor and wall colours', () => {
     expect(store().design.proposals[0].floorColor).toBe(DEFAULT_FLOOR_COLOR);
   });
 });
+
+describe('discarding an undrawn new room', () => {
+  const RECT = [
+    { x: -2, z: -2.5 },
+    { x: 2, z: -2.5 },
+    { x: 2, z: 2.5 },
+    { x: -2, z: 2.5 },
+  ];
+
+  beforeEach(() => {
+    store().newProject();
+  });
+
+  it('drops a new room that was never drawn and reactivates the previous one', () => {
+    const firstId = store().design.id;
+    const newId = store().createRoom();
+    expect(store().project.rooms).toHaveLength(2);
+    expect(store().project.activeRoomId).toBe(newId);
+
+    store().discardRoomIfUndrawn(newId);
+
+    expect(store().project.rooms.map((r) => r.id)).toEqual([firstId]);
+    expect(store().project.activeRoomId).toBe(firstId);
+    expect(store().design.id).toBe(firstId);
+  });
+
+  it('keeps a new room once its outline has been drawn', () => {
+    const newId = store().createRoom();
+    const result = store().commitExteriorPolygon(RECT);
+    expect(result.ok).toBe(true);
+
+    store().discardRoomIfUndrawn(newId);
+
+    expect(store().project.rooms.map((r) => r.id)).toContain(newId);
+    expect(store().project.activeRoomId).toBe(newId);
+  });
+
+  it('leaves an empty workspace when the only room is undrawn', () => {
+    store().loadProject({ ...store().project, rooms: [], activeRoomId: '' });
+    const onlyId = store().createRoom();
+    expect(store().project.rooms).toHaveLength(1);
+
+    store().discardRoomIfUndrawn(onlyId);
+
+    expect(store().project.rooms).toHaveLength(0);
+    expect(store().project.activeRoomId).toBe('');
+  });
+});
