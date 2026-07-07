@@ -71,12 +71,12 @@ describe('history (undo/redo)', () => {
     expect(furnitureCount()).toBe(0);
   });
 
-  it('restores room-level edits such as colours', () => {
-    const before = useDesignStore.getState().design.room.wallColor;
-    useDesignStore.getState().setRoom({ wallColor: '#123456' });
-    expect(useDesignStore.getState().design.room.wallColor).toBe('#123456');
+  it('restores proposal-level edits such as colours', () => {
+    const before = useDesignStore.getState().design.wallColor;
+    useDesignStore.getState().setColors({ wallColor: '#123456' });
+    expect(useDesignStore.getState().design.wallColor).toBe('#123456');
 
     useHistoryStore.getState().undo();
-    expect(useDesignStore.getState().design.room.wallColor).toBe(before);
+    expect(useDesignStore.getState().design.wallColor).toBe(before);
   });
 });

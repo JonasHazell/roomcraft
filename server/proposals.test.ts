@@ -23,13 +23,17 @@ function makeRoom(): Design {
     id: 'r0',
     name: 'test',
     updatedAt: '',
-    room: { height: 2.4, floorColor: '#fff', wallColor: '#fff' },
+    room: { height: 2.4 },
+    floorColor: '#ffffff',
+    wallColor: '#ffffff',
     walls,
     openings: [
       { id: 'd0', kind: 'door', wallId: 'w0', offset: 1.5, width: 1.0, height: 2.0, elevation: 0 },
     ],
     furniture: [],
-    proposals: [{ id: 'p0', name: 'Proposal 1', furniture: [] }],
+    proposals: [
+      { id: 'p0', name: 'Proposal 1', furniture: [], floorColor: '#ffffff', wallColor: '#ffffff' },
+    ],
     activeProposalId: 'p0',
   };
 }
@@ -65,7 +69,11 @@ describe('resolveProposals — orientation', () => {
   it('snaps an againstWall wardrobe flush against the nearest wall with its front facing the room', () => {
     const design = makeRoom();
     const resolved = resolveProposals(
-      { proposals: [{ title: 't', concept: 'c', furniture: [aiItem({})] }] },
+      {
+        proposals: [
+          { title: 't', concept: 'c', floorColor: '#fff', wallColor: '#fff', furniture: [aiItem({})] },
+        ],
+      },
       design,
     );
     const g = resolved.proposals[0].furniture[0];
@@ -85,6 +93,8 @@ describe('resolveProposals — orientation', () => {
           {
             title: 't',
             concept: 'c',
+            floorColor: '#fff',
+            wallColor: '#fff',
             furniture: [
               aiItem({
                 kind: 'chair',

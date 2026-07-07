@@ -20,7 +20,7 @@ function selectFloorOnStillClick(e: ThreeEvent<MouseEvent>) {
 
 export function Floor() {
   const walls = useDesignStore((s) => s.design.walls);
-  const floorColor = useDesignStore((s) => s.design.room.floorColor);
+  const floorColor = useDesignStore((s) => s.design.floorColor);
 
   const geometry = useMemo(() => {
     const poly = floorPolygon(walls);

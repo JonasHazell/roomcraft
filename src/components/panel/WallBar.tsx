@@ -7,8 +7,9 @@ import { useUiStore } from '../../store/useUiStore';
  * a compact pill with the most-used wall actions — recolour the walls, add a
  * door or window, open the full openings editor, and (for interior walls) delete.
  *
- * Wall colour is a single room-wide colour (`room.wallColor`), so the swatch here
- * recolours every wall, not just the selected one.
+ * Wall colour is a single colour per furnishing proposal (`design.wallColor`), so
+ * the swatch here recolours every wall of the current proposal, not just the
+ * selected one; a different proposal of the same room can use another colour.
  */
 export function WallBar() {
   const mode = useUiStore((s) => s.mode);
@@ -20,8 +21,8 @@ export function WallBar() {
   const wall = useDesignStore((s) =>
     selection?.kind === 'wall' ? s.design.walls.find((w) => w.id === selection.id) : undefined,
   );
-  const wallColor = useDesignStore((s) => s.design.room.wallColor);
-  const setRoom = useDesignStore((s) => s.setRoom);
+  const wallColor = useDesignStore((s) => s.design.wallColor);
+  const setColors = useDesignStore((s) => s.setColors);
   const addOpening = useDesignStore((s) => s.addOpening);
   const removeWall = useDesignStore((s) => s.removeWall);
 
@@ -36,7 +37,7 @@ export function WallBar() {
             className="sel-color-input"
             value={wallColor}
             aria-label="Wall colour"
-            onChange={(e) => setRoom({ wallColor: e.target.value })}
+            onChange={(e) => setColors({ wallColor: e.target.value })}
           />
           <span className="sel-label">Colour</span>
         </label>

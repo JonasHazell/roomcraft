@@ -56,6 +56,12 @@ export const proposalsSchema = z.strictObject({
       z.strictObject({
         title: z.string().describe('Short title, e.g. "Light and airy".'),
         concept: z.string().describe("2–3 sentences about the proposal's core idea."),
+        floorColor: z
+          .string()
+          .describe("Floor colour for this proposal as #rrggbb, part of the proposal's palette."),
+        wallColor: z
+          .string()
+          .describe("Wall colour for this proposal as #rrggbb, part of the proposal's palette."),
         furniture: z.array(aiFurnitureSchema),
       }),
     )
@@ -84,7 +90,13 @@ export interface ResolvedFurniture {
 }
 
 export interface ResolvedProposals {
-  proposals: { title: string; concept: string; furniture: ResolvedFurniture[] }[];
+  proposals: {
+    title: string;
+    concept: string;
+    floorColor: string;
+    wallColor: string;
+    furniture: ResolvedFurniture[];
+  }[];
 }
 
 // NOTE: the $schema key must be removed — with it, `claude --json-schema`

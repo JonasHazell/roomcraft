@@ -29,11 +29,15 @@ function makeDesign(furniture: FurnitureItem[], openings?: Omit<WallOpening, 'id
     id: 'r0',
     name: 'Test',
     updatedAt: '2026-01-01T00:00:00.000Z',
-    room: { height: 2.5, floorColor: '#c9a878', wallColor: '#efe8da' },
+    room: { height: 2.5 },
+    floorColor: '#c9a878',
+    wallColor: '#efe8da',
     walls,
     openings: (openings ?? defaultOpenings).map((o, i) => ({ ...o, id: `o${i}` })),
     furniture,
-    proposals: [{ id: 'p0', name: 'Proposal 1', furniture }],
+    proposals: [
+      { id: 'p0', name: 'Proposal 1', furniture, floorColor: '#c9a878', wallColor: '#efe8da' },
+    ],
     activeProposalId: 'p0',
   };
 }

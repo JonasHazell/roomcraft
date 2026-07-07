@@ -42,7 +42,7 @@ describe('migration to the project schema', () => {
   const room = activeRoom(p);
 
   it('wraps a legacy single design into a one-room project', () => {
-    expect(p.schemaVersion).toBe(4);
+    expect(p.schemaVersion).toBe(5);
     expect(p.rooms).toHaveLength(1);
     expect(p.activeRoomId).toBe(room.id);
     expect(room.id).toBeTruthy();
@@ -70,17 +70,21 @@ describe('migration to the project schema', () => {
     expect(win?.offset).toBe(1.2);
   });
 
-  it('keeps ceiling height, colors, furniture and name', () => {
-    expect(room.room).toEqual({ height: 2.5, floorColor: '#c9a878', wallColor: '#efe8da' });
+  it('keeps ceiling height, furniture and name; moves colours onto the proposal', () => {
+    expect(room.room).toEqual({ height: 2.5 });
+    expect(room.floorColor).toBe('#c9a878');
+    expect(room.wallColor).toBe('#efe8da');
     expect(room.furniture).toHaveLength(1);
     expect(room.name).toBe('My room');
     expect(p.name).toBe('My room');
   });
 
-  it('wraps the furnishing into a single active proposal', () => {
+  it('wraps the furnishing into a single active proposal carrying the colours', () => {
     expect(room.proposals).toHaveLength(1);
     expect(room.activeProposalId).toBe(room.proposals[0].id);
     expect(room.proposals[0].furniture).toEqual(room.furniture);
+    expect(room.proposals[0].floorColor).toBe('#c9a878');
+    expect(room.proposals[0].wallColor).toBe('#efe8da');
   });
 });
 
@@ -125,9 +129,14 @@ describe('proposals within a room', () => {
       rooms: [
         {
           ...room,
-          proposals: [room.proposals[0], { id: 'p2', name: 'Empty', furniture: [] }],
+          proposals: [
+            room.proposals[0],
+            { id: 'p2', name: 'Dark', furniture: [], floorColor: '#222222', wallColor: '#333333' },
+          ],
           activeProposalId: 'p2',
           furniture: [],
+          floorColor: '#222222',
+          wallColor: '#333333',
         },
       ],
     };
@@ -136,6 +145,11 @@ describe('proposals within a room', () => {
     expect(parsedRoom.proposals).toHaveLength(2);
     expect(parsedRoom.activeProposalId).toBe('p2');
     expect(parsedRoom.furniture).toHaveLength(0);
+    // Each proposal keeps its own palette, and the live colours mirror the active one.
+    expect(parsedRoom.proposals[0].wallColor).toBe('#efe8da');
+    expect(parsedRoom.proposals[1].wallColor).toBe('#333333');
+    expect(parsedRoom.wallColor).toBe('#333333');
+    expect(parsedRoom.floorColor).toBe('#222222');
   });
 
   it('falls back to the first proposal when the active id is unknown', () => {
@@ -156,10 +170,10 @@ describe('proposals within a room', () => {
 });
 
 describe('parseProject', () => {
-  it('accepts a v4 project and survives a JSON round trip', () => {
-    const v4 = parseProject(V1_DESIGN);
-    const roundTripped = parseProject(JSON.parse(JSON.stringify(v4)));
-    expect(roundTripped).toEqual(v4);
+  it('accepts a v5 project and survives a JSON round trip', () => {
+    const v5 = parseProject(V1_DESIGN);
+    const roundTripped = parseProject(JSON.parse(JSON.stringify(v5)));
+    expect(roundTripped).toEqual(v5);
   });
 
   it('rejects unknown schema version', () => {

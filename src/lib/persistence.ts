@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
 import type { Design, FurnitureLibraryEntry, Project, Proposal, Wall } from '../types';
-import { SCHEMA_VERSION } from '../types';
+import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, SCHEMA_VERSION } from '../types';
 import { isAxisParallel, validateExteriorLoop } from './polygon';
 import { FURNITURE_KINDS } from './furnitureCatalog';
 
@@ -140,6 +140,47 @@ const projectSchemaV4 = z.object({
   activeRoomId: z.string().min(1),
 });
 
+type ProjectV4 = z.infer<typeof projectSchemaV4>;
+
+// ---- v5 (current format: floor/wall colour moves onto each proposal) ----
+
+/** The room now only carries what is shared across proposals: the ceiling height. */
+const roomSchemaV5 = z.object({
+  height: z.number().min(1).max(20),
+});
+
+/** A furnishing variant: its furniture plus its own floor/wall colours. */
+const proposalSchemaV5 = z.object({
+  id: z.string().min(1),
+  name: z.string().max(100),
+  furniture: z.array(furnitureSchema).max(500),
+  floorColor: color.default(DEFAULT_FLOOR_COLOR),
+  wallColor: color.default(DEFAULT_WALL_COLOR),
+});
+
+const roomSchemaEntryV5 = z.object({
+  id: z.string().min(1).default(() => nanoid(8)),
+  name: z.string().max(200),
+  updatedAt: z.string().default(''),
+  room: roomSchemaV5,
+  walls: z.array(wallSchema).max(400),
+  openings: z.array(openingSchemaV2).max(200),
+  furniture: z.array(furnitureSchema).max(500),
+  // Live mirror of the active proposal; normalizeProposals overwrites it on load.
+  floorColor: color.default(DEFAULT_FLOOR_COLOR),
+  wallColor: color.default(DEFAULT_WALL_COLOR),
+  proposals: z.array(proposalSchemaV5).min(1).max(50),
+  activeProposalId: z.string().min(1),
+});
+
+const projectSchemaV5 = z.object({
+  schemaVersion: z.literal(5),
+  name: z.string().max(200),
+  updatedAt: z.string(),
+  rooms: z.array(roomSchemaEntryV5).min(1).max(50),
+  activeRoomId: z.string().min(1),
+});
+
 /** Structural post-validation of a single room that the zod schema cannot express. */
 function validateRoom(d: Design): Design {
   const exterior = d.walls.filter((w) => w.kind === 'exterior');
@@ -186,7 +227,8 @@ export function migrateV1toV2(d: DesignV1): DesignV2 {
 
 /** The single furnishing of a v2 design becomes the room's first proposal. */
 export function migrateV2toV3(d: DesignV2): DesignV3 {
-  const proposal: Proposal = { id: nanoid(8), name: 'Proposal 1', furniture: d.furniture };
+  // v3 proposals carry no colours yet — those are added in migrateV4toV5.
+  const proposal = { id: nanoid(8), name: 'Proposal 1', furniture: d.furniture };
   return {
     ...d,
     schemaVersion: 3,
@@ -196,8 +238,8 @@ export function migrateV2toV3(d: DesignV2): DesignV3 {
 }
 
 /** A single (v3) room design becomes a project holding just that one room. */
-export function migrateV3toV4(d: DesignV3): Project {
-  const room: Design = {
+export function migrateV3toV4(d: DesignV3): ProjectV4 {
+  const room = {
     id: nanoid(8),
     name: d.name,
     updatedAt: d.updatedAt,
@@ -209,7 +251,7 @@ export function migrateV3toV4(d: DesignV3): Project {
     activeProposalId: d.activeProposalId,
   };
   return {
-    schemaVersion: SCHEMA_VERSION,
+    schemaVersion: 4,
     name: d.name,
     updatedAt: d.updatedAt,
     rooms: [room],
@@ -218,31 +260,81 @@ export function migrateV3toV4(d: DesignV3): Project {
 }
 
 /**
- * Writes the live `furniture` back into its proposal so the stored proposal
- * snapshot matches what is on screen. Called before persisting/exporting and
- * before switching proposals.
+ * The room's shared floor/wall colours move onto every furnishing proposal (and
+ * the live mirror), so each variant can then be recoloured independently.
+ */
+export function migrateV4toV5(p: ProjectV4): Project {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    name: p.name,
+    updatedAt: p.updatedAt,
+    activeRoomId: p.activeRoomId,
+    rooms: p.rooms.map((r) => {
+      const { floorColor, wallColor } = r.room;
+      return {
+        id: r.id,
+        name: r.name,
+        updatedAt: r.updatedAt,
+        room: { height: r.room.height },
+        walls: r.walls,
+        openings: r.openings,
+        furniture: r.furniture,
+        floorColor,
+        wallColor,
+        proposals: r.proposals.map((pr) => ({ ...pr, floorColor, wallColor })),
+        activeProposalId: r.activeProposalId,
+      };
+    }),
+  };
+}
+
+/**
+ * Writes the live `furniture` and floor/wall colours back into their proposal so
+ * the stored proposal snapshot matches what is on screen. Called before
+ * persisting/exporting and before switching proposals.
  */
 export function syncActiveProposal(d: Design): Design {
   return {
     ...d,
     proposals: d.proposals.map((p) =>
-      p.id === d.activeProposalId ? { ...p, furniture: d.furniture } : p,
+      p.id === d.activeProposalId
+        ? { ...p, furniture: d.furniture, floorColor: d.floorColor, wallColor: d.wallColor }
+        : p,
     ),
   };
 }
 
 /**
  * Guarantees the proposal invariants: at least one proposal, a valid active id,
- * and `furniture` mirroring the active proposal. Runs after every load so older
- * or hand-edited data can't leave the room in an inconsistent state.
+ * and `furniture`/colours mirroring the active proposal. Runs after every load so
+ * older or hand-edited data can't leave the room in an inconsistent state.
  */
 export function normalizeProposals(d: Design): Design {
   if (d.proposals.length === 0) {
-    const proposal: Proposal = { id: nanoid(8), name: 'Proposal 1', furniture: d.furniture ?? [] };
-    return { ...d, proposals: [proposal], activeProposalId: proposal.id, furniture: proposal.furniture };
+    const proposal: Proposal = {
+      id: nanoid(8),
+      name: 'Proposal 1',
+      furniture: d.furniture ?? [],
+      floorColor: d.floorColor ?? DEFAULT_FLOOR_COLOR,
+      wallColor: d.wallColor ?? DEFAULT_WALL_COLOR,
+    };
+    return {
+      ...d,
+      proposals: [proposal],
+      activeProposalId: proposal.id,
+      furniture: proposal.furniture,
+      floorColor: proposal.floorColor,
+      wallColor: proposal.wallColor,
+    };
   }
   const active = d.proposals.find((p) => p.id === d.activeProposalId) ?? d.proposals[0];
-  return { ...d, activeProposalId: active.id, furniture: active.furniture };
+  return {
+    ...d,
+    activeProposalId: active.id,
+    furniture: active.furniture,
+    floorColor: active.floorColor,
+    wallColor: active.wallColor,
+  };
 }
 
 /** The active room — the one the store's live `design` mirrors. */
@@ -286,13 +378,15 @@ export function parseProject(raw: unknown): Project {
   const version = (raw as { schemaVersion?: unknown } | null)?.schemaVersion;
   let project: Project;
   if (version === 1) {
-    project = migrateV3toV4(migrateV2toV3(migrateV1toV2(designSchemaV1.parse(raw))));
+    project = migrateV4toV5(migrateV3toV4(migrateV2toV3(migrateV1toV2(designSchemaV1.parse(raw)))));
   } else if (version === 2) {
-    project = migrateV3toV4(migrateV2toV3(designSchemaV2.parse(raw)));
+    project = migrateV4toV5(migrateV3toV4(migrateV2toV3(designSchemaV2.parse(raw))));
   } else if (version === 3) {
-    project = migrateV3toV4(designSchemaV3.parse(raw));
+    project = migrateV4toV5(migrateV3toV4(designSchemaV3.parse(raw)));
+  } else if (version === 4) {
+    project = migrateV4toV5(projectSchemaV4.parse(raw));
   } else if (version === SCHEMA_VERSION) {
-    project = projectSchemaV4.parse(raw);
+    project = projectSchemaV5.parse(raw);
   } else {
     throw new Error(
       `The file has schema version ${String(version)}, but the app supports version ${SCHEMA_VERSION}.`,

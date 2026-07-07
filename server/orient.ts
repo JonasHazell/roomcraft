@@ -99,6 +99,8 @@ export function resolveProposals(data: AiProposals, design: Design): ResolvedPro
     proposals: data.proposals.map((p) => ({
       title: p.title,
       concept: p.concept,
+      floorColor: p.floorColor,
+      wallColor: p.wallColor,
       furniture: p.furniture.map((f) => resolveFurniture(f, design, roomCenter)),
     })),
   };
