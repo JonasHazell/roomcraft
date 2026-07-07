@@ -1,9 +1,15 @@
-import type { Design, FurnitureItem, FurnitureKind, Point } from '../../types';
+import type { Point } from '../../types';
 import { FURNITURE_CATALOG } from '../furnitureCatalog';
-import { floorPolygon, formatCm, pointInPolygon, polygonBounds, polygonCenter, signedArea } from '../polygon';
+import {
+  formatCm,
+  pointInPolygon,
+  polygonBounds,
+  polygonCenter,
+  segmentsCross,
+  signedArea,
+} from '../polygon';
 import {
   add,
-  blockers,
   clearanceZones,
   convexOverlap,
   distToQuad,
@@ -12,9 +18,7 @@ import {
   floodFill,
   footprint,
   frontDir,
-  nearestWall,
   norm,
-  openingInfos,
   quadGap,
   rightDir,
   segmentHitsQuad,
@@ -22,153 +26,39 @@ import {
   sub,
   support,
   wallsHitQuad,
-  type OpeningInfo,
 } from './geo';
+import {
+  backAgainstWall,
+  backEdgeMid,
+  blockersInZone,
+  DOUBLE_BED_MIN_WIDTH,
+  fail,
+  frontZone,
+  isCoffeeTable,
+  isDiningTable,
+  na,
+  names,
+  ok,
+  sideZone,
+  topOf,
+} from './ruleHelpers';
+import type { RuleDef, Violation } from './ruleTypes';
 
-export type RuleCategory =
-  | 'Safety'
-  | 'Accessibility'
-  | 'Ergonomics & dimensions'
-  | 'Feng shui'
-  | 'Light'
-  | 'Color & textiles'
-  | 'Acoustics'
-  | 'Aesthetics';
-
-export const CATEGORY_ORDER: RuleCategory[] = [
-  'Safety',
-  'Accessibility',
-  'Ergonomics & dimensions',
-  'Feng shui',
-  'Light',
-  'Color & textiles',
-  'Acoustics',
-  'Aesthetics',
-];
-
-export type RoomType = 'sovrum' | 'vardagsrum' | 'hemmakontor' | 'matplats';
-
-export const ROOM_TYPE_LABEL: Record<RoomType, string> = {
-  sovrum: 'Bedroom',
-  vardagsrum: 'Living room',
-  hemmakontor: 'Home office',
-  matplats: 'Dining area',
-};
-
-/** Score weight per importance level according to the rule catalog. */
-export const IMPORTANCE_WEIGHT: Record<number, number> = { 5: 16, 4: 8, 3: 4, 2: 2, 1: 1 };
-
-export interface Violation {
-  message: string;
-  /** Furniture highlighted in the 3D view when the issue is selected. */
-  furnitureIds: string[];
-  /** Floor zones (polygons) highlighted in the 3D view. */
-  zones?: Point[][];
-}
-
-export type RuleOutcome =
-  | { status: 'not-applicable' }
-  | { status: 'passed' }
-  | { status: 'violated'; violations: Violation[] };
-
-export interface RuleCtx {
-  design: Design;
-  poly: Point[];
-  roomTypes: Set<RoomType>;
-  doors: OpeningInfo[];
-  windows: OpeningInfo[];
-  byKind: (k: FurnitureKind) => FurnitureItem[];
-}
-
-export interface RuleDef {
-  id: string;
-  title: string;
-  category: RuleCategory;
-  importance: 1 | 2 | 3 | 4 | 5;
-  source: string;
-  /** Linked twin rule (e.g. FEN-03 for ERG-08): reported in both categories, counted once in the total. */
-  twin?: { id: string; category: RuleCategory };
-  /** Room types the rule requires; omitted = all rooms. */
-  appliesTo?: RoomType[];
-  check: (ctx: RuleCtx) => RuleOutcome;
-}
-
-/** Infers room types from the furnishing (mixed rooms can yield several). */
-export function inferRoomTypes(design: Design): Set<RoomType> {
-  const kinds = new Set(design.furniture.map((f) => f.kind));
-  const types = new Set<RoomType>();
-  if (kinds.has('bed')) types.add('sovrum');
-  if (kinds.has('sofa')) types.add('vardagsrum');
-  if (kinds.has('desk')) types.add('hemmakontor');
-  if (design.furniture.some(isDiningTable) && kinds.has('chair')) types.add('matplats');
-  return types;
-}
-
-const na: RuleOutcome = { status: 'not-applicable' };
-const ok: RuleOutcome = { status: 'passed' };
-function fail(violations: Violation[]): RuleOutcome {
-  return violations.length > 0 ? { status: 'violated', violations } : ok;
-}
-
-function isDiningTable(f: FurnitureItem): boolean {
-  return f.kind === 'table' && f.size.height >= 0.6 && f.size.height <= 0.9;
-}
-
-function isCoffeeTable(f: FurnitureItem): boolean {
-  return f.kind === 'table' && f.size.height < 0.6;
-}
-
-function topOf(f: FurnitureItem): number {
-  return f.elevation + f.size.height;
-}
-
-/** Midpoint of the back edge (opposite the front). */
-function backEdgeMid(f: FurnitureItem): Point {
-  return add(f.position, frontDir(f.rotationY), -f.size.depth / 2);
-}
-
-/** True if the back of the furniture sits flush (≤ tol) against a wall. */
-function backAgainstWall(design: Design, f: FurnitureItem, tol = 0.18) {
-  const hit = nearestWall(design, backEdgeMid(f));
-  return hit && hit.distance <= tol ? hit.wall : null;
-}
-
-/** Zone along one of the furniture's long sides (side = ±1 along the right axis), depth outward. */
-function sideZone(f: FurnitureItem, side: 1 | -1, depth: number): Point[] {
-  const fwd = frontDir(f.rotationY);
-  const right = rightDir(f.rotationY);
-  const n = { x: right.x * side, z: right.z * side };
-  const edgeMid = add(f.position, n, f.size.width / 2);
-  const s = add(edgeMid, fwd, -f.size.depth / 2);
-  const e = add(edgeMid, fwd, f.size.depth / 2);
-  return stripZone(s, e, n, depth);
-}
-
-/** Zone in front of the furniture's front face, as wide as the piece. */
-function frontZone(f: FurnitureItem, depth: number): Point[] {
-  const fwd = frontDir(f.rotationY);
-  const right = rightDir(f.rotationY);
-  const faceMid = add(f.position, fwd, f.size.depth / 2);
-  const s = add(faceMid, right, -f.size.width / 2);
-  const e = add(faceMid, right, f.size.width / 2);
-  return stripZone(s, e, fwd, depth);
-}
-
-/** Blocking furniture that overlaps the zone. */
-function blockersInZone(
-  ctx: RuleCtx,
-  zone: Point[],
-  except: Set<string> = new Set(),
-  minTop = 0,
-): FurnitureItem[] {
-  return blockers(ctx.design.furniture, except).filter(
-    (f) => topOf(f) > minTop && convexOverlap(footprint(f), zone),
-  );
-}
-
-function names(items: FurnitureItem[]): string {
-  return items.map((f) => `"${f.name}"`).join(', ');
-}
+// The rule catalog's taxonomy and types live in ruleTypes.ts and the rule-local
+// geometry helpers (plus buildCtx/inferRoomTypes) in ruleHelpers.ts; both are
+// re-exported here so consumers keep importing everything from ./rules.
+export {
+  CATEGORY_ORDER,
+  IMPORTANCE_WEIGHT,
+  ROOM_TYPE_LABEL,
+  type RoomType,
+  type RuleCategory,
+  type RuleCtx,
+  type RuleDef,
+  type RuleOutcome,
+  type Violation,
+} from './ruleTypes';
+export { buildCtx, inferRoomTypes } from './ruleHelpers';
 
 // ---------------------------------------------------------------------------
 // Rules
@@ -330,7 +220,7 @@ export const RULES: RuleDef[] = [
       if (beds.length === 0) return na;
       const violations: Violation[] = [];
       for (const bed of beds) {
-        const double = bed.size.width >= 1.35;
+        const double = bed.size.width >= DOUBLE_BED_MIN_WIDTH;
         const except = new Set(ctx.byKind('nightstand').map((f) => f.id));
         const sideFree = ([-1, 1] as const).map((side) => {
           const zone = sideZone(bed, side, 0.6);
@@ -616,7 +506,7 @@ export const RULES: RuleDef[] = [
       const stands = ctx.byKind('nightstand');
       const violations: Violation[] = [];
       for (const bed of beds) {
-        const double = bed.size.width >= 1.35;
+        const double = bed.size.width >= DOUBLE_BED_MIN_WIDTH;
         const fwd = frontDir(bed.rotationY);
         const right = rightDir(bed.rotationY);
         const nearSide = (side: 1 | -1) =>
@@ -1118,27 +1008,3 @@ export const RULES: RuleDef[] = [
   },
 ];
 
-/** Segment crossing without touch tolerance (sight through a doorway should not be stopped by the wall's endpoints). */
-function segmentsCross(a: Point, b: Point, c: Point, d: Point): boolean {
-  const o = (p: Point, q: Point, r: Point) => Math.sign((q.x - p.x) * (r.z - p.z) - (q.z - p.z) * (r.x - p.x));
-  return o(a, b, c) !== o(a, b, d) && o(c, d, a) !== o(c, d, b) && o(a, b, c) !== 0 && o(c, d, a) !== 0;
-}
-
-export function buildCtx(design: Design): RuleCtx {
-  const byKindCache = new Map<FurnitureKind, FurnitureItem[]>();
-  return {
-    design,
-    poly: floorPolygon(design.walls),
-    roomTypes: inferRoomTypes(design),
-    doors: openingInfos(design, 'door'),
-    windows: openingInfos(design, 'window'),
-    byKind: (k) => {
-      let list = byKindCache.get(k);
-      if (!list) {
-        list = design.furniture.filter((f) => f.kind === k);
-        byKindCache.set(k, list);
-      }
-      return list;
-    },
-  };
-}

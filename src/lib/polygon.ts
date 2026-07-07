@@ -203,6 +203,17 @@ function onSegment(p: Point, q: Point, r: Point): boolean {
   );
 }
 
+/**
+ * True if the segments strictly cross, excluding endpoint touches and collinear
+ * overlap. Unlike {@link segmentsIntersect}, a shared endpoint does not count —
+ * e.g. a line of sight through a doorway must not be stopped by a wall's corner.
+ */
+export function segmentsCross(a: Point, b: Point, c: Point, d: Point): boolean {
+  const o = (p: Point, q: Point, r: Point) =>
+    Math.sign((q.x - p.x) * (r.z - p.z) - (q.z - p.z) * (r.x - p.x));
+  return o(a, b, c) !== o(a, b, d) && o(c, d, a) !== o(c, d, b) && o(a, b, c) !== 0 && o(c, d, a) !== 0;
+}
+
 /** True if the segments cross or touch each other (incl. collinear overlap). */
 export function segmentsIntersect(p1: Point, p2: Point, p3: Point, p4: Point): boolean {
   const o1 = orient(p1, p2, p3);
