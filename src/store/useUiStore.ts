@@ -4,7 +4,17 @@ export type Selection =
   | { kind: 'furniture' | 'wall'; id: string }
   | { kind: 'floor' }
   | null;
-export type EditorMode = '2d' | '3d';
+
+/**
+ * The app's top-level surface. `lobby` picks or creates rooms and edits their
+ * floor plans; `plan` is the 2D floor-plan editor for one room; `furnish` is the
+ * 3D furnishing view for one room. Choosing/creating rooms (lobby) is kept
+ * separate from furnishing them (furnish).
+ */
+export type AppView = 'lobby' | 'plan' | 'furnish';
+
+/** Which tool the floor-plan editor starts on when it is next opened. */
+export type PlanStartTool = 'select' | 'exterior';
 
 /**
  * A global side panel opened from the bottom action bar (AI, validation) or the
@@ -23,15 +33,15 @@ export type FurnitureDialog = { mode: 'create' } | { mode: 'edit'; id: string } 
 interface UiState {
   selection: Selection;
   draggingId: string | null;
-  mode: EditorMode;
-  sidebarOpen: boolean;
+  appView: AppView;
+  /** Consumed once by the plan editor when it opens; then reset to 'select'. */
+  planStartTool: PlanStartTool;
   furnitureDialog: FurnitureDialog;
   panel: Panel;
   select: (selection: Selection) => void;
   setDragging: (id: string | null) => void;
-  setMode: (mode: EditorMode) => void;
-  setSidebarOpen: (open: boolean) => void;
-  toggleSidebar: () => void;
+  setAppView: (view: AppView) => void;
+  setPlanStartTool: (tool: PlanStartTool) => void;
   openAddFurniture: () => void;
   openEditFurniture: (id: string) => void;
   closeFurnitureDialog: () => void;
@@ -42,16 +52,16 @@ interface UiState {
 export const useUiStore = create<UiState>()((set) => ({
   selection: null,
   draggingId: null,
-  mode: '3d',
-  // Only affects the mobile drawer; on desktop the sidebar is always visible.
-  sidebarOpen: false,
+  // The app always opens on the lobby: a returning user picks a room, a new user
+  // creates their first one.
+  appView: 'lobby',
+  planStartTool: 'select',
   furnitureDialog: null,
   panel: null,
   select: (selection) => set({ selection }),
   setDragging: (draggingId) => set({ draggingId }),
-  setMode: (mode) => set({ mode }),
-  setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
-  toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
+  setAppView: (appView) => set({ appView }),
+  setPlanStartTool: (planStartTool) => set({ planStartTool }),
   openAddFurniture: () => set({ furnitureDialog: { mode: 'create' } }),
   openEditFurniture: (id) =>
     set({ selection: { kind: 'furniture', id }, furnitureDialog: { mode: 'edit', id } }),

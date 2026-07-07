@@ -7,13 +7,13 @@ import { useUiStore } from '../../store/useUiStore';
  * to clicking a wall for the wall colour.
  */
 export function FloorBar() {
-  const mode = useUiStore((s) => s.mode);
+  const appView = useUiStore((s) => s.appView);
   const selection = useUiStore((s) => s.selection);
   const select = useUiStore((s) => s.select);
   const floorColor = useDesignStore((s) => s.design.floorColor);
   const setColors = useDesignStore((s) => s.setColors);
 
-  if (mode !== '3d' || selection?.kind !== 'floor') return null;
+  if (appView !== 'furnish' || selection?.kind !== 'floor') return null;
 
   return (
     <div className="selection-bar-wrap">

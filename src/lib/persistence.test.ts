@@ -106,10 +106,13 @@ describe('rooms', () => {
     expect(parsed?.activeRoomId).toBe(base.rooms[0].id);
   });
 
-  it('rejects a project with no rooms', () => {
+  it('accepts an empty workspace (no rooms yet)', () => {
+    // A new user starts with no rooms; the lobby shows its create-first-room state.
     const base = parseProject(V1_DESIGN);
-    const broken = { ...base, rooms: [] };
-    expect(parseProjectSafe(JSON.parse(JSON.stringify(broken)))).toBeNull();
+    const empty = { ...base, rooms: [], activeRoomId: '' };
+    const parsed = parseProjectSafe(JSON.parse(JSON.stringify(empty)));
+    expect(parsed?.rooms).toHaveLength(0);
+    expect(parsed?.activeRoomId).toBe('');
   });
 
   it('syncActiveRoom folds the live room back into the project', () => {

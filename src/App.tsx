@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Sidebar } from './components/panel/Sidebar';
+import { Lobby } from './components/lobby/Lobby';
 import { SelectionBar } from './components/panel/SelectionBar';
 import { ActionBar } from './components/panel/ActionBar';
 import { WallBar } from './components/panel/WallBar';
@@ -15,12 +15,51 @@ import { useDesignStore } from './store/useDesignStore';
 import { useUiStore } from './store/useUiStore';
 import { useDialogStore } from './store/useDialogStore';
 import { useHistoryStore } from './store/useHistoryStore';
+import { backToLobby } from './lib/nav';
+
+/** The 3D furnishing view for the active room: only furnishing plus a way back. */
+function FurnishView() {
+  const roomName = useDesignStore((s) => s.design.name);
+  return (
+    <main className="viewport">
+      <Scene />
+      <div className="room-topbar">
+        <button
+          type="button"
+          className="btn room-back"
+          onClick={backToLobby}
+          title="Back to your rooms"
+        >
+          <span aria-hidden="true">←</span> Rooms
+        </button>
+        <span className="room-topbar-name">{roomName}</span>
+      </div>
+      <ProposalSwitcher />
+      <div className="viewport-hint">
+        Drag to orbit · scroll to zoom · drag a furniture piece to move it
+      </div>
+      <SidePanel />
+      <ActionBar />
+      <SelectionBar />
+      <WallBar />
+      <FloorBar />
+      <HistoryControls />
+    </main>
+  );
+}
+
+/** The 2D floor-plan editor for the active room; "Done" returns to the lobby. */
+function PlanView() {
+  return (
+    <main className="viewport">
+      <PlanEditor />
+      <HistoryControls />
+    </main>
+  );
+}
 
 function App() {
-  const mode = useUiStore((s) => s.mode);
-  const sidebarOpen = useUiStore((s) => s.sidebarOpen);
-  const toggleSidebar = useUiStore((s) => s.toggleSidebar);
-  const setSidebarOpen = useUiStore((s) => s.setSidebarOpen);
+  const appView = useUiStore((s) => s.appView);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -37,6 +76,8 @@ function App() {
       // While the furniture dialog or a confirm/prompt dialog is open it owns the
       // keyboard (Esc closes it), so don't also deselect or rotate behind it.
       if (useUiStore.getState().furnitureDialog || useDialogStore.getState().active) return;
+      // Editing shortcuts only apply inside a room, never in the lobby.
+      if (useUiStore.getState().appView === 'lobby') return;
       // Undo/redo work regardless of the current selection.
       if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
         e.preventDefault();
@@ -85,37 +126,10 @@ function App() {
   }, []);
 
   return (
-    <div className={`app${sidebarOpen ? ' sidebar-open' : ''}`}>
-      <button
-        type="button"
-        className="menu-toggle"
-        aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
-        aria-expanded={sidebarOpen}
-        onClick={toggleSidebar}
-      >
-        {sidebarOpen ? '✕' : '☰'}
-      </button>
-      <Sidebar />
-      <div
-        className="sidebar-backdrop"
-        role="presentation"
-        onClick={() => setSidebarOpen(false)}
-      />
-      <main className="viewport">
-        {mode === '2d' ? <PlanEditor /> : <Scene />}
-        <ProposalSwitcher />
-        {mode === '3d' && (
-          <div className="viewport-hint">
-            Drag to orbit · scroll to zoom · drag a furniture piece to move it
-          </div>
-        )}
-        {mode === '3d' && <SidePanel />}
-        <ActionBar />
-        <SelectionBar />
-        <WallBar />
-        <FloorBar />
-        <HistoryControls />
-      </main>
+    <div className="app">
+      {appView === 'lobby' && <Lobby />}
+      {appView === 'plan' && <PlanView />}
+      {appView === 'furnish' && <FurnishView />}
       <FurnitureDialog />
       <DialogHost />
     </div>

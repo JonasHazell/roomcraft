@@ -16,7 +16,7 @@ const TITLES = {
  * can be seen while the panel is open. Hosts whichever global panel is active.
  */
 export function SidePanel() {
-  const mode = useUiStore((s) => s.mode);
+  const appView = useUiStore((s) => s.appView);
   const panel = useUiStore((s) => s.panel);
   const closePanel = useUiStore((s) => s.closePanel);
   const selection = useUiStore((s) => s.selection);
@@ -38,7 +38,7 @@ export function SidePanel() {
     return () => window.removeEventListener('keydown', onKey);
   }, [panel, closePanel]);
 
-  if (mode !== '3d' || !panel) return null;
+  if (appView !== 'furnish' || !panel) return null;
 
   return (
     <aside className="side-panel" aria-label={TITLES[panel]}>

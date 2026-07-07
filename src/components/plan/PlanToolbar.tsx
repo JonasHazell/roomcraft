@@ -12,7 +12,7 @@ interface Props {
   deleteDisabledReason?: string;
   /** True when the user has zoomed/panned away from the auto-fitted view. */
   canResetView: boolean;
-  /** Leaves the floor-plan editor and returns to the 3D view. */
+  /** Leaves the floor-plan editor and returns to the lobby. */
   onDone: () => void;
   onSelectTool: () => void;
   onExteriorTool: () => void;
@@ -65,7 +65,7 @@ export function PlanToolbar({
     <div className="plan-toolbar" role="toolbar" aria-label="Floor plan tools">
       <div className="button-row">
         <button type="button" className="btn btn-done" onClick={onDone}>
-          <span aria-hidden="true">✓</span> Done · 3D view
+          <span aria-hidden="true">←</span> Done · back to rooms
         </button>
         <button
           type="button"

@@ -6,14 +6,14 @@ import { useUiStore } from '../../store/useUiStore';
  * pill in the same family as the selection bar, pinned to the bottom centre.
  */
 export function ActionBar() {
-  const mode = useUiStore((s) => s.mode);
+  const appView = useUiStore((s) => s.appView);
   const selection = useUiStore((s) => s.selection);
   const openAddFurniture = useUiStore((s) => s.openAddFurniture);
   const openPanel = useUiStore((s) => s.openPanel);
   const panel = useUiStore((s) => s.panel);
 
   // Only the empty-selection state; furniture/wall/floor get their own bars.
-  if (mode !== '3d' || selection !== null) return null;
+  if (appView !== 'furnish' || selection !== null) return null;
 
   return (
     <div className="selection-bar-wrap">

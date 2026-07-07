@@ -12,7 +12,7 @@ import { useUiStore } from '../../store/useUiStore';
  * selected one; a different proposal of the same room can use another colour.
  */
 export function WallBar() {
-  const mode = useUiStore((s) => s.mode);
+  const appView = useUiStore((s) => s.appView);
   const selection = useUiStore((s) => s.selection);
   const select = useUiStore((s) => s.select);
   const openPanel = useUiStore((s) => s.openPanel);
@@ -26,7 +26,7 @@ export function WallBar() {
   const addOpening = useDesignStore((s) => s.addOpening);
   const removeWall = useDesignStore((s) => s.removeWall);
 
-  if (mode !== '3d' || selection?.kind !== 'wall' || !wall) return null;
+  if (appView !== 'furnish' || selection?.kind !== 'wall' || !wall) return null;
 
   return (
     <div className="selection-bar-wrap">

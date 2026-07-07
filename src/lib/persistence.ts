@@ -177,15 +177,21 @@ const projectSchemaV5 = z.object({
   schemaVersion: z.literal(5),
   name: z.string().max(200),
   updatedAt: z.string(),
-  rooms: z.array(roomSchemaEntryV5).min(1).max(50),
-  activeRoomId: z.string().min(1),
+  // A workspace may be empty (a new user has not created a room yet).
+  rooms: z.array(roomSchemaEntryV5).max(50),
+  // Empty while no room is active (empty workspace / sitting in the lobby).
+  activeRoomId: z.string(),
 });
 
 /** Structural post-validation of a single room that the zod schema cannot express. */
 function validateRoom(d: Design): Design {
   const exterior = d.walls.filter((w) => w.kind === 'exterior');
-  const loop = validateExteriorLoop(exterior);
-  if (!loop.ok) throw new Error(`Invalid room shape: ${loop.reason}`);
+  // A room with no exterior walls is a not-yet-drawn room (created in the lobby,
+  // outline still to be sketched) — a valid intermediate state, not a broken loop.
+  if (exterior.length > 0) {
+    const loop = validateExteriorLoop(exterior);
+    if (!loop.ok) throw new Error(`Invalid room shape: ${loop.reason}`);
+  }
   for (const w of d.walls) {
     if (w.kind === 'interior' && !isAxisParallel(w.a, w.b)) {
       throw new Error('Invalid room shape: Walls must be horizontal or vertical.');
@@ -370,7 +376,7 @@ export function normalizeProject(p: Project): Project {
     return room.updatedAt ? room : { ...room, updatedAt: p.updatedAt };
   });
   const active = rooms.find((r) => r.id === p.activeRoomId) ?? rooms[0];
-  return { ...p, rooms, activeRoomId: active.id };
+  return { ...p, rooms, activeRoomId: active?.id ?? '' };
 }
 
 /** The single entry point for all untrusted project data (import, saves, rehydration). */
@@ -435,54 +441,6 @@ export function exportProject(project: Project) {
   a.download = `${project.name.trim() || 'project'}.room.json`;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-// ---- Named saves in localStorage ----
-
-const SAVES_KEY = 'roomcraft:saves';
-
-/** Values may be older schemas; they are validated/migrated first in loadSave. */
-type SavesMap = Record<string, { name: string; updatedAt: string }>;
-
-function readSaves(): SavesMap {
-  try {
-    const raw = localStorage.getItem(SAVES_KEY);
-    return raw ? (JSON.parse(raw) as SavesMap) : {};
-  } catch {
-    return {};
-  }
-}
-
-function writeSaves(saves: SavesMap) {
-  localStorage.setItem(SAVES_KEY, JSON.stringify(saves));
-}
-
-export interface SaveInfo {
-  name: string;
-  updatedAt: string;
-}
-
-export function listSaves(): SaveInfo[] {
-  return Object.values(readSaves())
-    .map((d) => ({ name: d.name, updatedAt: d.updatedAt }))
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-}
-
-export function saveAs(name: string, project: Project) {
-  const saves = readSaves();
-  saves[name] = { ...project, name, updatedAt: new Date().toISOString() };
-  writeSaves(saves);
-}
-
-export function loadSave(name: string): Project | null {
-  const raw = readSaves()[name];
-  return raw ? parseProjectSafe(raw) : null;
-}
-
-export function deleteSave(name: string) {
-  const saves = readSaves();
-  delete saves[name];
-  writeSaves(saves);
 }
 
 // ---- Furniture library in localStorage ----

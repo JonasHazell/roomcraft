@@ -133,6 +133,52 @@ export function createDefaultProject(): Project {
 }
 
 /**
+ * A brand-new room with no floor plan yet: no walls or openings and one empty
+ * furnishing. Created from the lobby's "New room", which then drops the user
+ * straight into the floor-plan editor to draw the outline.
+ */
+export function createEmptyRoom(name = 'Room 1'): Design {
+  const proposalId = nanoid(8);
+  return {
+    id: nanoid(8),
+    name,
+    updatedAt: new Date().toISOString(),
+    room: { height: 2.5 },
+    floorColor: DEFAULT_FLOOR_COLOR,
+    wallColor: DEFAULT_WALL_COLOR,
+    walls: [],
+    openings: [],
+    proposals: [
+      {
+        id: proposalId,
+        name: 'Proposal 1',
+        furniture: [],
+        floorColor: DEFAULT_FLOOR_COLOR,
+        wallColor: DEFAULT_WALL_COLOR,
+      },
+    ],
+    activeProposalId: proposalId,
+    furniture: [],
+  };
+}
+
+/** An empty workspace: no rooms yet. The lobby shows the "create your first room" state. */
+export function createEmptyProject(): Project {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    name: 'My rooms',
+    updatedAt: new Date().toISOString(),
+    rooms: [],
+    activeRoomId: '',
+  };
+}
+
+/** The active room, or a throwaway placeholder while the workspace has no rooms. */
+function activeOrPlaceholder(p: Project): Design {
+  return activeRoom(p) ?? createEmptyRoom();
+}
+
+/**
  * Deep-copies a room with fresh ids — used when a new room starts from an
  * existing one. Wall ids are remapped so openings keep pointing at their wall,
  * and every proposal (and its furniture) gets new ids too.
@@ -187,6 +233,15 @@ interface DesignState {
    * room (shape + furnishings); otherwise a fresh default room is added.
    */
   addRoom: (opts: { name?: string; copyCurrent: boolean }) => string;
+  /**
+   * Creates a new, undrawn room (no walls yet) and makes it active. Used by the
+   * lobby's "New room", which then opens the floor-plan editor to draw it.
+   */
+  createRoom: (name?: string) => string;
+  /** Snapshots the active room back into the project before returning to the lobby. */
+  exitToLobby: () => void;
+  /** Duplicates a room by id (floor plan + furnishings) without leaving the lobby. */
+  duplicateRoom: (id: string) => string;
   /** Activates another room; its floor plan and furnishings replace the live ones. */
   setActiveRoom: (id: string) => void;
   renameRoom: (id: string, name: string) => void;
@@ -262,13 +317,13 @@ function clampOpeningIn(d: Design, o: WallOpening): WallOpening {
   return wall ? clampOpening(o, wall, d.room.height) : o;
 }
 
-const bootProject = createDefaultProject();
+const bootProject = createEmptyProject();
 
 export const useDesignStore = create<DesignState>()(
   persist(
     (set, get) => ({
       project: bootProject,
-      design: activeRoom(bootProject),
+      design: activeOrPlaceholder(bootProject),
 
       setProjectName: (name) =>
         set({ project: { ...get().project, name, updatedAt: new Date().toISOString() } }),
@@ -284,6 +339,32 @@ export const useDesignStore = create<DesignState>()(
           design: room,
         });
         return room.id;
+      },
+
+      createRoom: (name) => {
+        const project = syncActiveRoom(get().project, syncActiveProposal(get().design));
+        const room = createEmptyRoom(name?.trim() || nextRoomName(project.rooms));
+        set({
+          project: { ...project, rooms: [...project.rooms, room], activeRoomId: room.id },
+          design: room,
+        });
+        return room.id;
+      },
+
+      exitToLobby: () => {
+        // Fold the on-screen room back into the project so its lobby card is current.
+        const project = syncActiveRoom(get().project, syncActiveProposal(get().design));
+        set({ project });
+      },
+
+      duplicateRoom: (id) => {
+        const project = syncActiveRoom(get().project, syncActiveProposal(get().design));
+        const src = project.rooms.find((r) => r.id === id);
+        if (!src) return '';
+        const copy = cloneRoom(src, nextRoomName(project.rooms));
+        // The copy is added but not activated — the user stays in the lobby.
+        set({ project: { ...project, rooms: [...project.rooms, copy] } });
+        return copy.id;
       },
 
       setActiveRoom: (id) => {
@@ -310,7 +391,6 @@ export const useDesignStore = create<DesignState>()(
 
       removeRoom: (id) => {
         const cur = get();
-        if (cur.project.rooms.length <= 1) return; // keep at least one room per project
         const project = syncActiveRoom(cur.project, syncActiveProposal(cur.design));
         const idx = project.rooms.findIndex((r) => r.id === id);
         if (idx === -1) return;
@@ -319,9 +399,13 @@ export const useDesignStore = create<DesignState>()(
           set({ project: { ...project, rooms } });
           return;
         }
-        // Removing the active room: fall back to the previous room in the list.
+        // Removing the active room: fall back to the previous room, or leave the
+        // workspace empty (the lobby shows its create-first-room state).
         const nextActive = rooms[Math.max(0, idx - 1)];
-        set({ project: { ...project, rooms, activeRoomId: nextActive.id }, design: nextActive });
+        set({
+          project: { ...project, rooms, activeRoomId: nextActive?.id ?? '' },
+          design: nextActive ?? createEmptyRoom(),
+        });
       },
 
       setName: (name) => set({ design: touch({ ...get().design, name }) }),
@@ -752,7 +836,7 @@ export const useDesignStore = create<DesignState>()(
           };
         });
         const project = { ...normalized, rooms };
-        set({ project, design: activeRoom(project) });
+        set({ project, design: activeOrPlaceholder(project) });
       },
 
       newProject: () => {
@@ -781,7 +865,7 @@ export const useDesignStore = create<DesignState>()(
       merge: (persisted, current) => {
         const raw = (persisted as { project?: unknown } | undefined)?.project;
         const project = parseProjectSafe(raw) ?? current.project;
-        return { ...current, project, design: activeRoom(project) };
+        return { ...current, project, design: activeOrPlaceholder(project) };
       },
     },
   ),

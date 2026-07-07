@@ -19,7 +19,7 @@ export function ProposalSwitcher() {
   const renameProposal = useDesignStore((s) => s.renameProposal);
   const removeProposal = useDesignStore((s) => s.removeProposal);
   const select = useUiStore((s) => s.select);
-  const mode = useUiStore((s) => s.mode);
+  const appView = useUiStore((s) => s.appView);
 
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -44,7 +44,7 @@ export function ProposalSwitcher() {
   }, [open]);
 
   // Furnishing actions live in the 3D view, matching the other furniture bars.
-  if (mode !== '3d') return null;
+  if (appView !== 'furnish') return null;
 
   const switchTo = (id: string) => {
     setActiveProposal(id);
