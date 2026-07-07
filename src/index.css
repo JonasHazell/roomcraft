@@ -692,8 +692,9 @@ select {
   pointer-events: none;
 }
 
-/* Undo/redo cluster, bottom-right of the viewport — clear of the centred
-   bottom action bar (z:55) and the top row, and thumb-reachable on mobile. */
+/* Undo/redo cluster for the 2D floor-plan editor, bottom-right of the viewport
+   and thumb-reachable on mobile. (In the 3D view undo/redo live inside the
+   bottom pill bars instead — see HistoryButtons.) */
 .history-controls {
   position: absolute;
   right: calc(14px + env(safe-area-inset-right));
@@ -736,14 +737,6 @@ select {
   }
 }
 
-/* On phones the bottom-centre action/selection bar and the history cluster
-   share the bottom edge, so lift the cluster above the bar to clear it. */
-@media (max-width: 768px) {
-  .history-controls {
-    bottom: calc(84px + env(safe-area-inset-bottom));
-  }
-}
-
 /* ---------- Proposal switcher (furnishing variants) ---------- */
 
 .proposal-switcher {
@@ -753,10 +746,18 @@ select {
   z-index: 55;
 }
 
+/* One connected, segmented pill — prev · name ▾ · next — sharing a single
+   border, radius and shadow with the bottom dock so the whole 3D-view control
+   family reads as one system. The arrows and the name button are borderless
+   segments divided by hairlines. */
 .proposal-nav {
   display: flex;
   align-items: center;
-  gap: 8px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--card);
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(43, 38, 29, 0.18);
 }
 
 .proposal-arrow {
@@ -764,19 +765,22 @@ select {
   align-items: center;
   justify-content: center;
   flex: none;
-  /* Match the 52px height of the bottom pill bars so the whole 3D-view pill
-     family reads at one size. */
-  width: 52px;
+  /* Segments run the full 52px height so the whole pill matches the bottom bars. */
+  width: 46px;
   height: 52px;
   padding: 0;
   font: inherit;
   font-size: 22px;
   line-height: 1;
-  border: 1.5px solid var(--ink);
-  border-radius: 999px;
-  background: var(--card);
+  border: 0;
+  background: transparent;
   color: var(--ink);
   cursor: pointer;
+  transition: background 0.12s;
+}
+
+.proposal-arrow:hover:not(:disabled) {
+  background: var(--paper-2);
 }
 
 .proposal-arrow:disabled {
@@ -791,14 +795,20 @@ select {
   max-width: 46vw;
   font: inherit;
   font-size: 13px;
-  /* Same 52px height as the arrows and the bottom pill bars. */
-  min-height: 52px;
+  height: 52px;
   padding: 6px 16px;
-  border: 1.5px solid var(--ink);
-  border-radius: 999px;
-  background: var(--card);
+  /* Hairline dividers between the name and the flanking arrows. */
+  border: 0;
+  border-left: 1.5px solid var(--line);
+  border-right: 1.5px solid var(--line);
+  background: transparent;
   color: var(--ink);
   cursor: pointer;
+  transition: background 0.12s;
+}
+
+.proposal-pill:hover {
+  background: var(--paper-2);
 }
 
 .proposal-pill-icon {
@@ -1465,6 +1475,25 @@ select {
   color: var(--card);
 }
 
+/* Undo/redo segment: icon-only regardless of the bar's label mode, and dimmed
+   when there is nothing to undo/redo. */
+.sel-action.sel-history {
+  padding: 8px 10px;
+}
+
+.sel-action.sel-history .sel-icon {
+  font-size: 19px;
+}
+
+.sel-action:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sel-action:disabled:hover {
+  background: transparent;
+}
+
 .sel-icon {
   font-size: 15px;
   line-height: 1;
@@ -1873,8 +1902,27 @@ select {
   z-index: 56;
 }
 
+/* Same rounded, card-filled, shadowed surface as the switcher and bottom dock so
+   the back control belongs to the same family. */
 .room-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 999px;
   background: var(--card);
+  box-shadow: 0 6px 20px rgba(43, 38, 29, 0.18);
+}
+
+.room-back:hover {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+.room-back > [aria-hidden] {
+  font-size: 18px;
+  line-height: 1;
 }
 
 .room-topbar-name {
@@ -1898,5 +1946,17 @@ select {
      back button and switcher each get the room they need. */
   .room-topbar-name {
     display: none;
+  }
+
+  /* Icon-only circular back button on phones so it matches the compact control
+     family and leaves room for the centred switcher. */
+  .room-back-label {
+    display: none;
+  }
+
+  .room-back {
+    width: 52px;
+    padding: 0;
+    justify-content: center;
   }
 }

@@ -1,20 +1,29 @@
 import type { ReactNode } from 'react';
+import { HistoryButtons } from './HistoryButtons';
 
 /**
  * Shared building blocks for the bottom action pills (Action/Selection/Wall/Floor
  * bars) so their markup is defined once. A bar is a `SelBar` wrapper containing
  * `SelBarButton`s, `SelBarColor` swatches and `SelBarDivider`s.
+ *
+ * Every furnish-view bar ends with a persistent undo/redo segment ({@link
+ * HistoryButtons}), so the 3D view has one unified bottom dock in every selection
+ * state rather than a separate floating history cluster. Pass `history={false}`
+ * to opt out.
  */
 export function SelBar({
   label,
   children,
   keepLabels,
+  history = true,
 }: {
   label: string;
   children: ReactNode;
   /** Keep the button text labels visible on narrow phones (for short bars where
    *  they still fit); long bars drop to icon-only to save room. */
   keepLabels?: boolean;
+  /** Append the shared undo/redo segment (default true). */
+  history?: boolean;
 }) {
   return (
     <div className="selection-bar-wrap">
@@ -24,6 +33,7 @@ export function SelBar({
         aria-label={label}
       >
         {children}
+        {history && <HistoryButtons />}
       </div>
     </div>
   );
