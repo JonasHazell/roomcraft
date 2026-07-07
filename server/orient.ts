@@ -1,3 +1,4 @@
+import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, isHexColor } from '../src/types.ts';
 import type { Design, Point, Wall } from '../src/types.ts';
 import {
   closestPointOnSegment,
@@ -9,6 +10,11 @@ import {
 import type { AiFurniture, AiProposals, ResolvedFurniture, ResolvedProposals } from './schema.ts';
 
 const HALF_PI = Math.PI / 2;
+
+/** Structured output can't enforce a colour format, so clamp anything malformed to a fallback. */
+function safeColor(c: string, fallback: string): string {
+  return isHexColor(c) ? c : fallback;
+}
 
 /** Snaps an angle to the nearest quarter turn. */
 function snap90(theta: number): number {
@@ -87,7 +93,7 @@ function resolveFurniture(f: AiFurniture, design: Design, roomCenter: Point): Re
     rotationY,
     size: f.size,
     elevation: f.elevation,
-    color: f.color,
+    color: safeColor(f.color, '#b0a795'),
     reasoning: f.reasoning,
   };
 }
@@ -99,8 +105,8 @@ export function resolveProposals(data: AiProposals, design: Design): ResolvedPro
     proposals: data.proposals.map((p) => ({
       title: p.title,
       concept: p.concept,
-      floorColor: p.floorColor,
-      wallColor: p.wallColor,
+      floorColor: safeColor(p.floorColor, DEFAULT_FLOOR_COLOR),
+      wallColor: safeColor(p.wallColor, DEFAULT_WALL_COLOR),
       furniture: p.furniture.map((f) => resolveFurniture(f, design, roomCenter)),
     })),
   };

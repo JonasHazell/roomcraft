@@ -1,12 +1,18 @@
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
 import type { Design, FurnitureLibraryEntry, Project, Proposal, Wall } from '../types';
-import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, SCHEMA_VERSION } from '../types';
+import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, HEX_COLOR_RE, SCHEMA_VERSION } from '../types';
 import { isAxisParallel, validateExteriorLoop } from './polygon';
 import { FURNITURE_KINDS } from './furnitureCatalog';
 
-const color = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'invalid color code (expected #rrggbb)');
+const color = z.string().regex(HEX_COLOR_RE, 'invalid color code (expected #rrggbb)');
 const meters = (max: number) => z.number().min(0).max(max);
+
+const furnitureSizeSchema = z.object({
+  width: z.number().min(0.01).max(100),
+  depth: z.number().min(0.01).max(100),
+  height: z.number().min(0.01).max(20),
+});
 
 const furnitureSchema = z.object({
   id: z.string().min(1),
@@ -14,11 +20,7 @@ const furnitureSchema = z.object({
   name: z.string().max(100),
   position: z.object({ x: z.number().min(-100).max(100), z: z.number().min(-100).max(100) }),
   rotationY: z.number().min(-100).max(100),
-  size: z.object({
-    width: z.number().min(0.01).max(100),
-    depth: z.number().min(0.01).max(100),
-    height: z.number().min(0.01).max(20),
-  }),
+  size: furnitureSizeSchema,
   /** Missing in saves made before the field existed — falls back to the floor. */
   elevation: meters(20).default(0),
   color,
@@ -451,11 +453,7 @@ const libraryEntrySchema = z.object({
   id: z.string().min(1),
   name: z.string().max(100),
   kind: z.enum(FURNITURE_KINDS),
-  size: z.object({
-    width: z.number().min(0.01).max(100),
-    depth: z.number().min(0.01).max(100),
-    height: z.number().min(0.01).max(20),
-  }),
+  size: furnitureSizeSchema,
   elevation: meters(20).default(0),
   color,
 });

@@ -25,6 +25,14 @@ export interface Room {
 export const DEFAULT_FLOOR_COLOR = '#c9a878';
 export const DEFAULT_WALL_COLOR = '#efe8da';
 
+/** Matches a #rrggbb colour. The single source of truth for persistence, the AI client and the server. */
+export const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+
+/** True if `c` is a valid #rrggbb colour string. */
+export function isHexColor(c: string | undefined | null): c is string {
+  return typeof c === 'string' && HEX_COLOR_RE.test(c);
+}
+
 export interface WallOpening {
   id: string;
   kind: OpeningKind;
