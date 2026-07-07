@@ -217,6 +217,18 @@ export function segmentsIntersect(p1: Point, p2: Point, p3: Point, p4: Point): b
   return false;
 }
 
+/**
+ * True if the edge b→c folds straight back along a→b (collinear and reversed).
+ * Used to reject a drawn outline point that would double back on the last edge.
+ */
+export function foldsBack(a: Point, b: Point, c: Point): boolean {
+  const d1 = wallDir({ a, b });
+  const d2 = wallDir({ a: b, b: c });
+  const cross = d1.x * d2.z - d1.z * d2.x;
+  const dot = d1.x * d2.x + d1.z * d2.z;
+  return Math.abs(cross) < EPS && dot < 0;
+}
+
 export type LoopValidation = { ok: true } | { ok: false; reason: string };
 
 /**
