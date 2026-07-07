@@ -36,12 +36,19 @@ interface UiState {
   appView: AppView;
   /** Consumed once by the plan editor when it opens; then reset to 'select'. */
   planStartTool: PlanStartTool;
+  /**
+   * The room created by "New room" that hasn't been drawn yet. Set while its
+   * outline is being drawn in the plan editor; leaving without drawing discards
+   * it so an abandoned "New room" creates no room. Null once drawn or cleared.
+   */
+  pendingRoomId: string | null;
   furnitureDialog: FurnitureDialog;
   panel: Panel;
   select: (selection: Selection) => void;
   setDragging: (id: string | null) => void;
   setAppView: (view: AppView) => void;
   setPlanStartTool: (tool: PlanStartTool) => void;
+  setPendingRoomId: (id: string | null) => void;
   openAddFurniture: () => void;
   openEditFurniture: (id: string) => void;
   closeFurnitureDialog: () => void;
@@ -56,12 +63,14 @@ export const useUiStore = create<UiState>()((set) => ({
   // creates their first one.
   appView: 'lobby',
   planStartTool: 'select',
+  pendingRoomId: null,
   furnitureDialog: null,
   panel: null,
   select: (selection) => set({ selection }),
   setDragging: (draggingId) => set({ draggingId }),
   setAppView: (appView) => set({ appView }),
   setPlanStartTool: (planStartTool) => set({ planStartTool }),
+  setPendingRoomId: (pendingRoomId) => set({ pendingRoomId }),
   openAddFurniture: () => set({ furnitureDialog: { mode: 'create' } }),
   openEditFurniture: (id) =>
     set({ selection: { kind: 'furniture', id }, furnitureDialog: { mode: 'edit', id } }),

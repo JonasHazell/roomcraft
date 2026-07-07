@@ -240,6 +240,12 @@ interface DesignState {
   createRoom: (name?: string) => string;
   /** Snapshots the active room back into the project before returning to the lobby. */
   exitToLobby: () => void;
+  /**
+   * Snapshots the active room back into the project, then drops the given room if
+   * it is still undrawn (no exterior walls). Used when leaving the plan editor so
+   * a room created via "New room" but never drawn leaves no empty room behind.
+   */
+  discardRoomIfUndrawn: (id: string) => void;
   /** Duplicates a room by id (floor plan + furnishings) without leaving the lobby. */
   duplicateRoom: (id: string) => string;
   /** Activates another room; its floor plan and furnishings replace the live ones. */
@@ -355,6 +361,32 @@ export const useDesignStore = create<DesignState>()(
         // Fold the on-screen room back into the project so its lobby card is current.
         const project = syncActiveRoom(get().project, syncActiveProposal(get().design));
         set({ project });
+      },
+
+      discardRoomIfUndrawn: (id) => {
+        // Fold the on-screen room back in first (as exitToLobby does), so a room
+        // we keep has a current card.
+        const cur = get();
+        const project = syncActiveRoom(cur.project, syncActiveProposal(cur.design));
+        const room = project.rooms.find((r) => r.id === id);
+        const drawn = !!room && room.walls.some((w) => w.kind === 'exterior');
+        if (!room || drawn) {
+          set({ project });
+          return;
+        }
+        // Undrawn: drop it. If it was active, fall back to the previous room (or an
+        // empty workspace), mirroring removeRoom.
+        const idx = project.rooms.findIndex((r) => r.id === id);
+        const rooms = project.rooms.filter((r) => r.id !== id);
+        if (id !== project.activeRoomId) {
+          set({ project: { ...project, rooms } });
+          return;
+        }
+        const nextActive = rooms[Math.max(0, idx - 1)];
+        set({
+          project: { ...project, rooms, activeRoomId: nextActive?.id ?? '' },
+          design: nextActive ?? createEmptyRoom(),
+        });
       },
 
       duplicateRoom: (id) => {
