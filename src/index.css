@@ -1729,16 +1729,6 @@ select {
   font-size: 15px;
 }
 
-.lobby-tools {
-  display: flex;
-  gap: 8px;
-}
-
-.lobby-messages {
-  max-width: 1120px;
-  margin: 0 auto 16px;
-}
-
 .lobby-empty {
   max-width: 560px;
   margin: 8vh auto 0;
