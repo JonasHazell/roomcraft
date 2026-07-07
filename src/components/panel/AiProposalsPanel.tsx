@@ -4,6 +4,7 @@ import { useUiStore } from '../../store/useUiStore';
 import {
   fetchProposals,
   toFurnitureItem,
+  validHexColor,
   type AiProposal,
   type ProposalsResponse,
 } from '../../lib/aiProposals';
@@ -36,8 +37,11 @@ export function AiProposalsPanel() {
 
   function apply(proposal: AiProposal) {
     // Keep the AI layout as its own switchable proposal instead of overwriting
-    // the current furnishing.
-    addProposalFromFurniture(proposal.title, proposal.furniture.map(toFurnitureItem));
+    // the current furnishing. Malformed colours fall back to the current palette.
+    addProposalFromFurniture(proposal.title, proposal.furniture.map(toFurnitureItem), {
+      floorColor: validHexColor(proposal.floorColor),
+      wallColor: validHexColor(proposal.wallColor),
+    });
     select(null);
     setAppliedTitle(proposal.title);
   }
@@ -86,6 +90,12 @@ export function AiProposalsPanel() {
             {appliedTitle === p.title && <span className="ai-applied">In use</span>}
           </header>
           <p className="ai-concept">{p.concept}</p>
+          <p className="ai-palette">
+            <span className="swatch" style={{ background: validHexColor(p.wallColor) ?? '#ccc' }} />
+            <span className="ai-dim">Walls</span>
+            <span className="swatch" style={{ background: validHexColor(p.floorColor) ?? '#ccc' }} />
+            <span className="ai-dim">Floor</span>
+          </p>
           <ul className="ai-furniture">
             {p.furniture.map((f, i) => (
               <li key={i}>

@@ -19,9 +19,11 @@ export interface Wall {
 
 export interface Room {
   height: number; // ceiling height, meters
-  floorColor: string;
-  wallColor: string;
 }
+
+/** Default floor/wall colours for a fresh proposal. */
+export const DEFAULT_FLOOR_COLOR = '#c9a878';
+export const DEFAULT_WALL_COLOR = '#efe8da';
 
 export interface WallOpening {
   id: string;
@@ -80,14 +82,20 @@ export interface FurnitureLibraryEntry {
 }
 
 /** A named furnishing variant of one room. The room shape (walls, openings,
- *  colours) is shared across all proposals; only the furniture differs. */
+ *  ceiling height) is shared across all proposals; the furniture and the
+ *  floor/wall colours are part of the proposal, so each variant can have its
+ *  own palette. */
 export interface Proposal {
   id: string;
   name: string;
   furniture: FurnitureItem[];
+  /** Floor colour for this furnishing variant (#rrggbb). */
+  floorColor: string;
+  /** Wall colour for this furnishing variant (#rrggbb). */
+  wallColor: string;
 }
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 /**
  * One room within a {@link Project}: its floor plan (walls, openings), its
@@ -111,9 +119,16 @@ export interface Design {
    * exported or a different proposal is activated.
    */
   furniture: FurnitureItem[];
+  /**
+   * The active proposal's floor colour — the live source of truth while editing,
+   * mirrored back into the matching proposal exactly like `furniture`.
+   */
+  floorColor: string;
+  /** The active proposal's wall colour — mirrored like `floorColor`. */
+  wallColor: string;
   /** Named furnishing variants of this room; always at least one. */
   proposals: Proposal[];
-  /** Which proposal `furniture` currently mirrors. */
+  /** Which proposal `furniture`/`floorColor`/`wallColor` currently mirror. */
   activeProposalId: string;
 }
 

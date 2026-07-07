@@ -20,9 +20,11 @@ with its own floor plan and its own furnishing options.
 - Furniture (bed, sofa, table, chair, wardrobe, bookshelf, rug, custom box) with
   their own measurements, color and rotation; dragged around the floor and kept
   inside the outer walls
-- Colors for floor, walls and each piece of furniture
+- Colors for floor, walls and each piece of furniture — the floor and wall
+  colours are part of each furnishing proposal, so different proposals of the
+  same room can have their own palette
 - AI furnishing suggestions: describe your needs and the backend asks Claude to
-  propose a furniture layout for the room
+  propose a furniture layout for the room, each with its own floor/wall palette
 - Undo/redo for every editing step — moving and editing furniture, walls, doors,
   windows, colours and more. Use the ↶/↷ buttons in the bottom-right corner (they
   work on mobile too) or the keyboard shortcuts below; a whole drag counts as a

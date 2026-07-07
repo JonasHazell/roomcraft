@@ -21,7 +21,18 @@ export interface AiFurniture {
 export interface AiProposal {
   title: string;
   concept: string;
+  /** Floor colour for this proposal (#rrggbb); may be malformed — sanitize before use. */
+  floorColor: string;
+  /** Wall colour for this proposal (#rrggbb); may be malformed — sanitize before use. */
+  wallColor: string;
   furniture: AiFurniture[];
+}
+
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
+
+/** Returns the colour only if it is a valid #rrggbb string, otherwise `undefined`. */
+export function validHexColor(c: string | undefined): string | undefined {
+  return c && HEX_COLOR.test(c) ? c : undefined;
 }
 
 export interface ProposalsResponse {

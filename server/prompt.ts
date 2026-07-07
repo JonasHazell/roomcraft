@@ -54,7 +54,9 @@ Produce 2–3 deliberately different proposals (e.g. "maximize space", "maximize
 Each proposal: a title, a short concept, and a complete furnishing that meets the user's needs.
 Start from the catalog's default dimensions but adjust sizes reasonably when needed (e.g. bed 1.4/1.6/1.8 m).
 Use "box" with a descriptive name for furniture missing from the catalog (e.g. desk, TV bench, armchair).
-Choose colors that give a cohesive palette per proposal. Write all user-facing text in English.
+Choose colors that give a cohesive palette per proposal — including the floor and wall colours
+(floorColor, wallColor) for the room, so different proposals can present distinct looks. Write all
+user-facing text in English.
 Respond only according to the given JSON schema.`;
 
 const round = (v: number) => Math.round(v * 1000) / 1000;

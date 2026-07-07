@@ -14,7 +14,7 @@ import type {
   Wall,
   WallOpening,
 } from '../types';
-import { SCHEMA_VERSION } from '../types';
+import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, SCHEMA_VERSION } from '../types';
 import { clampFurniture, clampOpening, furnitureFits, slideFurniture } from '../lib/geometry';
 import {
   GRID,
@@ -82,11 +82,19 @@ export function createDefaultRoom(name = 'Room 1'): Design {
     updatedAt: new Date().toISOString(),
     room: {
       height: 2.5,
-      floorColor: '#c9a878',
-      wallColor: '#efe8da',
     },
+    floorColor: DEFAULT_FLOOR_COLOR,
+    wallColor: DEFAULT_WALL_COLOR,
     walls: [north, east, south, west],
-    proposals: [{ id: proposalId, name: 'Proposal 1', furniture: [] }],
+    proposals: [
+      {
+        id: proposalId,
+        name: 'Proposal 1',
+        furniture: [],
+        floorColor: DEFAULT_FLOOR_COLOR,
+        wallColor: DEFAULT_WALL_COLOR,
+      },
+    ],
     activeProposalId: proposalId,
     openings: [
       {
@@ -141,11 +149,16 @@ function cloneRoom(src: Design, name: string): Design {
     id: nanoid(8),
     wallId: wallIdMap.get(o.wallId) ?? o.wallId,
   }));
-  const proposals = src.proposals.map((p) => ({
-    id: nanoid(8),
-    name: p.name,
-    furniture: cloneFurniture(p.id === src.activeProposalId ? src.furniture : p.furniture),
-  }));
+  const proposals = src.proposals.map((p) => {
+    const isActive = p.id === src.activeProposalId;
+    return {
+      id: nanoid(8),
+      name: p.name,
+      furniture: cloneFurniture(isActive ? src.furniture : p.furniture),
+      floorColor: isActive ? src.floorColor : p.floorColor,
+      wallColor: isActive ? src.wallColor : p.wallColor,
+    };
+  });
   const activeIdx = Math.max(0, src.proposals.findIndex((p) => p.id === src.activeProposalId));
   const active = proposals[activeIdx] ?? proposals[0];
   return {
@@ -153,6 +166,8 @@ function cloneRoom(src: Design, name: string): Design {
     name,
     updatedAt: new Date().toISOString(),
     room: { ...src.room },
+    floorColor: active.floorColor,
+    wallColor: active.wallColor,
     walls,
     openings,
     proposals,
@@ -179,6 +194,11 @@ interface DesignState {
   removeRoom: (id: string) => void;
   setName: (name: string) => void;
   setRoom: (patch: Partial<Room>) => void;
+  /**
+   * Recolours the floor and/or walls of the active proposal. Different proposals
+   * of the same room can therefore carry different palettes.
+   */
+  setColors: (patch: { floorColor?: string; wallColor?: string }) => void;
   commitExteriorPolygon: (points: Point[]) => LoopValidation;
   addInteriorWall: (a: Point, b: Point) => string | null;
   removeWall: (id: string) => void;
@@ -209,8 +229,16 @@ interface DesignState {
    * `copyCurrent` starts it from the active proposal's furniture; otherwise empty.
    */
   addProposal: (opts: { name?: string; copyCurrent: boolean }) => string;
-  /** Creates a new proposal from a given furnishing (e.g. an applied AI layout) and activates it. */
-  addProposalFromFurniture: (name: string, items: Omit<FurnitureItem, 'id'>[]) => string;
+  /**
+   * Creates a new proposal from a given furnishing (e.g. an applied AI layout)
+   * and activates it. Optional `colors` set the proposal's floor/wall palette;
+   * anything omitted inherits the currently active proposal's colour.
+   */
+  addProposalFromFurniture: (
+    name: string,
+    items: Omit<FurnitureItem, 'id'>[],
+    colors?: { floorColor?: string; wallColor?: string },
+  ) => string;
   /** Activates another proposal; the room shape stays, only the furnishing swaps. */
   setActiveProposal: (id: string) => void;
   renameProposal: (id: string, name: string) => void;
@@ -309,6 +337,11 @@ export const useDesignStore = create<DesignState>()(
             openings: next.openings.map((o) => clampOpeningIn(next, o)),
           }),
         });
+      },
+
+      setColors: (patch) => {
+        const d = get().design;
+        set({ design: touch({ ...d, ...patch }) });
       },
 
       commitExteriorPolygon: (points) => {
@@ -598,30 +631,50 @@ export const useDesignStore = create<DesignState>()(
         const d = syncActiveProposal(get().design);
         const id = nanoid(8);
         const furniture = copyCurrent ? cloneFurniture(d.furniture) : [];
-        const proposal: Proposal = { id, name: name?.trim() || nextProposalName(d.proposals), furniture };
+        // A new variant starts from the current palette; the user tweaks it after.
+        const { floorColor, wallColor } = d;
+        const proposal: Proposal = {
+          id,
+          name: name?.trim() || nextProposalName(d.proposals),
+          furniture,
+          floorColor,
+          wallColor,
+        };
         set({
           design: touch({
             ...d,
             proposals: [...d.proposals, proposal],
             activeProposalId: id,
             furniture,
+            floorColor,
+            wallColor,
           }),
         });
         return id;
       },
 
-      addProposalFromFurniture: (name, items) => {
+      addProposalFromFurniture: (name, items, colors) => {
         const d = syncActiveProposal(get().design);
         const poly = floorPolygon(d.walls);
         const furniture = items.map((it) => clampFurniture({ ...it, id: nanoid(8) }, poly));
         const id = nanoid(8);
-        const proposal: Proposal = { id, name: name.trim() || nextProposalName(d.proposals), furniture };
+        const floorColor = colors?.floorColor ?? d.floorColor;
+        const wallColor = colors?.wallColor ?? d.wallColor;
+        const proposal: Proposal = {
+          id,
+          name: name.trim() || nextProposalName(d.proposals),
+          furniture,
+          floorColor,
+          wallColor,
+        };
         set({
           design: touch({
             ...d,
             proposals: [...d.proposals, proposal],
             activeProposalId: id,
             furniture,
+            floorColor,
+            wallColor,
           }),
         });
         return id;
@@ -640,6 +693,8 @@ export const useDesignStore = create<DesignState>()(
             ...d,
             activeProposalId: id,
             furniture: target.furniture.map((f) => clampFurniture(f, poly)),
+            floorColor: target.floorColor,
+            wallColor: target.wallColor,
           }),
         });
       },
@@ -675,6 +730,8 @@ export const useDesignStore = create<DesignState>()(
             proposals,
             activeProposalId: nextActive.id,
             furniture: nextActive.furniture.map((f) => clampFurniture(f, poly)),
+            floorColor: nextActive.floorColor,
+            wallColor: nextActive.wallColor,
           }),
         });
       },

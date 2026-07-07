@@ -62,7 +62,8 @@ function WallMesh({
   endExtension: number;
   ref: (g: THREE.Group | null) => void;
 }) {
-  const room = useDesignStore((s) => s.design.room);
+  const height = useDesignStore((s) => s.design.room.height);
+  const wallColor = useDesignStore((s) => s.design.wallColor);
   const openings = useDesignStore((s) => s.design.openings);
   const selected = useUiStore(
     (s) => s.selection?.kind === 'wall' && s.selection.id === wall.id,
@@ -83,8 +84,8 @@ function WallMesh({
   };
 
   const geometry = useMemo(
-    () => buildWallGeometry(wallLen(wall) + endExtension, room.height, wallOpenings),
-    [wall, endExtension, room.height, wallOpenings],
+    () => buildWallGeometry(wallLen(wall) + endExtension, height, wallOpenings),
+    [wall, endExtension, height, wallOpenings],
   );
   useEffect(() => () => geometry.dispose(), [geometry]);
 
@@ -95,7 +96,7 @@ function WallMesh({
       {/* FrontSide deliberately: extruded closed solid with outward-facing normals. */}
       <mesh geometry={geometry} castShadow receiveShadow onClick={onClick}>
         <meshStandardMaterial
-          color={room.wallColor}
+          color={wallColor}
           roughness={0.95}
           emissive={selected ? SELECT_EMISSIVE : '#000000'}
           emissiveIntensity={selected ? 0.25 : 0}

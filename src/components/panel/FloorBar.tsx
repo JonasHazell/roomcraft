@@ -10,8 +10,8 @@ export function FloorBar() {
   const mode = useUiStore((s) => s.mode);
   const selection = useUiStore((s) => s.selection);
   const select = useUiStore((s) => s.select);
-  const floorColor = useDesignStore((s) => s.design.room.floorColor);
-  const setRoom = useDesignStore((s) => s.setRoom);
+  const floorColor = useDesignStore((s) => s.design.floorColor);
+  const setColors = useDesignStore((s) => s.setColors);
 
   if (mode !== '3d' || selection?.kind !== 'floor') return null;
 
@@ -24,7 +24,7 @@ export function FloorBar() {
             className="sel-color-input"
             value={floorColor}
             aria-label="Floor colour"
-            onChange={(e) => setRoom({ floorColor: e.target.value })}
+            onChange={(e) => setColors({ floorColor: e.target.value })}
           />
           <span className="sel-label">Floor colour</span>
         </label>
