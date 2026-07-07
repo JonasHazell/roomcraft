@@ -9,7 +9,7 @@ import { useUiStore } from '../../store/useUiStore';
  * when the piece was added.
  */
 export function SelectionBar() {
-  const mode = useUiStore((s) => s.mode);
+  const appView = useUiStore((s) => s.appView);
   const selection = useUiStore((s) => s.selection);
   const select = useUiStore((s) => s.select);
   const openEditFurniture = useUiStore((s) => s.openEditFurniture);
@@ -23,7 +23,7 @@ export function SelectionBar() {
   const duplicateFurniture = useDesignStore((s) => s.duplicateFurniture);
   const removeFurniture = useDesignStore((s) => s.removeFurniture);
 
-  if (mode !== '3d' || selection?.kind !== 'furniture' || !selected) return null;
+  if (appView !== 'furnish' || selection?.kind !== 'furniture' || !selected) return null;
 
   const editing = dialog?.mode === 'edit' && dialog.id === selected.id;
 

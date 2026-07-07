@@ -15,6 +15,7 @@ import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { confirmDialog } from '../../store/useDialogStore';
+import { backToLobby } from '../../lib/nav';
 import { COARSE_POINTER, useMediaQuery } from '../../lib/useMediaQuery';
 import { PlanGrid } from './PlanGrid';
 import { PlanWalls } from './PlanWalls';
@@ -42,11 +43,12 @@ export function PlanEditor() {
   const removeWall = useDesignStore((s) => s.removeWall);
   const selection = useUiStore((s) => s.selection);
   const select = useUiStore((s) => s.select);
-  const setMode = useUiStore((s) => s.setMode);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const coarse = useMediaQuery(COARSE_POINTER);
-  const [tool, setTool] = useState<PlanTool>('select');
+  // A new room opens here with the exterior tool armed so the user draws its
+  // outline right away; editing an existing plan opens in select mode.
+  const [tool, setTool] = useState<PlanTool>(() => useUiStore.getState().planStartTool);
   const [draft, setDraft] = useState<Point[]>([]);
   const [hover, setHover] = useState<Point | null>(null);
   const [guide, setGuide] = useState<Point | null>(null);
@@ -69,6 +71,12 @@ export function PlanEditor() {
 
   /** The user's zoom/pan; null = auto-fit the view to the content. */
   const [view, setView] = useState<Bounds | null>(null);
+
+  // The start tool is a one-shot handoff from the lobby; clear it once consumed
+  // so re-entering an existing plan later opens in select mode.
+  useEffect(() => {
+    useUiStore.getState().setPlanStartTool('select');
+  }, []);
 
   const fitBounds: Bounds = useMemo(() => {
     const pts = [...walls.flatMap((w) => [w.a, w.b]), ...draft];
@@ -429,7 +437,7 @@ export function PlanEditor() {
           onDone={() => {
             cancelDraft();
             setTool('select');
-            setMode('3d');
+            backToLobby();
           }}
           onSelectTool={startSelect}
           onExteriorTool={startExterior}
