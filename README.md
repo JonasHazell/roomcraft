@@ -29,9 +29,9 @@ with its own floor plan and its own furnishing options.
   windows, colours and more. Use the ↶/↷ buttons in the bottom-right corner (they
   work on mobile too) or the keyboard shortcuts below; a whole drag counts as a
   single step
-- Autosave, named project saves (localStorage) and export/import as a JSON file
-  — older saves (schema v1–v3, including single-room designs) are migrated to the
-  current multi-room format automatically
+- Autosave and named project saves (localStorage) — older saves (schema v1–v3,
+  including single-room designs) are migrated to the current multi-room format
+  automatically
 
 ## Keyboard shortcuts
 

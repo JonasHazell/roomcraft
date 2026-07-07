@@ -1,37 +1,19 @@
-import { useRef, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { confirmDialog, promptDialog } from '../../store/useDialogStore';
-import {
-  exportProject,
-  importProject,
-  syncActiveProposal,
-  syncActiveRoom,
-} from '../../lib/persistence';
 import { createRoomAndDraw, openRoomToFurnish, openRoomToPlan } from '../../lib/nav';
-
-/** The live workspace with the on-screen room folded back in (for export). */
-function currentProject() {
-  const s = useDesignStore.getState();
-  return syncActiveRoom(s.project, syncActiveProposal(s.design));
-}
 
 /**
  * The lobby: the app's home surface, kept separate from furnishing. Here you
  * pick a room to furnish, create a new room (which opens the floor-plan editor
- * to draw it), edit an existing room's floor plan, duplicate/rename/delete
- * rooms, and export or import the whole workspace. Furnishing a room happens on
- * its own surface, reached by opening a room card.
+ * to draw it), edit an existing room's floor plan, and duplicate/rename/delete
+ * rooms. Furnishing a room happens on its own surface, reached by opening a
+ * room card.
  */
 export function Lobby() {
   const rooms = useDesignStore((s) => s.project.rooms);
   const duplicateRoom = useDesignStore((s) => s.duplicateRoom);
   const renameRoom = useDesignStore((s) => s.renameRoom);
   const removeRoom = useDesignStore((s) => s.removeRoom);
-  const loadProject = useDesignStore((s) => s.loadProject);
-
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const rename = async (id: string, current: string) => {
     const next = await promptDialog({ title: 'Rename room', label: 'Room name', initial: current });
@@ -48,18 +30,6 @@ export function Lobby() {
     if (ok) removeRoom(id);
   };
 
-  const onImport = async (file: File) => {
-    try {
-      const project = await importProject(file);
-      loadProject(project);
-      setError(null);
-      setNotice(`Imported “${project.name}”.`);
-    } catch (e) {
-      setNotice(null);
-      setError(e instanceof Error ? e.message : 'Import failed.');
-    }
-  };
-
   return (
     <div className="lobby">
       <header className="lobby-head">
@@ -67,33 +37,7 @@ export function Lobby() {
           <h1>Roomcraft</h1>
           <p>Pick a room to furnish, or create a new one.</p>
         </div>
-        <div className="lobby-tools">
-          <button type="button" className="btn" onClick={() => exportProject(currentProject())}>
-            Export JSON
-          </button>
-          <button type="button" className="btn" onClick={() => fileRef.current?.click()}>
-            Import JSON
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".json,application/json"
-            hidden
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void onImport(file);
-              e.target.value = '';
-            }}
-          />
-        </div>
       </header>
-
-      {(notice || error) && (
-        <div className="lobby-messages">
-          {notice && <p className="hint">{notice}</p>}
-          {error && <p className="error">{error}</p>}
-        </div>
-      )}
 
       {rooms.length === 0 ? (
         <div className="lobby-empty">

@@ -410,39 +410,6 @@ export function parseProjectSafe(raw: unknown): Project | null {
   }
 }
 
-export async function importProject(file: File): Promise<Project> {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(await file.text());
-  } catch {
-    throw new Error('The file is not valid JSON.');
-  }
-  try {
-    return parseProject(parsed);
-  } catch (e) {
-    if (e instanceof z.ZodError) {
-      const issues = e.issues
-        .slice(0, 3)
-        .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
-        .join('; ');
-      throw new Error(`The file could not be read as a room design — ${issues}`);
-    }
-    throw e;
-  }
-}
-
-export function exportProject(project: Project) {
-  const blob = new Blob([JSON.stringify(project, null, 2)], {
-    type: 'application/json',
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${project.name.trim() || 'project'}.room.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 // ---- Furniture library in localStorage ----
 
 const LIBRARY_KEY = 'roomcraft:furniture-library';
