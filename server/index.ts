@@ -73,12 +73,26 @@ interface ProposalRequest {
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     let body = '';
+    let done = false;
+    // Overflowing the limit or an error stops the read and tears down the socket
+    // so a malicious/oversized upload can't keep growing memory past MAX_BODY.
+    const fail = (err: Error) => {
+      if (done) return;
+      done = true;
+      req.destroy();
+      reject(err);
+    };
     req.on('data', (chunk: Buffer) => {
+      if (done) return;
       body += chunk.toString();
-      if (body.length > MAX_BODY) reject(new Error('The request body is too large.'));
+      if (body.length > MAX_BODY) fail(new Error('The request body is too large.'));
     });
-    req.on('end', () => resolve(body));
-    req.on('error', reject);
+    req.on('end', () => {
+      if (done) return;
+      done = true;
+      resolve(body);
+    });
+    req.on('error', fail);
   });
 }
 
@@ -87,12 +101,43 @@ function json(res: ServerResponse, status: number, payload: unknown) {
   res.end(JSON.stringify(payload));
 }
 
-/** Rough shape check — the server runs locally and trusts the client's design data. */
+function isFiniteNumber(v: unknown): v is number {
+  return typeof v === 'number' && Number.isFinite(v);
+}
+
+function isPoint(p: unknown): boolean {
+  const q = p as { x?: unknown; z?: unknown } | null;
+  return !!q && isFiniteNumber(q.x) && isFiniteNumber(q.z);
+}
+
+function isWall(w: unknown): boolean {
+  const q = w as { kind?: unknown; a?: unknown; b?: unknown } | null;
+  return !!q && (q.kind === 'exterior' || q.kind === 'interior') && isPoint(q.a) && isPoint(q.b);
+}
+
+/**
+ * Structural validation of the incoming design. The geometry math downstream
+ * assumes well-formed walls/openings, so a malformed request is rejected here
+ * with a 400 instead of throwing deep inside the pipeline (which would surface
+ * as an opaque 502).
+ */
 function parseRequest(raw: string): ProposalRequest {
   const body = JSON.parse(raw) as Partial<ProposalRequest>;
   const design = body.design;
   if (!design || !Array.isArray(design.walls) || design.walls.length === 0 || !design.room) {
     throw new Error('The "design" field is missing or contains no room.');
+  }
+  if (!design.walls.every(isWall)) {
+    throw new Error('The "design" contains a malformed wall (each needs kind and points a/b).');
+  }
+  if (!isFiniteNumber(design.room.height) || design.room.height <= 0) {
+    throw new Error('The "design" has an invalid room height.');
+  }
+  if (design.openings !== undefined && !Array.isArray(design.openings)) {
+    throw new Error('The "design.openings" field must be an array.');
+  }
+  if (design.furniture !== undefined && !Array.isArray(design.furniture)) {
+    throw new Error('The "design.furniture" field must be an array.');
   }
   if (typeof body.needs !== 'string' || body.needs.trim().length === 0) {
     throw new Error('The "needs" field (description of needs) is missing.');
@@ -154,9 +199,11 @@ const server = createServer((req, res) => {
       const { data, warnings } = await generateProposals(request.design, request.needs);
       return json(res, 200, { proposals: data.proposals, warnings });
     } catch (e) {
+      // Log the full error server-side; return a generic message so raw CLI
+      // stderr or ZodError internals aren't leaked to the client.
       console.error('[proposals] error:', e);
       return json(res, 502, {
-        error: e instanceof Error ? e.message : 'Generation failed.',
+        error: 'The AI proposal generation failed. Check the server logs for details.',
       });
     }
   })();

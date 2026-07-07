@@ -1,0 +1,114 @@
+import type { Design, FurnitureItem, FurnitureKind, Point } from '../../types';
+import { floorPolygon } from '../polygon';
+import {
+  add,
+  blockers,
+  convexOverlap,
+  footprint,
+  frontDir,
+  nearestWall,
+  openingInfos,
+  rightDir,
+  stripZone,
+} from './geo';
+import type { RuleCtx, RoomType, RuleOutcome, Violation } from './ruleTypes';
+
+/** Minimum mattress width counted as a double bed (needs access on both sides). */
+export const DOUBLE_BED_MIN_WIDTH = 1.35;
+
+export const na: RuleOutcome = { status: 'not-applicable' };
+export const ok: RuleOutcome = { status: 'passed' };
+
+export function fail(violations: Violation[]): RuleOutcome {
+  return violations.length > 0 ? { status: 'violated', violations } : ok;
+}
+
+export function isDiningTable(f: FurnitureItem): boolean {
+  return f.kind === 'table' && f.size.height >= 0.6 && f.size.height <= 0.9;
+}
+
+export function isCoffeeTable(f: FurnitureItem): boolean {
+  return f.kind === 'table' && f.size.height < 0.6;
+}
+
+export function topOf(f: FurnitureItem): number {
+  return f.elevation + f.size.height;
+}
+
+/** Midpoint of the back edge (opposite the front). */
+export function backEdgeMid(f: FurnitureItem): Point {
+  return add(f.position, frontDir(f.rotationY), -f.size.depth / 2);
+}
+
+/** True if the back of the furniture sits flush (≤ tol) against a wall. */
+export function backAgainstWall(design: Design, f: FurnitureItem, tol = 0.18) {
+  const hit = nearestWall(design, backEdgeMid(f));
+  return hit && hit.distance <= tol ? hit.wall : null;
+}
+
+/** Zone along one of the furniture's long sides (side = ±1 along the right axis), depth outward. */
+export function sideZone(f: FurnitureItem, side: 1 | -1, depth: number): Point[] {
+  const fwd = frontDir(f.rotationY);
+  const right = rightDir(f.rotationY);
+  const n = { x: right.x * side, z: right.z * side };
+  const edgeMid = add(f.position, n, f.size.width / 2);
+  const s = add(edgeMid, fwd, -f.size.depth / 2);
+  const e = add(edgeMid, fwd, f.size.depth / 2);
+  return stripZone(s, e, n, depth);
+}
+
+/** Zone in front of the furniture's front face, as wide as the piece. */
+export function frontZone(f: FurnitureItem, depth: number): Point[] {
+  const fwd = frontDir(f.rotationY);
+  const right = rightDir(f.rotationY);
+  const faceMid = add(f.position, fwd, f.size.depth / 2);
+  const s = add(faceMid, right, -f.size.width / 2);
+  const e = add(faceMid, right, f.size.width / 2);
+  return stripZone(s, e, fwd, depth);
+}
+
+/** Blocking furniture that overlaps the zone. */
+export function blockersInZone(
+  ctx: RuleCtx,
+  zone: Point[],
+  except: Set<string> = new Set(),
+  minTop = 0,
+): FurnitureItem[] {
+  return blockers(ctx.design.furniture, except).filter(
+    (f) => topOf(f) > minTop && convexOverlap(footprint(f), zone),
+  );
+}
+
+export function names(items: FurnitureItem[]): string {
+  return items.map((f) => `"${f.name}"`).join(', ');
+}
+
+/** Infers room types from the furnishing (mixed rooms can yield several). */
+export function inferRoomTypes(design: Design): Set<RoomType> {
+  const kinds = new Set(design.furniture.map((f) => f.kind));
+  const types = new Set<RoomType>();
+  if (kinds.has('bed')) types.add('sovrum');
+  if (kinds.has('sofa')) types.add('vardagsrum');
+  if (kinds.has('desk')) types.add('hemmakontor');
+  if (design.furniture.some(isDiningTable) && kinds.has('chair')) types.add('matplats');
+  return types;
+}
+
+export function buildCtx(design: Design): RuleCtx {
+  const byKindCache = new Map<FurnitureKind, FurnitureItem[]>();
+  return {
+    design,
+    poly: floorPolygon(design.walls),
+    roomTypes: inferRoomTypes(design),
+    doors: openingInfos(design, 'door'),
+    windows: openingInfos(design, 'window'),
+    byKind: (k) => {
+      let list = byKindCache.get(k);
+      if (!list) {
+        list = design.furniture.filter((f) => f.kind === k);
+        byKindCache.set(k, list);
+      }
+      return list;
+    },
+  };
+}

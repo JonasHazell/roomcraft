@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { confirmDialog, promptDialog } from '../../store/useDialogStore';
+import { useEscape } from '../../lib/useEscape';
 import { SwitcherList } from './SwitcherList';
 
 /**
@@ -27,20 +28,14 @@ export function ProposalSwitcher() {
   const active = proposals.find((p) => p.id === activeId) ?? proposals[0];
 
   // Close on outside click or Esc, like the other floating surfaces.
+  useEscape(() => setOpen(false), open);
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
     window.addEventListener('mousedown', onDown);
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('mousedown', onDown);
-      window.removeEventListener('keydown', onKey);
-    };
+    return () => window.removeEventListener('mousedown', onDown);
   }, [open]);
 
   // Furnishing actions live in the 3D view, matching the other furniture bars.

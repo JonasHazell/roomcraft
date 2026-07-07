@@ -2,25 +2,25 @@ import type { Design, FurnitureItem, Point, Wall, WallOpening } from '../../type
 import { FURNITURE_CATALOG } from '../furnitureCatalog';
 import {
   closestPointOnSegment,
+  convexOverlap as convexOverlapEps,
   dist,
+  distToQuad,
   floorPolygon,
+  frontDir,
+  interiorWallQuad,
   outwardNormal,
   pointInPolygon,
   polygonBounds,
   segmentsIntersect,
   wallDir,
-  WALL_T,
 } from '../polygon';
-import { furnitureCorners } from '../geometry';
+import { furnitureCorners } from '../collision';
+
+export { distToQuad, frontDir, interiorWallQuad };
 
 /** Footprint corners without shrinkage — the rules measure real dimensions. */
 export function footprint(f: FurnitureItem): Point[] {
   return furnitureCorners(f, 0);
-}
-
-/** World direction of the front face (local +z rotated by rotationY). */
-export function frontDir(rotationY: number): Point {
-  return { x: Math.sin(rotationY), z: Math.cos(rotationY) };
 }
 
 /** Right in the furniture's coordinate system (local +x in world space). */
@@ -51,49 +51,13 @@ export function support(quad: Point[], d: Point): number {
   return Math.max(...quad.map((p) => dot(p, d)));
 }
 
-/** Separation axes of convex polygons (edge normals). */
-function edgeAxes(poly: Point[]): Point[] {
-  const axes: Point[] = [];
-  for (let i = 0; i < poly.length; i++) {
-    const a = poly[i];
-    const b = poly[(i + 1) % poly.length];
-    const len = Math.hypot(b.x - a.x, b.z - a.z) || 1;
-    axes.push({ x: -(b.z - a.z) / len, z: (b.x - a.x) / len });
-  }
-  return axes;
-}
-
-/** Separating Axis Theorem for two convex polygons. eps > 0 tolerates touching. */
+/**
+ * Convex overlap for the rules, which tolerate 1 cm of touching by default so
+ * flush-against-a-wall placements aren't flagged. Same implementation as the
+ * server's; only the default tolerance differs (see polygon.convexOverlap).
+ */
 export function convexOverlap(a: Point[], b: Point[], eps = 0.01): boolean {
-  for (const axis of [...edgeAxes(a), ...edgeAxes(b)]) {
-    let minA = Infinity;
-    let maxA = -Infinity;
-    let minB = Infinity;
-    let maxB = -Infinity;
-    for (const p of a) {
-      const d = dot(p, axis);
-      minA = Math.min(minA, d);
-      maxA = Math.max(maxA, d);
-    }
-    for (const p of b) {
-      const d = dot(p, axis);
-      minB = Math.min(minB, d);
-      maxB = Math.max(maxB, d);
-    }
-    if (maxA - eps <= minB || maxB - eps <= minA) return false;
-  }
-  return true;
-}
-
-/** Distance from a point to a convex quad; 0 if the point is inside. */
-export function distToQuad(p: Point, quad: Point[]): number {
-  if (pointInPolygon(p, quad)) return 0;
-  let best = Infinity;
-  for (let i = 0; i < quad.length; i++) {
-    const c = closestPointOnSegment(p, quad[i], quad[(i + 1) % quad.length]);
-    best = Math.min(best, dist(p, c));
-  }
-  return best;
+  return convexOverlapEps(a, b, eps);
 }
 
 /** Minimum distance between two convex quads; 0 when overlapping. */
@@ -173,23 +137,6 @@ export function clearanceZones(info: OpeningInfo, depth: number): Point[][] {
 }
 
 // ---- Walls as obstacles ----
-
-/** All wall segments (drawn lines of exterior walls + centerlines of interior walls). */
-export function wallSegments(design: Design): Wall[] {
-  return design.walls;
-}
-
-/** The interior wall's solid as a quad (centered, thickness WALL_T). */
-export function interiorWallQuad(w: Wall): Point[] {
-  const n = outwardNormal(w);
-  const t = WALL_T / 2;
-  return [
-    add(w.a, n, t),
-    add(w.b, n, t),
-    add(w.b, n, -t),
-    add(w.a, n, -t),
-  ];
-}
 
 /** True if any wall segment intersects the quad. */
 export function wallsHitQuad(design: Design, quad: Point[]): boolean {

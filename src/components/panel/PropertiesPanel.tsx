@@ -1,5 +1,5 @@
 import { useDesignStore } from '../../store/useDesignStore';
-import { useUiStore } from '../../store/useUiStore';
+import { useSelectedFurniture } from '../../store/selectors';
 import { COARSE_POINTER, useMediaQuery } from '../../lib/useMediaQuery';
 import { FurnitureFields } from './FurnitureFields';
 
@@ -9,12 +9,7 @@ import { FurnitureFields } from './FurnitureFields';
  * visible even when this form scrolls on short screens.
  */
 export function PropertiesPanel() {
-  const selection = useUiStore((s) => s.selection);
-  const selected = useDesignStore((s) =>
-    selection?.kind === 'furniture'
-      ? s.design.furniture.find((f) => f.id === selection.id)
-      : undefined,
-  );
+  const selected = useSelectedFurniture();
   const updateFurniture = useDesignStore((s) => s.updateFurniture);
   const coarse = useMediaQuery(COARSE_POINTER);
 

@@ -1,0 +1,84 @@
+import type { ReactNode } from 'react';
+
+/**
+ * Shared building blocks for the bottom action pills (Action/Selection/Wall/Floor
+ * bars) so their markup is defined once. A bar is a `SelBar` wrapper containing
+ * `SelBarButton`s, `SelBarColor` swatches and `SelBarDivider`s.
+ */
+export function SelBar({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="selection-bar-wrap">
+      <div className="selection-bar" role="toolbar" aria-label={label}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function SelBarDivider() {
+  return <span className="sel-divider" aria-hidden="true" />;
+}
+
+export function SelBarButton({
+  icon,
+  label,
+  title,
+  ariaLabel,
+  onClick,
+  active,
+  danger,
+  expandable,
+}: {
+  icon: ReactNode;
+  label: string;
+  title: string;
+  ariaLabel: string;
+  onClick: () => void;
+  active?: boolean;
+  danger?: boolean;
+  /** When set, the button also exposes aria-expanded reflecting `active`. */
+  expandable?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      className={`sel-action${active ? ' sel-active' : ''}${danger ? ' sel-danger' : ''}`}
+      title={title}
+      aria-label={ariaLabel}
+      aria-expanded={expandable ? Boolean(active) : undefined}
+      onClick={onClick}
+    >
+      <span className="sel-icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="sel-label">{label}</span>
+    </button>
+  );
+}
+
+export function SelBarColor({
+  label,
+  title,
+  value,
+  ariaLabel,
+  onChange,
+}: {
+  label: string;
+  title: string;
+  value: string;
+  ariaLabel: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="sel-action sel-color" title={title}>
+      <input
+        type="color"
+        className="sel-color-input"
+        value={value}
+        aria-label={ariaLabel}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <span className="sel-label">{label}</span>
+    </label>
+  );
+}

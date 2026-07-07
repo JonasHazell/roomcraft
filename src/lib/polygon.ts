@@ -203,6 +203,17 @@ function onSegment(p: Point, q: Point, r: Point): boolean {
   );
 }
 
+/**
+ * True if the segments strictly cross, excluding endpoint touches and collinear
+ * overlap. Unlike {@link segmentsIntersect}, a shared endpoint does not count —
+ * e.g. a line of sight through a doorway must not be stopped by a wall's corner.
+ */
+export function segmentsCross(a: Point, b: Point, c: Point, d: Point): boolean {
+  const o = (p: Point, q: Point, r: Point) =>
+    Math.sign((q.x - p.x) * (r.z - p.z) - (q.z - p.z) * (r.x - p.x));
+  return o(a, b, c) !== o(a, b, d) && o(c, d, a) !== o(c, d, b) && o(a, b, c) !== 0 && o(c, d, a) !== 0;
+}
+
 /** True if the segments cross or touch each other (incl. collinear overlap). */
 export function segmentsIntersect(p1: Point, p2: Point, p3: Point, p4: Point): boolean {
   const o1 = orient(p1, p2, p3);
@@ -215,6 +226,18 @@ export function segmentsIntersect(p1: Point, p2: Point, p3: Point, p4: Point): b
   if (o3 === 0 && onSegment(p3, p1, p4)) return true;
   if (o4 === 0 && onSegment(p3, p2, p4)) return true;
   return false;
+}
+
+/**
+ * True if the edge b→c folds straight back along a→b (collinear and reversed).
+ * Used to reject a drawn outline point that would double back on the last edge.
+ */
+export function foldsBack(a: Point, b: Point, c: Point): boolean {
+  const d1 = wallDir({ a, b });
+  const d2 = wallDir({ a: b, b: c });
+  const cross = d1.x * d2.z - d1.z * d2.x;
+  const dot = d1.x * d2.x + d1.z * d2.z;
+  return Math.abs(cross) < EPS && dot < 0;
 }
 
 export type LoopValidation = { ok: true } | { ok: false; reason: string };
@@ -320,4 +343,100 @@ export function defaultOpening(kind: OpeningKind, wallId: string): Omit<WallOpen
   return kind === 'door'
     ? { kind, wallId, offset: 0.5, width: 0.9, height: 2.1, elevation: 0 }
     : { kind, wallId, offset: 0.8, width: 1.2, height: 1.2, elevation: 0.9 };
+}
+
+// ---- Footprint / collision primitives (shared by client and server) ----
+
+/** Clamps v to [min, max]. */
+export function clamp(v: number, min: number, max: number): number {
+  return Math.min(Math.max(v, min), max);
+}
+
+/**
+ * The four corners of a rotated rectangle centered on `center` with the given
+ * half extents (three.js rotation convention: +z is the front, x maps to cos/sin
+ * as `x + lx*cos + lz*sin`, `z - lx*sin + lz*cos`). The single source of truth
+ * for every furniture footprint on both the client and the server.
+ */
+export function rectCorners(center: Point, hw: number, hd: number, rotationY: number): Point[] {
+  const cos = Math.cos(rotationY);
+  const sin = Math.sin(rotationY);
+  return (
+    [
+      [-hw, -hd],
+      [hw, -hd],
+      [hw, hd],
+      [-hw, hd],
+    ] as const
+  ).map(([lx, lz]) => ({
+    x: center.x + lx * cos + lz * sin,
+    z: center.z - lx * sin + lz * cos,
+  }));
+}
+
+/** World direction of a furniture front (local +z rotated by rotationY). */
+export function frontDir(rotationY: number): Point {
+  return { x: Math.sin(rotationY), z: Math.cos(rotationY) };
+}
+
+/** The interior wall's solid as a quad in the floor plane (centered, thickness WALL_T). */
+export function interiorWallQuad(w: Pick<Wall, 'a' | 'b'>): Point[] {
+  const n = outwardNormal(w);
+  const t = WALL_T / 2;
+  return [
+    { x: w.a.x + n.x * t, z: w.a.z + n.z * t },
+    { x: w.b.x + n.x * t, z: w.b.z + n.z * t },
+    { x: w.b.x - n.x * t, z: w.b.z - n.z * t },
+    { x: w.a.x - n.x * t, z: w.a.z - n.z * t },
+  ];
+}
+
+/** Separation axes of a convex polygon (edge normals). */
+function edgeAxes(poly: Point[]): Point[] {
+  const axes: Point[] = [];
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i];
+    const b = poly[(i + 1) % poly.length];
+    const len = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+    axes.push({ x: -(b.z - a.z) / len, z: (b.x - a.x) / len });
+  }
+  return axes;
+}
+
+/**
+ * Separating Axis Theorem for two convex polygons. A positive `eps` tolerates
+ * touching (treats an overlap thinner than eps as no overlap); a negative eps
+ * reports touching as an overlap. The single implementation for both the client
+ * (which defaults to a 1 cm tolerance) and the server (which defaults to none).
+ */
+export function convexOverlap(a: Point[], b: Point[], eps = 0): boolean {
+  for (const axis of [...edgeAxes(a), ...edgeAxes(b)]) {
+    let minA = Infinity;
+    let maxA = -Infinity;
+    let minB = Infinity;
+    let maxB = -Infinity;
+    for (const p of a) {
+      const d = p.x * axis.x + p.z * axis.z;
+      minA = Math.min(minA, d);
+      maxA = Math.max(maxA, d);
+    }
+    for (const p of b) {
+      const d = p.x * axis.x + p.z * axis.z;
+      minB = Math.min(minB, d);
+      maxB = Math.max(maxB, d);
+    }
+    if (maxA - eps <= minB || maxB - eps <= minA) return false; // separation gap → no overlap
+  }
+  return true;
+}
+
+/** Distance from a point to a convex quad; 0 if the point is inside. */
+export function distToQuad(p: Point, quad: Point[]): number {
+  if (pointInPolygon(p, quad)) return 0;
+  let best = Infinity;
+  for (let i = 0; i < quad.length; i++) {
+    const c = closestPointOnSegment(p, quad[i], quad[(i + 1) % quad.length]);
+    best = Math.min(best, dist(p, c));
+  }
+  return best;
 }

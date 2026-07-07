@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useUiStore } from '../../store/useUiStore';
+import { useEscape } from '../../lib/useEscape';
 import { AiProposalsPanel } from './AiProposalsPanel';
 import { ValidationPanel } from './ValidationPanel';
 import { OpeningsEditor } from './OpeningsEditor';
@@ -29,14 +30,9 @@ export function SidePanel() {
 
   // Esc closes the panel. The furniture dialog owns Esc while it's open, and the
   // App-level handler bails out on dialogs too, so only one thing reacts.
-  useEffect(() => {
-    if (!panel) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !useUiStore.getState().furnitureDialog) closePanel();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [panel, closePanel]);
+  useEscape(() => {
+    if (!useUiStore.getState().furnitureDialog) closePanel();
+  }, !!panel);
 
   if (appView !== 'furnish' || !panel) return null;
 

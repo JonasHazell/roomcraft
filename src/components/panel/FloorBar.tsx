@@ -1,5 +1,6 @@
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
+import { SelBar, SelBarButton, SelBarColor, SelBarDivider } from './SelBar';
 
 /**
  * Action bar for the selected floor (3D view). Clicking the floor selects it and
@@ -16,32 +17,22 @@ export function FloorBar() {
   if (appView !== 'furnish' || selection?.kind !== 'floor') return null;
 
   return (
-    <div className="selection-bar-wrap">
-      <div className="selection-bar" role="toolbar" aria-label="Floor actions">
-        <label className="sel-action sel-color" title="Floor colour">
-          <input
-            type="color"
-            className="sel-color-input"
-            value={floorColor}
-            aria-label="Floor colour"
-            onChange={(e) => setColors({ floorColor: e.target.value })}
-          />
-          <span className="sel-label">Floor colour</span>
-        </label>
-        <span className="sel-divider" aria-hidden="true" />
-        <button
-          type="button"
-          className="sel-action"
-          title="Deselect the floor"
-          aria-label="Done"
-          onClick={() => select(null)}
-        >
-          <span className="sel-icon" aria-hidden="true">
-            ✓
-          </span>
-          <span className="sel-label">Done</span>
-        </button>
-      </div>
-    </div>
+    <SelBar label="Floor actions">
+      <SelBarColor
+        label="Floor colour"
+        title="Floor colour"
+        value={floorColor}
+        ariaLabel="Floor colour"
+        onChange={(floorColor) => setColors({ floorColor })}
+      />
+      <SelBarDivider />
+      <SelBarButton
+        icon="✓"
+        label="Done"
+        title="Deselect the floor"
+        ariaLabel="Done"
+        onClick={() => select(null)}
+      />
+    </SelBar>
   );
 }

@@ -1,4 +1,4 @@
-import type { Design, FurnitureItem } from '../types';
+import { isHexColor, type Design, type FurnitureItem } from '../types';
 
 /**
  * A single furniture piece in an AI proposal. Matches the server's schema
@@ -28,11 +28,9 @@ export interface AiProposal {
   furniture: AiFurniture[];
 }
 
-const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
-
 /** Returns the colour only if it is a valid #rrggbb string, otherwise `undefined`. */
 export function validHexColor(c: string | undefined): string | undefined {
-  return c && HEX_COLOR.test(c) ? c : undefined;
+  return isHexColor(c) ? c : undefined;
 }
 
 export interface ProposalsResponse {

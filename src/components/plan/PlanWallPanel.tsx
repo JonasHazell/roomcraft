@@ -6,7 +6,7 @@ import {
   wallLen,
 } from '../../lib/polygon';
 import { useDesignStore } from '../../store/useDesignStore';
-import { useUiStore } from '../../store/useUiStore';
+import { useSelectedWall } from '../../store/selectors';
 import { NumberField } from '../panel/fields';
 
 /** Fine-tuning in cm for the selected wall in the floor plan. */
@@ -14,9 +14,7 @@ export function PlanWallPanel() {
   const walls = useDesignStore((s) => s.design.walls);
   const resizeWall = useDesignStore((s) => s.resizeWall);
   const moveWall = useDesignStore((s) => s.moveWall);
-  const selection = useUiStore((s) => s.selection);
-  const wall =
-    selection?.kind === 'wall' ? walls.find((w) => w.id === selection.id) : undefined;
+  const wall = useSelectedWall();
   if (!wall) return null;
 
   const lenCm = Math.round(wallLen(wall) * 100);

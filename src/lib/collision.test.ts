@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Point, Wall } from '../types';
-import { furnitureFits, slideFurniture } from './geometry';
+import { furnitureFits, slideFurniture } from './collision';
 
 /** 4×5 m room with a corner at the origin, canonical winding. */
 const square: Point[] = [
