@@ -848,14 +848,28 @@ select {
 }
 
 @media (max-width: 768px) {
-  /* On a phone the top row is tight: hide the prev/next arrows (the dropdown
-     still switches proposals) so the pill has room and clears the back button. */
-  .proposal-arrow {
-    display: none;
+  /* On a phone the top row is tight next to the back button, so give the whole
+     switcher — prev/next arrows included — its own centred row just below the
+     back button instead of dropping the arrows. */
+  .proposal-switcher {
+    top: calc(64px + env(safe-area-inset-top));
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
   }
 
   .proposal-pill {
     max-width: 52vw;
+  }
+
+  /* The switcher is centred on its own row here, so centre the dropdown under it
+     too — anchoring to the right edge could push it off-screen when the pill is
+     narrow. */
+  .proposal-menu {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: sheet-up-center 0.2s ease;
   }
 }
 
