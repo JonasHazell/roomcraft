@@ -5,10 +5,24 @@ import type { ReactNode } from 'react';
  * bars) so their markup is defined once. A bar is a `SelBar` wrapper containing
  * `SelBarButton`s, `SelBarColor` swatches and `SelBarDivider`s.
  */
-export function SelBar({ label, children }: { label: string; children: ReactNode }) {
+export function SelBar({
+  label,
+  children,
+  keepLabels,
+}: {
+  label: string;
+  children: ReactNode;
+  /** Keep the button text labels visible on narrow phones (for short bars where
+   *  they still fit); long bars drop to icon-only to save room. */
+  keepLabels?: boolean;
+}) {
   return (
     <div className="selection-bar-wrap">
-      <div className="selection-bar" role="toolbar" aria-label={label}>
+      <div
+        className={`selection-bar${keepLabels ? ' selection-bar-keep-labels' : ''}`}
+        role="toolbar"
+        aria-label={label}
+      >
         {children}
       </div>
     </div>

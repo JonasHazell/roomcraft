@@ -17,7 +17,7 @@ export function ActionBar() {
   if (appView !== 'furnish' || selection !== null) return null;
 
   return (
-    <SelBar label="Room actions">
+    <SelBar label="Room actions" keepLabels>
       <SelBarButton
         icon="＋"
         label="Furniture"

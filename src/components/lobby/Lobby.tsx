@@ -65,7 +65,7 @@ export function Lobby() {
                   <span className="room-card-name">{r.name}</span>
                   <span className="room-card-meta">
                     {drawn
-                      ? `${r.proposals.length} furnishing option${r.proposals.length === 1 ? '' : 's'}`
+                      ? `${r.proposals.length} furnishing proposal${r.proposals.length === 1 ? '' : 's'}`
                       : 'No floor plan yet'}
                   </span>
                 </button>
