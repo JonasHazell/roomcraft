@@ -106,6 +106,25 @@ function createController() {
       batching = false;
       batchCaptured = false;
     },
+    /**
+     * Rolls the running batch back to the state it started from and drops it, so a
+     * cancelled live edit leaves no trace (and no redo entry). No-op if the batch
+     * never recorded a change. Returns whether anything was rolled back.
+     */
+    cancelBatch: () => {
+      let rolledBack = false;
+      if (batching && batchCaptured) {
+        const stack = stackFor(keyFor(useDesignStore.getState().design));
+        const before = stack.past.pop();
+        if (before) {
+          applySnapshot(before);
+          rolledBack = true;
+        }
+      }
+      batching = false;
+      batchCaptured = false;
+      return rolledBack;
+    },
   };
 }
 
@@ -127,6 +146,8 @@ interface HistoryState {
    */
   beginBatch: () => void;
   endBatch: () => void;
+  /** Rolls back and discards the running batch (a cancelled live edit). */
+  cancelBatch: () => void;
 }
 
 /** Publishes canUndo/canRedo for the currently active variation. */
@@ -164,6 +185,10 @@ export const useHistoryStore = create<HistoryState>(() => ({
 
   beginBatch: () => controller.beginBatch(),
   endBatch: () => controller.endBatch(),
+  cancelBatch: () => {
+    controller.cancelBatch();
+    syncFlags();
+  },
 }));
 
 // Record a step whenever the document (the project or the live room) changes.

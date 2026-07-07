@@ -1,47 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useLibraryStore } from '../../store/useLibraryStore';
 import { useUiStore } from '../../store/useUiStore';
-import { FURNITURE_CATALOG, FURNITURE_KINDS } from '../../lib/furnitureCatalog';
-import type { FurnitureItem, FurnitureKind, FurnitureLibraryEntry } from '../../types';
-import { FurnitureFields, type FurnitureDraft, type FurnitureFieldPatch } from './FurnitureFields';
+import { useHistoryStore } from '../../store/useHistoryStore';
+import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
+import { FurnitureFields } from './FurnitureFields';
+import { FurniturePicker, type Source } from './FurniturePicker';
+import { applyPatch, type FurnitureDraft } from './furnitureDraft';
 import { PropertiesPanel } from './PropertiesPanel';
-
-/** Which source the "Add furniture" picker is showing. */
-type Source = 'generic' | 'library';
-
-const cm = (m: number) => Math.round(m * 100);
-
-function draftFor(kind: FurnitureKind): FurnitureDraft {
-  const entry = FURNITURE_CATALOG[kind];
-  return {
-    kind,
-    name: entry.label,
-    size: { ...entry.defaultSize },
-    elevation: 0,
-    color: entry.defaultColor,
-  };
-}
-
-function draftFromLibrary(entry: FurnitureLibraryEntry): FurnitureDraft {
-  return {
-    kind: entry.kind,
-    name: entry.name,
-    size: { ...entry.size },
-    elevation: entry.elevation,
-    color: entry.color,
-  };
-}
-
-function applyPatch(draft: FurnitureDraft, patch: FurnitureFieldPatch): FurnitureDraft {
-  return {
-    ...draft,
-    name: patch.name ?? draft.name,
-    color: patch.color ?? draft.color,
-    elevation: patch.elevation != null ? Math.max(0, patch.elevation) : draft.elevation,
-    size: patch.size ? { ...draft.size, ...patch.size } : draft.size,
-  };
-}
 
 /**
  * Modal for adding and editing furniture. In `create` mode it walks through a
@@ -54,7 +20,6 @@ export function FurnitureDialog() {
   const close = useUiStore((s) => s.closeFurnitureDialog);
   const select = useUiStore((s) => s.select);
   const addFurnitureConfigured = useDesignStore((s) => s.addFurnitureConfigured);
-  const updateFurniture = useDesignStore((s) => s.updateFurniture);
   const libraryEntries = useLibraryStore((s) => s.entries);
   const saveToLibrary = useLibraryStore((s) => s.save);
   const removeFromLibrary = useLibraryStore((s) => s.remove);
@@ -76,44 +41,32 @@ export function FurnitureDialog() {
     setSavedForId(null);
   }, [dialog]);
 
-  // Edits in edit mode go straight to the store (live 3D preview), so cancelling
-  // means rolling back. Snapshot the piece's original values once per open.
   const editId = dialog?.mode === 'edit' ? dialog.id : null;
   // The live piece being edited — the footer's "Save to library" reads from it.
   const editItem = useDesignStore((s) =>
     editId ? s.design.furniture.find((f) => f.id === editId) : undefined,
   );
-  const snapshotRef = useRef<FurnitureItem | null>(null);
+
+  // Edits in edit mode go straight to the store (live 3D preview). Wrap the whole
+  // open dialog in one history batch: OK commits it as a single undo step,
+  // Cancel/✕/Esc rolls it back. This replaces the old hand-maintained snapshot
+  // (which had to list every editable field by hand to restore it).
   useEffect(() => {
-    if (!editId) {
-      snapshotRef.current = null;
-      return;
-    }
-    const item = useDesignStore.getState().design.furniture.find((f) => f.id === editId);
-    snapshotRef.current = item ? { ...item, size: { ...item.size }, position: { ...item.position } } : null;
+    if (!editId) return;
+    useHistoryStore.getState().beginBatch();
+    return () => useHistoryStore.getState().endBatch();
   }, [editId]);
 
-  // Restore the snapshot and close — used by ✕, Esc and the backdrop in edit
-  // mode so any change made while the box was open is undone.
-  const cancelEdit = useCallback(() => {
-    const snap = snapshotRef.current;
-    if (snap) {
-      updateFurniture(snap.id, {
-        name: snap.name,
-        color: snap.color,
-        size: { ...snap.size },
-        elevation: snap.elevation,
-        rotationY: snap.rotationY,
-      });
-    }
+  const commitEdit = useCallback(() => {
+    useHistoryStore.getState().endBatch();
     close();
-  }, [updateFurniture, close]);
+  }, [close]);
 
   // In create mode the draft is local, so a plain close already discards it.
   const dismiss = useCallback(() => {
-    if (dialog?.mode === 'edit') cancelEdit();
-    else close();
-  }, [dialog, cancelEdit, close]);
+    if (dialog?.mode === 'edit') useHistoryStore.getState().cancelBatch();
+    close();
+  }, [dialog, close]);
 
   // Esc dismisses the dialog. App's global handler bails out while a dialog is
   // open, so closing here doesn't also clear the selection.
@@ -156,82 +109,13 @@ export function FurnitureDialog() {
           {dialog.mode === 'edit' ? (
             <PropertiesPanel />
           ) : picking ? (
-            <div className="stack">
-              <div className="source-toggle" role="tablist" aria-label="Furniture source">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={source === 'generic'}
-                  className={source === 'generic' ? 'active' : ''}
-                  onClick={() => setSource('generic')}
-                >
-                  Generic
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={source === 'library'}
-                  className={source === 'library' ? 'active' : ''}
-                  onClick={() => setSource('library')}
-                >
-                  From library
-                </button>
-              </div>
-
-              {source === 'generic' ? (
-                <div className="palette">
-                  {FURNITURE_KINDS.map((kind) => (
-                    <button
-                      type="button"
-                      key={kind}
-                      className="palette-btn"
-                      onClick={() => setDraft(draftFor(kind))}
-                    >
-                      <span
-                        className="swatch"
-                        style={{ background: FURNITURE_CATALOG[kind].defaultColor }}
-                      />
-                      {FURNITURE_CATALOG[kind].label}
-                    </button>
-                  ))}
-                </div>
-              ) : libraryEntries.length === 0 ? (
-                <p className="hint">
-                  No saved furniture yet. Select a piece in the room and choose “Save to
-                  library” to reuse it here.
-                </p>
-              ) : (
-                <ul className="save-list">
-                  {libraryEntries.map((entry) => (
-                    <li key={entry.id}>
-                      <button
-                        type="button"
-                        className="save-name"
-                        title={`Use “${entry.name}”`}
-                        onClick={() => setDraft(draftFromLibrary(entry))}
-                      >
-                        <span className="lib-name">
-                          <span className="swatch" style={{ background: entry.color }} />
-                          {entry.name}
-                        </span>
-                        <span className="save-date">
-                          {cm(entry.size.width)}×{cm(entry.size.depth)}×{cm(entry.size.height)} cm
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-icon"
-                        title="Remove from library"
-                        aria-label={`Remove ${entry.name} from library`}
-                        onClick={() => removeFromLibrary(entry.id)}
-                      >
-                        ✕
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <FurniturePicker
+              source={source}
+              onSourceChange={setSource}
+              onPick={setDraft}
+              libraryEntries={libraryEntries}
+              onRemoveFromLibrary={removeFromLibrary}
+            />
           ) : (
             draft && (
               <div className="stack">
@@ -274,7 +158,7 @@ export function FurnitureDialog() {
                 </>
               )}
             </button>
-            <button type="button" className="btn btn-accent" onClick={close}>
+            <button type="button" className="btn btn-accent" onClick={commitEdit}>
               OK
             </button>
           </div>

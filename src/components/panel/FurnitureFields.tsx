@@ -1,22 +1,8 @@
-import type { FurnitureKind, FurnitureSize } from '../../types';
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { ColorField, NumberField } from './fields';
+import type { FurnitureDraft, FurnitureFieldPatch } from './furnitureDraft';
 
-/** The editable shape shared by a new-piece draft and an existing furniture item. */
-export interface FurnitureDraft {
-  kind: FurnitureKind;
-  name: string;
-  size: FurnitureSize;
-  elevation: number;
-  color: string;
-}
-
-export type FurnitureFieldPatch = {
-  name?: string;
-  size?: Partial<FurnitureSize>;
-  elevation?: number;
-  color?: string;
-};
+export type { FurnitureDraft, FurnitureFieldPatch };
 
 /**
  * Name / dimensions / colour controls for a furniture piece. Rendered identically
