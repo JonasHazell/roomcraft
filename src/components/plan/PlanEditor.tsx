@@ -256,6 +256,7 @@ export function PlanEditor() {
           error={error}
           coarse={coarse}
           draftActive={draft.length > 0}
+          hasExterior={walls.some((w) => w.kind === 'exterior')}
           canDelete={selectedWall?.kind === 'interior'}
           deleteDisabledReason={deleteDisabledReason}
           canResetView={viewport.isCustom}

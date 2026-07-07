@@ -3,12 +3,13 @@
   --paper-2: #efe7d5;
   --card: #fbf6ea;
   --ink: #2b261d;
-  --muted: #82785f;
+  --muted: #6f6549;
   --line: #d9cdb2;
   --accent: #b4532f;
   --accent-dark: #8f3f21;
   --select: #2f6fdd;
-  --danger: #a33a2a;
+  --danger: #c62828;
+  --danger-dark: #a81f1f;
 
   /* Shared chrome for every floating surface (modal, side panel, dropdown menu)
      so they read as one family. */
@@ -376,20 +377,21 @@ select {
 }
 
 .btn-danger:hover {
-  background: #8c2f21;
-  border-color: #8c2f21;
+  background: var(--danger-dark);
+  border-color: var(--danger-dark);
 }
 
-/* Leaves the floor-plan editor — filled so it reads as the primary way back. */
+/* Leaves the floor-plan editor — filled in the app's ink so it reads as the
+   primary way back while staying inside the warm palette (no stray blue). */
 .btn-done {
-  border-color: var(--select);
-  background: var(--select);
+  border-color: var(--ink);
+  background: var(--ink);
   color: #fff;
 }
 
 .btn-done:hover {
-  background: #245bc0;
-  border-color: #245bc0;
+  background: #423b2c;
+  border-color: #423b2c;
   color: #fff;
 }
 
@@ -989,7 +991,12 @@ select {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  background: rgba(245, 239, 226, 0.92);
+  /* Frosted glass: the panels float over the drawing (especially on mobile,
+     where they span the top), so let the plan show through while text stays
+     legible against the blur. */
+  background: rgba(245, 239, 226, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px 12px;
@@ -1518,11 +1525,13 @@ select {
 /* Narrow phones: drop the labels and keep icon-only actions so five buttons
    still fit on one row. */
 @media (max-width: 480px) {
-  .sel-label {
+  /* Long bars (e.g. the 5-action furniture bar) drop labels so every icon fits;
+     short bars flagged keep-labels stay legible for first-time discoverability. */
+  .selection-bar:not(.selection-bar-keep-labels) .sel-label {
     display: none;
   }
 
-  .sel-action {
+  .selection-bar:not(.selection-bar-keep-labels) .sel-action {
     padding: 8px 10px;
   }
 }

@@ -24,7 +24,11 @@ export function openRoomToPlan(id: string): void {
   useDesignStore.getState().setActiveRoom(id);
   useHistoryStore.getState().clear();
   useUiStore.getState().select(null);
-  useUiStore.getState().setPlanStartTool('select');
+  // A room that has never been drawn opens with the exterior tool armed so the
+  // user can start sketching its outline straight away, matching "New room"; an
+  // already-drawn plan opens in select mode.
+  const undrawn = !useDesignStore.getState().design.walls.some((w) => w.kind === 'exterior');
+  useUiStore.getState().setPlanStartTool(undrawn ? 'exterior' : 'select');
   // An existing room is never provisional — leaving keeps it even if undrawn.
   useUiStore.getState().setPendingRoomId(null);
   useUiStore.getState().setAppView('plan');

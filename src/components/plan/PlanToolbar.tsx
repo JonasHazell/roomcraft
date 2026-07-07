@@ -7,6 +7,8 @@ interface Props {
   coarse: boolean;
   /** True while an outline/interior chain is being drawn. */
   draftActive: boolean;
+  /** Whether the room already has exterior walls — switches Draw ↔ Redraw wording. */
+  hasExterior: boolean;
   canDelete: boolean;
   /** Explanation of why deletion is disabled; shown as a tooltip. */
   deleteDisabledReason?: string;
@@ -47,6 +49,7 @@ export function PlanToolbar({
   error,
   coarse,
   draftActive,
+  hasExterior,
   canDelete,
   deleteDisabledReason,
   canResetView,
@@ -79,7 +82,7 @@ export function PlanToolbar({
           className={`btn ${tool === 'exterior' ? 'btn-accent' : ''}`}
           onClick={onExteriorTool}
         >
-          Redraw exterior walls…
+          {hasExterior ? 'Redraw exterior walls…' : 'Draw exterior walls'}
         </button>
         <button
           type="button"

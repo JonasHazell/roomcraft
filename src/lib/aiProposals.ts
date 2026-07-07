@@ -65,9 +65,7 @@ export async function fetchProposals(design: Design, needs: string): Promise<Pro
       body: JSON.stringify({ design, needs }),
     });
   } catch {
-    throw new Error(
-      'Could not reach the AI server. Start it with "npm run server" in a terminal and try again.',
-    );
+    throw new Error('Could not reach the AI service. Check your connection and try again.');
   }
   const payload = (await res.json().catch(() => null)) as
     | (ProposalsResponse & { error?: string })

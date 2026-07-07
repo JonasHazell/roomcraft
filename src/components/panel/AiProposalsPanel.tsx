@@ -50,7 +50,7 @@ export function AiProposalsPanel() {
     <div className="stack">
       <p className="hint">
         Describe what the room will be used for and Claude will suggest 2–3 furnishing layouts
-        with reasoning (including feng shui). Requires the AI server to be running (<code>npm run server</code>).
+        with reasoning (including feng shui). Each suggestion is saved as its own proposal.
       </p>
       <label className="field">
         <span className="field-label">Needs &amp; wishes</span>
@@ -75,7 +75,7 @@ export function AiProposalsPanel() {
       </div>
 
       {loading && (
-        <p className="hint">This can take a couple of minutes. Claude Code runs the proposal in the terminal.</p>
+        <p className="hint">This can take a couple of minutes while Claude works out the layout.</p>
       )}
       {error && <p className="error">{error}</p>}
 
