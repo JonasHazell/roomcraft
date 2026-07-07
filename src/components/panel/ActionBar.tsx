@@ -1,4 +1,5 @@
 import { useUiStore } from '../../store/useUiStore';
+import { SelBar, SelBarButton, SelBarDivider } from './SelBar';
 
 /**
  * The primary action bar shown in the 3D view when nothing is selected. Groups
@@ -16,48 +17,33 @@ export function ActionBar() {
   if (appView !== 'furnish' || selection !== null) return null;
 
   return (
-    <div className="selection-bar-wrap">
-      <div className="selection-bar" role="toolbar" aria-label="Room actions">
-        <button
-          type="button"
-          className="sel-action"
-          title="Add a piece of furniture"
-          aria-label="Add furniture"
-          onClick={openAddFurniture}
-        >
-          <span className="sel-icon" aria-hidden="true">
-            ＋
-          </span>
-          <span className="sel-label">Furniture</span>
-        </button>
-        <span className="sel-divider" aria-hidden="true" />
-        <button
-          type="button"
-          className={`sel-action${panel === 'ai' ? ' sel-active' : ''}`}
-          title="Let Claude suggest a furnishing layout"
-          aria-label="AI furnishing"
-          aria-expanded={panel === 'ai'}
-          onClick={() => openPanel('ai')}
-        >
-          <span className="sel-icon" aria-hidden="true">
-            ✨
-          </span>
-          <span className="sel-label">AI</span>
-        </button>
-        <button
-          type="button"
-          className={`sel-action${panel === 'validation' ? ' sel-active' : ''}`}
-          title="Check the furnishing against the rule catalog"
-          aria-label="Validate"
-          aria-expanded={panel === 'validation'}
-          onClick={() => openPanel('validation')}
-        >
-          <span className="sel-icon" aria-hidden="true">
-            ✓
-          </span>
-          <span className="sel-label">Validate</span>
-        </button>
-      </div>
-    </div>
+    <SelBar label="Room actions">
+      <SelBarButton
+        icon="＋"
+        label="Furniture"
+        title="Add a piece of furniture"
+        ariaLabel="Add furniture"
+        onClick={openAddFurniture}
+      />
+      <SelBarDivider />
+      <SelBarButton
+        icon="✨"
+        label="AI"
+        title="Let Claude suggest a furnishing layout"
+        ariaLabel="AI furnishing"
+        expandable
+        active={panel === 'ai'}
+        onClick={() => openPanel('ai')}
+      />
+      <SelBarButton
+        icon="✓"
+        label="Validate"
+        title="Check the furnishing against the rule catalog"
+        ariaLabel="Validate"
+        expandable
+        active={panel === 'validation'}
+        onClick={() => openPanel('validation')}
+      />
+    </SelBar>
   );
 }

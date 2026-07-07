@@ -1,4 +1,4 @@
-import { Mat, type FurnitureProps } from './shared';
+import { Legs, Mat, type FurnitureProps } from './shared';
 
 export function Chair({ size, color, selected }: FurnitureProps) {
   const { width: w, depth: d, height: h } = size;
@@ -15,18 +15,16 @@ export function Chair({ size, color, selected }: FurnitureProps) {
         <boxGeometry args={[w, h - seatY, 0.05]} />
         <Mat color={color} selected={selected} />
       </mesh>
-      {[-1, 1].flatMap((sx) =>
-        [-1, 1].map((sz) => (
-          <mesh
-            key={`${sx}${sz}`}
-            castShadow
-            position={[sx * (w / 2 - inset), (seatY - seatT) / 2, sz * (d / 2 - inset)]}
-          >
-            <boxGeometry args={[0.04, seatY - seatT, 0.04]} />
-            <Mat color={color} selected={selected} />
-          </mesh>
-        )),
-      )}
+      <Legs
+        w={w}
+        d={d}
+        height={seatY - seatT}
+        y={(seatY - seatT) / 2}
+        inset={inset}
+        thickness={0.04}
+        color={color}
+        selected={selected}
+      />
     </group>
   );
 }

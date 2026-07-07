@@ -4,6 +4,7 @@ import { useLibraryStore } from '../../store/useLibraryStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
+import { useEscape } from '../../lib/useEscape';
 import { FurnitureFields } from './FurnitureFields';
 import { FurniturePicker, type Source } from './FurniturePicker';
 import { applyPatch, type FurnitureDraft } from './furnitureDraft';
@@ -70,14 +71,7 @@ export function FurnitureDialog() {
 
   // Esc dismisses the dialog. App's global handler bails out while a dialog is
   // open, so closing here doesn't also clear the selection.
-  useEffect(() => {
-    if (!dialog) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') dismiss();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [dialog, dismiss]);
+  useEscape(dismiss, !!dialog);
 
   if (!dialog) return null;
 

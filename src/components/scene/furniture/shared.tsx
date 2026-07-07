@@ -34,3 +34,44 @@ export function Mat({
     />
   );
 }
+
+/**
+ * Four square legs, one at each corner of a w×d top, inset from the edges. Shared
+ * by tables, desks and chairs. `height` is the leg length and `y` its centre.
+ */
+export function Legs({
+  w,
+  d,
+  height,
+  y,
+  inset,
+  thickness,
+  color,
+  selected,
+}: {
+  w: number;
+  d: number;
+  height: number;
+  y: number;
+  inset: number;
+  thickness: number;
+  color: string;
+  selected: boolean;
+}) {
+  return (
+    <>
+      {[-1, 1].flatMap((sx) =>
+        [-1, 1].map((sz) => (
+          <mesh
+            key={`${sx}${sz}`}
+            castShadow
+            position={[sx * (w / 2 - inset), y, sz * (d / 2 - inset)]}
+          >
+            <boxGeometry args={[thickness, height, thickness]} />
+            <Mat color={color} selected={selected} />
+          </mesh>
+        )),
+      )}
+    </>
+  );
+}

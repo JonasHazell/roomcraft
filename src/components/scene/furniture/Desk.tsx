@@ -1,9 +1,8 @@
-import { Mat, shade, type FurnitureProps } from './shared';
+import { Legs, Mat, shade, type FurnitureProps } from './shared';
 
 export function Desk({ size, color, selected }: FurnitureProps) {
   const { width: w, depth: d, height: h } = size;
   const top = Math.min(0.04, h * 0.1);
-  const leg = 0.05;
   const inset = Math.min(0.06, w / 4, d / 4);
   const screenW = Math.min(0.6, w * 0.55);
   const screenH = Math.min(0.4, screenW * 0.6);
@@ -15,18 +14,16 @@ export function Desk({ size, color, selected }: FurnitureProps) {
         <Mat color={color} selected={selected} />
       </mesh>
       {/* legs */}
-      {[-1, 1].flatMap((sx) =>
-        [-1, 1].map((sz) => (
-          <mesh
-            key={`${sx}${sz}`}
-            castShadow
-            position={[sx * (w / 2 - inset), (h - top) / 2, sz * (d / 2 - inset)]}
-          >
-            <boxGeometry args={[leg, h - top, leg]} />
-            <Mat color={color} selected={selected} />
-          </mesh>
-        )),
-      )}
+      <Legs
+        w={w}
+        d={d}
+        height={h - top}
+        y={(h - top) / 2}
+        inset={inset}
+        thickness={0.05}
+        color={color}
+        selected={selected}
+      />
       {/* screen toward the back (the front/seating side is local +z) */}
       <mesh castShadow position={[0, h + 0.06 + screenH / 2, -d / 2 + 0.12]}>
         <boxGeometry args={[screenW, screenH, 0.03]} />
