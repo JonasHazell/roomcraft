@@ -747,8 +747,7 @@ select {
 .proposal-switcher {
   position: absolute;
   top: calc(12px + env(safe-area-inset-top));
-  left: 50%;
-  transform: translateX(-50%);
+  right: calc(14px + env(safe-area-inset-right));
   z-index: 55;
 }
 
@@ -822,8 +821,7 @@ select {
 .proposal-menu {
   position: absolute;
   top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
+  right: 0;
   display: flex;
   flex-direction: column;
   width: min(300px, 80vw);
@@ -833,9 +831,9 @@ select {
   border: var(--popup-border);
   border-radius: var(--popup-radius);
   box-shadow: var(--popup-shadow);
-  /* Dedicated keyframe keeps the -50% X offset so the menu slides up centred
-     rather than drifting in from the right, like the furniture dialog. */
-  animation: sheet-up-center 0.2s ease;
+  /* Anchored to the switcher's right edge so it stays on-screen; slides up like
+     the other floating surfaces. */
+  animation: sheet-up 0.2s ease;
 }
 
 .proposal-menu-actions {
@@ -850,10 +848,14 @@ select {
 }
 
 @media (max-width: 768px) {
-  /* Keep the switcher centred on the hamburger row; narrow the pill so it clears
-     the top-left menu button. */
+  /* On a phone the top row is tight: hide the prev/next arrows (the dropdown
+     still switches proposals) so the pill has room and clears the back button. */
+  .proposal-arrow {
+    display: none;
+  }
+
   .proposal-pill {
-    max-width: 38vw;
+    max-width: 52vw;
   }
 }
 
@@ -1871,8 +1873,17 @@ select {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 5px 14px;
-  max-width: 46vw;
+  max-width: 32vw;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  /* The room name is redundant on a phone (you just came from picking the room)
+     and would collide with the right-aligned proposal switcher — drop it so the
+     back button and switcher each get the room they need. */
+  .room-topbar-name {
+    display: none;
+  }
 }
