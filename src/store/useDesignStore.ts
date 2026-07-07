@@ -15,7 +15,7 @@ import type {
   WallOpening,
 } from '../types';
 import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, SCHEMA_VERSION } from '../types';
-import { clampFurniture, clampOpening, furnitureFits, slideFurniture } from '../lib/geometry';
+import { clampFurniture, clampOpening, furnitureFits, slideFurniture } from '../lib/collision';
 import {
   GRID,
   clampToPolygon,
