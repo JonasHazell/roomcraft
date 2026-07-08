@@ -1,23 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
-import { confirmDialog, promptDialog } from '../../store/useDialogStore';
+import { confirmDialog } from '../../store/useDialogStore';
 import { useEscape } from '../../lib/useEscape';
 import { SwitcherList } from './SwitcherList';
 
 /**
  * Centred pill (on the hamburger row of the 3D view) that switches between a
- * room's furnishing proposals — the same room shape, different furniture. The
- * flanking ‹ / › arrows step through proposals without opening the menu; open
- * the menu to switch, rename, delete, or create a new proposal (starting either
- * from the current furnishing or an empty room).
+ * room's furnishing proposals — the same room shape, different furniture.
+ * Proposals carry no name: they are identified only by their position, shown as
+ * "Proposal 2/4" (index / total). The flanking ‹ / › arrows step through
+ * proposals without opening the menu; open the menu to switch, delete, or create
+ * a new proposal (starting either from the current furnishing or an empty room).
  */
 export function ProposalSwitcher() {
   const proposals = useDesignStore((s) => s.design.proposals);
   const activeId = useDesignStore((s) => s.design.activeProposalId);
   const addProposal = useDesignStore((s) => s.addProposal);
   const setActiveProposal = useDesignStore((s) => s.setActiveProposal);
-  const renameProposal = useDesignStore((s) => s.renameProposal);
   const removeProposal = useDesignStore((s) => s.removeProposal);
   const select = useUiStore((s) => s.select);
   const appView = useUiStore((s) => s.appView);
@@ -25,7 +25,13 @@ export function ProposalSwitcher() {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const active = proposals.find((p) => p.id === activeId) ?? proposals[0];
+  const activeIdx = Math.max(
+    0,
+    proposals.findIndex((p) => p.id === activeId),
+  );
+  const active = proposals[activeIdx];
+  // Proposals are labelled purely by position within the room, e.g. "Proposal 2/4".
+  const label = (i: number) => `Proposal ${i + 1}/${proposals.length}`;
 
   // Close on outside click or Esc, like the other floating surfaces.
   useEscape(() => setOpen(false), open);
@@ -62,20 +68,11 @@ export function ProposalSwitcher() {
     setOpen(false);
   };
 
-  const rename = async (id: string, current: string) => {
-    const next = await promptDialog({
-      title: 'Rename proposal',
-      label: 'Proposal name',
-      initial: current,
-    });
-    if (next !== null) renameProposal(id, next);
-  };
-
   const remove = async (id: string, name: string) => {
     if (proposals.length <= 1) return;
     const ok = await confirmDialog({
       title: 'Delete proposal',
-      message: `Delete the proposal “${name}”?`,
+      message: `Delete ${name}?`,
       confirmLabel: 'Delete',
       danger: true,
     });
@@ -106,7 +103,7 @@ export function ProposalSwitcher() {
           <span className="proposal-pill-icon" aria-hidden="true">
             ◗
           </span>
-          <span className="proposal-pill-name">{active?.name ?? 'Proposal'}</span>
+          <span className="proposal-pill-name">{label(activeIdx)}</span>
           <span className="proposal-pill-caret" aria-hidden="true">
             ▾
           </span>
@@ -138,16 +135,13 @@ export function ProposalSwitcher() {
           </div>
           <div className="proposal-menu-body">
             <SwitcherList
-              entries={proposals.map((p) => ({
+              entries={proposals.map((p, i) => ({
                 id: p.id,
-                name: p.name,
-                count: p.furniture.length,
-                countTitle: `${p.furniture.length} piece(s) of furniture`,
+                name: label(i),
               }))}
               activeId={activeId}
               noun="proposal"
               onSelect={switchTo}
-              onRename={rename}
               onDelete={remove}
             />
           </div>

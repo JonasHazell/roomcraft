@@ -354,7 +354,6 @@ export interface ProposalActions {
   ) => string;
   /** Activates another proposal; the room shape stays, only the furnishing swaps. */
   setActiveProposal: (id: string) => void;
-  renameProposal: (id: string, name: string) => void;
   /** Removes a proposal; a room always keeps at least one. */
   removeProposal: (id: string) => void;
 }

@@ -88,17 +88,6 @@ export function createProposalSlice(set: DesignSet, get: DesignGet): ProposalAct
       });
     },
 
-    renameProposal: (id, name) => {
-      const d = get().design;
-      const trimmed = name.trim() || nextProposalName(d.proposals.filter((p) => p.id !== id));
-      set({
-        design: touch({
-          ...d,
-          proposals: d.proposals.map((p) => (p.id === id ? { ...p, name: trimmed } : p)),
-        }),
-      });
-    },
-
     removeProposal: (id) => {
       const current = get().design;
       if (current.proposals.length <= 1) return; // keep at least one proposal per room
