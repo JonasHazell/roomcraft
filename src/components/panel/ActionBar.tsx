@@ -3,8 +3,8 @@ import { SelBar, SelBarButton, SelBarDivider } from './SelBar';
 
 /**
  * The primary action bar shown in the 3D view when nothing is selected. Groups
- * the room-wide actions — add furniture, AI furnishing, validation — into one
- * pill in the same family as the selection bar, pinned to the bottom centre.
+ * the room-wide actions — add furniture, validation — into one pill in the same
+ * family as the selection bar, pinned to the bottom centre.
  */
 export function ActionBar() {
   const appView = useUiStore((s) => s.appView);
@@ -26,15 +26,6 @@ export function ActionBar() {
         onClick={openAddFurniture}
       />
       <SelBarDivider />
-      <SelBarButton
-        icon="✨"
-        label="AI"
-        title="Let Claude suggest a furnishing layout"
-        ariaLabel="AI furnishing"
-        expandable
-        active={panel === 'ai'}
-        onClick={() => openPanel('ai')}
-      />
       <SelBarButton
         icon="✓"
         label="Validate"
