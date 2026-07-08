@@ -67,7 +67,7 @@ export { buildCtx, inferRoomTypes } from './ruleHelpers';
 export const RULES: RuleDef[] = [
   // ---- Level 5: Safety ----
   {
-    id: 'SAK-02',
+    id: 'SAF-02',
     title: 'Doors must be able to open fully',
     category: 'Safety',
     importance: 5,
@@ -96,7 +96,7 @@ export const RULES: RuleDef[] = [
     },
   },
   {
-    id: 'SAK-01',
+    id: 'SAF-01',
     title: 'Escape route must not be blocked',
     category: 'Safety',
     importance: 5,
@@ -133,7 +133,7 @@ export const RULES: RuleDef[] = [
     },
   },
   {
-    id: 'SAK-03',
+    id: 'SAF-03',
     title: 'Escape window must be reachable',
     category: 'Safety',
     importance: 5,
@@ -159,7 +159,7 @@ export const RULES: RuleDef[] = [
     },
   },
   {
-    id: 'SAK-10',
+    id: 'SAF-10',
     title: 'No heavy objects above where people lie or sit',
     category: 'Safety',
     importance: 5,
@@ -188,7 +188,7 @@ export const RULES: RuleDef[] = [
 
   // ---- Level 4: Accessibility ----
   {
-    id: 'TIL-02',
+    id: 'ACC-02',
     title: 'Wheelchair turning space (130 cm)',
     category: 'Accessibility',
     importance: 4,
@@ -209,7 +209,7 @@ export const RULES: RuleDef[] = [
     },
   },
   {
-    id: 'TIL-05',
+    id: 'ACC-05',
     title: 'Access around the bed',
     category: 'Accessibility',
     importance: 4,
@@ -243,7 +243,7 @@ export const RULES: RuleDef[] = [
     },
   },
   {
-    id: 'TIL-06',
+    id: 'ACC-06',
     title: 'Clear space in front of storage',
     category: 'Accessibility',
     importance: 4,
@@ -270,7 +270,7 @@ export const RULES: RuleDef[] = [
     },
   },
   {
-    id: 'TIL-07',
+    id: 'ACC-07',
     title: 'Space around the dining area',
     category: 'Accessibility',
     importance: 4,
@@ -307,7 +307,7 @@ export const RULES: RuleDef[] = [
     },
   },
   {
-    id: 'TIL-11',
+    id: 'ACC-11',
     title: 'Windows must be reachable and openable',
     category: 'Accessibility',
     importance: 4,
@@ -337,7 +337,7 @@ export const RULES: RuleDef[] = [
     },
   },
   {
-    id: 'TIL-13',
+    id: 'ACC-13',
     title: 'The room must not be over-furnished',
     category: 'Accessibility',
     importance: 4,
@@ -839,7 +839,7 @@ export const RULES: RuleDef[] = [
 
   // ---- Level 2: Light, color, acoustics ----
   {
-    id: 'LJS-05',
+    id: 'LGT-05',
     title: 'Make the most of daylight',
     category: 'Light',
     importance: 2,
@@ -865,7 +865,7 @@ export const RULES: RuleDef[] = [
     },
   },
   {
-    id: 'FRG-05',
+    id: 'COL-05',
     title: 'Rug size in the seating group',
     category: 'Color & textiles',
     importance: 2,
@@ -899,7 +899,7 @@ export const RULES: RuleDef[] = [
     },
   },
   {
-    id: 'FRG-06',
+    id: 'COL-06',
     title: 'Rug under the dining table',
     category: 'Color & textiles',
     importance: 2,
@@ -933,7 +933,7 @@ export const RULES: RuleDef[] = [
     },
   },
   {
-    id: 'AKU-03',
+    id: 'ACO-03',
     title: 'Plants for air and comfort',
     category: 'Acoustics',
     importance: 2,
@@ -952,7 +952,7 @@ export const RULES: RuleDef[] = [
 
   // ---- Level 1: Aesthetics ----
   {
-    id: 'EST-04',
+    id: 'AES-04',
     title: 'Scale and height variation',
     category: 'Aesthetics',
     importance: 1,
@@ -974,7 +974,7 @@ export const RULES: RuleDef[] = [
     },
   },
   {
-    id: 'EST-05',
+    id: 'AES-05',
     title: 'Visual balance in the room',
     category: 'Aesthetics',
     importance: 1,

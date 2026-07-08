@@ -94,10 +94,10 @@ describe('inferRoomTypes', () => {
   });
 });
 
-describe('SAK-02 door swing', () => {
+describe('SAF-02 door swing', () => {
   it('flags a wardrobe in the door swing area', () => {
     const wardrobe = piece('wardrobe', 2, 4.6, { width: 1.2, depth: 0.6, height: 2 });
-    const outcome = outcomeOf(makeDesign([wardrobe]), 'SAK-02');
+    const outcome = outcomeOf(makeDesign([wardrobe]), 'SAF-02');
     expect(outcome.status).toBe('violated');
     if (outcome.status === 'violated') {
       expect(outcome.violations[0].furnitureIds).toContain(wardrobe.id);
@@ -107,12 +107,12 @@ describe('SAK-02 door swing', () => {
 
   it('passes furniture placed away from the door', () => {
     const wardrobe = piece('wardrobe', 0.4, 1, { width: 1.2, depth: 0.6, height: 2 });
-    expect(outcomeOf(makeDesign([wardrobe]), 'SAK-02').status).toBe('passed');
+    expect(outcomeOf(makeDesign([wardrobe]), 'SAF-02').status).toBe('passed');
   });
 
   it('not applicable without a door', () => {
     const d = makeDesign([piece('sofa', 2, 2)], []);
-    expect(outcomeOf(d, 'SAK-02').status).toBe('not-applicable');
+    expect(outcomeOf(d, 'SAF-02').status).toBe('not-applicable');
   });
 });
 
@@ -159,7 +159,7 @@ describe('FEN-02 the coffin position', () => {
   });
 });
 
-describe('TIL-13 over-furnishing', () => {
+describe('ACC-13 over-furnishing', () => {
   it('flags a room where furniture covers more than 60% of the floor', () => {
     const boxes = [
       piece('box', 1, 1.2, { width: 1.9, depth: 2.3 }),
@@ -167,22 +167,22 @@ describe('TIL-13 over-furnishing', () => {
       piece('box', 1, 3.6, { width: 1.9, depth: 2.3 }),
       piece('box', 3, 3.6, { width: 1.9, depth: 2.3 }),
     ];
-    expect(outcomeOf(makeDesign(boxes), 'TIL-13').status).toBe('violated');
+    expect(outcomeOf(makeDesign(boxes), 'ACC-13').status).toBe('violated');
   });
 
   it('passes an airy room', () => {
-    expect(outcomeOf(makeDesign([piece('sofa', 2, 2, { width: 2, depth: 0.9 })]), 'TIL-13').status).toBe(
+    expect(outcomeOf(makeDesign([piece('sofa', 2, 2, { width: 2, depth: 0.9 })]), 'ACC-13').status).toBe(
       'passed',
     );
   });
 });
 
-describe('AKU-03 plants', () => {
+describe('ACO-03 plants', () => {
   it('flags a room without a plant and passes one with', () => {
     const sofa = piece('sofa', 2, 2, { width: 2, depth: 0.9 });
-    expect(outcomeOf(makeDesign([sofa]), 'AKU-03').status).toBe('violated');
+    expect(outcomeOf(makeDesign([sofa]), 'ACO-03').status).toBe('violated');
     const plant = piece('plant', 0.5, 0.5, { width: 0.4, depth: 0.4, height: 1.2 });
-    expect(outcomeOf(makeDesign([sofa, plant]), 'AKU-03').status).toBe('passed');
+    expect(outcomeOf(makeDesign([sofa, plant]), 'ACO-03').status).toBe('passed');
   });
 });
 
