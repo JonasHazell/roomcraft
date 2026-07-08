@@ -29,8 +29,10 @@ function FurnishView() {
           className="btn room-back"
           onClick={backToLobby}
           title="Back to your rooms"
+          aria-label="Back to your rooms"
         >
-          <span aria-hidden="true">←</span> Rooms
+          <span aria-hidden="true">←</span>
+          <span className="room-back-label">Rooms</span>
         </button>
         <span className="room-topbar-name">{roomName}</span>
       </div>
@@ -43,7 +45,6 @@ function FurnishView() {
       <SelectionBar />
       <WallBar />
       <FloorBar />
-      <HistoryControls />
     </main>
   );
 }
