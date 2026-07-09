@@ -41,10 +41,14 @@ function FurnishView() {
         Drag to orbit · scroll to zoom · drag a furniture piece to move it
       </div>
       <SidePanel />
-      <ActionBar />
-      <SelectionBar />
-      <WallBar />
-      <FloorBar />
+      {/* One bottom dock: the contextual bar for the current selection (if any)
+          floats above the always-present room-action bar. */}
+      <div className="selection-bar-wrap">
+        <SelectionBar />
+        <WallBar />
+        <FloorBar />
+        <ActionBar />
+      </div>
     </main>
   );
 }

@@ -17,7 +17,7 @@ export function FloorBar() {
   if (appView !== 'furnish' || selection?.kind !== 'floor') return null;
 
   return (
-    <SelBar label="Floor actions">
+    <SelBar label="Floor actions" history={false}>
       <SelBarColor
         label="Floor colour"
         title="Floor colour"

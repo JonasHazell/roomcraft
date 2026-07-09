@@ -860,11 +860,11 @@ select {
 }
 
 @media (max-width: 768px) {
-  /* On a phone the top row is tight next to the back button, so give the whole
-     switcher — prev/next arrows included — its own centred row just below the
-     back button instead of dropping the arrows. */
+  /* On a phone the back button is a compact 52px circle, so the switcher shares
+     its row — centred between the screen edges — instead of taking a row of its
+     own below it. */
   .proposal-switcher {
-    top: calc(64px + env(safe-area-inset-top));
+    top: calc(12px + env(safe-area-inset-top));
     left: 50%;
     right: auto;
     transform: translateX(-50%);
