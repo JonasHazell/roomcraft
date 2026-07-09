@@ -600,10 +600,9 @@ select {
   gap: 8px;
 }
 
-/* ---------- Switcher list (rooms & furnishing proposals) ----------
-   One list style shared by the sidebar's room list and the proposal dropdown:
-   an active dot, a name, a count, then rename/delete icon buttons. Both are the
-   same control, so they use the same markup (see SwitcherList) and CSS. */
+/* ---------- Switcher list (furnishing proposals) ----------
+   The proposal dropdown's rows: an optional drag grip, an active dot, a name, a
+   count, then rename/delete icon buttons (see SwitcherList). */
 
 .switch-list {
   list-style: none;
@@ -626,6 +625,32 @@ select {
 
 .switch-list li.is-active {
   background: rgba(47, 111, 221, 0.08);
+}
+
+.switch-list li.is-dragging {
+  opacity: 0.4;
+}
+
+/* A line at the top edge marks where the dragged row will land. */
+.switch-list li.is-drop-target {
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+
+.switch-drag {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  padding: 0 4px 0 10px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.switch-drag:active {
+  cursor: grabbing;
 }
 
 .switch-name {
