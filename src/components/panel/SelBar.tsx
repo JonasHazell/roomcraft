@@ -6,10 +6,10 @@ import { HistoryButtons } from './HistoryButtons';
  * bars) so their markup is defined once. A bar is a `SelBar` wrapper containing
  * `SelBarButton`s, `SelBarColor` swatches and `SelBarDivider`s.
  *
- * Every furnish-view bar ends with a persistent undo/redo segment ({@link
- * HistoryButtons}), so the 3D view has one unified bottom dock in every selection
- * state rather than a separate floating history cluster. Pass `history={false}`
- * to opt out.
+ * The bars are stacked inside a single bottom dock (see {@link BottomDock}): the
+ * static room-action bar (add furniture / undo-redo) stays pinned at the bottom
+ * and the contextual bar for the current selection floats just above it. Undo/redo
+ * lives only on the static bar, so contextual bars pass `history={false}`.
  */
 export function SelBar({
   label,
@@ -26,15 +26,13 @@ export function SelBar({
   history?: boolean;
 }) {
   return (
-    <div className="selection-bar-wrap">
-      <div
-        className={`selection-bar${keepLabels ? ' selection-bar-keep-labels' : ''}`}
-        role="toolbar"
-        aria-label={label}
-      >
-        {children}
-        {history && <HistoryButtons />}
-      </div>
+    <div
+      className={`selection-bar${keepLabels ? ' selection-bar-keep-labels' : ''}`}
+      role="toolbar"
+      aria-label={label}
+    >
+      {children}
+      {history && <HistoryButtons />}
     </div>
   );
 }

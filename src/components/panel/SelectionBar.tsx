@@ -25,7 +25,7 @@ export function SelectionBar() {
   const editing = dialog?.mode === 'edit' && dialog.id === selected.id;
 
   return (
-    <SelBar label="Furniture actions">
+    <SelBar label="Furniture actions" history={false}>
       <SelBarButton
         icon="⟲"
         label="Left"
