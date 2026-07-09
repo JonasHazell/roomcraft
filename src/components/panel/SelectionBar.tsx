@@ -1,14 +1,14 @@
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useSelectedFurniture } from '../../store/selectors';
-import { SelBar, SelBarButton, SelBarDivider } from './SelBar';
+import { SelBar, SelBarButton, SelBarColor, SelBarDivider } from './SelBar';
 
 /**
  * Action bar for the selected furniture piece. It surfaces the most-used actions
- * (rotate, duplicate, delete) in a compact pill pinned to the bottom of the
- * viewport — on both desktop and mobile. "More" opens the full furniture dialog
- * (name, size, colour) pre-filled with this piece's values — the same box used
- * when the piece was added.
+ * (recolour, rotate, duplicate, delete) in a compact pill pinned to the bottom of
+ * the viewport — on both desktop and mobile. Colour sits inline here, mirroring the
+ * wall and floor bars, so every contextual bar exposes colour the same way. "More"
+ * opens the full furniture dialog (name, size) pre-filled with this piece's values.
  */
 export function SelectionBar() {
   const appView = useUiStore((s) => s.appView);
@@ -26,6 +26,14 @@ export function SelectionBar() {
 
   return (
     <SelBar label="Furniture actions" history={false}>
+      <SelBarColor
+        label="Colour"
+        title="Furniture colour"
+        value={selected.color}
+        ariaLabel="Furniture colour"
+        onChange={(color) => updateFurniture(selected.id, { color })}
+      />
+      <SelBarDivider />
       <SelBarButton
         icon="⟲"
         label="Left"
