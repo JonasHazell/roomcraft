@@ -44,9 +44,16 @@ interface UiState {
   pendingRoomId: string | null;
   furnitureDialog: FurnitureDialog;
   panel: Panel;
+  /**
+   * Whether the proposal switcher's dropdown menu is open. Lifted out of the
+   * component so other chrome (the contextual selection bar) can treat it as
+   * just another open overlay and step aside for it.
+   */
+  proposalMenuOpen: boolean;
   select: (selection: Selection) => void;
   setDragging: (id: string | null) => void;
   setAppView: (view: AppView) => void;
+  setProposalMenuOpen: (open: boolean) => void;
   setPlanStartTool: (tool: PlanStartTool) => void;
   setPendingRoomId: (id: string | null) => void;
   openAddFurniture: () => void;
@@ -66,9 +73,21 @@ export const useUiStore = create<UiState>()((set) => ({
   pendingRoomId: null,
   furnitureDialog: null,
   panel: null,
-  select: (selection) => set({ selection }),
+  proposalMenuOpen: false,
+  select: (selection) =>
+    set((state) => {
+      // Making a new object selection dismisses a competing side panel so the
+      // selection's own contextual bar is visible and the two never fight for
+      // space. The openings editor is the exception: it is meant to follow
+      // whichever wall is selected, so keep it open when switching walls.
+      const keepPanel = state.panel === 'openings' && selection?.kind === 'wall';
+      return { selection, panel: selection && !keepPanel ? null : state.panel };
+    }),
   setDragging: (draggingId) => set({ draggingId }),
-  setAppView: (appView) => set({ appView }),
+  // Leaving a surface closes the transient proposal menu so its open flag can't
+  // linger and hide the selection bar after we return to the 3D view.
+  setAppView: (appView) => set({ appView, proposalMenuOpen: false }),
+  setProposalMenuOpen: (proposalMenuOpen) => set({ proposalMenuOpen }),
   setPlanStartTool: (planStartTool) => set({ planStartTool }),
   setPendingRoomId: (pendingRoomId) => set({ pendingRoomId }),
   openAddFurniture: () => set({ furnitureDialog: { mode: 'create' } }),

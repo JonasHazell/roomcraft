@@ -1,0 +1,48 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { useUiStore } from './useUiStore';
+
+describe('ui store — selection vs. open overlays', () => {
+  beforeEach(() => {
+    useUiStore.setState({
+      selection: null,
+      panel: null,
+      proposalMenuOpen: false,
+      appView: 'furnish',
+    });
+  });
+
+  it('closes a side panel when a new object is selected', () => {
+    useUiStore.getState().openPanel('ai');
+    useUiStore.getState().select({ kind: 'furniture', id: 'f1' });
+    expect(useUiStore.getState().panel).toBeNull();
+    expect(useUiStore.getState().selection).toEqual({ kind: 'furniture', id: 'f1' });
+  });
+
+  it('keeps the openings editor open when switching between walls', () => {
+    useUiStore.getState().select({ kind: 'wall', id: 'w1' });
+    useUiStore.getState().openPanel('openings');
+    useUiStore.getState().select({ kind: 'wall', id: 'w2' });
+    // The openings editor follows the selected wall, so it must not close.
+    expect(useUiStore.getState().panel).toBe('openings');
+    expect(useUiStore.getState().selection).toEqual({ kind: 'wall', id: 'w2' });
+  });
+
+  it('closes the openings editor when selecting a non-wall', () => {
+    useUiStore.getState().select({ kind: 'wall', id: 'w1' });
+    useUiStore.getState().openPanel('openings');
+    useUiStore.getState().select({ kind: 'floor' });
+    expect(useUiStore.getState().panel).toBeNull();
+  });
+
+  it('leaves the panel untouched when clearing the selection', () => {
+    useUiStore.getState().openPanel('validation');
+    useUiStore.getState().select(null);
+    expect(useUiStore.getState().panel).toBe('validation');
+  });
+
+  it('clears the proposal menu flag when leaving the view', () => {
+    useUiStore.getState().setProposalMenuOpen(true);
+    useUiStore.getState().setAppView('lobby');
+    expect(useUiStore.getState().proposalMenuOpen).toBe(false);
+  });
+});

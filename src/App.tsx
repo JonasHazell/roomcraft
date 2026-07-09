@@ -20,6 +20,15 @@ import { backToLobby } from './lib/nav';
 /** The 3D furnishing view for the active room: only furnishing plus a way back. */
 function FurnishView() {
   const roomName = useDesignStore((s) => s.design.name);
+  // Any other menu/popup that owns the screen hides the contextual selection
+  // bar (the piece/wall/floor pill) so it stops overlapping and blocking them.
+  // The selection itself is kept, so the bar returns when the overlay closes,
+  // and the always-present room-action bar stays — it is how panels are opened.
+  const panel = useUiStore((s) => s.panel);
+  const furnitureDialog = useUiStore((s) => s.furnitureDialog);
+  const proposalMenuOpen = useUiStore((s) => s.proposalMenuOpen);
+  const dialogActive = useDialogStore((s) => s.active);
+  const overlayOpen = !!panel || !!furnitureDialog || !!dialogActive || proposalMenuOpen;
   return (
     <main className="viewport">
       <Scene />
@@ -44,9 +53,9 @@ function FurnishView() {
       {/* One bottom dock: the contextual bar for the current selection (if any)
           floats above the always-present room-action bar. */}
       <div className="selection-bar-wrap">
-        <SelectionBar />
-        <WallBar />
-        <FloorBar />
+        {!overlayOpen && <SelectionBar />}
+        {!overlayOpen && <WallBar />}
+        {!overlayOpen && <FloorBar />}
         <ActionBar />
       </div>
     </main>

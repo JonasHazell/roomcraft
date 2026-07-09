@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { confirmDialog } from '../../store/useDialogStore';
@@ -21,8 +21,11 @@ export function ProposalSwitcher() {
   const removeProposal = useDesignStore((s) => s.removeProposal);
   const select = useUiStore((s) => s.select);
   const appView = useUiStore((s) => s.appView);
+  // Menu open state lives in the store so the contextual selection bar can
+  // treat it as another open overlay and step aside for it.
+  const open = useUiStore((s) => s.proposalMenuOpen);
+  const setOpen = useUiStore((s) => s.setProposalMenuOpen);
 
-  const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const activeIdx = Math.max(
@@ -42,7 +45,7 @@ export function ProposalSwitcher() {
     };
     window.addEventListener('mousedown', onDown);
     return () => window.removeEventListener('mousedown', onDown);
-  }, [open]);
+  }, [open, setOpen]);
 
   // Furnishing actions live in the 3D view, matching the other furniture bars.
   if (appView !== 'furnish') return null;
@@ -98,7 +101,7 @@ export function ProposalSwitcher() {
           aria-haspopup="menu"
           aria-expanded={open}
           title="Switch furnishing proposal"
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => setOpen(!open)}
         >
           <span className="proposal-pill-icon" aria-hidden="true">
             ◗
