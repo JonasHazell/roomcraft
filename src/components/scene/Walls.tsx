@@ -11,11 +11,20 @@ import { SELECT_EMISSIVE } from './furniture/shared';
 
 const camVec = new THREE.Vector3();
 
+// Target opacity for an exterior wall standing between the camera and the room.
+// Not 0 — a faint plane reads as "glass wall" and keeps the space legible.
+const FADED_OPACITY = 0.15;
+// Damping rate for the opacity cross-fade; higher = snappier.
+const FADE_LAMBDA = 8;
+// Below this opacity the wall is treated as see-through for picking, so clicks
+// fall through to whatever is behind it.
+const CLICK_PASSTHROUGH_OPACITY = 0.5;
+
 export function Walls() {
   const walls = useDesignStore((s) => s.design.walls);
-  const groupRefs = useRef<Record<string, THREE.Group | null>>({});
+  const matRefs = useRef<Record<string, THREE.MeshStandardMaterial | null>>({});
 
-  const hideData = useMemo(
+  const fadeData = useMemo(
     () =>
       walls
         .filter((w) => w.kind === 'exterior')
@@ -23,17 +32,23 @@ export function Walls() {
     [walls],
   );
 
-  // Hide exterior walls between the camera and the room. The direction is taken
-  // from the wall's midpoint so the heuristic works even for L-shaped/off-center
-  // rooms. Mutates .visible directly — no state needed, the flip is discrete per frame.
-  useFrame(({ camera }) => {
-    for (const { id, mid, normal } of hideData) {
-      const group = groupRefs.current[id];
-      if (!group) continue;
+  // Fade exterior walls that stand between the camera and the room instead of
+  // hiding them. The mesh stays in the scene, so it keeps casting its shadow —
+  // the shadow depth pass ignores material opacity. The direction is taken from
+  // the wall's midpoint so the heuristic works even for L-shaped/off-center rooms.
+  useFrame(({ camera }, delta) => {
+    for (const { id, mid, normal } of fadeData) {
+      const mat = matRefs.current[id];
+      if (!mat) continue;
       camVec
         .set(camera.position.x - mid.x, camera.position.y, camera.position.z - mid.z)
         .normalize();
-      group.visible = normal.x * camVec.x + normal.z * camVec.z <= 0.1;
+      const facingCamera = normal.x * camVec.x + normal.z * camVec.z > 0.1;
+      const target = facingCamera ? FADED_OPACITY : 1;
+      mat.opacity = THREE.MathUtils.damp(mat.opacity, target, FADE_LAMBDA, delta);
+      // Write depth only while (near) opaque, so furniture behind a faded wall
+      // isn't clipped away.
+      mat.depthWrite = mat.opacity > 0.98;
     }
   });
 
@@ -44,8 +59,9 @@ export function Walls() {
           key={w.id}
           wall={w}
           endExtension={w.kind === 'exterior' ? exteriorEndExtension(walls, i) : 0}
-          ref={(g: THREE.Group | null) => {
-            groupRefs.current[w.id] = g;
+          fadeable={w.kind === 'exterior'}
+          matRef={(m: THREE.MeshStandardMaterial | null) => {
+            matRefs.current[w.id] = m;
           }}
         />
       ))}
@@ -56,11 +72,13 @@ export function Walls() {
 function WallMesh({
   wall,
   endExtension,
-  ref,
+  fadeable,
+  matRef,
 }: {
   wall: Wall;
   endExtension: number;
-  ref: (g: THREE.Group | null) => void;
+  fadeable: boolean;
+  matRef: (m: THREE.MeshStandardMaterial | null) => void;
 }) {
   const height = useDesignStore((s) => s.design.room.height);
   const wallColor = useDesignStore((s) => s.design.wallColor);
@@ -77,8 +95,11 @@ function WallMesh({
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     // Same still-click guard as deselectOnStillClick.
     if (e.delta > 3) return;
-    // Camera-hidden walls are still raycast — pass the click through to what's behind.
-    if (!e.eventObject.parent?.visible) return;
+    // Faded walls are still raycast — pass the click through to what's behind.
+    const mat = e.eventObject instanceof THREE.Mesh ? e.eventObject.material : null;
+    if (mat instanceof THREE.MeshStandardMaterial && mat.transparent && mat.opacity < CLICK_PASSTHROUGH_OPACITY) {
+      return;
+    }
     e.stopPropagation();
     select({ kind: 'wall', id: wall.id });
   };
@@ -92,12 +113,15 @@ function WallMesh({
   const { origin, rotationY } = wallTransform(wall);
 
   return (
-    <group ref={ref} position={origin} rotation-y={rotationY}>
-      {/* FrontSide deliberately: extruded closed solid with outward-facing normals. */}
+    <group position={origin} rotation-y={rotationY}>
+      {/* FrontSide deliberately: extruded closed solid with outward-facing normals.
+          castShadow stays on even when faded — the shadow depth pass ignores opacity. */}
       <mesh geometry={geometry} castShadow receiveShadow onClick={onClick}>
         <meshStandardMaterial
+          ref={matRef}
           color={wallColor}
           roughness={0.95}
+          transparent={fadeable}
           emissive={selected ? SELECT_EMISSIVE : '#000000'}
           emissiveIntensity={selected ? 0.25 : 0}
         />
