@@ -145,8 +145,6 @@ export function ProposalSwitcher() {
               entries={proposals.map((p) => ({
                 id: p.id,
                 name: p.name,
-                count: p.furniture.length,
-                countTitle: `${p.furniture.length} piece(s) of furniture`,
               }))}
               activeId={activeId}
               noun="proposal"
