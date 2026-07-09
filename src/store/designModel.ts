@@ -354,6 +354,13 @@ export interface ProposalActions {
   ) => string;
   /** Activates another proposal; the room shape stays, only the furnishing swaps. */
   setActiveProposal: (id: string) => void;
+  /** Renames a proposal; a blank name falls back to the next free "Proposal N". */
+  renameProposal: (id: string, name: string) => void;
+  /**
+   * Reorders proposals, moving the dragged one so it lands at the target's
+   * position (drag-to-sort in the switcher list).
+   */
+  reorderProposals: (fromId: string, toId: string) => void;
   /** Removes a proposal; a room always keeps at least one. */
   removeProposal: (id: string) => void;
 }

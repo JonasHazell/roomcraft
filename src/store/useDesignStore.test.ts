@@ -48,6 +48,41 @@ describe('per-proposal floor and wall colours', () => {
   });
 });
 
+describe('naming and reordering proposals', () => {
+  beforeEach(() => {
+    store().newProject();
+  });
+
+  it('renames a proposal and falls back to a default name when blank', () => {
+    const id = store().design.activeProposalId;
+    store().renameProposal(id, '  Cosy layout  ');
+    expect(store().design.proposals.find((p) => p.id === id)?.name).toBe('Cosy layout');
+
+    // A blank name is not accepted — it falls back to the next free "Proposal N".
+    store().renameProposal(id, '   ');
+    expect(store().design.proposals.find((p) => p.id === id)?.name).toBe('Proposal 1');
+  });
+
+  it('reorders proposals by moving one to another position', () => {
+    const first = store().design.activeProposalId;
+    const second = store().addProposal({ copyCurrent: false });
+    const third = store().addProposal({ copyCurrent: false });
+    expect(store().design.proposals.map((p) => p.id)).toEqual([first, second, third]);
+
+    // Drag the first onto the third's slot: it lands where the third was.
+    store().reorderProposals(first, third);
+    expect(store().design.proposals.map((p) => p.id)).toEqual([second, third, first]);
+
+    // Reordering never changes which proposal is active.
+    expect(store().design.activeProposalId).toBe(third);
+
+    // A no-op move (unknown or identical ids) leaves the order untouched.
+    store().reorderProposals(first, first);
+    store().reorderProposals('nope', third);
+    expect(store().design.proposals.map((p) => p.id)).toEqual([second, third, first]);
+  });
+});
+
 describe('discarding an undrawn new room', () => {
   const RECT = [
     { x: -2, z: -2.5 },

@@ -88,6 +88,30 @@ export function createProposalSlice(set: DesignSet, get: DesignGet): ProposalAct
       });
     },
 
+    renameProposal: (id, name) => {
+      const d = get().design;
+      const trimmed = name.trim() || nextProposalName(d.proposals.filter((p) => p.id !== id));
+      set({
+        design: touch({
+          ...d,
+          proposals: d.proposals.map((p) => (p.id === id ? { ...p, name: trimmed } : p)),
+        }),
+      });
+    },
+
+    reorderProposals: (fromId, toId) => {
+      if (fromId === toId) return;
+      // Snapshot the live furnishing so the reordered array keeps fresh furniture.
+      const d = syncActiveProposal(get().design);
+      const from = d.proposals.findIndex((p) => p.id === fromId);
+      const to = d.proposals.findIndex((p) => p.id === toId);
+      if (from === -1 || to === -1) return;
+      const proposals = [...d.proposals];
+      const [moved] = proposals.splice(from, 1);
+      proposals.splice(to, 0, moved);
+      set({ design: touch({ ...d, proposals }) });
+    },
+
     removeProposal: (id) => {
       const current = get().design;
       if (current.proposals.length <= 1) return; // keep at least one proposal per room
