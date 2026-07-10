@@ -22,7 +22,6 @@ export function PropertiesPanel() {
       <FurnitureFields
         value={selected}
         onChange={(patch) => updateFurniture(selected.id, patch)}
-        showColor={false}
       />
       {!coarse && (
         <p className="hint">

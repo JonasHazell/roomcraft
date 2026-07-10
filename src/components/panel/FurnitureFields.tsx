@@ -67,18 +67,15 @@ function FurnitureOptionFields({
  * Name / dimensions / colour controls for a furniture piece. Rendered in the
  * "Add furniture" dialog (bound to a local draft) and in the "More" editor (bound
  * to the store). Rotation is not edited here — it's done with the Left/Right
- * buttons in the selection bar. Colour is likewise handled by the inline swatch in
- * the selection bar, so `showColor` is false in the "More" editor to avoid a
- * duplicate control; the add dialog keeps it, as there's no bar yet.
+ * buttons in the selection bar. Colour lives here rather than inline in the
+ * selection bar, so the bar stays focused on quick actions.
  */
 export function FurnitureFields({
   value,
   onChange,
-  showColor = true,
 }: {
   value: FurnitureDraft;
   onChange: (patch: FurnitureFieldPatch) => void;
-  showColor?: boolean;
 }) {
   return (
     <>
@@ -128,13 +125,11 @@ export function FurnitureFields({
         />
       </div>
       <FurnitureOptionFields value={value} onChange={onChange} />
-      {showColor && (
-        <ColorField
-          label="Color"
-          value={value.color}
-          onChange={(color) => onChange({ color })}
-        />
-      )}
+      <ColorField
+        label="Color"
+        value={value.color}
+        onChange={(color) => onChange({ color })}
+      />
     </>
   );
 }
