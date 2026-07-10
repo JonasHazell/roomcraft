@@ -1217,7 +1217,7 @@ select {
   display: inline-flex;
   align-items: baseline;
   gap: 8px;
-  height: 44px;
+  height: 52px;
   padding: 0 16px;
   border-radius: 999px;
   border: 1.5px solid var(--ink);
