@@ -17,11 +17,10 @@ export type AppView = 'lobby' | 'plan' | 'furnish';
 export type PlanStartTool = 'select' | 'exterior';
 
 /**
- * A global side panel opened from the bottom action bar (AI, validation) or the
- * wall action bar (openings). Independent of the current selection, except
- * `openings`, which reads whichever wall is selected.
+ * A global side panel opened from the bottom action bar (AI, validation).
+ * Independent of the current selection.
  */
-export type Panel = 'ai' | 'validation' | 'openings' | null;
+export type Panel = 'ai' | 'validation' | null;
 
 /**
  * The furniture add/edit dialog. `create` starts on the type picker and commits
@@ -78,10 +77,8 @@ export const useUiStore = create<UiState>()((set) => ({
     set((state) => {
       // Making a new object selection dismisses a competing side panel so the
       // selection's own contextual bar is visible and the two never fight for
-      // space. The openings editor is the exception: it is meant to follow
-      // whichever wall is selected, so keep it open when switching walls.
-      const keepPanel = state.panel === 'openings' && selection?.kind === 'wall';
-      return { selection, panel: selection && !keepPanel ? null : state.panel };
+      // space.
+      return { selection, panel: selection ? null : state.panel };
     }),
   setDragging: (draggingId) => set({ draggingId }),
   // Leaving a surface closes the transient proposal menu so its open flag can't

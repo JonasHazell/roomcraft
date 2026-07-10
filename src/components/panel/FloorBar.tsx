@@ -1,6 +1,6 @@
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
-import { SelBar, SelBarButton, SelBarColor, SelBarDivider } from './SelBar';
+import { SelBar, SelBarColor } from './SelBar';
 
 /**
  * Action bar for the selected floor (3D view). Clicking the floor selects it and
@@ -10,7 +10,6 @@ import { SelBar, SelBarButton, SelBarColor, SelBarDivider } from './SelBar';
 export function FloorBar() {
   const appView = useUiStore((s) => s.appView);
   const selection = useUiStore((s) => s.selection);
-  const select = useUiStore((s) => s.select);
   const floorColor = useDesignStore((s) => s.design.floorColor);
   const setColors = useDesignStore((s) => s.setColors);
 
@@ -24,14 +23,6 @@ export function FloorBar() {
         value={floorColor}
         ariaLabel="Floor colour"
         onChange={(floorColor) => setColors({ floorColor })}
-      />
-      <SelBarDivider />
-      <SelBarButton
-        icon="✓"
-        label="Done"
-        title="Deselect the floor"
-        ariaLabel="Done"
-        onClick={() => select(null)}
       />
     </SelBar>
   );
