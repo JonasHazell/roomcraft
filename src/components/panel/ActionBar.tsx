@@ -18,7 +18,6 @@ export function ActionBar() {
     <SelBar label="Room actions" keepLabels>
       <SelBarButton
         icon="＋"
-        label="Furniture"
         title="Add a piece of furniture"
         ariaLabel="Add furniture"
         onClick={openAddFurniture}
