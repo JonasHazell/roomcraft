@@ -19,9 +19,7 @@ function ruleLabel(r: RuleResult): string {
 export function ValidationPanel() {
   const select = useUiStore((s) => s.select);
   const report = useValidationStore((s) => s.report);
-  const fengShui = useValidationStore((s) => s.fengShui);
   const highlight = useValidationStore((s) => s.highlight);
-  const setFengShui = useValidationStore((s) => s.setFengShui);
   const toggleHighlight = useValidationStore((s) => s.toggleHighlight);
 
   const violated = report
@@ -39,14 +37,6 @@ export function ValidationPanel() {
         The furnishing is checked automatically against the rule catalog (safety, accessibility,
         ergonomics, feng shui, etc.). Click an issue to highlight it in the 3D view.
       </p>
-      <label className="check-field">
-        <input
-          type="checkbox"
-          checked={fengShui}
-          onChange={(e) => setFengShui(e.target.checked)}
-        />
-        <span>Include feng shui rules</span>
-      </label>
 
       {report && (
         <>

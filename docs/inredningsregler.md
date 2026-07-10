@@ -27,7 +27,7 @@ Varje regel har följande fält:
 | 2 | Komfort & atmosfär | Ljus, färg, akustik, ordning, energiflöde | 2 |
 | 1 | Estetik & finlir | Styling, proportion, harmoni | 1 |
 
-**Betygsförslag:** totalpoäng = Σ(vikt × uppfylld) / Σ(vikt × tillämplig), beräknat per kategori och totalt. Regler med mätbarhet `M` bör kunna undantas ur betyget och i stället visas som checklista. Feng shui-kategorin bör kunna slås av/på som helhet för användare som inte vill ha den, men viktas som övriga kategorier när den är på.
+**Betygsförslag:** totalpoäng = Σ(vikt × uppfylld) / Σ(vikt × tillämplig), beräknat per kategori och totalt. Regler med mätbarhet `M` bör kunna undantas ur betyget och i stället visas som checklista. Feng shui-kategorin är alltid med och viktas som övriga kategorier.
 
 **Källförbehåll:** BBR- och SS-regler är krav vid nybyggnad/ändring, inte vid möblering av befintlig bostad — regelmotorn använder dem som kvalitetsmått. Feng shui-regler vilar på tradition (formskolan/kompasskolan), inte på standard; de anges med källan `Feng shui`.
 

@@ -12,10 +12,8 @@ export interface ValidationHighlight {
 
 interface ValidationState {
   report: ValidationReport | null;
-  fengShui: boolean;
   highlight: ValidationHighlight | null;
   validate: () => void;
-  setFengShui: (on: boolean) => void;
   setHighlight: (h: ValidationHighlight | null) => void;
   /** Toggles: clicking an already highlighted row clears the highlight. */
   toggleHighlight: (h: ValidationHighlight) => void;
@@ -23,18 +21,11 @@ interface ValidationState {
 
 export const useValidationStore = create<ValidationState>()((set, get) => ({
   report: null,
-  fengShui: true,
   highlight: null,
 
   validate: () => {
     const design = useDesignStore.getState().design;
-    set({ report: runValidation(design, get().fengShui), highlight: null });
-  },
-
-  setFengShui: (fengShui) => {
-    set({ fengShui });
-    // Refresh the report immediately with the new setting.
-    get().validate();
+    set({ report: runValidation(design), highlight: null });
   },
 
   setHighlight: (highlight) => set({ highlight }),

@@ -27,7 +27,7 @@ Each rule has the following fields:
 | 2 | Comfort & atmosphere | Light, color, acoustics, order, energy flow | 2 |
 | 1 | Aesthetics & fine-tuning | Styling, proportion, harmony | 1 |
 
-**Scoring proposal:** total score = Σ(weight × passed) / Σ(weight × applicable), computed per category and overall. Rules with measurability `M` should be excludable from the score and shown as a checklist instead. The feng shui category should be toggleable on/off as a whole for users who don't want it, but weighted like the other categories when it is on.
+**Scoring proposal:** total score = Σ(weight × passed) / Σ(weight × applicable), computed per category and overall. Rules with measurability `M` should be excludable from the score and shown as a checklist instead. The feng shui category is always included and weighted like the other categories.
 
 **Source caveat:** BBR and SS rules are requirements for new construction/alteration, not for furnishing an existing home — the rule engine uses them as quality benchmarks. Feng shui rules rest on tradition (the Form School/Compass School), not on standards; they are cited with the source `Feng shui`.
 

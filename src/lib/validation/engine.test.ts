@@ -70,8 +70,8 @@ function piece(
   };
 }
 
-function outcomeOf(design: Design, ruleId: string, fengShui = true) {
-  const report = runValidation(design, fengShui);
+function outcomeOf(design: Design, ruleId: string) {
+  const report = runValidation(design);
   const result = report.results.find((r) => r.rule.id === ruleId);
   if (!result) throw new Error(`Rule ${ruleId} is missing from the report`);
   return result.outcome;
@@ -274,14 +274,12 @@ describe('LGT-06 screen reflections', () => {
   });
 });
 
-describe('feng shui mode', () => {
-  it('excludes FEN rules when feng shui is disabled', () => {
+describe('feng shui rules', () => {
+  it('always includes the FEN rules in the report', () => {
     const d = makeDesign([piece('bed', 2, 1.5, { width: 1.6, depth: 2 })]);
-    const report = runValidation(d, false);
-    expect(report.results.some((r) => r.rule.category === 'Feng shui')).toBe(false);
-    expect(report.byCategory.some((c) => c.category === 'Feng shui')).toBe(false);
-    // The twin rule ERG-08 remains in its primary category.
-    expect(report.results.some((r) => r.rule.id === 'ERG-08')).toBe(true);
+    const report = runValidation(d);
+    expect(report.results.some((r) => r.rule.category === 'Feng shui')).toBe(true);
+    expect(report.byCategory.some((c) => c.category === 'Feng shui')).toBe(true);
   });
 });
 
@@ -294,8 +292,8 @@ describe('scoring', () => {
       piece('bed', 2, 1.5, { width: 1.6, depth: 2, height: 0.5 }),
       piece('wardrobe', 2, 4.6, { width: 1.2, depth: 0.6, height: 2 }),
     ]);
-    const tidyReport = runValidation(tidy, true);
-    const messyReport = runValidation(messy, true);
+    const tidyReport = runValidation(tidy);
+    const messyReport = runValidation(messy);
     expect(tidyReport.total).not.toBeNull();
     expect(tidyReport.total!).toBeGreaterThan(messyReport.total!);
     expect(messyReport.total!).toBeGreaterThanOrEqual(0);
@@ -304,7 +302,7 @@ describe('scoring', () => {
 
   it('reports the twin rule in both categories', () => {
     const d = makeDesign([piece('bed', 2, 2.5, { width: 1.6, depth: 2, height: 0.5 })]);
-    const report = runValidation(d, true);
+    const report = runValidation(d);
     const erg = report.byCategory.find((c) => c.category === 'Ergonomics & dimensions');
     const fen = report.byCategory.find((c) => c.category === 'Feng shui');
     // ERG-08 (free-standing bed) counts as violated in both categories.
