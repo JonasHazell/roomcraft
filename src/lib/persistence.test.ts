@@ -183,6 +183,35 @@ describe('parseProject', () => {
     expect(() => parseProject({ ...V1_DESIGN, schemaVersion: 99 })).toThrow(/schema version 99/);
   });
 
+  it('backfills furniture options with the kind defaults for older saves', () => {
+    // The v1 bed has no `options` field — it should load with the bed defaults.
+    const room = activeRoom(parseProject(V1_DESIGN));
+    expect(room.furniture[0].options).toEqual({ mattresses: 1, pillows: 2, headboard: true });
+  });
+
+  it('normalizes stored options: clamps counts, keeps valid ones, drops unknown keys', () => {
+    const base = parseProject(V1_DESIGN);
+    const room = base.rooms[0];
+    const bookshelf = {
+      ...room.furniture[0],
+      kind: 'bookshelf',
+      options: { shelves: 99, doors: true, bogus: 'x' },
+    };
+    const withOptions = {
+      ...base,
+      rooms: [
+        {
+          ...room,
+          furniture: [bookshelf],
+          // The active proposal mirrors the live furniture, so put it there too.
+          proposals: [{ ...room.proposals[0], furniture: [bookshelf] }],
+        },
+      ],
+    };
+    const parsed = activeRoom(parseProject(JSON.parse(JSON.stringify(withOptions))));
+    expect(parsed.furniture[0].options).toEqual({ shelves: 6, doors: true });
+  });
+
   it('rejects garbage and broken structures', () => {
     expect(parseProjectSafe(null)).toBeNull();
     expect(parseProjectSafe('hello')).toBeNull();

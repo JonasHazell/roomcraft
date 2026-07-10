@@ -4,6 +4,7 @@ import type {
   FurnitureItem,
   FurnitureKind,
   FurnitureLibraryEntry,
+  FurnitureOptions,
   FurnitureSize,
   Point,
   Project,
@@ -14,6 +15,7 @@ import type {
 } from '../types';
 import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, SCHEMA_VERSION } from '../types';
 import { clampFurniture, clampOpening } from '../lib/collision';
+import { normalizeOptions } from '../lib/furnitureOptions';
 import { floorPolygon, polygonCenter, type LoopValidation } from '../lib/polygon';
 import { activeRoom, syncActiveProposal, syncActiveRoom } from '../lib/persistence';
 
@@ -42,6 +44,7 @@ export function cloneFurniture(items: FurnitureItem[]): FurnitureItem[] {
     id: nanoid(8),
     size: { ...f.size },
     position: { ...f.position },
+    options: f.options ? { ...f.options } : undefined,
   }));
 }
 
@@ -49,6 +52,16 @@ export type FurniturePatch = Partial<Omit<FurnitureItem, 'id' | 'size' | 'positi
   size?: Partial<FurnitureItem['size']>;
   position?: Partial<FurnitureItem['position']>;
 };
+
+/** The caller-supplied spec for a piece placed into the room (before it gets an id/position). */
+export interface FurnitureSpec {
+  kind: FurnitureKind;
+  name: string;
+  size: FurnitureSize;
+  elevation: number;
+  color: string;
+  options?: FurnitureOptions;
+}
 
 // ---- Factories ----
 
@@ -237,10 +250,7 @@ export function syncedProject(project: Project, design: Design): Project {
  * (so several added pieces don't hide each other) and clamped inside the walls.
  * Shared by every "add a piece to the room" action.
  */
-export function placeAtCenter(
-  d: Design,
-  spec: { kind: FurnitureKind; name: string; size: FurnitureSize; elevation: number; color: string },
-): FurnitureItem {
+export function placeAtCenter(d: Design, spec: FurnitureSpec): FurnitureItem {
   const poly = floorPolygon(d.walls);
   const center = polygonCenter(poly);
   const nudge = () => (Math.random() - 0.5) * 0.6;
@@ -254,6 +264,7 @@ export function placeAtCenter(
       size: { ...spec.size },
       elevation: spec.elevation,
       color: spec.color,
+      options: normalizeOptions(spec.kind, spec.options),
     },
     poly,
   );
@@ -318,14 +329,8 @@ export interface PlanActions {
 
 export interface FurnitureActions {
   addFurniture: (kind: FurnitureKind) => string;
-  /** Places a piece with caller-supplied name/size/color at the room center (the "Add furniture" dialog). */
-  addFurnitureConfigured: (config: {
-    kind: FurnitureKind;
-    name: string;
-    size: FurnitureSize;
-    elevation: number;
-    color: string;
-  }) => string;
+  /** Places a piece with caller-supplied name/size/color/options at the room center (the "Add furniture" dialog). */
+  addFurnitureConfigured: (config: FurnitureSpec) => string;
   /** Places a saved library furniture piece at the center of the room and returns its id. */
   addFurnitureFromLibrary: (entry: FurnitureLibraryEntry) => string;
   duplicateFurniture: (id: string) => string | null;

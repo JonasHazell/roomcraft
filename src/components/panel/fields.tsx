@@ -46,6 +46,101 @@ export function NumberField({
   );
 }
 
+/** A small integer stepper (−/value/+) for a bounded count, e.g. number of shelves. */
+export function CountField({
+  label,
+  value,
+  onChange,
+  min = 0,
+  max = 99,
+  title,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  title?: string;
+}) {
+  const clamp = (v: number) => Math.min(max, Math.max(min, v));
+  return (
+    <label className="field" title={title}>
+      <span className="field-label">{label}</span>
+      <span className="count-field">
+        <button
+          type="button"
+          className="count-step"
+          aria-label={`Decrease ${label}`}
+          disabled={value <= min}
+          onClick={() => onChange(clamp(value - 1))}
+        >
+          −
+        </button>
+        <span className="count-value" aria-live="polite">
+          {value}
+        </span>
+        <button
+          type="button"
+          className="count-step"
+          aria-label={`Increase ${label}`}
+          disabled={value >= max}
+          onClick={() => onChange(clamp(value + 1))}
+        >
+          +
+        </button>
+      </span>
+    </label>
+  );
+}
+
+/** A labelled checkbox for a boolean option, e.g. "has doors". */
+export function ToggleField({
+  label,
+  value,
+  onChange,
+  title,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+  title?: string;
+}) {
+  return (
+    <label className="check-field" title={title}>
+      <input type="checkbox" checked={value} onChange={(e) => onChange(e.target.checked)} />
+      <span>{label}</span>
+    </label>
+  );
+}
+
+/** A labelled dropdown for a named choice, e.g. a rug pattern. */
+export function SelectField({
+  label,
+  value,
+  choices,
+  onChange,
+  title,
+}: {
+  label: string;
+  value: string;
+  choices: { value: string; label: string }[];
+  onChange: (v: string) => void;
+  title?: string;
+}) {
+  return (
+    <label className="field" title={title}>
+      <span className="field-label">{label}</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)}>
+        {choices.map((c) => (
+          <option key={c.value} value={c.value}>
+            {c.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 export function ColorField({
   label,
   value,

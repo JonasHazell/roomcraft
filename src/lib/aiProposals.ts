@@ -1,4 +1,5 @@
 import { isHexColor, type Design, type FurnitureItem } from '../types';
+import { defaultOptions } from './furnitureOptions';
 
 /**
  * A single furniture piece in an AI proposal. Matches the server's schema
@@ -49,6 +50,7 @@ export function toFurnitureItem(f: AiFurniture): Omit<FurnitureItem, 'id'> {
     size: f.size,
     elevation: f.elevation,
     color: f.color,
+    options: defaultOptions(f.kind),
   };
 }
 

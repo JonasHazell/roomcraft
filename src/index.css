@@ -1186,6 +1186,44 @@ select {
   accent-color: var(--accent);
 }
 
+/* Integer stepper (−/value/+) for a bounded count option (shelves, pillows …). */
+.count-field {
+  display: inline-flex;
+  align-items: stretch;
+  align-self: flex-start;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.count-step {
+  width: 30px;
+  border: 0;
+  background: #f4f1ea;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.count-step:hover:not(:disabled) {
+  background: #e9e4d8;
+}
+
+.count-step:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.count-value {
+  min-width: 34px;
+  padding: 6px 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+
 .validation-stale {
   color: var(--danger);
 }

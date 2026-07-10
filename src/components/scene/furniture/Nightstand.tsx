@@ -1,23 +1,34 @@
+import { optNum } from '../../../lib/furnitureOptions';
 import { Mat, shade, type FurnitureProps } from './shared';
 
-export function Nightstand({ size, color, selected }: FurnitureProps) {
+export function Nightstand({ size, color, selected, options }: FurnitureProps) {
   const { width: w, depth: d, height: h } = size;
-  const drawerH = h * 0.28;
+  const drawers = optNum(options, 'drawers', 2);
+  const gap = 0.02;
+  const drawerH = (h - gap * (drawers + 1)) / drawers;
+
   return (
     <group>
       <mesh castShadow position={[0, h / 2, 0]}>
         <boxGeometry args={[w, h, d]} />
         <Mat color={color} selected={selected} />
       </mesh>
-      {/* drawer front with knob on the front (local +z) */}
-      <mesh castShadow position={[0, h - drawerH, d / 2 + 0.005]}>
-        <boxGeometry args={[w * 0.85, drawerH, 0.015]} />
-        <Mat color={shade(color, 0.25)} selected={selected} />
-      </mesh>
-      <mesh castShadow position={[0, h - drawerH, d / 2 + 0.025]}>
-        <sphereGeometry args={[0.015, 12, 12]} />
-        <Mat color="#4a453c" selected={selected} />
-      </mesh>
+      {/* drawer fronts with knobs on the front (local +z), stacked top to bottom */}
+      {Array.from({ length: drawers }, (_, i) => {
+        const cy = h - gap - drawerH / 2 - i * (drawerH + gap);
+        return (
+          <group key={i}>
+            <mesh castShadow position={[0, cy, d / 2 + 0.005]}>
+              <boxGeometry args={[w * 0.85, drawerH, 0.015]} />
+              <Mat color={shade(color, 0.25)} selected={selected} />
+            </mesh>
+            <mesh castShadow position={[0, cy, d / 2 + 0.025]}>
+              <sphereGeometry args={[0.015, 12, 12]} />
+              <Mat color="#4a453c" selected={selected} />
+            </mesh>
+          </group>
+        );
+      })}
     </group>
   );
 }

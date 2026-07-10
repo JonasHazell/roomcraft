@@ -1,10 +1,12 @@
 import * as THREE from 'three';
-import type { FurnitureSize } from '../../../types';
+import type { FurnitureOptions, FurnitureSize } from '../../../types';
 
 export interface FurnitureProps {
   size: FurnitureSize;
   color: string;
   selected: boolean;
+  /** Per-type customization, already normalized against the kind's option specs. */
+  options: FurnitureOptions;
 }
 
 export const SELECT_EMISSIVE = '#2f6fdd';

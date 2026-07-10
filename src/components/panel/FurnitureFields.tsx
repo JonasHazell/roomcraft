@@ -1,8 +1,67 @@
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
-import { ColorField, NumberField } from './fields';
+import { FURNITURE_OPTIONS, normalizeOptions } from '../../lib/furnitureOptions';
+import { ColorField, CountField, NumberField, SelectField, ToggleField } from './fields';
 import type { FurnitureDraft, FurnitureFieldPatch } from './furnitureDraft';
 
 export type { FurnitureDraft, FurnitureFieldPatch };
+
+/**
+ * Per-type customization controls (shelves, doors, pillows, monitor …) driven by
+ * the kind's option specs. Renders nothing for kinds without options.
+ */
+function FurnitureOptionFields({
+  value,
+  onChange,
+}: {
+  value: FurnitureDraft;
+  onChange: (patch: FurnitureFieldPatch) => void;
+}) {
+  const specs = FURNITURE_OPTIONS[value.kind];
+  if (specs.length === 0) return null;
+  const options = normalizeOptions(value.kind, value.options);
+
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      <p className="field-label">{FURNITURE_CATALOG[value.kind].label} details</p>
+      {specs.map((spec) => {
+        if (spec.type === 'count') {
+          return (
+            <CountField
+              key={spec.key}
+              label={spec.label}
+              title={spec.hint}
+              value={options[spec.key] as number}
+              min={spec.min}
+              max={spec.max}
+              onChange={(v) => onChange({ options: { [spec.key]: v } })}
+            />
+          );
+        }
+        if (spec.type === 'toggle') {
+          return (
+            <ToggleField
+              key={spec.key}
+              label={spec.label}
+              title={spec.hint}
+              value={options[spec.key] as boolean}
+              onChange={(v) => onChange({ options: { [spec.key]: v } })}
+            />
+          );
+        }
+        return (
+          <SelectField
+            key={spec.key}
+            label={spec.label}
+            title={spec.hint}
+            value={options[spec.key] as string}
+            choices={spec.choices}
+            onChange={(v) => onChange({ options: { [spec.key]: v } })}
+          />
+        );
+      })}
+    </div>
+  );
+}
 
 /**
  * Name / dimensions / colour controls for a furniture piece. Rendered in the
@@ -68,6 +127,7 @@ export function FurnitureFields({
           onChange={(v) => onChange({ elevation: v / 100 })}
         />
       </div>
+      <FurnitureOptionFields value={value} onChange={onChange} />
       {showColor && (
         <ColorField
           label="Color"

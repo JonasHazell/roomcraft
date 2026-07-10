@@ -3,6 +3,7 @@ import type { ThreeEvent } from '@react-three/fiber';
 import { useCursor } from '@react-three/drei';
 import * as THREE from 'three';
 import type { FurnitureKind } from '../../types';
+import { normalizeOptions } from '../../lib/furnitureOptions';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
@@ -19,6 +20,7 @@ import { Nightstand } from './furniture/Nightstand';
 import { Tv } from './furniture/Tv';
 import { Mirror } from './furniture/Mirror';
 import { Plant } from './furniture/Plant';
+import { Rug } from './furniture/Rug';
 
 const COMPONENTS: Record<FurnitureKind, ComponentType<FurnitureProps>> = {
   bed: Bed,
@@ -32,7 +34,7 @@ const COMPONENTS: Record<FurnitureKind, ComponentType<FurnitureProps>> = {
   plant: Plant,
   wardrobe: Wardrobe,
   bookshelf: Bookshelf,
-  rug: GenericBox,
+  rug: Rug,
   box: GenericBox,
 };
 
@@ -106,7 +108,12 @@ export function FurnitureMesh({ id }: { id: string }) {
       }}
       onPointerOut={() => setHovered(false)}
     >
-      <Piece size={item.size} color={item.color} selected={selected} />
+      <Piece
+        size={item.size}
+        color={item.color}
+        selected={selected}
+        options={normalizeOptions(item.kind, item.options)}
+      />
       {selected && (
         // The selection is projected down onto the floor so the footprint is
         // visible even when the furniture hangs above it.

@@ -66,6 +66,17 @@ export interface FurnitureSize {
   height: number; // Y
 }
 
+/** A single value of a per-type furniture option (a count, a flag or a named choice). */
+export type FurnitureOptionValue = number | boolean | string;
+
+/**
+ * Per-type customization of a furniture piece, keyed by option id — e.g. the
+ * number of shelves in a bookshelf, whether a desk has a monitor, how many
+ * pillows a bed has. The available options for each {@link FurnitureKind} and
+ * their defaults/ranges live in {@link ../lib/furnitureOptions}.
+ */
+export type FurnitureOptions = Record<string, FurnitureOptionValue>;
+
 export interface FurnitureItem {
   id: string;
   kind: FurnitureKind;
@@ -77,6 +88,12 @@ export interface FurnitureItem {
   /** Bottom edge above the floor, meters; 0 = standing on the floor (e.g. wall shelf > 0). */
   elevation: number;
   color: string;
+  /**
+   * Per-type customization (shelves, doors, pillows …). Optional: pieces created
+   * before the field existed — or by the AI — fall back to the type's defaults,
+   * resolved wherever the options are read (see {@link ../lib/furnitureOptions}).
+   */
+  options?: FurnitureOptions;
 }
 
 /** A saved furniture piece in the library — reusable properties without placement. */
@@ -87,6 +104,8 @@ export interface FurnitureLibraryEntry {
   size: FurnitureSize;
   elevation: number;
   color: string;
+  /** Saved per-type customization; see {@link FurnitureItem.options}. */
+  options?: FurnitureOptions;
 }
 
 /** A named furnishing variant of one room. The room shape (walls, openings,
