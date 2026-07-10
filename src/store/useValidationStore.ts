@@ -12,10 +12,8 @@ export interface ValidationHighlight {
 
 interface ValidationState {
   report: ValidationReport | null;
-  fengShui: boolean;
   highlight: ValidationHighlight | null;
   validate: () => void;
-  setFengShui: (on: boolean) => void;
   setHighlight: (h: ValidationHighlight | null) => void;
   /** Toggles: clicking an already highlighted row clears the highlight. */
   toggleHighlight: (h: ValidationHighlight) => void;
@@ -23,18 +21,11 @@ interface ValidationState {
 
 export const useValidationStore = create<ValidationState>()((set, get) => ({
   report: null,
-  fengShui: true,
   highlight: null,
 
   validate: () => {
     const design = useDesignStore.getState().design;
-    set({ report: runValidation(design, get().fengShui), highlight: null });
-  },
-
-  setFengShui: (fengShui) => {
-    set({ fengShui });
-    // Refresh the report immediately with the new setting.
-    get().validate();
+    set({ report: runValidation(design), highlight: null });
   },
 
   setHighlight: (highlight) => set({ highlight }),
@@ -45,9 +36,12 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
 
 // The room is validated automatically: re-run the rule catalog whenever the
 // design changes so the score badge and validation panel are always current
-// without any manual "Validate" action. `updatedAt` bumps on every edit.
+// without any manual "Validate" action. Every edit replaces the design with a
+// fresh object, so an identity check reliably catches each change — comparing
+// the `updatedAt` timestamp would miss two edits that land in the same
+// millisecond.
 useDesignStore.subscribe((state, prev) => {
-  if (state.design.updatedAt !== prev.design.updatedAt) {
+  if (state.design !== prev.design) {
     useValidationStore.getState().validate();
   }
 });

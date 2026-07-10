@@ -25,7 +25,6 @@ export interface CategoryScore {
 
 export interface ValidationReport {
   designUpdatedAt: string;
-  fengShui: boolean;
   roomTypes: RoomType[];
   results: RuleResult[];
   /** 0–100, null if no rules were applicable. */
@@ -35,17 +34,16 @@ export interface ValidationReport {
 
 /**
  * Runs the entire rule catalog against the design. Rules whose room type does
- * not match the inferred furnishing are reported as not applicable; with feng
- * shui disabled the FEN rules are excluded entirely (and twin rules count only
- * in their primary category). Linked twin pairs are counted once in the total
- * score but reported in both categories, per the rule catalog appendix.
+ * not match the inferred furnishing are reported as not applicable. The feng
+ * shui rules are always part of the catalog. Linked twin pairs are counted once
+ * in the total score but reported in both categories, per the rule catalog
+ * appendix.
  */
-export function runValidation(design: Design, fengShui: boolean): ValidationReport {
+export function runValidation(design: Design): ValidationReport {
   const ctx = buildCtx(design);
 
   const results: RuleResult[] = [];
   for (const rule of RULES) {
-    if (!fengShui && rule.category === 'Feng shui') continue;
     let outcome: RuleOutcome;
     if (rule.appliesTo && !rule.appliesTo.some((t) => ctx.roomTypes.has(t))) {
       outcome = { status: 'not-applicable' };
@@ -66,16 +64,14 @@ export function runValidation(design: Design, fengShui: boolean): ValidationRepo
   }
 
   // Category scores: twin rules contribute to both of their categories.
-  const byCategory: CategoryScore[] = CATEGORY_ORDER.filter(
-    (cat) => fengShui || cat !== 'Feng shui',
-  ).map((category) => {
+  const byCategory: CategoryScore[] = CATEGORY_ORDER.map((category) => {
     let cPassed = 0;
     let cApplicable = 0;
     let applicable = 0;
     let violated = 0;
     for (const { rule, outcome } of results) {
       const inCategory =
-        rule.category === category || (fengShui && rule.twin?.category === category);
+        rule.category === category || rule.twin?.category === category;
       if (!inCategory || outcome.status === 'not-applicable') continue;
       const w = IMPORTANCE_WEIGHT[rule.importance];
       cApplicable += w;
@@ -93,7 +89,6 @@ export function runValidation(design: Design, fengShui: boolean): ValidationRepo
 
   return {
     designUpdatedAt: design.updatedAt,
-    fengShui,
     roomTypes: [...ctx.roomTypes],
     results,
     total: wApplicable > 0 ? Math.round((100 * wPassed) / wApplicable) : null,
