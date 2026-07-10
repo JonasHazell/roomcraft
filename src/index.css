@@ -1288,6 +1288,9 @@ select {
      in it rather than below the switcher. */
   .score-badge {
     top: calc(12px + env(safe-area-inset-top));
+    /* Only the score number shows here (the "/ 100" meta is hidden below), so
+       baseline alignment would leave it hugging the top — centre it instead. */
+    align-items: center;
   }
 
   /* Space is tight next to the centred switcher, so show only the score number
