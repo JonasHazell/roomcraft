@@ -1,23 +1,24 @@
 import { useHistoryStore } from '../../store/useHistoryStore';
-import { SelBarDivider } from './SelBar';
+import { useUiStore } from '../../store/useUiStore';
 
 /**
- * Undo/redo pair rendered as a trailing segment inside the bottom pill bars
- * (Action/Selection/Wall/Floor). Keeping history in the same bar as the
- * contextual actions means one unified bottom dock in every state, instead of a
- * separate floating cluster in its own shape. Icon-only so it stays compact even
- * behind the five-action furniture bar. Keyboard equivalents (Ctrl/Cmd+Z,
- * Ctrl/Cmd+Shift+Z, Ctrl+Y) are handled in App.
+ * Standalone undo/redo pill for the 3D furnish view. It sits as its own pill on
+ * the right of the bottom dock — separate from the add-furniture pill on the left
+ * and the contextual selection pill in the middle — so history is always in the
+ * same spot regardless of what is selected. Icon-only to stay compact. Keyboard
+ * equivalents (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl+Y) are handled in App.
  */
-export function HistoryButtons() {
+export function HistoryBar() {
+  const appView = useUiStore((s) => s.appView);
   const canUndo = useHistoryStore((s) => s.canUndo);
   const canRedo = useHistoryStore((s) => s.canRedo);
   const undo = useHistoryStore((s) => s.undo);
   const redo = useHistoryStore((s) => s.redo);
 
+  if (appView !== 'furnish') return null;
+
   return (
-    <>
-      <SelBarDivider />
+    <div className="selection-bar" role="toolbar" aria-label="History">
       <button
         type="button"
         className="sel-action sel-history"
@@ -42,6 +43,6 @@ export function HistoryButtons() {
           ↷
         </span>
       </button>
-    </>
+    </div>
   );
 }

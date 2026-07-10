@@ -4,6 +4,7 @@ import { SelectionBar } from './components/panel/SelectionBar';
 import { ActionBar } from './components/panel/ActionBar';
 import { WallBar } from './components/panel/WallBar';
 import { FloorBar } from './components/panel/FloorBar';
+import { HistoryBar } from './components/panel/HistoryBar';
 import { SidePanel } from './components/panel/SidePanel';
 import { ValidationScore } from './components/panel/ValidationScore';
 import { ProposalSwitcher } from './components/panel/ProposalSwitcher';
@@ -52,13 +53,23 @@ function FurnishView() {
         Drag to orbit · scroll to zoom · drag a furniture piece to move it
       </div>
       <SidePanel />
-      {/* One bottom dock: the contextual bar for the current selection (if any)
-          floats above the always-present room-action bar. */}
+      {/* Bottom dock in three fixed slots: the add-furniture pill locked to the
+          left, the contextual bar for the current selection (if any) centred in the
+          middle, and the standalone undo/redo pill locked to the right. The side
+          pills stay put whether or not something is selected — the middle is simply
+          empty when nothing is. */}
       <div className="selection-bar-wrap">
-        {!overlayOpen && <SelectionBar />}
-        {!overlayOpen && <WallBar />}
-        {!overlayOpen && <FloorBar />}
-        <ActionBar />
+        <div className="dock-slot dock-left">
+          <ActionBar />
+        </div>
+        <div className="dock-slot dock-mid">
+          {!overlayOpen && <SelectionBar />}
+          {!overlayOpen && <WallBar />}
+          {!overlayOpen && <FloorBar />}
+        </div>
+        <div className="dock-slot dock-right">
+          <HistoryBar />
+        </div>
       </div>
     </main>
   );

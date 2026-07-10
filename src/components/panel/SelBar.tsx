@@ -1,29 +1,24 @@
 import type { ReactNode } from 'react';
-import { HistoryButtons } from './HistoryButtons';
 
 /**
  * Shared building blocks for the bottom action pills (Action/Selection/Wall/Floor
  * bars) so their markup is defined once. A bar is a `SelBar` wrapper containing
  * `SelBarButton`s, `SelBarColor` swatches and `SelBarDivider`s.
  *
- * The bars are stacked inside a single bottom dock (see {@link BottomDock}): the
- * static room-action bar (add furniture / undo-redo) stays pinned at the bottom
- * and the contextual bar for the current selection floats just above it. Undo/redo
- * lives only on the static bar, so contextual bars pass `history={false}`.
+ * The pills sit side by side in a single bottom dock (see the wrap in App): the
+ * add-furniture pill on the left, the contextual bar for the current selection in
+ * the middle, and the standalone undo/redo pill ({@link HistoryBar}) on the right.
  */
 export function SelBar({
   label,
   children,
   keepLabels,
-  history = true,
 }: {
   label: string;
   children: ReactNode;
   /** Keep the button text labels visible on narrow phones (for short bars where
    *  they still fit); long bars drop to icon-only to save room. */
   keepLabels?: boolean;
-  /** Append the shared undo/redo segment (default true). */
-  history?: boolean;
 }) {
   return (
     <div
@@ -32,7 +27,6 @@ export function SelBar({
       aria-label={label}
     >
       {children}
-      {history && <HistoryButtons />}
     </div>
   );
 }
