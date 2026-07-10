@@ -186,6 +186,94 @@ describe('ACO-03 plants', () => {
   });
 });
 
+describe('ACC-01 main passages', () => {
+  it('flags a room split by a passage narrower than 90 cm', () => {
+    // A long box reaching from the west wall leaves only a 0.8 m gap to the east wall.
+    const divider = piece('box', 1.5, 2.5, { width: 3.4, depth: 0.4 });
+    expect(outcomeOf(makeDesign([divider]), 'ACC-01').status).toBe('violated');
+  });
+
+  it('passes an open room', () => {
+    const sofa = piece('sofa', 2, 2, { width: 2, depth: 0.9 });
+    expect(outcomeOf(makeDesign([sofa]), 'ACC-01').status).toBe('passed');
+  });
+});
+
+describe('ACC-03 doorway passage width', () => {
+  it('flags furniture narrowing the doorway', () => {
+    const wardrobe = piece('wardrobe', 2.2, 4.8, { width: 0.6, depth: 0.4, height: 2 });
+    const outcome = outcomeOf(makeDesign([wardrobe]), 'ACC-03');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].furnitureIds).toContain(wardrobe.id);
+    }
+  });
+
+  it('passes a clear doorway', () => {
+    const wardrobe = piece('wardrobe', 0.5, 1, { width: 0.6, depth: 0.4, height: 2 });
+    expect(outcomeOf(makeDesign([wardrobe]), 'ACC-03').status).toBe('passed');
+  });
+});
+
+describe('ERG-03 conversation group', () => {
+  it('flags a seat turned away from the group', () => {
+    const sofa = piece('sofa', 2, 1, { width: 2, depth: 0.9 });
+    const chair = piece('chair', 2, 4.4, { width: 0.6, depth: 0.6, name: 'armchair' });
+    expect(outcomeOf(makeDesign([sofa, chair]), 'ERG-03').status).toBe('violated');
+  });
+
+  it('passes seats facing each other', () => {
+    const sofa = piece('sofa', 2, 1.5, { width: 2, depth: 0.9 });
+    const chair = piece('chair', 2, 3, {
+      width: 0.6,
+      depth: 0.6,
+      rotationY: Math.PI,
+      name: 'armchair',
+    });
+    expect(outcomeOf(makeDesign([sofa, chair]), 'ERG-03').status).toBe('passed');
+  });
+});
+
+describe('ERG-04 surface within reach', () => {
+  it('flags a lone seat with no nearby surface', () => {
+    const sofa = piece('sofa', 2, 1, { width: 2, depth: 0.9 });
+    const chair = piece('chair', 3.5, 4, { width: 0.6, depth: 0.6, name: 'armchair' });
+    expect(outcomeOf(makeDesign([sofa, chair]), 'ERG-04').status).toBe('violated');
+  });
+
+  it('passes a sofa with a coffee table in front', () => {
+    const sofa = piece('sofa', 2, 1, { width: 2, depth: 0.9 });
+    const table = piece('table', 2, 2, { width: 1.1, depth: 0.6, height: 0.4 });
+    expect(outcomeOf(makeDesign([sofa, table]), 'ERG-04').status).toBe('passed');
+  });
+});
+
+describe('FEN-14 poison arrows', () => {
+  it('flags a sharp corner aimed at the bed', () => {
+    const bed = piece('bed', 3, 4, { width: 1.2, depth: 1.4, height: 0.5 });
+    const box = piece('box', 1.8, 2.6, { width: 0.8, depth: 0.8, height: 1 });
+    expect(outcomeOf(makeDesign([bed, box]), 'FEN-14').status).toBe('violated');
+  });
+
+  it('passes when nothing sharp is close', () => {
+    const bed = piece('bed', 3, 4, { width: 1.2, depth: 1.4, height: 0.5 });
+    const box = piece('box', 0.6, 0.6, { width: 0.8, depth: 0.8, height: 1 });
+    expect(outcomeOf(makeDesign([bed, box]), 'FEN-14').status).toBe('passed');
+  });
+});
+
+describe('LGT-06 screen reflections', () => {
+  it('flags a TV facing the window', () => {
+    const tv = piece('tv', 1.9, 2, { width: 1.3, depth: 0.35, height: 0.8, rotationY: Math.PI });
+    expect(outcomeOf(makeDesign([tv]), 'LGT-06').status).toBe('violated');
+  });
+
+  it('passes a TV facing away from the window', () => {
+    const tv = piece('tv', 1.9, 2, { width: 1.3, depth: 0.35, height: 0.8 });
+    expect(outcomeOf(makeDesign([tv]), 'LGT-06').status).toBe('passed');
+  });
+});
+
 describe('feng shui mode', () => {
   it('excludes FEN rules when feng shui is disabled', () => {
     const d = makeDesign([piece('bed', 2, 1.5, { width: 1.6, depth: 2 })]);

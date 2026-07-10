@@ -226,6 +226,49 @@ export function erodedGrid(design: Design, erode: number, except: Set<string> = 
   return { cols, rows, minX: b.minX, minZ: b.minZ, free, center, idx };
 }
 
+/**
+ * Sizes (in cells) of every connected component of free cells, using
+ * 4-connectivity — how the walkable floor breaks into separate pockets. A
+ * single component means everything is reachable at the grid's erosion width.
+ */
+export function freeComponentSizes(grid: Grid): number[] {
+  const { cols, rows, free, idx } = grid;
+  const seen = new Uint8Array(cols * rows);
+  const sizes: number[] = [];
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r++) {
+      const start = idx(c, r);
+      if (!free[start] || seen[start]) continue;
+      let size = 0;
+      const queue = [start];
+      seen[start] = 1;
+      for (let head = 0; head < queue.length; head++) {
+        const cell = queue[head];
+        const cc = cell % cols;
+        const rr = (cell - cc) / cols;
+        size++;
+        for (const [dc, dr] of [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ] as const) {
+          const nc = cc + dc;
+          const nr = rr + dr;
+          if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+          const ni = idx(nc, nr);
+          if (free[ni] && !seen[ni]) {
+            seen[ni] = 1;
+            queue.push(ni);
+          }
+        }
+      }
+      sizes.push(size);
+    }
+  }
+  return sizes;
+}
+
 /** Flood fill from seed cells; returns the reached cells. */
 export function floodFill(grid: Grid, seed: (p: Point) => boolean): Uint8Array {
   const { cols, rows, free, center, idx } = grid;

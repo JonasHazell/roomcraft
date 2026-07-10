@@ -1,4 +1,4 @@
-import type { Point } from '../../types';
+import type { FurnitureKind, Point } from '../../types';
 import { FURNITURE_CATALOG } from '../furnitureCatalog';
 import {
   formatCm,
@@ -17,6 +17,7 @@ import {
   erodedGrid,
   floodFill,
   footprint,
+  freeComponentSizes,
   frontDir,
   norm,
   quadGap,
@@ -39,6 +40,7 @@ import {
   na,
   names,
   ok,
+  seatingSeats,
   sideZone,
   topOf,
 } from './ruleHelpers';
@@ -63,6 +65,18 @@ export { buildCtx, inferRoomTypes } from './ruleHelpers';
 // ---------------------------------------------------------------------------
 // Rules
 // ---------------------------------------------------------------------------
+
+/** Widest uncovered run within [0, width] given covered [lo, hi] intervals. */
+function widestGap(width: number, covered: Array<[number, number]>): number {
+  const sorted = [...covered].sort((a, b) => a[0] - b[0]);
+  let best = 0;
+  let cursor = 0;
+  for (const [lo, hi] of sorted) {
+    if (lo > cursor) best = Math.max(best, lo - cursor);
+    cursor = Math.max(cursor, hi);
+  }
+  return Math.max(best, width - cursor);
+}
 
 export const RULES: RuleDef[] = [
   // ---- Level 5: Safety ----
@@ -187,6 +201,66 @@ export const RULES: RuleDef[] = [
   },
 
   // ---- Level 4: Accessibility ----
+  {
+    id: 'ACC-01',
+    title: 'Main passages at least 90 cm',
+    category: 'Accessibility',
+    importance: 4,
+    source: 'SS 91 42 21, BBR 3:1, NKBA',
+    check(ctx) {
+      if (ctx.design.furniture.length === 0) return na;
+      if (Math.abs(signedArea(ctx.poly)) < 2) return na; // too small to reason about circulation
+      // Walkable floor for a 90 cm passage (0.45 m erosion each side).
+      const grid = erodedGrid(ctx.design, 0.45);
+      // Ignore pockets < 0.8 m² (80 cells) — small nooks behind furniture, not routes.
+      const rooms = freeComponentSizes(grid).filter((n) => n >= 80);
+      if (rooms.length <= 1) return ok;
+      return fail([
+        {
+          message:
+            'The walkable floor is split into separate areas by a passage narrower than 90 cm — widen the gap between the furniture (or between furniture and wall) so you can move through at 90 cm.',
+          furnitureIds: [],
+        },
+      ]);
+    },
+  },
+  {
+    id: 'ACC-03',
+    title: 'Clear passage width in doorways',
+    category: 'Accessibility',
+    importance: 4,
+    source: 'BBR 3:143, SS 91 42 21',
+    check(ctx) {
+      if (ctx.doors.length === 0) return na;
+      const violations: Violation[] = [];
+      for (const door of ctx.doors) {
+        const width = Math.hypot(door.e.x - door.s.x, door.e.z - door.s.z);
+        if (width < 0.8) continue; // the opening itself is narrow — a building matter, not furniture
+        const axis = norm(sub(door.e, door.s));
+        for (const n of door.normals) {
+          const throat = stripZone(door.s, door.e, n, 0.25);
+          const intruders = blockersInZone(ctx, throat);
+          if (intruders.length === 0) continue;
+          // Project each intruder onto the door line and subtract the covered span.
+          const covered = intruders.map((f): [number, number] => {
+            const proj = footprint(f).map((p) => dot(sub(p, door.s), axis));
+            return [Math.max(0, Math.min(...proj)), Math.min(width, Math.max(...proj))];
+          });
+          const clear = widestGap(width, covered);
+          if (clear < 0.8) {
+            violations.push({
+              message: `${names(intruders)} narrows the passage through the doorway to about ${formatCm(
+                Math.max(0, clear),
+              )} — keep at least 80 cm clear.`,
+              furnitureIds: intruders.map((f) => f.id),
+              zones: [throat],
+            });
+          }
+        }
+      }
+      return fail(violations);
+    },
+  },
   {
     id: 'ACC-02',
     title: 'Wheelchair turning space (130 cm)',
@@ -414,6 +488,73 @@ export const RULES: RuleDef[] = [
           violations.push({
             message: `The seat "${nearest.s.name}" is ${nearest.d.toFixed(1)} m from the TV — the guideline for this screen size is ${min.toFixed(1)}–${max.toFixed(1)} m.`,
             furnitureIds: [tv.id, nearest.s.id],
+          });
+        }
+      }
+      return fail(violations);
+    },
+  },
+  {
+    id: 'ERG-03',
+    title: 'Conversation-friendly seating group',
+    category: 'Ergonomics & dimensions',
+    importance: 3,
+    source: 'Best practice (interior design practice)',
+    appliesTo: ['vardagsrum'],
+    check(ctx) {
+      const seats = seatingSeats(ctx.design);
+      if (seats.length < 2) return na;
+      const center = {
+        x: seats.reduce((s, f) => s + f.position.x, 0) / seats.length,
+        z: seats.reduce((s, f) => s + f.position.z, 0) / seats.length,
+      };
+      const violations: Violation[] = [];
+      for (const seat of seats) {
+        const nearest = Math.min(
+          ...seats
+            .filter((o) => o.id !== seat.id)
+            .map((o) => Math.hypot(o.position.x - seat.position.x, o.position.z - seat.position.z)),
+        );
+        if (nearest > 3.5) {
+          violations.push({
+            message: `"${seat.name}" sits more than 3.5 m from the rest of the seating group — pull the seats closer so conversation stays easy.`,
+            furnitureIds: [seat.id],
+          });
+          continue;
+        }
+        const toCenter = sub(center, seat.position);
+        const d = Math.hypot(toCenter.x, toCenter.z);
+        if (d > 0.3 && dot(norm(toCenter), frontDir(seat.rotationY)) < -0.3) {
+          violations.push({
+            message: `"${seat.name}" faces away from the seating group — turn it toward the centre so it joins the conversation.`,
+            furnitureIds: [seat.id],
+          });
+        }
+      }
+      return fail(violations);
+    },
+  },
+  {
+    id: 'ERG-04',
+    title: 'Surface within reach of every seat',
+    category: 'Ergonomics & dimensions',
+    importance: 3,
+    source: 'Best practice',
+    appliesTo: ['vardagsrum'],
+    check(ctx) {
+      const seats = seatingSeats(ctx.design);
+      if (seats.length === 0) return na;
+      const surfaces = ctx.design.furniture.filter(
+        (f) =>
+          isCoffeeTable(f) || f.kind === 'nightstand' || (f.kind === 'table' && !isDiningTable(f)),
+      );
+      const violations: Violation[] = [];
+      for (const seat of seats) {
+        const near = surfaces.some((s) => quadGap(footprint(seat), footprint(s)) <= 0.45);
+        if (!near) {
+          violations.push({
+            message: `"${seat.name}" has no surface within arm's reach (45 cm) — add a coffee or side table beside it.`,
+            furnitureIds: [seat.id],
           });
         }
       }
@@ -818,6 +959,47 @@ export const RULES: RuleDef[] = [
     },
   },
   {
+    id: 'FEN-14',
+    title: 'Sharp corners not aimed at resting places',
+    category: 'Feng shui',
+    importance: 3,
+    source: 'Feng shui (sha chi)',
+    appliesTo: ['sovrum', 'vardagsrum'],
+    check(ctx) {
+      const resting = [...ctx.byKind('bed'), ...ctx.byKind('sofa')];
+      if (resting.length === 0) return na;
+      const SHARP = new Set<FurnitureKind>(['table', 'desk', 'wardrobe', 'bookshelf', 'box']);
+      const sharp = ctx.design.furniture.filter((f) => SHARP.has(f.kind) && topOf(f) >= 0.6);
+      if (sharp.length === 0) return ok;
+      const violations: Violation[] = [];
+      for (const rest of resting) {
+        const target = footprint(rest);
+        for (const f of sharp) {
+          const quad = footprint(f);
+          const gap = quadGap(quad, target);
+          if (gap === 0 || gap > 1.0) continue; // overlapping is a collision, not a poison arrow
+          let aimed = false;
+          for (let i = 0; i < quad.length && !aimed; i++) {
+            const c = quad[i];
+            if (distToQuad(c, target) > 1.0) continue;
+            const e1 = norm(sub(quad[(i + 3) % quad.length], c));
+            const e2 = norm(sub(quad[(i + 1) % quad.length], c));
+            const toRest = norm(sub(rest.position, c));
+            // The resting place sits in the corner's outward wedge (both edges point away).
+            if (dot(toRest, e1) < 0 && dot(toRest, e2) < 0) aimed = true;
+          }
+          if (aimed) {
+            violations.push({
+              message: `A corner of "${f.name}" points straight at "${rest.name}" from close range (a "poison arrow") — angle the piece, round the corner, or soften it with a plant.`,
+              furnitureIds: [f.id, rest.id],
+            });
+          }
+        }
+      }
+      return fail(violations);
+    },
+  },
+  {
     id: 'FEN-22',
     title: 'Minimal electronics in the bedroom',
     category: 'Feng shui',
@@ -858,6 +1040,35 @@ export const RULES: RuleDef[] = [
               furnitureIds: tallInWay.map((f) => f.id),
               zones: [zone],
             });
+          }
+        }
+      }
+      return fail(violations);
+    },
+  },
+  {
+    id: 'LGT-06',
+    title: 'Screens free of window reflections',
+    category: 'Light',
+    importance: 2,
+    source: 'AFS 2020:1, best practice',
+    check(ctx) {
+      const tvs = ctx.byKind('tv');
+      if (tvs.length === 0 || ctx.windows.length === 0) return na;
+      const violations: Violation[] = [];
+      for (const tv of tvs) {
+        const screen = frontDir(tv.rotationY); // the screen faces this way
+        for (const win of ctx.windows) {
+          const toWin = sub(win.center, tv.position);
+          const distance = Math.hypot(toWin.x, toWin.z);
+          if (distance > 4) continue;
+          if (dot(norm(toWin), screen) > 0.6) {
+            violations.push({
+              message: `"${tv.name}" faces the window — daylight reflects on the screen. Angle it away from the window or plan for a curtain.`,
+              furnitureIds: [tv.id],
+              zones: [stripZone(win.s, win.e, win.normals[0], 0.5)],
+            });
+            break;
           }
         }
       }

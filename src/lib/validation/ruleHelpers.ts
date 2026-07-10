@@ -8,6 +8,7 @@ import {
   frontDir,
   nearestWall,
   openingInfos,
+  quadGap,
   rightDir,
   stripZone,
 } from './geo';
@@ -81,6 +82,21 @@ export function blockersInZone(
 
 export function names(items: FurnitureItem[]): string {
   return items.map((f) => `"${f.name}"`).join(', ');
+}
+
+/**
+ * Seats that belong to a conversation group: sofas plus armchairs. Dining
+ * chairs (a chair pulled up to a dining table) are excluded so living-room
+ * rules don't fire on the dining set.
+ */
+export function seatingSeats(design: Design): FurnitureItem[] {
+  const diningTables = design.furniture.filter(isDiningTable);
+  return design.furniture.filter(
+    (f) =>
+      f.kind === 'sofa' ||
+      (f.kind === 'chair' &&
+        !diningTables.some((t) => quadGap(footprint(f), footprint(t)) <= 0.5)),
+  );
 }
 
 /** Infers room types from the furnishing (mixed rooms can yield several). */
