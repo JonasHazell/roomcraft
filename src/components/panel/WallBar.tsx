@@ -22,7 +22,7 @@ export function WallBar() {
   if (appView !== 'furnish' || !wall) return null;
 
   return (
-    <SelBar label="Wall actions" history={false}>
+    <SelBar label="Wall actions">
       <SelBarColor
         label="Colour"
         title="Wall colour (applies to every wall)"

@@ -4,6 +4,7 @@ import { SelectionBar } from './components/panel/SelectionBar';
 import { ActionBar } from './components/panel/ActionBar';
 import { WallBar } from './components/panel/WallBar';
 import { FloorBar } from './components/panel/FloorBar';
+import { HistoryBar } from './components/panel/HistoryBar';
 import { SidePanel } from './components/panel/SidePanel';
 import { ValidationScore } from './components/panel/ValidationScore';
 import { ProposalSwitcher } from './components/panel/ProposalSwitcher';
@@ -52,13 +53,15 @@ function FurnishView() {
         Drag to orbit · scroll to zoom · drag a furniture piece to move it
       </div>
       <SidePanel />
-      {/* One bottom dock: the contextual bar for the current selection (if any)
-          floats above the always-present room-action bar. */}
+      {/* One bottom dock, three side-by-side pills: the add-furniture pill on the
+          left, the contextual bar for the current selection (if any) in the middle,
+          and the standalone undo/redo pill on the right. */}
       <div className="selection-bar-wrap">
+        <ActionBar />
         {!overlayOpen && <SelectionBar />}
         {!overlayOpen && <WallBar />}
         {!overlayOpen && <FloorBar />}
-        <ActionBar />
+        <HistoryBar />
       </div>
     </main>
   );

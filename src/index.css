@@ -722,8 +722,8 @@ select {
 }
 
 /* Undo/redo cluster for the 2D floor-plan editor, bottom-right of the viewport
-   and thumb-reachable on mobile. (In the 3D view undo/redo live inside the
-   bottom pill bars instead — see HistoryButtons.) */
+   and thumb-reachable on mobile. (In the 3D view undo/redo live in their own
+   pill on the right of the bottom dock instead — see HistoryBar.) */
 .history-controls {
   position: absolute;
   right: calc(14px + env(safe-area-inset-right));
@@ -1519,11 +1519,17 @@ select {
   bottom: calc(12px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   z-index: 55;
+  /* Three side-by-side pills — add / contextual / undo-redo — on one row, centred
+     as a group. Sizes to its content and wraps only if the row can't fit the
+     viewport (very narrow phones), keeping the pills whole rather than clipped. */
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
   gap: 10px;
-  width: min(560px, calc(100% - 24px));
+  width: max-content;
+  max-width: calc(100% - 24px);
   /* The wrap only positions; let the bar / panel capture pointer events so
      clicks between them fall through to the scene. */
   pointer-events: none;
@@ -1649,9 +1655,12 @@ select {
   border-radius: 999px;
 }
 
-/* Narrow phones: drop the labels and keep icon-only actions so five buttons
-   still fit on one row. */
-@media (max-width: 480px) {
+/* Narrower viewports: drop the labels and keep icon-only actions so the three
+   dock pills — add / contextual / undo-redo — still sit on one row. The
+   breakpoint is set so the widest case (a furniture piece selected, five labelled
+   actions plus the two side pills ≈ 630px) collapses to icons just before it
+   would otherwise wrap a pill onto a second line. */
+@media (max-width: 656px) {
   /* Long bars (e.g. the 5-action furniture bar) drop labels so every icon fits;
      short bars flagged keep-labels stay legible for first-time discoverability. */
   .selection-bar:not(.selection-bar-keep-labels) .sel-label {
@@ -1660,6 +1669,20 @@ select {
 
   .selection-bar:not(.selection-bar-keep-labels) .sel-action {
     padding: 8px 10px;
+  }
+}
+
+/* True phones (≲ iPhone SE): tighten the dock gap and the icon paddings a touch
+   more so all three pills still hold one row down to ~360px before anything
+   wraps. */
+@media (max-width: 430px) {
+  .selection-bar-wrap {
+    gap: 6px;
+  }
+
+  .selection-bar:not(.selection-bar-keep-labels) .sel-action,
+  .sel-action.sel-history {
+    padding: 8px 7px;
   }
 }
 
