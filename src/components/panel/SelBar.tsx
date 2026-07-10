@@ -52,7 +52,7 @@ export function SelBarButton({
   expandable,
 }: {
   icon: ReactNode;
-  label: string;
+  label?: string;
   title: string;
   ariaLabel: string;
   onClick: () => void;
@@ -73,7 +73,7 @@ export function SelBarButton({
       <span className="sel-icon" aria-hidden="true">
         {icon}
       </span>
-      <span className="sel-label">{label}</span>
+      {label && <span className="sel-label">{label}</span>}
     </button>
   );
 }
