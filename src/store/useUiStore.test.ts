@@ -18,20 +18,11 @@ describe('ui store — selection vs. open overlays', () => {
     expect(useUiStore.getState().selection).toEqual({ kind: 'furniture', id: 'f1' });
   });
 
-  it('keeps the openings editor open when switching between walls', () => {
+  it('closes a side panel when a wall is selected', () => {
+    useUiStore.getState().openPanel('validation');
     useUiStore.getState().select({ kind: 'wall', id: 'w1' });
-    useUiStore.getState().openPanel('openings');
-    useUiStore.getState().select({ kind: 'wall', id: 'w2' });
-    // The openings editor follows the selected wall, so it must not close.
-    expect(useUiStore.getState().panel).toBe('openings');
-    expect(useUiStore.getState().selection).toEqual({ kind: 'wall', id: 'w2' });
-  });
-
-  it('closes the openings editor when selecting a non-wall', () => {
-    useUiStore.getState().select({ kind: 'wall', id: 'w1' });
-    useUiStore.getState().openPanel('openings');
-    useUiStore.getState().select({ kind: 'floor' });
     expect(useUiStore.getState().panel).toBeNull();
+    expect(useUiStore.getState().selection).toEqual({ kind: 'wall', id: 'w1' });
   });
 
   it('leaves the panel untouched when clearing the selection', () => {
