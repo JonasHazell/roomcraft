@@ -36,9 +36,12 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
 
 // The room is validated automatically: re-run the rule catalog whenever the
 // design changes so the score badge and validation panel are always current
-// without any manual "Validate" action. `updatedAt` bumps on every edit.
+// without any manual "Validate" action. Every edit replaces the design with a
+// fresh object, so an identity check reliably catches each change — comparing
+// the `updatedAt` timestamp would miss two edits that land in the same
+// millisecond.
 useDesignStore.subscribe((state, prev) => {
-  if (state.design.updatedAt !== prev.design.updatedAt) {
+  if (state.design !== prev.design) {
     useValidationStore.getState().validate();
   }
 });
