@@ -704,7 +704,11 @@ select {
   display: block;
 }
 
+/* The orbit/zoom hint is mouse-centric ("scroll to zoom"); touch users pinch
+   instead. It's hidden at every width so the 3D view reads the same on desktop
+   and mobile — the interactions are discoverable by direct manipulation. */
 .viewport-hint {
+  display: none;
   position: absolute;
   left: 14px;
   bottom: 12px;
@@ -764,10 +768,15 @@ select {
 
 /* ---------- Proposal switcher (furnishing variants) ---------- */
 
+/* Centred on the top row of the 3D view, between the back button and the score
+   badge — the same placement at every width so the switcher never jumps as the
+   window resizes. */
 .proposal-switcher {
   position: absolute;
   top: calc(12px + env(safe-area-inset-top));
-  right: calc(14px + env(safe-area-inset-right));
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
   z-index: 55;
 }
 
@@ -817,7 +826,7 @@ select {
   display: flex;
   align-items: center;
   gap: 7px;
-  max-width: 46vw;
+  max-width: 52vw;
   font: inherit;
   font-size: 13px;
   height: 52px;
@@ -858,7 +867,9 @@ select {
 .proposal-menu {
   position: absolute;
   top: calc(100% + 8px);
-  right: 0;
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   width: min(300px, 80vw);
@@ -868,9 +879,9 @@ select {
   border: var(--popup-border);
   border-radius: var(--popup-radius);
   box-shadow: var(--popup-shadow);
-  /* Anchored to the switcher's right edge so it stays on-screen; slides up like
-     the other floating surfaces. */
-  animation: sheet-up 0.2s ease;
+  /* Centred under the switcher (which is itself centred on the top row), so it
+     stays on-screen at any width; slides up like the other floating surfaces. */
+  animation: sheet-up-center 0.2s ease;
 }
 
 .proposal-menu-actions {
@@ -882,32 +893,6 @@ select {
 
 .proposal-menu-actions .btn {
   flex: 1;
-}
-
-@media (max-width: 768px) {
-  /* On a phone the back button is a compact 52px circle, so the switcher shares
-     its row — centred between the screen edges — instead of taking a row of its
-     own below it. */
-  .proposal-switcher {
-    top: calc(12px + env(safe-area-inset-top));
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-  }
-
-  .proposal-pill {
-    max-width: 52vw;
-  }
-
-  /* The switcher is centred on its own row here, so centre the dropdown under it
-     too — anchoring to the right edge could push it off-screen when the pill is
-     narrow. */
-  .proposal-menu {
-    right: auto;
-    left: 50%;
-    transform: translateX(-50%);
-    animation: sheet-up-center 0.2s ease;
-  }
 }
 
 /* ---------- Floor plan (2D) ---------- */
@@ -1010,11 +995,15 @@ select {
   stroke-width: 0.04;
 }
 
+/* The floor-plan tool panels span the top of the drawing and wrap to the
+   available width — the same full-width band at every screen size, dropped below
+   the top row so nothing overlaps. */
 .plan-overlay {
   position: absolute;
-  top: 12px;
-  left: 14px;
-  max-width: 420px;
+  top: calc(64px + env(safe-area-inset-top));
+  left: calc(12px + env(safe-area-inset-left));
+  right: calc(12px + env(safe-area-inset-right));
+  max-width: none;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1211,11 +1200,11 @@ select {
    floating controls so it belongs to the family. */
 .score-badge {
   position: absolute;
-  top: calc(12px + 52px + 10px + env(safe-area-inset-top));
+  top: calc(12px + env(safe-area-inset-top));
   right: calc(14px + env(safe-area-inset-right));
   z-index: 55;
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   height: 52px;
   padding: 0 16px;
@@ -1261,8 +1250,11 @@ select {
   color: var(--paper);
 }
 
+/* Only the score number shows — the "/ 100" and issue count are dropped at every
+   width so the chip stays compact and clears the centred switcher. The full
+   breakdown is one tap away in the validation panel. */
 .score-badge-meta {
-  display: inline-flex;
+  display: none;
   align-items: baseline;
   gap: 8px;
   font-size: 11px;
@@ -1281,24 +1273,6 @@ select {
   background: var(--danger);
   color: #fff;
   letter-spacing: 0.03em;
-}
-
-@media (max-width: 768px) {
-  /* On a phone the switcher is centred, so the top-right corner is free — sit
-     in it rather than below the switcher. */
-  .score-badge {
-    top: calc(12px + env(safe-area-inset-top));
-    /* Only the score number shows here (the "/ 100" meta is hidden below), so
-       baseline alignment would leave it hugging the top — centre it instead. */
-    align-items: center;
-  }
-
-  /* Space is tight next to the centred switcher, so show only the score number
-     and drop the "/ 100" and issue count — that keeps the chip compact enough
-     to clear the switcher. The full breakdown is one tap away in the panel. */
-  .score-badge-meta {
-    display: none;
-  }
 }
 
 .validation-summary {
@@ -1446,27 +1420,6 @@ select {
   line-height: 1.45;
 }
 
-/* ---------- Mobile: keep the top-row overlays from colliding ----------
-   Placed after the base .mode-tabs / .plan-overlay rules so these
-   overrides win (equal specificity → later rule applies). */
-
-@media (max-width: 768px) {
-  /* Drop the plan toolbar below the top row (hamburger + proposal switcher)
-     so they no longer overlap; let its buttons wrap to the screen width. */
-  .plan-overlay {
-    top: calc(64px + env(safe-area-inset-top));
-    left: calc(12px + env(safe-area-inset-left));
-    right: calc(12px + env(safe-area-inset-right));
-    max-width: none;
-  }
-
-  /* The floor-plan hint ("scroll to zoom …") is mouse-centric; the toolbar's
-     touch hint covers mobile, so hide the persistent 3D hint on small screens. */
-  .viewport-hint {
-    display: none;
-  }
-}
-
 /* ---------- Touch: larger hit areas & no iOS focus-zoom ----------
    Targets touch-first devices regardless of width so tablets benefit too. */
 
@@ -1530,7 +1483,7 @@ select {
      the sidebar pushes it off-centre. */
   position: absolute;
   left: 50%;
-  bottom: calc(16px + env(safe-area-inset-bottom));
+  bottom: calc(12px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   z-index: 55;
   display: flex;
@@ -1661,14 +1614,6 @@ select {
 .sel-color-input::-moz-color-swatch {
   border: none;
   border-radius: 999px;
-}
-
-@media (max-width: 768px) {
-  /* On phones keep the bar as a floating pill (like the Floor plan / 3D view
-     tabs) instead of a full-width bar pinned flush to the bottom edge. */
-  .selection-bar-wrap {
-    bottom: calc(12px + env(safe-area-inset-bottom));
-  }
 }
 
 /* Narrow phones: drop the labels and keep icon-only actions so five buttons
@@ -1803,34 +1748,24 @@ select {
 
 .side-panel {
   position: absolute;
-  top: calc(60px + env(safe-area-inset-top));
-  right: calc(14px + env(safe-area-inset-right));
+  /* Start below the top row (switcher/score at 12px + 52px tall) and span the
+     viewport with a small inset on both sides — the same sheet at every width so
+     the panel never changes shape as the window resizes. */
+  top: calc(12px + 52px + 14px + env(safe-area-inset-top));
+  left: calc(12px + env(safe-area-inset-left));
+  right: calc(12px + env(safe-area-inset-right));
   z-index: 60;
   display: flex;
   flex-direction: column;
-  width: min(360px, calc(100% - 28px));
+  width: auto;
   /* Leave room for the bottom action bar. */
-  max-height: calc(100% - 60px - 96px - env(safe-area-inset-top));
+  max-height: calc(100% - 78px - 92px - env(safe-area-inset-top));
   background: var(--paper);
   border: var(--popup-border);
   border-radius: var(--popup-radius);
   box-shadow: var(--popup-shadow);
   overflow: hidden;
   animation: sheet-up 0.2s ease;
-}
-
-@media (max-width: 768px) {
-  /* On phones widen to a near-full-width sheet on the right, still clear of the
-     mode tabs above and the action bar below. */
-  .side-panel {
-    left: calc(12px + env(safe-area-inset-left));
-    right: calc(12px + env(safe-area-inset-right));
-    width: auto;
-    /* Start below the top pills (switcher/score at 12px + 52px tall) so the
-       panel no longer covers the menu, and trim the height to match. */
-    top: calc(12px + 52px + 14px + env(safe-area-inset-top));
-    max-height: calc(100% - 78px - 92px - env(safe-area-inset-top));
-  }
 }
 
 /* ---------- Respect reduced-motion preferences ---------- */
@@ -2030,9 +1965,11 @@ select {
 .room-back {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
+  width: 52px;
   height: 52px;
-  padding: 0 18px;
+  padding: 0;
   border-radius: 999px;
   background: var(--card);
   box-shadow: 0 6px 20px rgba(43, 38, 29, 0.18);
@@ -2048,7 +1985,17 @@ select {
   line-height: 1;
 }
 
+/* Icon-only circular back button: the "Rooms" label is dropped at every width so
+   the control matches the compact family and leaves the top row's centre free
+   for the proposal switcher. */
+.room-back-label {
+  display: none;
+}
+
+/* The room name is dropped at every width — you just came from picking the room,
+   and it would collide with the centred proposal switcher. */
 .room-topbar-name {
+  display: none;
   font-family: var(--display);
   font-size: 17px;
   font-variation-settings: 'wght' 560;
@@ -2061,25 +2008,4 @@ select {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-@media (max-width: 768px) {
-  /* The room name is redundant on a phone (you just came from picking the room)
-     and would collide with the right-aligned proposal switcher — drop it so the
-     back button and switcher each get the room they need. */
-  .room-topbar-name {
-    display: none;
-  }
-
-  /* Icon-only circular back button on phones so it matches the compact control
-     family and leaves room for the centred switcher. */
-  .room-back-label {
-    display: none;
-  }
-
-  .room-back {
-    width: 52px;
-    padding: 0;
-    justify-content: center;
-  }
 }
