@@ -1289,6 +1289,13 @@ select {
   .score-badge {
     top: calc(12px + env(safe-area-inset-top));
   }
+
+  /* Space is tight next to the centred switcher, so show only the score number
+     and drop the "/ 100" and issue count — that keeps the chip compact enough
+     to clear the switcher. The full breakdown is one tap away in the panel. */
+  .score-badge-meta {
+    display: none;
+  }
 }
 
 .validation-summary {
@@ -1816,7 +1823,10 @@ select {
     left: calc(12px + env(safe-area-inset-left));
     right: calc(12px + env(safe-area-inset-right));
     width: auto;
-    max-height: calc(100% - 56px - 92px - env(safe-area-inset-top));
+    /* Start below the top pills (switcher/score at 12px + 52px tall) so the
+       panel no longer covers the menu, and trim the height to match. */
+    top: calc(12px + 52px + 14px + env(safe-area-inset-top));
+    max-height: calc(100% - 78px - 92px - env(safe-area-inset-top));
   }
 }
 
