@@ -5,6 +5,7 @@ import { ActionBar } from './components/panel/ActionBar';
 import { WallBar } from './components/panel/WallBar';
 import { FloorBar } from './components/panel/FloorBar';
 import { SidePanel } from './components/panel/SidePanel';
+import { ValidationScore } from './components/panel/ValidationScore';
 import { ProposalSwitcher } from './components/panel/ProposalSwitcher';
 import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { DialogHost } from './components/panel/DialogHost';
@@ -46,6 +47,7 @@ function FurnishView() {
         <span className="room-topbar-name">{roomName}</span>
       </div>
       <ProposalSwitcher />
+      <ValidationScore />
       <div className="viewport-hint">
         Drag to orbit · scroll to zoom · drag a furniture piece to move it
       </div>

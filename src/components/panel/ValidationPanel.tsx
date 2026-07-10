@@ -1,4 +1,3 @@
-import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useValidationStore } from '../../store/useValidationStore';
 import { ROOM_TYPE_LABEL } from '../../lib/validation/rules';
@@ -18,16 +17,12 @@ function ruleLabel(r: RuleResult): string {
 }
 
 export function ValidationPanel() {
-  const updatedAt = useDesignStore((s) => s.design.updatedAt);
   const select = useUiStore((s) => s.select);
   const report = useValidationStore((s) => s.report);
   const fengShui = useValidationStore((s) => s.fengShui);
   const highlight = useValidationStore((s) => s.highlight);
-  const validate = useValidationStore((s) => s.validate);
   const setFengShui = useValidationStore((s) => s.setFengShui);
   const toggleHighlight = useValidationStore((s) => s.toggleHighlight);
-
-  const stale = report !== null && report.designUpdatedAt !== updatedAt;
 
   const violated = report
     ? report.results
@@ -41,8 +36,8 @@ export function ValidationPanel() {
   return (
     <div className="stack">
       <p className="hint">
-        Checks the furnishing against the rule catalog (safety, accessibility, ergonomics, feng
-        shui, etc.). Click an issue to highlight it in the 3D view.
+        The furnishing is checked automatically against the rule catalog (safety, accessibility,
+        ergonomics, feng shui, etc.). Click an issue to highlight it in the 3D view.
       </p>
       <label className="check-field">
         <input
@@ -52,13 +47,6 @@ export function ValidationPanel() {
         />
         <span>Include feng shui rules</span>
       </label>
-      <div className="button-row">
-        <button type="button" className="btn btn-accent" onClick={validate}>
-          Validate furnishing
-        </button>
-      </div>
-
-      {stale && <p className="hint validation-stale">The room has changed — validate again.</p>}
 
       {report && (
         <>
