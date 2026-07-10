@@ -845,11 +845,6 @@ select {
   background: var(--paper-2);
 }
 
-.proposal-pill-icon {
-  color: var(--accent);
-  font-size: 12px;
-}
-
 .proposal-pill-name {
   font-weight: 600;
   overflow: hidden;
