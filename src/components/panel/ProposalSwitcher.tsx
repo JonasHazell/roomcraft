@@ -107,9 +107,6 @@ export function ProposalSwitcher() {
           title="Switch furnishing proposal"
           onClick={() => setOpen(!open)}
         >
-          <span className="proposal-pill-icon" aria-hidden="true">
-            ◗
-          </span>
           <span className="proposal-pill-name">{active?.name ?? 'Proposal'}</span>
           <span className="proposal-pill-caret" aria-hidden="true">
             ▾
