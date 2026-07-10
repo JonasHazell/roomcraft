@@ -1511,28 +1511,49 @@ select {
    surfaced over the scene so edits stay visible. */
 
 .selection-bar-wrap {
-  /* Absolute within .viewport (like the Floor plan / 3D view tabs) so the bar
-     centres over the 3D view, not the whole window — otherwise on wide screens
-     the sidebar pushes it off-centre. */
+  /* Absolute within .viewport (like the Floor plan / 3D view tabs) so the dock
+     spans the 3D view, not the whole window — otherwise on wide screens the
+     sidebar pushes it off-centre. */
   position: absolute;
-  left: 50%;
+  left: 14px;
+  right: 14px;
   bottom: calc(12px + env(safe-area-inset-bottom));
-  transform: translateX(-50%);
   z-index: 55;
-  /* Three side-by-side pills — add / contextual / undo-redo — on one row, centred
-     as a group. Sizes to its content and wraps only if the row can't fit the
-     viewport (very narrow phones), keeping the pills whole rather than clipped. */
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: center;
+  /* Three fixed slots across the width: add pinned left, contextual bar centred,
+     undo/redo pinned right. The 1fr side columns are equal, so the auto middle
+     column stays truly centred in the view regardless of the (differing) side pill
+     widths, and the add / undo pills keep their spot whether the middle is filled
+     or empty. */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
   gap: 10px;
-  width: max-content;
-  max-width: calc(100% - 24px);
-  /* The wrap only positions; let the bar / panel capture pointer events so
-     clicks between them fall through to the scene. */
+  /* The wrap only positions; the pills inside the slots capture pointer events so
+     clicks over the empty middle fall through to the scene. */
   pointer-events: none;
+}
+
+.dock-slot {
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.dock-slot > * {
+  pointer-events: auto;
+}
+
+.dock-left {
+  justify-content: flex-start;
+}
+
+.dock-mid {
+  justify-content: center;
+}
+
+.dock-right {
+  justify-content: flex-end;
 }
 
 .selection-bar {
@@ -1683,6 +1704,21 @@ select {
   .selection-bar:not(.selection-bar-keep-labels) .sel-action,
   .sel-action.sel-history {
     padding: 8px 7px;
+  }
+}
+
+/* Smallest phones (≲ iPhone SE, 375px) with the widest middle bar (a furniture
+   piece selected): squeeze the icon paddings and the slot gap a little further so
+   the centred middle pill keeps a small gap to the corner pills instead of
+   touching them. */
+@media (max-width: 400px) {
+  .selection-bar-wrap {
+    gap: 4px;
+  }
+
+  .selection-bar:not(.selection-bar-keep-labels) .sel-action,
+  .sel-action.sel-history {
+    padding: 8px 5px;
   }
 }
 

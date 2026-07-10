@@ -53,15 +53,23 @@ function FurnishView() {
         Drag to orbit · scroll to zoom · drag a furniture piece to move it
       </div>
       <SidePanel />
-      {/* One bottom dock, three side-by-side pills: the add-furniture pill on the
-          left, the contextual bar for the current selection (if any) in the middle,
-          and the standalone undo/redo pill on the right. */}
+      {/* Bottom dock in three fixed slots: the add-furniture pill locked to the
+          left, the contextual bar for the current selection (if any) centred in the
+          middle, and the standalone undo/redo pill locked to the right. The side
+          pills stay put whether or not something is selected — the middle is simply
+          empty when nothing is. */}
       <div className="selection-bar-wrap">
-        <ActionBar />
-        {!overlayOpen && <SelectionBar />}
-        {!overlayOpen && <WallBar />}
-        {!overlayOpen && <FloorBar />}
-        <HistoryBar />
+        <div className="dock-slot dock-left">
+          <ActionBar />
+        </div>
+        <div className="dock-slot dock-mid">
+          {!overlayOpen && <SelectionBar />}
+          {!overlayOpen && <WallBar />}
+          {!overlayOpen && <FloorBar />}
+        </div>
+        <div className="dock-slot dock-right">
+          <HistoryBar />
+        </div>
       </div>
     </main>
   );
