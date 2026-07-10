@@ -33,8 +33,8 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
 
   setFengShui: (fengShui) => {
     set({ fengShui });
-    // Refresh an already displayed report immediately with the new setting.
-    if (get().report) get().validate();
+    // Refresh the report immediately with the new setting.
+    get().validate();
   },
 
   setHighlight: (highlight) => set({ highlight }),
@@ -42,3 +42,12 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
   toggleHighlight: (h) =>
     set({ highlight: get().highlight?.key === h.key ? null : h }),
 }));
+
+// The room is validated automatically: re-run the rule catalog whenever the
+// design changes so the score badge and validation panel are always current
+// without any manual "Validate" action. `updatedAt` bumps on every edit.
+useDesignStore.subscribe((state, prev) => {
+  if (state.design.updatedAt !== prev.design.updatedAt) {
+    useValidationStore.getState().validate();
+  }
+});

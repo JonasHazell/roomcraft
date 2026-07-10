@@ -1206,6 +1206,91 @@ select {
   color: var(--danger);
 }
 
+/* Always-visible score chip, top-right of the 3D view, stacked under the
+   proposal switcher. Same rounded, card-filled, shadowed surface as the other
+   floating controls so it belongs to the family. */
+.score-badge {
+  position: absolute;
+  top: calc(12px + 52px + 10px + env(safe-area-inset-top));
+  right: calc(14px + env(safe-area-inset-right));
+  z-index: 55;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ink);
+  background: var(--card);
+  box-shadow: 0 6px 20px rgba(43, 38, 29, 0.18);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.score-badge:hover {
+  background: var(--paper-2);
+}
+
+.score-badge.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.score-badge-value {
+  font-family: var(--display);
+  font-size: 20px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Colour the score number by band, matching the validation panel. The active
+   (panel-open) state inverts to the ink fill, so keep the number legible there. */
+.score-badge.score-good .score-badge-value {
+  color: #4a7a3a;
+}
+
+.score-badge.score-mid .score-badge-value {
+  color: #ad7615;
+}
+
+.score-badge.score-bad .score-badge-value {
+  color: var(--danger);
+}
+
+.score-badge.active .score-badge-value {
+  color: var(--paper);
+}
+
+.score-badge-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.score-badge.active .score-badge-meta {
+  color: rgba(245, 239, 226, 0.75);
+}
+
+.score-badge-issues {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  letter-spacing: 0.03em;
+}
+
+@media (max-width: 768px) {
+  /* On a phone the switcher is centred, so the top-right corner is free — sit
+     in it rather than below the switcher. */
+  .score-badge {
+    top: calc(12px + env(safe-area-inset-top));
+  }
+}
+
 .validation-summary {
   display: flex;
   align-items: center;
