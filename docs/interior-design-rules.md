@@ -9,7 +9,7 @@ Each rule has the following fields:
 | Field | Meaning |
 |---|---|
 | **ID** | Unique identifier with category prefix (SAF, ACC, ERG, FEN, LGT, COL, ACO, AES) |
-| **Category** | Safety, Accessibility, Ergonomics & dimensions, Feng shui, Light, Color & textiles, Acoustics, Aesthetics |
+| **Category** | Safety, Accessibility, Ergonomics & dimensions, Feng shui, Light, Color & textiles, Acoustics & air, Aesthetics |
 | **Room** | Room type(s) the rule applies to — `All` if room-independent |
 | **Importance** | 5 = critical … 1 = fine-tuning (see scale below) |
 | **Measurability** | `A` = automatically measurable from floor plan/model (geometry, dimensions, placement) · `D` = partial — requires object metadata (e.g. material type, light source) · `M` = manual — requires asking the user or a photo |
@@ -486,19 +486,19 @@ Each rule has the following fields:
 ## Acoustics and air
 
 ### ACO-01 — Dampen hard rooms
-- **Category:** Acoustics · **Room:** All · **Importance:** 2 · **Measurability:** D
+- **Category:** Acoustics & air · **Room:** All · **Importance:** 2 · **Measurability:** D
 - **Condition:** Rooms with hard surfaces (parquet/tile + large glass) have at least two of three dampeners: a large rug, heavier curtains, upholstered furniture. Large bare wall surfaces facing each other are broken up with a bookcase, textile, or acoustic panel.
 - **Source:** Best practice (reverberation time, SS-EN ISO 3382 as reference)
 - **Remedy:** Add {rug/curtain/upholstered furniture} in {room} to shorten the reverberation.
 
 ### ACO-02 — The bedroom dark and quiet
-- **Category:** Acoustics · **Room:** Bedroom · **Importance:** 2 · **Measurability:** D
+- **Category:** Acoustics & air · **Room:** Bedroom · **Importance:** 2 · **Measurability:** D
 - **Condition:** The bedroom has blackout curtains/blinds and textiles that dampen sound; the bed does not stand flush against a wall shared with an elevator, kitchen, or bathroom if alternatives exist.
 - **Source:** Best practice (sleep hygiene), BBR 7 (acoustic environment)
 - **Remedy:** Add blackout curtains; try the bed against {quieter wall}.
 
 ### ACO-03 — Plants for air and well-being
-- **Category:** Acoustics · **Room:** All · **Importance:** 2 · **Measurability:** D
+- **Category:** Acoustics & air · **Room:** All · **Importance:** 2 · **Measurability:** D
 - **Condition:** At least one living plant per room (living room preferably 2–3 at varying heights); thriving, not wilting.
 - **Source:** Best practice; feng shui (the wood element)
 - **Remedy:** Place a plant {suited to the light conditions} in {room}.
@@ -654,5 +654,5 @@ Each rule has the following fields:
 - **Applicability:** Each rule is only tested if its `Room` matches and the room's objects make it relevant (no TV → ERG-02 is skipped). Report "not applicable" separately from "passed".
 - **Duplicates/reinforcements:** Some rules deliberately overlap across categories (ERG-08/FEN-03, SAF-10/FEN-06, ERG-05/FEN-13, ERG-09/FEN-20, ACC-10/FEN-11). The rule engine should link them so that the same geometric finding is not double-penalized in the total score, but they can be reported within their respective categories.
 - **Measurability A** requires from the model: room polygon with doors/windows (position, width, swing direction), furniture with type, dimensions, rotation, and escape route markings. **D** requires object metadata (material, light source, color). **M** is handled with a checklist the user fills in.
-- **Score display:** one total score + sub-scores per category (Safety, Accessibility, Ergonomics, Feng shui, Light, Color & textiles, Acoustics, Aesthetics), a list of violated rules sorted by importance, with the `Remedy` template filled in with actual objects and measurements.
+- **Score display:** one total score + sub-scores per category (Safety, Accessibility, Ergonomics, Feng shui, Light, Color & textiles, Acoustics & air, Aesthetics), a list of violated rules sorted by importance, with the `Remedy` template filled in with actual objects and measurements.
 - **Thresholds:** where ranges are given (e.g. 30–45 cm), the engine can award full points within the range, half points within ±20 %, and zero outside — this gives softer scoring than binary pass/fail.

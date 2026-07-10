@@ -1146,7 +1146,7 @@ export const RULES: RuleDef[] = [
   {
     id: 'ACO-03',
     title: 'Plants for air and comfort',
-    category: 'Acoustics',
+    category: 'Acoustics & air',
     importance: 2,
     source: 'Best practice; feng shui (the wood element)',
     check(ctx) {

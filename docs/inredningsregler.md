@@ -9,7 +9,7 @@ Varje regel har följande fält:
 | Fält | Betydelse |
 |---|---|
 | **ID** | Unik identifierare med kategoriprefix (SAF, ACC, ERG, FEN, LGT, COL, ACO, AES) |
-| **Kategori** | Säkerhet, Tillgänglighet, Ergonomi & mått, Feng shui, Ljus, Färg & textil, Akustik, Estetik |
+| **Kategori** | Säkerhet, Tillgänglighet, Ergonomi & mått, Feng shui, Ljus, Färg & textil, Akustik & luft, Estetik |
 | **Rum** | Rumstyp(er) regeln gäller — `Alla` om rumsoberoende |
 | **Viktighet** | 5 = kritisk … 1 = finlir (se skala nedan) |
 | **Mätbarhet** | `A` = automatiskt mätbar från planritning/modell (geometri, mått, placering) · `D` = delvis — kräver metadata om objekt (t.ex. materialtyp, ljuskälla) · `M` = manuell — kräver fråga till användaren eller foto |
@@ -486,19 +486,19 @@ Varje regel har följande fält:
 ## Akustik och luft
 
 ### ACO-01 — Dämpa hårda rum
-- **Kategori:** Akustik · **Rum:** Alla · **Viktighet:** 2 · **Mätbarhet:** D
+- **Kategori:** Akustik & luft · **Rum:** Alla · **Viktighet:** 2 · **Mätbarhet:** D
 - **Villkor:** Rum med hårda ytor (parkett/klinker + stora glas) har minst två av tre dämpare: stor matta, tyngre gardiner, stoppade möbler. Stora kala väggytor mittemot varandra bryts av med bokhylla, textil eller akustikpanel.
 - **Källa:** Best practice (efterklangstid, SS-EN ISO 3382 som referens)
 - **Åtgärd:** Lägg till {matta/gardin/textilmöbel} i {rum} för att korta efterklangen.
 
 ### ACO-02 — Sovrummet mörkt och tyst
-- **Kategori:** Akustik · **Rum:** Sovrum · **Viktighet:** 2 · **Mätbarhet:** D
+- **Kategori:** Akustik & luft · **Rum:** Sovrum · **Viktighet:** 2 · **Mätbarhet:** D
 - **Villkor:** Sovrum har mörkläggande gardiner/persienner och textilier som dämpar; säng står inte dikt an mot vägg som delas med hiss, kök eller badrum om alternativ finns.
 - **Källa:** Best practice (sömnhygien), BBR 7 (ljudmiljö)
 - **Åtgärd:** Komplettera med mörkläggning; prova sängen mot {tystare vägg}.
 
 ### ACO-03 — Växter för luft och trivsel
-- **Kategori:** Akustik · **Rum:** Alla · **Viktighet:** 2 · **Mätbarhet:** D
+- **Kategori:** Akustik & luft · **Rum:** Alla · **Viktighet:** 2 · **Mätbarhet:** D
 - **Villkor:** Minst en levande växt per rum (vardagsrum gärna 2–3 i olika höjd); välmående, inte vissnande.
 - **Källa:** Best practice; feng shui (träelementet)
 - **Åtgärd:** Ställ en {ljuslägesanpassad} växt i {rum}.
@@ -654,5 +654,5 @@ Varje regel har följande fält:
 - **Tillämplighet:** Varje regel prövas bara om dess `Rum` matchar och rummets objekt gör den relevant (ingen TV → ERG-02 utgår). Redovisa "ej tillämplig" separat från "godkänd".
 - **Dubbletter/förstärkningar:** Vissa regler överlappar avsiktligt över kategorier (ERG-08/FEN-03, SAF-10/FEN-06, ERG-05/FEN-13, ERG-09/FEN-20, ACC-10/FEN-11). Regelmotorn bör länka dem så att samma geometrifynd inte dubbelbestraffas i totalbetyget, men kan redovisas i respektive kategori.
 - **Mätbarhet A** kräver från modellen: rumspolygon med dörrar/fönster (position, bredd, slagriktning), möbler med typ, mått, rotation samt utrymningsvägsmarkering. **D** kräver objektmetadata (material, ljuskälla, färg). **M** löses med en checklista användaren fyller i.
-- **Betygsvisning:** ett totalbetyg + delbetyg per kategori (Säkerhet, Tillgänglighet, Ergonomi, Feng shui, Ljus, Färg & textil, Akustik, Estetik), lista över brutna regler sorterad på viktighet, med `Åtgärd`-mallen ifylld med faktiska objekt och mått.
+- **Betygsvisning:** ett totalbetyg + delbetyg per kategori (Säkerhet, Tillgänglighet, Ergonomi, Feng shui, Ljus, Färg & textil, Akustik & luft, Estetik), lista över brutna regler sorterad på viktighet, med `Åtgärd`-mallen ifylld med faktiska objekt och mått.
 - **Trösklar:** där intervall anges (t.ex. 30–45 cm) kan motorn ge full poäng inom intervallet, halv poäng inom ±20 % och noll utanför — det ger mjukare betyg än binärt pass/fail.

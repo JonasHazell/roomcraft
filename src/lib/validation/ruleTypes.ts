@@ -8,7 +8,7 @@ export type RuleCategory =
   | 'Feng shui'
   | 'Light'
   | 'Color & textiles'
-  | 'Acoustics'
+  | 'Acoustics & air'
   | 'Aesthetics';
 
 export const CATEGORY_ORDER: RuleCategory[] = [
@@ -18,7 +18,7 @@ export const CATEGORY_ORDER: RuleCategory[] = [
   'Feng shui',
   'Light',
   'Color & textiles',
-  'Acoustics',
+  'Acoustics & air',
   'Aesthetics',
 ];
 
