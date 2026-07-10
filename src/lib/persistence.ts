@@ -4,6 +4,7 @@ import type { Design, FurnitureLibraryEntry, Project, Proposal, Wall } from '../
 import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, HEX_COLOR_RE, SCHEMA_VERSION } from '../types';
 import { isAxisParallel, validateExteriorLoop } from './polygon';
 import { FURNITURE_KINDS } from './furnitureCatalog';
+import { normalizeOptions } from './furnitureOptions';
 
 const color = z.string().regex(HEX_COLOR_RE, 'invalid color code (expected #rrggbb)');
 const meters = (max: number) => z.number().min(0).max(max);
@@ -14,17 +15,28 @@ const furnitureSizeSchema = z.object({
   height: z.number().min(0.01).max(20),
 });
 
-const furnitureSchema = z.object({
-  id: z.string().min(1),
-  kind: z.enum(FURNITURE_KINDS),
-  name: z.string().max(100),
-  position: z.object({ x: z.number().min(-100).max(100), z: z.number().min(-100).max(100) }),
-  rotationY: z.number().min(-100).max(100),
-  size: furnitureSizeSchema,
-  /** Missing in saves made before the field existed — falls back to the floor. */
-  elevation: meters(20).default(0),
-  color,
-});
+/** Raw per-type options as stored; coerced to the kind's valid set by the transform below. */
+const furnitureOptionsSchema = z.record(
+  z.string(),
+  z.union([z.number(), z.boolean(), z.string()]),
+);
+
+const furnitureSchema = z
+  .object({
+    id: z.string().min(1),
+    kind: z.enum(FURNITURE_KINDS),
+    name: z.string().max(100),
+    position: z.object({ x: z.number().min(-100).max(100), z: z.number().min(-100).max(100) }),
+    rotationY: z.number().min(-100).max(100),
+    size: furnitureSizeSchema,
+    /** Missing in saves made before the field existed — falls back to the floor. */
+    elevation: meters(20).default(0),
+    color,
+    /** Missing in saves made before the field existed — normalized to the kind's defaults. */
+    options: furnitureOptionsSchema.optional(),
+  })
+  // Normalize options against the kind so stored/hand-edited data is always sound.
+  .transform((f) => ({ ...f, options: normalizeOptions(f.kind, f.options) }));
 
 // ---- v1 (older format: rectangular room, walls by compass direction) ----
 
@@ -416,14 +428,17 @@ export function parseProjectSafe(raw: unknown): Project | null {
 
 const LIBRARY_KEY = 'roomcraft:furniture-library';
 
-const libraryEntrySchema = z.object({
-  id: z.string().min(1),
-  name: z.string().max(100),
-  kind: z.enum(FURNITURE_KINDS),
-  size: furnitureSizeSchema,
-  elevation: meters(20).default(0),
-  color,
-});
+const libraryEntrySchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string().max(100),
+    kind: z.enum(FURNITURE_KINDS),
+    size: furnitureSizeSchema,
+    elevation: meters(20).default(0),
+    color,
+    options: furnitureOptionsSchema.optional(),
+  })
+  .transform((e) => ({ ...e, options: normalizeOptions(e.kind, e.options) }));
 
 /** Reads the library; invalid entries are filtered out instead of throwing. */
 export function listFurnitureLibrary(): FurnitureLibraryEntry[] {

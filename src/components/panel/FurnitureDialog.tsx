@@ -138,6 +138,7 @@ export function FurnitureDialog() {
                   size: { ...editItem.size },
                   elevation: editItem.elevation,
                   color: editItem.color,
+                  options: editItem.options ? { ...editItem.options } : undefined,
                 });
                 setSavedForId(editItem.id);
               }}

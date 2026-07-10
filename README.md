@@ -17,9 +17,15 @@ with its own floor plan and its own furnishing options.
   floor — select a wall in the 3D view or floor plan and add one
 - 3D view with an orbit camera — the outer walls closest to the camera are
   hidden automatically
-- Furniture (bed, sofa, table, chair, wardrobe, bookshelf, rug, custom box) with
-  their own measurements, color and rotation; dragged around the floor and kept
-  inside the outer walls
+- Furniture (bed, sofa, table, chair, desk, nightstand, TV, mirror, plant,
+  wardrobe, bookshelf, rug, custom box) with their own measurements, color and
+  rotation; dragged around the floor and kept inside the outer walls
+- Per-type customization for each piece — e.g. the number of mattresses and
+  pillows on a bed, whether a desk has monitors and a drawer unit, how many
+  shelves a bookshelf has and whether it has doors, a wardrobe's door count and
+  legs, a rug's pattern, and more. Edit them in the "Add furniture" dialog or via
+  **More** on a selected piece; the 3D model updates live and the choices are
+  saved with the piece (and to the furniture library)
 - Colors for floor, walls and each piece of furniture — the floor and wall
   colours are part of each furnishing proposal, so different proposals of the
   same room can have their own palette

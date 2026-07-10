@@ -3,6 +3,7 @@ import type { FurnitureItem } from '../../types';
 import { clampFurniture, furnitureFits, slideFurniture } from '../../lib/collision';
 import { clampToPolygon, floorPolygon } from '../../lib/polygon';
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
+import { defaultOptions, normalizeOptions } from '../../lib/furnitureOptions';
 import {
   placeAtCenter,
   touch,
@@ -23,6 +24,7 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
         size: entry.defaultSize,
         elevation: 0,
         color: entry.defaultColor,
+        options: defaultOptions(kind),
       });
       set({ design: touch({ ...d, furniture: [...d.furniture, item] }) });
       return item.id;
@@ -43,6 +45,7 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
         size: entry.size,
         elevation: entry.elevation,
         color: entry.color,
+        options: normalizeOptions(entry.kind, entry.options),
       });
       set({ design: touch({ ...d, furniture: [...d.furniture, item] }) });
       return item.id;
@@ -62,6 +65,7 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
           id: newId,
           size: { ...src.size },
           position: { x: src.position.x + nudge(), z: src.position.z + nudge() },
+          options: src.options ? { ...src.options } : undefined,
         },
         poly,
       );
@@ -83,6 +87,11 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
               size: { ...f.size, ...patch.size },
               position: { ...f.position, ...patch.position },
               elevation: Math.max(0, patch.elevation ?? f.elevation),
+              // Merge option changes onto a fully-defaulted set so a single edited
+              // key never drops the piece's other options.
+              options: patch.options
+                ? { ...normalizeOptions(f.kind, f.options), ...patch.options }
+                : f.options,
             };
             return clampFurniture(next, poly);
           }),

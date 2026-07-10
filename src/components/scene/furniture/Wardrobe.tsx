@@ -1,27 +1,50 @@
+import { optBool, optNum } from '../../../lib/furnitureOptions';
 import { Mat, shade, type FurnitureProps } from './shared';
 
-export function Wardrobe({ size, color, selected }: FurnitureProps) {
+export function Wardrobe({ size, color, selected, options }: FurnitureProps) {
   const { width: w, depth: d, height: h } = size;
+  const doors = optNum(options, 'doors', 2);
+  const legs = optBool(options, 'legs', false);
+  const legH = legs ? 0.1 : 0;
+  const bodyH = Math.max(h - legH, 0.1);
+  const bodyY = legH + bodyH / 2;
+  const slotW = w / doors;
+
   return (
     <group>
-      <mesh castShadow position={[0, h / 2, 0]}>
-        <boxGeometry args={[w, h, d]} />
+      {/* carcass */}
+      <mesh castShadow position={[0, bodyY, 0]}>
+        <boxGeometry args={[w, bodyH, d]} />
         <Mat color={color} selected={selected} />
       </mesh>
-      {/* hint of door panels: two fronts with a gap in the middle */}
-      {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * (w / 4 + 0.005), h / 2, d / 2 + 0.005]}>
-          <boxGeometry args={[Math.max(w / 2 - 0.03, 0.05), Math.max(h - 0.08, 0.1), 0.015]} />
-          <Mat color={shade(color, 0.12)} selected={selected} />
-        </mesh>
-      ))}
-      {/* handles */}
-      {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * 0.06, h * 0.52, d / 2 + 0.025]}>
-          <boxGeometry args={[0.025, 0.22, 0.025]} />
-          <Mat color="#5c5648" selected={selected} roughness={0.4} />
-        </mesh>
-      ))}
+      {/* door panels — one per door */}
+      {Array.from({ length: doors }, (_, i) => {
+        const cx = -w / 2 + slotW / 2 + i * slotW;
+        // Handle sits toward the centre-facing edge of each door.
+        const handleX = cx + (i < doors / 2 ? slotW / 2 - 0.06 : -slotW / 2 + 0.06);
+        return (
+          <group key={i}>
+            <mesh position={[cx, bodyY, d / 2 + 0.005]}>
+              <boxGeometry args={[Math.max(slotW - 0.03, 0.05), Math.max(bodyH - 0.08, 0.1), 0.015]} />
+              <Mat color={shade(color, 0.12)} selected={selected} />
+            </mesh>
+            <mesh position={[handleX, bodyY, d / 2 + 0.025]}>
+              <boxGeometry args={[0.025, 0.22, 0.025]} />
+              <Mat color="#5c5648" selected={selected} roughness={0.4} />
+            </mesh>
+          </group>
+        );
+      })}
+      {/* optional legs */}
+      {legs &&
+        [-1, 1].flatMap((sx) =>
+          [-1, 1].map((sz) => (
+            <mesh key={`${sx}${sz}`} castShadow position={[sx * (w / 2 - 0.06), legH / 2, sz * (d / 2 - 0.06)]}>
+              <boxGeometry args={[0.05, legH, 0.05]} />
+              <Mat color={shade(color, 0.2)} selected={selected} />
+            </mesh>
+          )),
+        )}
     </group>
   );
 }
