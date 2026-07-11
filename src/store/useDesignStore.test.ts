@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useDesignStore } from './useDesignStore';
+import { defaultOpening } from '../lib/polygon';
 import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR } from '../types';
 
 const store = () => useDesignStore.getState();
@@ -128,5 +129,48 @@ describe('discarding an undrawn new room', () => {
 
     expect(store().project.rooms).toHaveLength(0);
     expect(store().project.activeRoomId).toBe('');
+  });
+});
+
+describe('adding doors and windows to a wall', () => {
+  const RECT = [
+    { x: -2, z: -2.5 },
+    { x: 2, z: -2.5 },
+    { x: 2, z: 2.5 },
+    { x: -2, z: 2.5 },
+  ];
+
+  beforeEach(() => {
+    store().newProject();
+    store().commitExteriorPolygon(RECT);
+  });
+
+  it('adds an opening on the given wall and returns its id', () => {
+    const wallId = store().design.walls[0].id;
+    const id = store().addOpening(defaultOpening('door', wallId));
+
+    expect(id).toBeTruthy();
+    const openings = store().design.openings;
+    expect(openings).toHaveLength(1);
+    expect(openings[0].id).toBe(id);
+    expect(openings[0]).toMatchObject({ kind: 'door', wallId, elevation: 0 });
+  });
+
+  it('refuses an opening on a wall that does not exist', () => {
+    expect(store().addOpening(defaultOpening('window', 'nope'))).toBeNull();
+    expect(store().design.openings).toHaveLength(0);
+  });
+
+  it('updates and removes an opening', () => {
+    const wallId = store().design.walls[0].id;
+    const id = store().addOpening(defaultOpening('window', wallId))!;
+
+    store().updateOpening(id, { width: 1.5, elevation: 1 });
+    const updated = store().design.openings.find((o) => o.id === id)!;
+    expect(updated.width).toBe(1.5);
+    expect(updated.elevation).toBe(1);
+
+    store().removeOpening(id);
+    expect(store().design.openings).toHaveLength(0);
   });
 });

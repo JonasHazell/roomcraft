@@ -322,7 +322,7 @@ export interface PlanActions {
   removeWall: (id: string) => void;
   moveWall: (id: string, coord: number) => void;
   resizeWall: (id: string, newLen: number) => void;
-  addOpening: (o: Omit<WallOpening, 'id'>) => void;
+  addOpening: (o: Omit<WallOpening, 'id'>) => string | null;
   updateOpening: (id: string, patch: Partial<Omit<WallOpening, 'id'>>) => void;
   removeOpening: (id: string) => void;
 }

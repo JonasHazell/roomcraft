@@ -1102,6 +1102,59 @@ select {
   background: rgba(180, 83, 47, 0.07);
 }
 
+.opening-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.opening-add {
+  display: flex;
+  gap: 6px;
+}
+
+.opening-add button {
+  flex: 1;
+  font: inherit;
+  font-size: 12px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.opening-add button:hover {
+  background: rgba(180, 83, 47, 0.07);
+}
+
+.opening-summary {
+  font-weight: 500;
+}
+
+.opening-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px 10px;
+}
+
+/* Beats `.opening-list button` (the summary rows share that selector). */
+.opening-list .opening-remove {
+  width: auto;
+  align-self: flex-start;
+  font-size: 12px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--danger);
+}
+
+.opening-list .opening-remove:hover {
+  background: rgba(198, 40, 40, 0.08);
+}
+
 .plan-wall-panel .field-grid {
   gap: 8px 10px;
 }
