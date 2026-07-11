@@ -56,12 +56,17 @@ export function PlanEditor() {
     useUiStore.getState().setPlanStartTool('select');
   }, []);
 
+  // The auto-fit view is derived from the placed walls only — never the
+  // in-progress draft. Folding draft points in made the camera zoom/jump the
+  // moment the first corner was clicked (a single point + padding is a tiny
+  // box), so the user lost track of where they were. Excluding the draft keeps
+  // the view steady while drawing.
   const fitBounds: Bounds = useMemo(() => {
-    const pts = [...walls.flatMap((w) => [w.a, w.b]), ...draft];
+    const pts = walls.flatMap((w) => [w.a, w.b]);
     if (pts.length === 0) return { minX: -5, maxX: 5, minZ: -5, maxZ: 5 };
     const b = polygonBounds(pts);
     return { minX: b.minX - PAD, maxX: b.maxX + PAD, minZ: b.minZ - PAD, maxZ: b.maxZ + PAD };
-  }, [walls, draft]);
+  }, [walls]);
 
   const viewport = useViewport(svgRef, fitBounds);
   const bounds = viewport.bounds;
