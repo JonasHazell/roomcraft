@@ -44,10 +44,11 @@ export function Bed({ size, color, selected, options }: FurnitureProps) {
           </mesh>
         );
       })}
-      {/* headboard — sits flush behind the frame (local -z) so it never overlaps the bed */}
+      {/* headboard — sits flush behind the frame (local -z) so it never overlaps the bed,
+          and runs the full height from the floor up */}
       {headboard && (
-        <mesh castShadow position={[0, h * 0.65, -d / 2 - 0.03]}>
-          <boxGeometry args={[w, h * 0.9, 0.06]} />
+        <mesh castShadow position={[0, h * 0.55, -d / 2 - 0.03]}>
+          <boxGeometry args={[w, h * 1.1, 0.06]} />
           <Mat color={shade(color, 0.15)} selected={selected} />
         </mesh>
       )}
