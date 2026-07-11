@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Point } from '../../types';
 import {
   dist,
@@ -18,6 +18,7 @@ import { backToLobby } from '../../lib/nav';
 import { COARSE_POINTER, useMediaQuery } from '../../lib/useMediaQuery';
 import { PlanGrid } from './PlanGrid';
 import { PlanWalls } from './PlanWalls';
+import { PlanCorners } from './PlanCorners';
 import { PlanDraft } from './PlanDraft';
 import { PlanToolbar } from './PlanToolbar';
 import { PlanWallPanel } from './PlanWallPanel';
@@ -37,6 +38,7 @@ export function PlanEditor() {
   const commitExteriorPolygon = useDesignStore((s) => s.commitExteriorPolygon);
   const addInteriorWall = useDesignStore((s) => s.addInteriorWall);
   const moveWall = useDesignStore((s) => s.moveWall);
+  const moveCorner = useDesignStore((s) => s.moveCorner);
   const removeWall = useDesignStore((s) => s.removeWall);
   const selection = useUiStore((s) => s.selection);
   const select = useUiStore((s) => s.select);
@@ -49,6 +51,13 @@ export function PlanEditor() {
   const { tool, draft, hover, guide, closable, error } = draw.state;
   // A wall being dragged in select mode (domain drag, distinct from viewport pan).
   const dragRef = useRef<{ id: string; horizontal: boolean } | null>(null);
+  // A corner (shared point of two exterior walls) being dragged in select mode.
+  const cornerDragRef = useRef<{ wallAId: string; wallBId: string } | null>(null);
+  // A press-drag-release (or tap) drawing gesture: the pointer that owns it.
+  const drawGestureRef = useRef<{ pointerId: number } | null>(null);
+  // Walls whose length is actively changing under a drag, highlighted so the
+  // relevant measurements stand out while the corner or edge moves.
+  const [activeWallIds, setActiveWallIds] = useState<string[]>([]);
 
   // The start tool is a one-shot handoff from the lobby; clear it once consumed
   // so re-entering an existing plan later opens in select mode.
@@ -133,28 +142,37 @@ export function PlanEditor() {
     // Track the pointer so a second contact turns the gesture into a pinch-zoom.
     viewport.addPointer(e.pointerId, e.clientX, e.clientY);
     if (viewport.pointerCount() >= 2) {
-      // Second finger down: abandon any in-progress pan/drag and start pinching.
+      // Second finger down: abandon any in-progress pan/drag/draw and start pinching.
       viewport.cancelPan();
-      if (dragRef.current) useHistoryStore.getState().endBatch();
+      if (dragRef.current || cornerDragRef.current) useHistoryStore.getState().endBatch();
       dragRef.current = null;
+      cornerDragRef.current = null;
+      setActiveWallIds([]);
+      drawGestureRef.current = null;
       viewport.resetPinch();
       capture(e);
       return;
     }
     const raw = viewport.toWorld(e);
-    if (tool === 'exterior') {
-      if (draft.length >= 4 && dist(raw, draft[0]) <= CLOSE_RADIUS) tryClose(draft);
-      else draw.place(drawTarget(raw).point);
-    } else if (tool === 'interior') {
-      // Points are buffered like the exterior outline and committed as walls on
-      // finish, so each placement is a single undoable step while drawing.
-      draw.place(drawTarget(raw).point);
-    } else {
-      // Select mode: dragging on empty space pans, a click without dragging
-      // deselects on release (walls stop propagation).
-      viewport.beginPan(e.clientX, e.clientY, bounds, true);
+    if (tool === 'exterior' || tool === 'interior') {
+      // A click/tap near the start corner seals the exterior outline.
+      if (tool === 'exterior' && draft.length >= 4 && dist(raw, draft[0]) <= CLOSE_RADIUS) {
+        tryClose(draft);
+        return;
+      }
+      // The first corner anchors on press so it is visible while the wall is
+      // dragged out; every corner is (re)placed on release. That makes a
+      // press-drag-release draw one segment and a plain tap place one corner —
+      // identically on mouse and touch, with the live length shown throughout.
+      if (draft.length === 0) draw.place(drawTarget(raw).point);
+      drawGestureRef.current = { pointerId: e.pointerId };
       capture(e);
+      return;
     }
+    // Select mode: dragging on empty space pans, a click without dragging
+    // deselects on release (walls and corner handles stop propagation).
+    viewport.beginPan(e.clientX, e.clientY, bounds, true);
+    capture(e);
   };
 
   const onWallPointerDown = (id: string, e: React.PointerEvent) => {
@@ -164,7 +182,29 @@ export function PlanEditor() {
     const wall = walls.find((w) => w.id === id);
     if (!wall) return;
     dragRef.current = { id, horizontal: wall.a.z === wall.b.z };
+    // Highlight the wall and any wall sharing a corner with it: sliding this wall
+    // changes those neighbours' lengths, so their measurements are the relevant ones.
+    const shares = (w: (typeof walls)[number]) =>
+      w.id !== id &&
+      (pointsEqual(w.a, wall.a) ||
+        pointsEqual(w.a, wall.b) ||
+        pointsEqual(w.b, wall.a) ||
+        pointsEqual(w.b, wall.b));
+    setActiveWallIds([id, ...walls.filter(shares).map((w) => w.id)]);
     // Fold the whole wall drag into a single undo step.
+    useHistoryStore.getState().beginBatch();
+    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+  };
+
+  const onCornerPointerDown = (wallAId: string, wallBId: string, e: React.PointerEvent) => {
+    if (tool !== 'select' || e.button !== 0) return;
+    e.stopPropagation();
+    // A corner drag reshapes the outline, not a single wall — clear any selection
+    // so the wall panel doesn't fight the gesture, and highlight both walls whose
+    // lengths change as the corner moves.
+    select(null);
+    cornerDragRef.current = { wallAId, wallBId };
+    setActiveWallIds([wallAId, wallBId]);
     useHistoryStore.getState().beginBatch();
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
   };
@@ -181,6 +221,11 @@ export function PlanEditor() {
     }
     const raw = viewport.toWorld(e);
     if (tool === 'select') {
+      const corner = cornerDragRef.current;
+      if (corner) {
+        moveCorner(corner.wallAId, corner.wallBId, raw.x, raw.z);
+        return;
+      }
       const drag = dragRef.current;
       if (drag) moveWall(drag.id, snap(drag.horizontal ? raw.z : raw.x));
       return;
@@ -198,6 +243,26 @@ export function PlanEditor() {
     if (viewport.pointerCount() < 2) viewport.resetPinch();
     if (dragRef.current) useHistoryStore.getState().endBatch();
     dragRef.current = null;
+    if (cornerDragRef.current) {
+      useHistoryStore.getState().endBatch();
+      cornerDragRef.current = null;
+      setActiveWallIds([]);
+    }
+    // End of a drawing gesture: place the corner at the release point. A drag
+    // lands the far corner of the segment; a tap lands back on the same spot
+    // (deduped against the last corner). Using the release point makes drawing
+    // work on touch, which has no hover to preview from.
+    const gesture = drawGestureRef.current;
+    if (gesture && gesture.pointerId === e.pointerId) {
+      drawGestureRef.current = null;
+      const raw = viewport.toWorld(e);
+      if (tool === 'exterior' && draft.length >= 4 && dist(raw, draft[0]) <= CLOSE_RADIUS) {
+        tryClose(draft);
+      } else {
+        draw.place(drawTarget(raw).point);
+      }
+      draw.clearHover();
+    }
     const pan = viewport.endPan();
     if (pan && !pan.moved && pan.deselectOnTap) select(null);
   };
@@ -208,6 +273,12 @@ export function PlanEditor() {
     if (viewport.pointerCount() < 2) viewport.resetPinch();
     if (dragRef.current) useHistoryStore.getState().endBatch();
     dragRef.current = null;
+    if (cornerDragRef.current) {
+      useHistoryStore.getState().endBatch();
+      cornerDragRef.current = null;
+      setActiveWallIds([]);
+    }
+    drawGestureRef.current = null;
     viewport.cancelPan();
   };
 
@@ -274,8 +345,12 @@ export function PlanEditor() {
         <PlanWalls
           dimExterior={tool === 'exterior'}
           selectedWallId={selection?.kind === 'wall' ? selection.id : null}
+          highlightWallIds={activeWallIds}
           onWallPointerDown={onWallPointerDown}
         />
+        {tool === 'select' && (
+          <PlanCorners coarse={coarse} onCornerPointerDown={onCornerPointerDown} />
+        )}
         {tool !== 'select' && (
           <PlanDraft draft={draft} hover={hover} guide={guide} closable={closable} />
         )}

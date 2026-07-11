@@ -1,11 +1,13 @@
 import { nanoid } from 'nanoid';
-import type { Wall } from '../../types';
+import type { Design, Wall } from '../../types';
 import { clampFurniture } from '../../lib/collision';
 import {
   GRID,
   floorPolygon,
   isAxisParallel,
   normalizeWinding,
+  slideWall,
+  snap,
   validateExteriorLoop,
   wallDir,
   wallLen,
@@ -19,6 +21,19 @@ import {
   type DesignSet,
   type PlanActions,
 } from '../designModel';
+
+/** Applies a new wall set, re-clamping openings and furniture to the new shape. */
+function commitWalls(set: DesignSet, d: Design, walls: Wall[]): void {
+  const poly = floorPolygon(walls);
+  const next = { ...d, walls };
+  set({
+    design: touch({
+      ...next,
+      openings: next.openings.map((o) => clampOpeningIn(next, o)),
+      furniture: next.furniture.map((f) => clampFurniture(f, poly)),
+    }),
+  });
+}
 
 /** Floor-plan actions: the exterior outline, interior walls and openings. */
 export function createPlanSlice(set: DesignSet, get: DesignGet): PlanActions {
@@ -68,36 +83,34 @@ export function createPlanSlice(set: DesignSet, get: DesignGet): PlanActions {
       const d = get().design;
       const wall = wallById(d, id);
       if (!wall) return;
-      const horizontal = wall.a.z === wall.b.z;
-      const moved: Wall = horizontal
-        ? { ...wall, a: { ...wall.a, z: coord }, b: { ...wall.b, z: coord } }
-        : { ...wall, a: { ...wall.a, x: coord }, b: { ...wall.b, x: coord } };
-
-      let walls: Wall[];
-      if (wall.kind === 'interior') {
-        walls = d.walls.map((w) => (w.id === id ? moved : w));
-      } else {
-        // The neighboring walls follow at their endpoints so the loop stays closed.
-        walls = d.walls.map((w) => {
-          if (w.id === id) return moved;
-          if (w.kind !== 'exterior') return w;
-          const b = w.b.x === wall.a.x && w.b.z === wall.a.z ? moved.a : w.b;
-          const a = w.a.x === wall.b.x && w.a.z === wall.b.z ? moved.b : w.a;
-          return a === w.a && b === w.b ? w : { ...w, a, b };
-        });
+      // The neighboring exterior walls follow at their endpoints so the loop stays closed.
+      const walls = slideWall(d.walls, wall, coord);
+      if (wall.kind === 'exterior') {
         const check = validateExteriorLoop(walls.filter((w) => w.kind === 'exterior'));
         if (!check.ok) return; // reject drags that break the outline
       }
+      commitWalls(set, d, walls);
+    },
 
-      const poly = floorPolygon(walls);
-      const next = { ...d, walls };
-      set({
-        design: touch({
-          ...next,
-          openings: next.openings.map((o) => clampOpeningIn(next, o)),
-          furniture: next.furniture.map((f) => clampFurniture(f, poly)),
-        }),
-      });
+    moveCorner: (wallAId, wallBId, x, z) => {
+      const d = get().design;
+      const wallA = wallById(d, wallAId);
+      const wallB = wallById(d, wallBId);
+      if (!wallA || !wallB || wallA.kind !== 'exterior' || wallB.kind !== 'exterior') return;
+      // A corner is the meeting point of one horizontal and one vertical exterior
+      // wall. Dragging it slides the horizontal wall to the new z and the vertical
+      // wall to the new x — each perpendicular move keeps the loop rectilinear, and
+      // together they land the shared corner at (x, z).
+      const horizontal = wallA.a.z === wallA.b.z ? wallA : wallB;
+      const vertical = wallA.a.z === wallA.b.z ? wallB : wallA;
+      if (horizontal === vertical || vertical.a.x !== vertical.b.x) return;
+      let walls = slideWall(d.walls, horizontal, snap(z));
+      const nextVertical = walls.find((w) => w.id === vertical.id);
+      if (!nextVertical) return;
+      walls = slideWall(walls, nextVertical, snap(x));
+      const check = validateExteriorLoop(walls.filter((w) => w.kind === 'exterior'));
+      if (!check.ok) return; // reject drags that would break the outline
+      commitWalls(set, d, walls);
     },
 
     resizeWall: (id, newLen) => {
