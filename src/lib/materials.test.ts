@@ -14,7 +14,7 @@ describe('materials', () => {
   });
 
   it('includes the patterned stone/tile finishes', () => {
-    for (const id of ['concrete', 'tile', 'stone', 'marble']) {
+    for (const id of ['concrete', 'tile', 'stone', 'marble', 'brick', 'terrazzo']) {
       expect(MATERIALS.some((m) => m.id === id)).toBe(true);
     }
   });

@@ -57,6 +57,8 @@ export const MATERIALS: MaterialSpec[] = [
   { id: 'tile', label: 'Tile', roughness: 0.32, metalness: 0, envMapIntensity: 0.6, bumpScale: 0.06, texScale: 0.62 },
   { id: 'stone', label: 'Stone', roughness: 0.85, metalness: 0, envMapIntensity: 0.2, bumpScale: 0.16, texScale: 0.9 },
   { id: 'marble', label: 'Marble', roughness: 0.22, metalness: 0, envMapIntensity: 0.6, bumpScale: 0.012, texScale: 1.6 },
+  { id: 'brick', label: 'Brick', roughness: 0.9, metalness: 0, envMapIntensity: 0.14, bumpScale: 0.14, texScale: 0.8 },
+  { id: 'terrazzo', label: 'Terrazzo', roughness: 0.32, metalness: 0, envMapIntensity: 0.55, bumpScale: 0.02, texScale: 0.7 },
 ];
 
 /** The finish every surface falls back to — the original flat matte look. */

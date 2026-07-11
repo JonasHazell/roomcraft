@@ -336,6 +336,88 @@ function build(id: string): Built {
     }
     return out;
   }
+  if (id === 'brick') {
+    const m = canvas();
+    const b = canvas();
+    if (m && b) {
+      const rnd = prng(131);
+      const rows = 8;
+      const rh = SIZE / rows; // 32
+      const bw = SIZE / 4; // 64 — brick length
+      const mortar = 4;
+      m.ctx.fillStyle = 'rgb(202,202,202)'; // mortar (light)
+      m.ctx.fillRect(0, 0, SIZE, SIZE);
+      b.ctx.fillStyle = '#565656'; // mortar recessed
+      b.ctx.fillRect(0, 0, SIZE, SIZE);
+      for (let r = 0; r < rows; r++) {
+        const y = r * rh + mortar / 2;
+        const h = rh - mortar;
+        const offset = (r % 2) * (bw / 2); // running bond
+        for (let k = -1; k < 5; k++) {
+          const x = offset + k * bw + mortar / 2;
+          const w = bw - mortar;
+          const v = 166 + Math.round((rnd() - 0.5) * 40);
+          m.ctx.fillStyle = `rgb(${v},${v},${v})`;
+          m.ctx.fillRect(x, y, w, h);
+          const bv = 182 + Math.round((rnd() - 0.5) * 28);
+          b.ctx.fillStyle = `rgb(${bv},${bv},${bv})`;
+          b.ctx.fillRect(x, y, w, h);
+        }
+      }
+      out.map = m.c;
+      out.bump = b.c;
+    }
+    return out;
+  }
+  if (id === 'terrazzo') {
+    const m = canvas();
+    const b = canvas();
+    if (m && b) {
+      const rnd = prng(151);
+      m.ctx.fillStyle = 'rgb(226,226,226)'; // light binder, so colour shows
+      m.ctx.fillRect(0, 0, SIZE, SIZE);
+      b.ctx.fillStyle = '#808080';
+      b.ctx.fillRect(0, 0, SIZE, SIZE);
+      // Scattered angular aggregate chips; wrapped at the edges so it tiles.
+      const chip = (cx: number, cy: number, s: number, v: number, sides: number, rot: number) => {
+        m.ctx.fillStyle = `rgb(${v},${v},${v})`;
+        m.ctx.beginPath();
+        for (let a = 0; a < sides; a++) {
+          const ang = (a / sides) * Math.PI * 2 + rot;
+          const rr = s * (0.6 + ((a * 37) % 10) / 20);
+          const px = cx + Math.cos(ang) * rr;
+          const py = cy + Math.sin(ang) * rr;
+          if (a === 0) m.ctx.moveTo(px, py);
+          else m.ctx.lineTo(px, py);
+        }
+        m.ctx.closePath();
+        m.ctx.fill();
+        if (s > 7) {
+          b.ctx.fillStyle = 'rgba(150,150,150,0.5)';
+          b.ctx.beginPath();
+          b.ctx.arc(cx, cy, s * 0.6, 0, Math.PI * 2);
+          b.ctx.fill();
+        }
+      };
+      for (let i = 0; i < 520; i++) {
+        const x = rnd() * SIZE;
+        const y = rnd() * SIZE;
+        const s = 3 + rnd() * 10;
+        const v = 150 + Math.floor(rnd() * 105);
+        const sides = 3 + Math.floor(rnd() * 3);
+        const rot = rnd() * Math.PI;
+        const margin = s + 2;
+        for (const dx of x < margin ? [0, SIZE] : x > SIZE - margin ? [0, -SIZE] : [0]) {
+          for (const dy of y < margin ? [0, SIZE] : y > SIZE - margin ? [0, -SIZE] : [0]) {
+            chip(x + dx, y + dy, s, v, sides, rot);
+          }
+        }
+      }
+      out.map = m.c;
+      out.bump = b.c;
+    }
+    return out;
+  }
 
   return out;
 }
