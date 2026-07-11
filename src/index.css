@@ -20,6 +20,12 @@
   --display: 'Fraunces Variable', Georgia, serif;
   --body: 'Karla', 'Segoe UI', sans-serif;
 
+  /* One optical size for the line icons across the floating control family
+     (top bar + bottom dock) so no control's glyph reads larger or bolder than
+     its neighbour; --icon-sm is for secondary marks like the switcher caret. */
+  --icon: 20px;
+  --icon-sm: 16px;
+
   font-family: var(--body);
   font-size: 15px;
   line-height: 1.45;
@@ -338,6 +344,30 @@ select {
 /* Wrapper around a disabled button so the title tooltip is caught on hover. */
 .btn-tooltip-wrap {
   display: inline-flex;
+}
+
+/* Inline line icon (see components/ui/Icon.tsx). It renders at 1em, so its size
+   follows the font-size of whatever it sits in — set that once per control and
+   every icon matches. All icons share the same 24-grid stroke, so weight is
+   uniform regardless of which glyph it is. */
+.icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: middle;
+  flex: none;
+}
+
+/* Text buttons (e.g. the proposal-menu "New" actions) carry a slightly larger
+   icon than their 13px label so the mark stays balanced next to the text. */
+.btn > .icon {
+  width: 1.2em;
+  height: 1.2em;
+}
+
+.btn-icon > .icon {
+  width: 18px;
+  height: 18px;
 }
 
 .btn {
@@ -804,7 +834,7 @@ select {
   height: 52px;
   padding: 0;
   font: inherit;
-  font-size: 22px;
+  font-size: var(--icon);
   line-height: 1;
   border: 0;
   background: transparent;
@@ -853,7 +883,8 @@ select {
 }
 
 .proposal-pill-caret {
-  font-size: 10px;
+  display: inline-flex;
+  font-size: var(--icon-sm);
   color: var(--muted);
 }
 
@@ -1614,10 +1645,6 @@ select {
   padding: 8px 10px;
 }
 
-.sel-action.sel-history .sel-icon {
-  font-size: 19px;
-}
-
 .sel-action:disabled {
   opacity: 0.4;
   cursor: default;
@@ -1628,14 +1655,9 @@ select {
 }
 
 .sel-icon {
-  font-size: 15px;
+  display: inline-flex;
+  font-size: var(--icon);
   line-height: 1;
-}
-
-/* Bump the icon size slightly in the furniture selection bar so the action
-   glyphs read a touch larger than in the other pill bars. */
-.selection-bar .sel-icon {
-  font-size: 18px;
 }
 
 .sel-divider {
@@ -2073,7 +2095,8 @@ select {
 }
 
 .room-back > [aria-hidden] {
-  font-size: 18px;
+  display: inline-flex;
+  font-size: var(--icon);
   line-height: 1;
 }
 

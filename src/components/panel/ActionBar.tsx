@@ -1,5 +1,6 @@
 import { useUiStore } from '../../store/useUiStore';
 import { SelBar, SelBarButton } from './SelBar';
+import { Icon } from '../ui/Icon';
 
 /**
  * The add-furniture pill for the 3D view: the left-most pill in the bottom dock,
@@ -18,7 +19,7 @@ export function ActionBar() {
   return (
     <SelBar label="Room actions" keepLabels>
       <SelBarButton
-        icon="＋"
+        icon={<Icon name="plus" />}
         title="Add a piece of furniture"
         ariaLabel="Add furniture"
         onClick={openAddFurniture}

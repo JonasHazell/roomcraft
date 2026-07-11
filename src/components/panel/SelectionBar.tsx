@@ -2,6 +2,7 @@ import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useSelectedFurniture } from '../../store/selectors';
 import { SelBar, SelBarButton, SelBarDivider } from './SelBar';
+import { Icon } from '../ui/Icon';
 
 /**
  * Action bar for the selected furniture piece. It surfaces the most-used actions
@@ -27,21 +28,21 @@ export function SelectionBar() {
   return (
     <SelBar label="Furniture actions">
       <SelBarButton
-        icon="⟲"
+        icon={<Icon name="rotate-ccw" />}
         label="Left"
         title="Rotate 90° left"
         ariaLabel="Rotate 90 degrees left"
         onClick={() => updateFurniture(selected.id, { rotationY: selected.rotationY + Math.PI / 2 })}
       />
       <SelBarButton
-        icon="⟳"
+        icon={<Icon name="rotate-cw" />}
         label="Right"
         title="Rotate 90° right"
         ariaLabel="Rotate 90 degrees right"
         onClick={() => updateFurniture(selected.id, { rotationY: selected.rotationY - Math.PI / 2 })}
       />
       <SelBarButton
-        icon="⧉"
+        icon={<Icon name="copy" />}
         label="Duplicate"
         title="Create an identical piece with the same dimensions"
         ariaLabel="Duplicate"
@@ -51,7 +52,7 @@ export function SelectionBar() {
         }}
       />
       <SelBarButton
-        icon="✕"
+        icon={<Icon name="x" />}
         label="Delete"
         title="Delete this piece"
         ariaLabel="Delete"
@@ -63,7 +64,7 @@ export function SelectionBar() {
       />
       <SelBarDivider />
       <SelBarButton
-        icon="⋯"
+        icon={<Icon name="more-horizontal" />}
         label="More"
         title="More settings"
         ariaLabel="More settings"

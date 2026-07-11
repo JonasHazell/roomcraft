@@ -12,6 +12,7 @@ import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { DialogHost } from './components/panel/DialogHost';
 import { HistoryControls } from './components/panel/HistoryControls';
 import { Scene } from './components/scene/Scene';
+import { Icon } from './components/ui/Icon';
 import { PlanEditor } from './components/plan/PlanEditor';
 import { useDesignStore } from './store/useDesignStore';
 import { useUiStore } from './store/useUiStore';
@@ -42,7 +43,9 @@ function FurnishView() {
           title="Back to your rooms"
           aria-label="Back to your rooms"
         >
-          <span aria-hidden="true">←</span>
+          <span aria-hidden="true">
+            <Icon name="arrow-left" />
+          </span>
           <span className="room-back-label">Rooms</span>
         </button>
         <span className="room-topbar-name">{roomName}</span>
