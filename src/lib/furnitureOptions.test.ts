@@ -33,7 +33,7 @@ describe('furniture option specs', () => {
 
 describe('defaultOptions', () => {
   it('builds an object from the specs at their defaults', () => {
-    expect(defaultOptions('bed')).toEqual({ mattresses: 1, pillows: 2, headboard: true });
+    expect(defaultOptions('bed')).toEqual({ mattresses: 1, headboard: true });
     expect(defaultOptions('bookshelf')).toEqual({ shelves: 4, doors: false });
   });
 
@@ -55,7 +55,7 @@ describe('normalizeOptions', () => {
   it('clamps and rounds out-of-range counts', () => {
     expect(normalizeOptions('bookshelf', { shelves: 99 }).shelves).toBe(6);
     expect(normalizeOptions('bookshelf', { shelves: 0 }).shelves).toBe(1);
-    expect(normalizeOptions('bed', { pillows: 2.7 }).pillows).toBe(3);
+    expect(normalizeOptions('bed', { mattresses: 2.7 }).mattresses).toBe(2);
   });
 
   it('falls back on wrong-typed values and invalid choices', () => {
