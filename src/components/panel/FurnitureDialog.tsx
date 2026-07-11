@@ -5,6 +5,7 @@ import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { useEscape } from '../../lib/useEscape';
+import { Icon } from '../ui/Icon';
 import { FurnitureFields } from './FurnitureFields';
 import { FurniturePicker, type Source } from './FurniturePicker';
 import { applyPatch, type FurnitureDraft } from './furnitureDraft';
@@ -95,7 +96,7 @@ export function FurnitureDialog() {
         <div className="modal-head">
           <span className="modal-title">{title}</span>
           <button type="button" className="btn-icon" aria-label="Close" onClick={dismiss}>
-            ✕
+            <Icon name="x" />
           </button>
         </div>
 
@@ -145,11 +146,11 @@ export function FurnitureDialog() {
             >
               {savedForId && savedForId === editItem?.id ? (
                 <>
-                  <span aria-hidden="true">✓</span> Saved to library
+                  <Icon name="check" /> Saved to library
                 </>
               ) : (
                 <>
-                  <span aria-hidden="true">☆</span> Save to library
+                  <Icon name="star" /> Save to library
                 </>
               )}
             </button>
@@ -162,7 +163,7 @@ export function FurnitureDialog() {
         {dialog.mode === 'create' && draft !== null && (
           <div className="modal-foot">
             <button type="button" className="btn" onClick={() => setDraft(null)}>
-              <span aria-hidden="true">←</span> Back
+              <Icon name="arrow-left" /> Back
             </button>
             <button
               type="button"

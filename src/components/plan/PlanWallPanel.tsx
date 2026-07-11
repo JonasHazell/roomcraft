@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  OPENING_ICON,
   defaultOpening,
   floorPolygon,
   formatCm,
@@ -12,6 +11,7 @@ import type { OpeningKind, WallOpening } from '../../types';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useSelectedWall } from '../../store/selectors';
 import { NumberField } from '../panel/fields';
+import { Icon } from '../ui/Icon';
 
 /** Fine-tuning in cm for the selected wall in the floor plan. */
 export function PlanWallPanel() {
@@ -40,7 +40,7 @@ export function PlanWallPanel() {
 
   return (
     <div className="plan-wall-panel">
-      <p className="plan-hint">
+      <p className="hint">
         <strong>{wallLabel(walls, wall.id)}</strong> · {formatCm(wallLen(wall))}
       </p>
       <div className="field-grid">
@@ -65,7 +65,7 @@ export function PlanWallPanel() {
           />
         )}
       </div>
-      <p className="plan-hint">
+      <p className="hint">
         {wall.kind === 'exterior'
           ? 'The length changes at the wall’s end (the arrow); the adjacent wall follows.'
           : 'The length changes at the wall’s end (the arrow).'}
@@ -73,15 +73,15 @@ export function PlanWallPanel() {
 
       {/* Doors & windows on this wall — add one, then tune its position and size. */}
       <div className="opening-editor">
-        <p className="plan-hint">
+        <p className="hint">
           <strong>Doors &amp; windows</strong>
         </p>
         <div className="opening-add">
           <button type="button" onClick={() => add('door')}>
-            {OPENING_ICON.door} Add door
+            <Icon name="door" /> Add door
           </button>
           <button type="button" onClick={() => add('window')}>
-            {OPENING_ICON.window} Add window
+            <Icon name="window" /> Add window
           </button>
         </div>
         {wallOpenings.length > 0 && (
@@ -101,7 +101,7 @@ export function PlanWallPanel() {
       </div>
 
       {wall.kind === 'exterior' && (
-        <p className="plan-hint">
+        <p className="hint">
           Exterior walls cannot be deleted one by one — the outline must stay closed. Use
           &ldquo;Redraw exterior walls…&rdquo; to change the shape of the room.
         </p>
@@ -138,7 +138,7 @@ function OpeningRow({
         aria-expanded={expanded}
         onClick={onToggle}
       >
-        {OPENING_ICON[o.kind]} {label} · {formatCm(o.width)}
+        <Icon name={o.kind} /> {label} · {formatCm(o.width)}
       </button>
       {expanded && (
         <div className="opening-edit">

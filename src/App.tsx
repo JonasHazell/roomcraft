@@ -134,6 +134,10 @@ function App() {
       }
       const { selection, select } = useUiStore.getState();
       if (e.key === 'Escape') {
+        // Esc closes one overlay at a time: dialog › panel › selection. Dialogs
+        // are already handled above; if a side panel is open let it close first
+        // (SidePanel's own Esc handler does that) and keep the selection.
+        if (useUiStore.getState().panel) return;
         select(null);
         return;
       }

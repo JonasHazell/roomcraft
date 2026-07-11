@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDialogStore } from '../../store/useDialogStore';
+import { Icon } from '../ui/Icon';
 
 /**
  * Renders the app's confirm/prompt dialogs (see useDialogStore) using the shared
@@ -57,7 +58,7 @@ export function DialogHost() {
         <div className="modal-head">
           <span className="modal-title">{active.title}</span>
           <button type="button" className="btn-icon" aria-label="Close" onClick={cancel}>
-            ✕
+            <Icon name="x" />
           </button>
         </div>
 
