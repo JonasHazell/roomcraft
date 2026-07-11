@@ -9,6 +9,13 @@ interface Props {
   label?: string;
   /** Focus and select the field on mount — used when an edge is picked to edit. */
   autoFocus?: boolean;
+  /**
+   * Apply the typed value when the field loses focus, not only on Enter. Used when
+   * editing a picked edge — tapping away (common on touch, where there is no Enter
+   * key) then applies the length instead of silently discarding it. Left off while
+   * aiming, where blur must not place a corner (e.g. when clicking the canvas).
+   */
+  commitOnBlur?: boolean;
 }
 
 /**
@@ -17,7 +24,13 @@ interface Props {
  * distance) or an already-placed edge picked for editing — no need to close the
  * room first to fine-tune it.
  */
-export function PlanLengthInput({ lengthCm, onCommit, label = 'Length', autoFocus }: Props) {
+export function PlanLengthInput({
+  lengthCm,
+  onCommit,
+  label = 'Length',
+  autoFocus,
+  commitOnBlur,
+}: Props) {
   // Local text while the field is focused, so the live length doesn't overwrite
   // what is being typed; null means "not editing, follow the live value".
   const [text, setText] = useState<string | null>(null);
@@ -58,7 +71,7 @@ export function PlanLengthInput({ lengthCm, onCommit, label = 'Length', autoFocu
             e.currentTarget.blur();
           }
         }}
-        onBlur={() => setText(null)}
+        onBlur={() => (commitOnBlur ? commit() : setText(null))}
       />
       <span className="plan-length-suffix">cm</span>
     </div>

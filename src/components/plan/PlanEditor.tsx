@@ -427,6 +427,7 @@ export function PlanEditor() {
           key={`edge-${selectedEdge}`}
           label="Edge"
           autoFocus
+          commitOnBlur
           lengthCm={Math.round(dist(draft[selectedEdge], draft[selectedEdge + 1]) * 100)}
           onCommit={(cm) => draw.resizeEdge(selectedEdge, cm / 100)}
         />
