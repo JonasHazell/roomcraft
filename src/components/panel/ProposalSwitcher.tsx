@@ -4,6 +4,7 @@ import { useUiStore } from '../../store/useUiStore';
 import { confirmDialog, promptDialog } from '../../store/useDialogStore';
 import { useEscape } from '../../lib/useEscape';
 import { SwitcherList } from './SwitcherList';
+import { Icon } from '../ui/Icon';
 
 /**
  * Centred pill (on the hamburger row of the 3D view) that switches between a
@@ -97,7 +98,7 @@ export function ProposalSwitcher() {
           disabled={proposals.length <= 1}
           onClick={() => step(-1)}
         >
-          ‹
+          <Icon name="chevron-left" />
         </button>
         <button
           type="button"
@@ -109,7 +110,7 @@ export function ProposalSwitcher() {
         >
           <span className="proposal-pill-name">{active?.name ?? 'Proposal'}</span>
           <span className="proposal-pill-caret" aria-hidden="true">
-            ▾
+            <Icon name="chevron-down" />
           </span>
         </button>
         <button
@@ -120,7 +121,7 @@ export function ProposalSwitcher() {
           disabled={proposals.length <= 1}
           onClick={() => step(1)}
         >
-          ›
+          <Icon name="chevron-right" />
         </button>
       </div>
 
@@ -134,7 +135,7 @@ export function ProposalSwitcher() {
               aria-label="Close"
               onClick={() => setOpen(false)}
             >
-              ✕
+              <Icon name="x" />
             </button>
           </div>
           <div className="proposal-menu-body">
@@ -153,10 +154,10 @@ export function ProposalSwitcher() {
           </div>
           <div className="proposal-menu-actions">
             <button type="button" className="btn btn-accent" onClick={() => create(true)}>
-              <span aria-hidden="true">＋</span> New from current
+              <Icon name="plus" /> New from current
             </button>
             <button type="button" className="btn" onClick={() => create(false)}>
-              <span aria-hidden="true">＋</span> New empty
+              <Icon name="plus" /> New empty
             </button>
           </div>
         </div>

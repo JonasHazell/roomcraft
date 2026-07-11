@@ -1,5 +1,6 @@
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useUiStore } from '../../store/useUiStore';
+import { Icon } from '../ui/Icon';
 
 /**
  * Standalone undo/redo pill for the 3D furnish view. It sits as its own pill on
@@ -28,7 +29,7 @@ export function HistoryBar() {
         aria-label="Undo"
       >
         <span className="sel-icon" aria-hidden="true">
-          ↶
+          <Icon name="undo-2" />
         </span>
       </button>
       <button
@@ -40,7 +41,7 @@ export function HistoryBar() {
         aria-label="Redo"
       >
         <span className="sel-icon" aria-hidden="true">
-          ↷
+          <Icon name="redo-2" />
         </span>
       </button>
     </div>
