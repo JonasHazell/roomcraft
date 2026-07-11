@@ -399,7 +399,7 @@ export function PlanEditor() {
       <div className="plan-topbar">
         <button
           type="button"
-          className="room-back"
+          className="btn room-back"
           onClick={onDone}
           title="Done · back to your rooms"
           aria-label="Done · back to your rooms"
