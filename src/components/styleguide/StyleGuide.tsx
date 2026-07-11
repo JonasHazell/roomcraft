@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Icon, type IconName } from '../ui/Icon';
+import { Icon, ICON_NAMES } from '../ui/Icon';
 
 /**
  * Living component reference ("style guide") for RoomCraft's UI.
@@ -33,28 +33,6 @@ const COLOR_TOKENS = [
 const CHROME_TOKENS = ['--popup-radius', '--popup-border', '--popup-shadow'];
 const TYPE_TOKENS = ['--display', '--body'];
 const ICON_TOKENS = ['--icon', '--icon-sm'];
-
-const ICON_NAMES: IconName[] = [
-  'arrow-left',
-  'chevron-left',
-  'chevron-right',
-  'chevron-down',
-  'plus',
-  'minus',
-  'check',
-  'mouse-pointer',
-  'square',
-  'columns-2',
-  'trash-2',
-  'scan',
-  'rotate-ccw',
-  'rotate-cw',
-  'copy',
-  'x',
-  'more-horizontal',
-  'undo-2',
-  'redo-2',
-];
 
 /** A representative slice of the furniture palette, mirroring the real swatches. */
 const PALETTE_SAMPLE = [

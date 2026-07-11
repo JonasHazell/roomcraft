@@ -102,6 +102,10 @@ const PATHS: Record<string, ReactNode> = {
 
 export type IconName = keyof typeof PATHS;
 
+/** Every icon name, in declaration order — the single source the style guide
+ *  iterates over so its icon grid can never fall out of sync with PATHS. */
+export const ICON_NAMES = Object.keys(PATHS) as IconName[];
+
 export function Icon({ name, ...props }: { name: IconName } & SVGProps<SVGSVGElement>) {
   return (
     <svg
