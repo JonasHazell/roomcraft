@@ -41,3 +41,9 @@ reference stays complete and never drifts from the app.
 - `npm test` — Vitest.
 
 Run the build/lint/test before committing UI changes.
+
+## Monetization
+
+For ideas on how to make money from the app (freemium/subscription, furniture
+catalog affiliate links, credits, B2B licensing, etc.), see
+[`docs/MONETIZATION.md`](docs/MONETIZATION.md).
