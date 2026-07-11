@@ -1,21 +1,19 @@
+import { useHistoryStore } from '../../store/useHistoryStore';
+import { Icon } from '../ui/Icon';
 import type { PlanTool } from './PlanEditor';
 
 interface Props {
   tool: PlanTool;
   error: string | null;
-  /** Touch-first device: swaps in tap/pinch hints and shows on-screen draw controls. */
+  /** Touch-first device: swaps in tap/pinch hints and hides the mouse-only zoom buttons. */
   coarse: boolean;
   /** True while an outline/interior chain is being drawn. */
   draftActive: boolean;
   /** Whether the room already has exterior walls — switches Draw ↔ Redraw wording. */
   hasExterior: boolean;
   canDelete: boolean;
-  /** Explanation of why deletion is disabled; shown as a tooltip. */
-  deleteDisabledReason?: string;
   /** True when the user has zoomed/panned away from the auto-fitted view. */
   canResetView: boolean;
-  /** Leaves the floor-plan editor and returns to the lobby. */
-  onDone: () => void;
   onSelectTool: () => void;
   onExteriorTool: () => void;
   onInteriorTool: () => void;
@@ -41,9 +39,16 @@ const HINTS: Record<PlanTool, string> = {
 const TOUCH_HINTS: Record<PlanTool, string> = {
   select: 'Tap a wall to select it · drag it to move · drag empty space to pan · pinch to zoom',
   exterior: 'Tap to place corners · tap the start point to close · pinch to zoom · Cancel to abort',
-  interior: 'Tap to place points · “Finish wall” ends the chain · pinch to zoom · Cancel to abort',
+  interior: 'Tap to place points · “Finish” ends the chain · pinch to zoom · Cancel to abort',
 };
 
+/**
+ * Floating controls for the floor-plan editor, laid out like the 3D view: the
+ * canvas stays full-bleed and the tools live in a bottom pill dock (view controls
+ * left, mode + contextual actions centre, undo/redo right) so the drawing is never
+ * covered. A guidance pill appears at the top only while drawing — select mode
+ * stays clean, the interactions discoverable by direct manipulation as in 3D.
+ */
 export function PlanToolbar({
   tool,
   error,
@@ -51,9 +56,7 @@ export function PlanToolbar({
   draftActive,
   hasExterior,
   canDelete,
-  deleteDisabledReason,
   canResetView,
-  onDone,
   onSelectTool,
   onExteriorTool,
   onInteriorTool,
@@ -64,76 +67,190 @@ export function PlanToolbar({
   onFinishDraft,
   onCancelDraft,
 }: Props) {
+  const canUndo = useHistoryStore((s) => s.canUndo);
+  const canRedo = useHistoryStore((s) => s.canRedo);
+  const undo = useHistoryStore((s) => s.undo);
+  const redo = useHistoryStore((s) => s.redo);
+
+  const drawing = tool !== 'select';
+  const hint = (coarse ? TOUCH_HINTS : HINTS)[tool];
+
   return (
-    <div className="plan-toolbar" role="toolbar" aria-label="Floor plan tools">
-      <div className="button-row">
-        <button type="button" className="btn btn-done" onClick={onDone}>
-          <span aria-hidden="true">←</span> Done · back to rooms
-        </button>
-        <button
-          type="button"
-          className={`btn ${tool === 'select' ? 'btn-accent' : ''}`}
-          onClick={onSelectTool}
-        >
-          Select
-        </button>
-        <button
-          type="button"
-          className={`btn ${tool === 'exterior' ? 'btn-accent' : ''}`}
-          onClick={onExteriorTool}
-        >
-          {hasExterior ? 'Redraw exterior walls…' : 'Draw exterior walls'}
-        </button>
-        <button
-          type="button"
-          className={`btn ${tool === 'interior' ? 'btn-accent' : ''}`}
-          onClick={onInteriorTool}
-        >
-          Draw interior wall
-        </button>
-        {/* On-screen equivalents of the Enter/Esc shortcuts, essential on touch. */}
-        {tool === 'interior' && draftActive && (
-          <button type="button" className="btn btn-accent" onClick={onFinishDraft}>
-            Finish wall
-          </button>
-        )}
-        {tool !== 'select' && (
-          <button type="button" className="btn" onClick={onCancelDraft}>
-            Cancel
-          </button>
-        )}
+    <>
+      {drawing && <p className="plan-hint-pill">{hint}</p>}
+      {error && (
+        <p className="plan-error-pill" role="alert">
+          {error}
+        </p>
+      )}
+
+      <div className="plan-dock" role="toolbar" aria-label="Floor plan tools">
+        {/* Left: view controls. Touch relies on pinch/drag (as in the 3D view), so
+            the +/− buttons are mouse-only; Fit view is always offered. */}
+        <div className="dock-slot dock-left">
+          <div className="selection-bar">
+            {!coarse && (
+              <>
+                <button
+                  type="button"
+                  className="sel-action sel-history"
+                  onClick={onZoomOut}
+                  title="Zoom out"
+                  aria-label="Zoom out"
+                >
+                  <span className="sel-icon" aria-hidden="true">
+                    <Icon name="minus" />
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="sel-action sel-history"
+                  onClick={onZoomIn}
+                  title="Zoom in"
+                  aria-label="Zoom in"
+                >
+                  <span className="sel-icon" aria-hidden="true">
+                    <Icon name="plus" />
+                  </span>
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              className="sel-action sel-history"
+              onClick={onResetView}
+              disabled={!canResetView}
+              title="Fit the whole drawing in view"
+              aria-label="Fit view"
+            >
+              <span className="sel-icon" aria-hidden="true">
+                <Icon name="scan" />
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Centre: while drawing, the finish/cancel actions; otherwise the mode
+            switches plus a Delete action when an interior wall is selected. */}
+        <div className="dock-slot dock-mid">
+          {drawing ? (
+            <div className="selection-bar">
+              {tool === 'interior' && draftActive && (
+                <button
+                  type="button"
+                  className="sel-action sel-active"
+                  onClick={onFinishDraft}
+                  title="Finish wall"
+                  aria-label="Finish wall"
+                >
+                  <span className="sel-icon" aria-hidden="true">
+                    <Icon name="check" />
+                  </span>
+                  <span className="sel-label">Finish</span>
+                </button>
+              )}
+              <button
+                type="button"
+                className="sel-action sel-danger"
+                onClick={onCancelDraft}
+                title="Cancel drawing"
+                aria-label="Cancel drawing"
+              >
+                <span className="sel-icon" aria-hidden="true">
+                  <Icon name="x" />
+                </span>
+                <span className="sel-label">Cancel</span>
+              </button>
+            </div>
+          ) : (
+            <div className="selection-bar">
+              <button
+                type="button"
+                className={`sel-action${tool === 'select' ? ' sel-active' : ''}`}
+                onClick={onSelectTool}
+                title="Select and move walls"
+                aria-label="Select"
+              >
+                <span className="sel-icon" aria-hidden="true">
+                  <Icon name="mouse-pointer" />
+                </span>
+                <span className="sel-label">Select</span>
+              </button>
+              <button
+                type="button"
+                className="sel-action"
+                onClick={onExteriorTool}
+                title={hasExterior ? 'Redraw exterior walls' : 'Draw exterior walls'}
+                aria-label={hasExterior ? 'Redraw exterior walls' : 'Draw exterior walls'}
+              >
+                <span className="sel-icon" aria-hidden="true">
+                  <Icon name="square" />
+                </span>
+                <span className="sel-label">{hasExterior ? 'Redraw' : 'Exterior'}</span>
+              </button>
+              <button
+                type="button"
+                className="sel-action"
+                onClick={onInteriorTool}
+                title="Draw interior wall"
+                aria-label="Draw interior wall"
+              >
+                <span className="sel-icon" aria-hidden="true">
+                  <Icon name="columns-2" />
+                </span>
+                <span className="sel-label">Interior</span>
+              </button>
+              {canDelete && (
+                <>
+                  <span className="sel-divider" aria-hidden="true" />
+                  <button
+                    type="button"
+                    className="sel-action sel-danger"
+                    onClick={onDelete}
+                    title="Delete the selected interior wall"
+                    aria-label="Delete wall"
+                  >
+                    <span className="sel-icon" aria-hidden="true">
+                      <Icon name="trash-2" />
+                    </span>
+                    <span className="sel-label">Delete</span>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Right: undo/redo, in the same spot as the 3D view's history pill. */}
+        <div className="dock-slot dock-right">
+          <div className="selection-bar">
+            <button
+              type="button"
+              className="sel-action sel-history"
+              onClick={undo}
+              disabled={!canUndo}
+              title="Undo (Ctrl/Cmd+Z)"
+              aria-label="Undo"
+            >
+              <span className="sel-icon" aria-hidden="true">
+                <Icon name="undo-2" />
+              </span>
+            </button>
+            <button
+              type="button"
+              className="sel-action sel-history"
+              onClick={redo}
+              disabled={!canRedo}
+              title="Redo (Ctrl/Cmd+Shift+Z)"
+              aria-label="Redo"
+            >
+              <span className="sel-icon" aria-hidden="true">
+                <Icon name="redo-2" />
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
-      <div className="button-row">
-        {/* The wrapper carries the tooltip: disabled buttons don't receive hover events themselves. */}
-        <span
-          className="btn-tooltip-wrap"
-          title={canDelete ? 'Delete the selected interior wall' : deleteDisabledReason}
-        >
-          <button type="button" className="btn" disabled={!canDelete} onClick={onDelete}>
-            Delete wall
-          </button>
-        </span>
-        <button type="button" className="btn btn-zoom" aria-label="Zoom out" onClick={onZoomOut}>
-          −
-        </button>
-        <button type="button" className="btn btn-zoom" aria-label="Zoom in" onClick={onZoomIn}>
-          +
-        </button>
-        <span
-          className="btn-tooltip-wrap"
-          title={
-            canResetView
-              ? 'Reset zoom and panning so the whole drawing is visible.'
-              : 'The view already follows the drawing — scroll, pinch or drag to zoom and pan.'
-          }
-        >
-          <button type="button" className="btn" disabled={!canResetView} onClick={onResetView}>
-            Fit view
-          </button>
-        </span>
-      </div>
-      <p className="plan-hint">{(coarse ? TOUCH_HINTS : HINTS)[tool]}</p>
-      {error && <p className="error">{error}</p>}
-    </div>
+    </>
   );
 }
