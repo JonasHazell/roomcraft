@@ -87,6 +87,8 @@ function WallMesh({
   const finish = materialSpec(useDesignStore((s) => s.design.wallMaterial));
   // Wall UVs are in metres (ExtrudeGeometry world UVs), so ~2 tiles/m.
   const bump = finish.bumpScale > 0 ? materialBump(finish.id, 'surface', 2) : null;
+  // Cap wall reflectivity like the floor, so a shiny finish can't flare to white.
+  const envIntensity = Math.min(finish.envMapIntensity, 0.4);
   const openings = useDesignStore((s) => s.design.openings);
   const selected = useUiStore(
     (s) => s.selection?.kind === 'wall' && s.selection.id === wall.id,
@@ -127,7 +129,7 @@ function WallMesh({
           color={wallColor}
           roughness={finish.roughness}
           metalness={finish.metalness}
-          envMapIntensity={finish.envMapIntensity}
+          envMapIntensity={envIntensity}
           bumpMap={bump}
           bumpScale={bump ? finish.bumpScale : 0}
           transparent={fadeable}

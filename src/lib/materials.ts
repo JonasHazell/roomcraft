@@ -37,12 +37,14 @@ export interface MaterialSpec {
  * read as clearly distinct once the scene has an environment map.
  */
 export const MATERIALS: MaterialSpec[] = [
-  { id: 'matte', label: 'Matte paint', roughness: 0.9, metalness: 0, envMapIntensity: 0.25, bumpScale: 0 },
-  { id: 'wood', label: 'Wood', roughness: 0.5, metalness: 0, envMapIntensity: 0.55, bumpScale: 0.05 },
-  { id: 'fabric', label: 'Fabric', roughness: 1, metalness: 0, envMapIntensity: 0.12, bumpScale: 0.04 },
-  { id: 'carpet', label: 'Carpet', roughness: 1, metalness: 0, envMapIntensity: 0.08, bumpScale: 0.12 },
-  { id: 'metal', label: 'Metal', roughness: 0.28, metalness: 1, envMapIntensity: 1, bumpScale: 0.02 },
-  { id: 'gloss', label: 'Gloss paint', roughness: 0.08, metalness: 0, envMapIntensity: 1, bumpScale: 0 },
+  { id: 'matte', label: 'Matte paint', roughness: 0.9, metalness: 0, envMapIntensity: 0.18, bumpScale: 0 },
+  { id: 'wood', label: 'Wood', roughness: 0.6, metalness: 0, envMapIntensity: 0.35, bumpScale: 0.05 },
+  { id: 'fabric', label: 'Fabric', roughness: 1, metalness: 0, envMapIntensity: 0.1, bumpScale: 0.04 },
+  { id: 'carpet', label: 'Carpet', roughness: 1, metalness: 0, envMapIntensity: 0.06, bumpScale: 0.12 },
+  // Just under full metalness so a metal surface keeps a sliver of its own colour
+  // and never collapses to black in a dim reflection, the way pure metal can.
+  { id: 'metal', label: 'Metal', roughness: 0.35, metalness: 0.9, envMapIntensity: 0.85, bumpScale: 0.02 },
+  { id: 'gloss', label: 'Gloss paint', roughness: 0.12, metalness: 0, envMapIntensity: 0.8, bumpScale: 0 },
 ];
 
 /** The finish every surface falls back to — the original flat matte look. */

@@ -26,6 +26,9 @@ export function Floor() {
   const finish = materialSpec(useDesignStore((s) => s.design.floorMaterial));
   // Floor UVs are in metres (ShapeGeometry), so ~2 tiles/m gives a 0.5 m pattern.
   const bump = finish.bumpScale > 0 ? materialBump(finish.id, 'surface', 2) : null;
+  // The floor is large and often seen at a grazing angle, where reflections peak.
+  // Cap its reflectivity so even a shiny finish can't flare out to white.
+  const envIntensity = Math.min(finish.envMapIntensity, 0.4);
 
   const geometry = useMemo(() => {
     const poly = floorPolygon(walls);
@@ -48,7 +51,7 @@ export function Floor() {
         color={floorColor}
         roughness={finish.roughness}
         metalness={finish.metalness}
-        envMapIntensity={finish.envMapIntensity}
+        envMapIntensity={envIntensity}
         bumpMap={bump}
         bumpScale={bump ? finish.bumpScale : 0}
       />
