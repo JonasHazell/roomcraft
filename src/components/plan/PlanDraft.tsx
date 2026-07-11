@@ -56,6 +56,11 @@ export function PlanDraft({ draft, hover, guide, closable }: Props) {
       {draft.map((p, i) => (
         <circle key={i} cx={p.x} cy={p.z} r={0.08} className="draft-point" />
       ))}
+      {/* Before any corner is placed there is no rubber band to preview from, so
+          show the pending first corner directly under the cursor. */}
+      {draft.length === 0 && hover && (
+        <circle cx={hover.x} cy={hover.z} r={0.08} className="draft-point" />
+      )}
       {closable && draft[0] && (
         <circle cx={draft[0].x} cy={draft[0].z} r={0.22} className="draft-close-ring" />
       )}
