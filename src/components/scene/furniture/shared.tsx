@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react';
 import * as THREE from 'three';
 import type { FurnitureOptions, FurnitureSize } from '../../../types';
 import { materialSpec, type MaterialSpec } from '../../../lib/materials';
-import { materialBump } from '../materialTextures';
+import { materialBump, materialMap } from '../materialTextures';
 
 export interface FurnitureProps {
   size: FurnitureSize;
@@ -46,11 +46,16 @@ export function Mat({
   metalness?: number;
 }) {
   const finish = useContext(MaterialContext);
-  // Tile the finish's relief a few times across each piece's faces.
+  // Tile the finish's pattern/relief a couple of times across each piece's faces.
   const bump = finish.bumpScale > 0 ? materialBump(finish.id, 'furniture', 2) : null;
+  const map = materialMap(finish.id, 'furniture', 2);
   return (
+    // Key by finish so switching finish remounts the material: adding/removing a
+    // `map` changes the shader, which a plain prop update wouldn't recompile.
     <meshStandardMaterial
+      key={finish.id}
       color={color}
+      map={map}
       roughness={roughness ?? finish.roughness}
       metalness={metalness ?? finish.metalness}
       envMapIntensity={finish.envMapIntensity}

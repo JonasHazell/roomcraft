@@ -13,6 +13,12 @@ describe('materials', () => {
     expect(MATERIALS.some((m) => m.id === DEFAULT_MATERIAL)).toBe(true);
   });
 
+  it('includes the patterned stone/tile finishes', () => {
+    for (const id of ['concrete', 'tile', 'stone', 'marble']) {
+      expect(MATERIALS.some((m) => m.id === id)).toBe(true);
+    }
+  });
+
   it('keeps every finish within valid PBR ranges', () => {
     for (const m of MATERIALS) {
       expect(m.roughness).toBeGreaterThanOrEqual(0);

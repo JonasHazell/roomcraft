@@ -28,6 +28,12 @@ export interface MaterialSpec {
    * smooth (matte paint, gloss). See {@link ../components/scene/materialTextures}.
    */
   bumpScale: number;
+  /**
+   * How many metres of a surface one tile of the procedural texture spans, so the
+   * pattern is sized in the real world (e.g. ~0.3 m floor tiles, large marble
+   * veining). Small furniture uses a fixed tiling instead.
+   */
+  texScale: number;
 }
 
 /**
@@ -37,14 +43,20 @@ export interface MaterialSpec {
  * read as clearly distinct once the scene has an environment map.
  */
 export const MATERIALS: MaterialSpec[] = [
-  { id: 'matte', label: 'Matte paint', roughness: 0.9, metalness: 0, envMapIntensity: 0.18, bumpScale: 0 },
-  { id: 'wood', label: 'Wood', roughness: 0.6, metalness: 0, envMapIntensity: 0.35, bumpScale: 0.05 },
-  { id: 'fabric', label: 'Fabric', roughness: 1, metalness: 0, envMapIntensity: 0.1, bumpScale: 0.04 },
-  { id: 'carpet', label: 'Carpet', roughness: 1, metalness: 0, envMapIntensity: 0.06, bumpScale: 0.12 },
+  { id: 'matte', label: 'Matte paint', roughness: 0.9, metalness: 0, envMapIntensity: 0.18, bumpScale: 0, texScale: 0.5 },
+  { id: 'wood', label: 'Wood', roughness: 0.6, metalness: 0, envMapIntensity: 0.35, bumpScale: 0.05, texScale: 0.6 },
+  { id: 'fabric', label: 'Fabric', roughness: 1, metalness: 0, envMapIntensity: 0.1, bumpScale: 0.04, texScale: 0.4 },
+  { id: 'carpet', label: 'Carpet', roughness: 1, metalness: 0, envMapIntensity: 0.06, bumpScale: 0.12, texScale: 0.3 },
   // Just under full metalness so a metal surface keeps a sliver of its own colour
   // and never collapses to black in a dim reflection, the way pure metal can.
-  { id: 'metal', label: 'Metal', roughness: 0.35, metalness: 0.9, envMapIntensity: 0.85, bumpScale: 0.02 },
-  { id: 'gloss', label: 'Gloss paint', roughness: 0.12, metalness: 0, envMapIntensity: 0.8, bumpScale: 0 },
+  { id: 'metal', label: 'Metal', roughness: 0.35, metalness: 0.9, envMapIntensity: 0.85, bumpScale: 0.02, texScale: 0.5 },
+  { id: 'gloss', label: 'Gloss paint', roughness: 0.12, metalness: 0, envMapIntensity: 0.8, bumpScale: 0, texScale: 0.5 },
+  // Patterned finishes: these also carry a colour pattern (a `map`), so the piece's
+  // colour tints the stone/tile/veining rather than filling a flat surface.
+  { id: 'concrete', label: 'Concrete', roughness: 0.92, metalness: 0, envMapIntensity: 0.14, bumpScale: 0.05, texScale: 1.4 },
+  { id: 'tile', label: 'Tile', roughness: 0.32, metalness: 0, envMapIntensity: 0.6, bumpScale: 0.06, texScale: 0.62 },
+  { id: 'stone', label: 'Stone', roughness: 0.85, metalness: 0, envMapIntensity: 0.2, bumpScale: 0.16, texScale: 0.9 },
+  { id: 'marble', label: 'Marble', roughness: 0.22, metalness: 0, envMapIntensity: 0.6, bumpScale: 0.012, texScale: 1.6 },
 ];
 
 /** The finish every surface falls back to — the original flat matte look. */
