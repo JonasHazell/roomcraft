@@ -29,17 +29,17 @@ interface Props {
 
 const HINTS: Record<PlanTool, string> = {
   select:
-    'Click a wall to select it · drag perpendicular to move · scroll to zoom, drag on empty space to pan',
+    'Click a wall to select it and type its exact length · drag perpendicular to move · scroll to zoom, drag on empty space to pan',
   exterior:
-    'Click to place corners · click the start point to close · scroll to zoom, middle button pans · Esc cancels',
+    'Press, drag out the wall, release to place a corner — the length shows as you drag · release on the start point to close · Esc cancels',
   interior:
-    'Click to place wall points · Enter or double-click to finish · scroll to zoom, middle button pans · Esc cancels',
+    'Press, drag out the wall, release to place a point — the length shows as you drag · Enter or double-click to finish · Esc cancels',
 };
 
 const TOUCH_HINTS: Record<PlanTool, string> = {
-  select: 'Tap a wall to select it · drag it to move · drag empty space to pan · pinch to zoom',
-  exterior: 'Tap to place corners · tap the start point to close · pinch to zoom · Cancel to abort',
-  interior: 'Tap to place points · “Finish” ends the chain · pinch to zoom · Cancel to abort',
+  select: 'Tap a wall to select it and type its exact length · drag it to move · drag empty space to pan · pinch to zoom',
+  exterior: 'Press, drag out the wall, release to drop a corner — the length shows as you drag · release on the start point to close',
+  interior: 'Press, drag out the wall, release to drop a point — the length shows as you drag · “Finish” ends the chain',
 };
 
 /**

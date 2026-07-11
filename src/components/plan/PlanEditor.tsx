@@ -153,18 +153,12 @@ export function PlanEditor() {
       capture(e);
       return;
     }
-    const raw = viewport.toWorld(e);
     if (tool === 'exterior' || tool === 'interior') {
-      // A click/tap near the start corner seals the exterior outline.
-      if (tool === 'exterior' && draft.length >= 4 && dist(raw, draft[0]) <= CLOSE_RADIUS) {
-        tryClose(draft);
-        return;
-      }
-      // The first corner anchors on press so it is visible while the wall is
-      // dragged out; every corner is (re)placed on release. That makes a
-      // press-drag-release draw one segment and a plain tap place one corner —
-      // identically on mouse and touch, with the live length shown throughout.
-      if (draft.length === 0) draw.place(drawTarget(raw).point);
+      // Nothing is committed on press: pressing only starts the gesture. Dragging
+      // previews the corner and its live distance to the previous one, and
+      // releasing places it where the measurement reads right (or seals the
+      // outline if released on the start corner). A plain tap is a zero-length
+      // drag, so it places one corner — identically on mouse and touch.
       drawGestureRef.current = { pointerId: e.pointerId };
       capture(e);
       return;
@@ -248,10 +242,12 @@ export function PlanEditor() {
       cornerDragRef.current = null;
       setActiveWallIds([]);
     }
-    // End of a drawing gesture: place the corner at the release point. A drag
-    // lands the far corner of the segment; a tap lands back on the same spot
-    // (deduped against the last corner). Using the release point makes drawing
-    // work on touch, which has no hover to preview from.
+    // End of a drawing gesture: place the corner at the release point, or seal
+    // the outline if released on the start corner. Every corner — including the
+    // first — commits here on release, never on press, so a press-drag-release
+    // lands the corner where the live measurement reads right. A plain tap is a
+    // zero-length drag that places one corner. Using the release point makes
+    // drawing work on touch, which has no hover to preview from.
     const gesture = drawGestureRef.current;
     if (gesture && gesture.pointerId === e.pointerId) {
       drawGestureRef.current = null;
