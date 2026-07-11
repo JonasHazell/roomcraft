@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from 'react';
+import { lazy, Suspense, useEffect, useSyncExternalStore } from 'react';
 import { Lobby } from './components/lobby/Lobby';
 import { StyleGuide } from './components/styleguide/StyleGuide';
 import { SelectionBar } from './components/panel/SelectionBar';
@@ -11,7 +11,6 @@ import { ValidationScore } from './components/panel/ValidationScore';
 import { ProposalSwitcher } from './components/panel/ProposalSwitcher';
 import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { DialogHost } from './components/panel/DialogHost';
-import { Scene } from './components/scene/Scene';
 import { Icon } from './components/ui/Icon';
 import { PlanEditor } from './components/plan/PlanEditor';
 import { useDesignStore } from './store/useDesignStore';
@@ -19,6 +18,10 @@ import { useUiStore } from './store/useUiStore';
 import { useDialogStore } from './store/useDialogStore';
 import { useHistoryStore } from './store/useHistoryStore';
 import { backToLobby } from './lib/nav';
+
+// three.js and the whole 3D scene are the bulk of the bundle; load them only
+// when a room is actually opened so the lobby/first paint stays light.
+const Scene = lazy(() => import('./components/scene/Scene').then((m) => ({ default: m.Scene })));
 
 /** The 3D furnishing view for the active room: only furnishing plus a way back. */
 function FurnishView() {
@@ -34,7 +37,9 @@ function FurnishView() {
   const overlayOpen = !!panel || !!furnitureDialog || !!dialogActive || proposalMenuOpen;
   return (
     <main className="viewport">
-      <Scene />
+      <Suspense fallback={<div className="scene-loading">Loading 3D view…</div>}>
+        <Scene />
+      </Suspense>
       <div className="room-topbar">
         <button
           type="button"

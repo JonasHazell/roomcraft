@@ -85,6 +85,15 @@ Optional environment variables:
 
 - `PORT` — backend port (default `8787`)
 - `AI_MODEL` — Claude model to use (default `sonnet`)
+- `AI_MAX_CONCURRENT` — how many AI proposals may run at once (default `2`)
+- `AI_MAX_QUEUE` — how many extra requests may wait for a slot before the server
+  sheds load with a 503 (default `8`)
+- `AI_RATE_LIMIT_MAX` / `AI_RATE_LIMIT_WINDOW_MS` — per-IP request cap and window
+  for `/api/proposals` (default `20` requests per `60000` ms)
+
+The server also exposes `GET /api/health` for platform health checks and sends
+baseline security headers (a strict CSP, `X-Content-Type-Options`,
+`X-Frame-Options`, `Referrer-Policy`) on every response.
 
 ## Deployment (Railway)
 
