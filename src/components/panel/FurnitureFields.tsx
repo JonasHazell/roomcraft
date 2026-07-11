@@ -1,5 +1,6 @@
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { FURNITURE_OPTIONS, normalizeOptions } from '../../lib/furnitureOptions';
+import { MATERIAL_CHOICES, normalizeMaterial } from '../../lib/materials';
 import { ColorField, CountField, NumberField, SelectField, ToggleField } from './fields';
 import type { FurnitureDraft, FurnitureFieldPatch } from './furnitureDraft';
 
@@ -129,6 +130,13 @@ export function FurnitureFields({
         label="Color"
         value={value.color}
         onChange={(color) => onChange({ color })}
+      />
+      <SelectField
+        label="Material"
+        title="Surface finish — changes how light reflects off the piece"
+        value={normalizeMaterial(value.material)}
+        choices={MATERIAL_CHOICES}
+        onChange={(material) => onChange({ material })}
       />
     </>
   );

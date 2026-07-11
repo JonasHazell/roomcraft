@@ -1,5 +1,7 @@
+import { createContext, useContext } from 'react';
 import * as THREE from 'three';
 import type { FurnitureOptions, FurnitureSize } from '../../../types';
+import { materialSpec, type MaterialSpec } from '../../../lib/materials';
 
 export interface FurnitureProps {
   size: FurnitureSize;
@@ -11,6 +13,14 @@ export interface FurnitureProps {
 
 export const SELECT_EMISSIVE = '#2f6fdd';
 
+/**
+ * The finish for the piece currently being rendered. {@link FurnitureMesh} wraps
+ * each piece in a provider so every {@link Mat} inside picks up the chosen
+ * material without threading it through each component; the default is the plain
+ * matte finish, so a piece rendered outside a provider looks as it always has.
+ */
+export const MaterialContext = createContext<MaterialSpec>(materialSpec(undefined));
+
 const scratch = new THREE.Color();
 
 /** Lighter shade of a hex color (amt 0–1 toward white). */
@@ -18,19 +28,28 @@ export function shade(color: string, amt: number): string {
   return `#${scratch.set(color).lerp(new THREE.Color('#ffffff'), amt).getHexString()}`;
 }
 
+/**
+ * Standard material for a furniture surface. Roughness/metalness come from the
+ * piece's chosen finish ({@link MaterialContext}); an explicit `roughness` or
+ * `metalness` prop overrides it for a fixed detail (a screen, a metal handle).
+ */
 export function Mat({
   color,
   selected,
-  roughness = 0.85,
+  roughness,
+  metalness,
 }: {
   color: string;
   selected: boolean;
   roughness?: number;
+  metalness?: number;
 }) {
+  const finish = useContext(MaterialContext);
   return (
     <meshStandardMaterial
       color={color}
-      roughness={roughness}
+      roughness={roughness ?? finish.roughness}
+      metalness={metalness ?? finish.metalness}
       emissive={selected ? SELECT_EMISSIVE : '#000000'}
       emissiveIntensity={selected ? 0.25 : 0}
     />

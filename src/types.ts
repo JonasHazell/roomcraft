@@ -89,6 +89,12 @@ export interface FurnitureItem {
   elevation: number;
   color: string;
   /**
+   * Surface finish id (see {@link ../lib/materials}). Optional: pieces created
+   * before the field existed — or by the AI — fall back to the default matte
+   * finish, resolved wherever the material is read.
+   */
+  material?: string;
+  /**
    * Per-type customization (shelves, doors, pillows …). Optional: pieces created
    * before the field existed — or by the AI — fall back to the type's defaults,
    * resolved wherever the options are read (see {@link ../lib/furnitureOptions}).
@@ -104,6 +110,8 @@ export interface FurnitureLibraryEntry {
   size: FurnitureSize;
   elevation: number;
   color: string;
+  /** Saved surface finish; see {@link FurnitureItem.material}. */
+  material?: string;
   /** Saved per-type customization; see {@link FurnitureItem.options}. */
   options?: FurnitureOptions;
 }
@@ -120,6 +128,10 @@ export interface Proposal {
   floorColor: string;
   /** Wall colour for this furnishing variant (#rrggbb). */
   wallColor: string;
+  /** Floor surface finish for this variant; see {@link ../lib/materials}. */
+  floorMaterial: string;
+  /** Wall surface finish for this variant; see {@link ../lib/materials}. */
+  wallMaterial: string;
 }
 
 export const SCHEMA_VERSION = 5;
@@ -153,6 +165,10 @@ export interface Design {
   floorColor: string;
   /** The active proposal's wall colour — mirrored like `floorColor`. */
   wallColor: string;
+  /** The active proposal's floor finish — mirrored like `floorColor`. */
+  floorMaterial: string;
+  /** The active proposal's wall finish — mirrored like `floorColor`. */
+  wallMaterial: string;
   /** Named furnishing variants of this room; always at least one. */
   proposals: Proposal[];
   /** Which proposal `furniture`/`floorColor`/`wallColor` currently mirror. */

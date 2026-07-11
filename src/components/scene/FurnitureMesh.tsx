@@ -4,10 +4,11 @@ import { useCursor } from '@react-three/drei';
 import * as THREE from 'three';
 import type { FurnitureKind } from '../../types';
 import { normalizeOptions } from '../../lib/furnitureOptions';
+import { materialSpec } from '../../lib/materials';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
-import { SELECT_EMISSIVE, type FurnitureProps } from './furniture/shared';
+import { MaterialContext, SELECT_EMISSIVE, type FurnitureProps } from './furniture/shared';
 import { Bed } from './furniture/Bed';
 import { Sofa } from './furniture/Sofa';
 import { Table } from './furniture/Table';
@@ -108,12 +109,14 @@ export function FurnitureMesh({ id }: { id: string }) {
       }}
       onPointerOut={() => setHovered(false)}
     >
-      <Piece
-        size={item.size}
-        color={item.color}
-        selected={selected}
-        options={normalizeOptions(item.kind, item.options)}
-      />
+      <MaterialContext.Provider value={materialSpec(item.material)}>
+        <Piece
+          size={item.size}
+          color={item.color}
+          selected={selected}
+          options={normalizeOptions(item.kind, item.options)}
+        />
+      </MaterialContext.Provider>
       {selected && (
         // The selection is projected down onto the floor so the footprint is
         // visible even when the furniture hangs above it.

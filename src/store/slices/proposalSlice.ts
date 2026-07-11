@@ -21,13 +21,15 @@ export function createProposalSlice(set: DesignSet, get: DesignGet): ProposalAct
       const id = nanoid(8);
       const furniture = copyCurrent ? cloneFurniture(d.furniture) : [];
       // A new variant starts from the current palette; the user tweaks it after.
-      const { floorColor, wallColor } = d;
+      const { floorColor, wallColor, floorMaterial, wallMaterial } = d;
       const proposal: Proposal = {
         id,
         name: name?.trim() || nextProposalName(d.proposals),
         furniture,
         floorColor,
         wallColor,
+        floorMaterial,
+        wallMaterial,
       };
       set({
         design: touch({
@@ -37,6 +39,8 @@ export function createProposalSlice(set: DesignSet, get: DesignGet): ProposalAct
           furniture,
           floorColor,
           wallColor,
+          floorMaterial,
+          wallMaterial,
         }),
       });
       return id;
@@ -49,12 +53,17 @@ export function createProposalSlice(set: DesignSet, get: DesignGet): ProposalAct
       const id = nanoid(8);
       const floorColor = colors?.floorColor ?? d.floorColor;
       const wallColor = colors?.wallColor ?? d.wallColor;
+      // A generated proposal keeps the current room's materials — the AI picks
+      // colours, not finishes.
+      const { floorMaterial, wallMaterial } = d;
       const proposal: Proposal = {
         id,
         name: name.trim() || nextProposalName(d.proposals),
         furniture,
         floorColor,
         wallColor,
+        floorMaterial,
+        wallMaterial,
       };
       set({
         design: touch({
@@ -64,6 +73,8 @@ export function createProposalSlice(set: DesignSet, get: DesignGet): ProposalAct
           furniture,
           floorColor,
           wallColor,
+          floorMaterial,
+          wallMaterial,
         }),
       });
       return id;
@@ -84,6 +95,8 @@ export function createProposalSlice(set: DesignSet, get: DesignGet): ProposalAct
           furniture: target.furniture.map((f) => clampFurniture(f, poly)),
           floorColor: target.floorColor,
           wallColor: target.wallColor,
+          floorMaterial: target.floorMaterial,
+          wallMaterial: target.wallMaterial,
         }),
       });
     },
@@ -134,6 +147,8 @@ export function createProposalSlice(set: DesignSet, get: DesignGet): ProposalAct
           furniture: nextActive.furniture.map((f) => clampFurniture(f, poly)),
           floorColor: nextActive.floorColor,
           wallColor: nextActive.wallColor,
+          floorMaterial: nextActive.floorMaterial,
+          wallMaterial: nextActive.wallMaterial,
         }),
       });
     },

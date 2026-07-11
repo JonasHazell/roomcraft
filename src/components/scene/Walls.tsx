@@ -5,6 +5,7 @@ import type { Wall, WallOpening } from '../../types';
 import { WALL_T, buildWallGeometry, wallTransform } from '../../lib/geometry';
 import type { ThreeEvent } from '@react-three/fiber';
 import { exteriorEndExtension, outwardNormal, wallLen, wallMidpoint } from '../../lib/polygon';
+import { materialSpec } from '../../lib/materials';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { SELECT_EMISSIVE } from './furniture/shared';
@@ -82,6 +83,7 @@ function WallMesh({
 }) {
   const height = useDesignStore((s) => s.design.room.height);
   const wallColor = useDesignStore((s) => s.design.wallColor);
+  const finish = materialSpec(useDesignStore((s) => s.design.wallMaterial));
   const openings = useDesignStore((s) => s.design.openings);
   const selected = useUiStore(
     (s) => s.selection?.kind === 'wall' && s.selection.id === wall.id,
@@ -120,7 +122,8 @@ function WallMesh({
         <meshStandardMaterial
           ref={matRef}
           color={wallColor}
-          roughness={0.95}
+          roughness={finish.roughness}
+          metalness={finish.metalness}
           transparent={fadeable}
           emissive={selected ? SELECT_EMISSIVE : '#000000'}
           emissiveIntensity={selected ? 0.25 : 0}

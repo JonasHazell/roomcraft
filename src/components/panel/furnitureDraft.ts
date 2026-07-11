@@ -1,5 +1,6 @@
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { defaultOptions, normalizeOptions } from '../../lib/furnitureOptions';
+import { DEFAULT_MATERIAL, normalizeMaterial } from '../../lib/materials';
 import type {
   FurnitureKind,
   FurnitureLibraryEntry,
@@ -14,6 +15,7 @@ export interface FurnitureDraft {
   size: FurnitureSize;
   elevation: number;
   color: string;
+  material?: string;
   options?: FurnitureOptions;
 }
 
@@ -22,6 +24,7 @@ export type FurnitureFieldPatch = {
   size?: Partial<FurnitureSize>;
   elevation?: number;
   color?: string;
+  material?: string;
   /** Per-type option changes, merged onto the current options. */
   options?: FurnitureOptions;
 };
@@ -35,6 +38,7 @@ export function draftFor(kind: FurnitureKind): FurnitureDraft {
     size: { ...entry.defaultSize },
     elevation: 0,
     color: entry.defaultColor,
+    material: DEFAULT_MATERIAL,
     options: defaultOptions(kind),
   };
 }
@@ -47,6 +51,7 @@ export function draftFromLibrary(entry: FurnitureLibraryEntry): FurnitureDraft {
     size: { ...entry.size },
     elevation: entry.elevation,
     color: entry.color,
+    material: normalizeMaterial(entry.material),
     options: normalizeOptions(entry.kind, entry.options),
   };
 }
@@ -57,6 +62,7 @@ export function applyPatch(draft: FurnitureDraft, patch: FurnitureFieldPatch): F
     ...draft,
     name: patch.name ?? draft.name,
     color: patch.color ?? draft.color,
+    material: patch.material ?? draft.material,
     elevation: patch.elevation != null ? Math.max(0, patch.elevation) : draft.elevation,
     size: patch.size ? { ...draft.size, ...patch.size } : draft.size,
     options: patch.options

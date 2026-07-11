@@ -374,7 +374,7 @@ export function StyleGuide() {
 
         <Demo
           title="Dock pill bar"
-          note="The floating rounded bar (.selection-bar) of .sel-action pills — the contextual selection bar in the 3D view and the tool bar in the plan editor. In the app three of these sit in a .selection-bar-wrap grid: add left · contextual centre · undo/redo right."
+          note="The floating rounded bar (.selection-bar) of .sel-action pills — the contextual selection bar in the 3D view and the tool bar in the plan editor. Pills can hold a glyph, a colour swatch (.sel-color) or a dropdown (.sel-select). In the app three of these sit in a .selection-bar-wrap grid: add left · contextual centre · undo/redo right."
         >
           <div className="selection-bar" role="toolbar" aria-label="Example dock bar" style={{ animation: 'none' }}>
             <button type="button" className="sel-action sel-active">
@@ -405,6 +405,14 @@ export function StyleGuide() {
                 onChange={(e) => setColor(e.target.value)}
               />
               <span className="sel-label">Wall</span>
+            </label>
+            <label className="sel-action sel-select" title="Wall material">
+              <span className="sel-label">Material</span>
+              <select className="sel-select-input" defaultValue="wood" aria-label="Wall material">
+                <option value="matte">Matte paint</option>
+                <option value="wood">Wood</option>
+                <option value="metal">Metal</option>
+              </select>
             </label>
             <span className="sel-divider" aria-hidden="true" />
             <button type="button" className="sel-action sel-history" aria-label="Undo">

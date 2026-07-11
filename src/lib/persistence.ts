@@ -5,9 +5,16 @@ import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, HEX_COLOR_RE, SCHEMA_VERSION }
 import { isAxisParallel, validateExteriorLoop } from './polygon';
 import { FURNITURE_KINDS } from './furnitureCatalog';
 import { normalizeOptions } from './furnitureOptions';
+import { DEFAULT_MATERIAL, normalizeMaterial } from './materials';
 
 const color = z.string().regex(HEX_COLOR_RE, 'invalid color code (expected #rrggbb)');
 const meters = (max: number) => z.number().min(0).max(max);
+// A surface finish id; unknown/missing ids normalize to the default matte finish,
+// so saves made before materials existed load unchanged.
+const material = z
+  .string()
+  .optional()
+  .transform((v) => normalizeMaterial(v));
 
 const furnitureSizeSchema = z.object({
   width: z.number().min(0.01).max(100),
@@ -32,11 +39,17 @@ const furnitureSchema = z
     /** Missing in saves made before the field existed — falls back to the floor. */
     elevation: meters(20).default(0),
     color,
+    /** Missing in saves made before the field existed — normalized to the default finish. */
+    material: z.string().optional(),
     /** Missing in saves made before the field existed — normalized to the kind's defaults. */
     options: furnitureOptionsSchema.optional(),
   })
-  // Normalize options against the kind so stored/hand-edited data is always sound.
-  .transform((f) => ({ ...f, options: normalizeOptions(f.kind, f.options) }));
+  // Normalize options/material against the kind so stored/hand-edited data is always sound.
+  .transform((f) => ({
+    ...f,
+    material: normalizeMaterial(f.material),
+    options: normalizeOptions(f.kind, f.options),
+  }));
 
 // ---- v1 (older format: rectangular room, walls by compass direction) ----
 
@@ -170,6 +183,8 @@ const proposalSchemaV5 = z.object({
   furniture: z.array(furnitureSchema).max(500),
   floorColor: color.default(DEFAULT_FLOOR_COLOR),
   wallColor: color.default(DEFAULT_WALL_COLOR),
+  floorMaterial: material,
+  wallMaterial: material,
 });
 
 const roomSchemaEntryV5 = z.object({
@@ -183,6 +198,8 @@ const roomSchemaEntryV5 = z.object({
   // Live mirror of the active proposal; normalizeProposals overwrites it on load.
   floorColor: color.default(DEFAULT_FLOOR_COLOR),
   wallColor: color.default(DEFAULT_WALL_COLOR),
+  floorMaterial: material,
+  wallMaterial: material,
   proposals: z.array(proposalSchemaV5).min(1).max(50),
   activeProposalId: z.string().min(1),
 });
@@ -291,6 +308,9 @@ export function migrateV4toV5(p: ProjectV4): Project {
     activeRoomId: p.activeRoomId,
     rooms: p.rooms.map((r) => {
       const { floorColor, wallColor } = r.room;
+      // v4 had no materials — every surface starts on the default matte finish.
+      const floorMaterial = DEFAULT_MATERIAL;
+      const wallMaterial = DEFAULT_MATERIAL;
       return {
         id: r.id,
         name: r.name,
@@ -301,7 +321,15 @@ export function migrateV4toV5(p: ProjectV4): Project {
         furniture: r.furniture,
         floorColor,
         wallColor,
-        proposals: r.proposals.map((pr) => ({ ...pr, floorColor, wallColor })),
+        floorMaterial,
+        wallMaterial,
+        proposals: r.proposals.map((pr) => ({
+          ...pr,
+          floorColor,
+          wallColor,
+          floorMaterial,
+          wallMaterial,
+        })),
         activeProposalId: r.activeProposalId,
       };
     }),
@@ -318,7 +346,14 @@ export function syncActiveProposal(d: Design): Design {
     ...d,
     proposals: d.proposals.map((p) =>
       p.id === d.activeProposalId
-        ? { ...p, furniture: d.furniture, floorColor: d.floorColor, wallColor: d.wallColor }
+        ? {
+            ...p,
+            furniture: d.furniture,
+            floorColor: d.floorColor,
+            wallColor: d.wallColor,
+            floorMaterial: d.floorMaterial,
+            wallMaterial: d.wallMaterial,
+          }
         : p,
     ),
   };
@@ -337,6 +372,8 @@ export function normalizeProposals(d: Design): Design {
       furniture: d.furniture ?? [],
       floorColor: d.floorColor ?? DEFAULT_FLOOR_COLOR,
       wallColor: d.wallColor ?? DEFAULT_WALL_COLOR,
+      floorMaterial: normalizeMaterial(d.floorMaterial),
+      wallMaterial: normalizeMaterial(d.wallMaterial),
     };
     return {
       ...d,
@@ -345,6 +382,8 @@ export function normalizeProposals(d: Design): Design {
       furniture: proposal.furniture,
       floorColor: proposal.floorColor,
       wallColor: proposal.wallColor,
+      floorMaterial: proposal.floorMaterial,
+      wallMaterial: proposal.wallMaterial,
     };
   }
   const active = d.proposals.find((p) => p.id === d.activeProposalId) ?? d.proposals[0];
@@ -354,6 +393,8 @@ export function normalizeProposals(d: Design): Design {
     furniture: active.furniture,
     floorColor: active.floorColor,
     wallColor: active.wallColor,
+    floorMaterial: active.floorMaterial,
+    wallMaterial: active.wallMaterial,
   };
 }
 
@@ -436,9 +477,14 @@ const libraryEntrySchema = z
     size: furnitureSizeSchema,
     elevation: meters(20).default(0),
     color,
+    material: z.string().optional(),
     options: furnitureOptionsSchema.optional(),
   })
-  .transform((e) => ({ ...e, options: normalizeOptions(e.kind, e.options) }));
+  .transform((e) => ({
+    ...e,
+    material: normalizeMaterial(e.material),
+    options: normalizeOptions(e.kind, e.options),
+  }));
 
 /** Reads the library; invalid entries are filtered out instead of throwing. */
 export function listFurnitureLibrary(): FurnitureLibraryEntry[] {

@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import type { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { floorPolygon } from '../../lib/polygon';
+import { materialSpec } from '../../lib/materials';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 
@@ -21,6 +22,7 @@ function selectFloorOnStillClick(e: ThreeEvent<MouseEvent>) {
 export function Floor() {
   const walls = useDesignStore((s) => s.design.walls);
   const floorColor = useDesignStore((s) => s.design.floorColor);
+  const finish = materialSpec(useDesignStore((s) => s.design.floorMaterial));
 
   const geometry = useMemo(() => {
     const poly = floorPolygon(walls);
@@ -39,7 +41,11 @@ export function Floor() {
       receiveShadow
       onClick={selectFloorOnStillClick}
     >
-      <meshStandardMaterial color={floorColor} roughness={0.9} />
+      <meshStandardMaterial
+        color={floorColor}
+        roughness={finish.roughness}
+        metalness={finish.metalness}
+      />
     </mesh>
   );
 }
