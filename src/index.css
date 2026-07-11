@@ -2516,6 +2516,20 @@ select {
   flex-wrap: wrap;
 }
 
+/* The floor-plan chrome positions itself absolutely over the viewport; in the
+   gallery we lay the pieces out in normal flow so they can simply be seen. */
+.sg-plan-stage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.sg-static-pill {
+  position: static;
+  transform: none;
+}
+
 .sg-footer {
   padding: 24px 32px 40px;
   border-top: 1px solid var(--line);

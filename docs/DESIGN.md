@@ -81,6 +81,18 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   `.window`) to tag kind; `.section` (`<details>`) for collapsible groups; `.modal`
   (+ `.modal-sm`, `.modal-head`, `.modal-body`, `.modal-foot`, `.modal-message`)
   for dialogs; `.side-panel` for the right-hand panel.
+- **Docked controls** — the floating rounded pill bar is `.selection-bar` filled
+  with `.sel-action` pills (each an optional `.sel-icon` + `.sel-label`); variants
+  `.sel-active` (ink-filled current mode), `.sel-danger`, `.sel-history` (icon-only
+  undo/redo), and `.sel-color` (a round `.sel-color-input` swatch), split by
+  `.sel-divider`. Three bars sit in a `.selection-bar-wrap` three-slot grid — add
+  left · contextual centre · undo/redo right — and the plan editor reuses the same
+  family inside its `.plan-dock`.
+- **Floating plan chrome** — the floor-plan editor floats these over the canvas:
+  `.plan-hint-pill` (guidance) and `.plan-error-pill` (failure) top-centre,
+  `.plan-length-input` for typing an exact edge length, the `.plan-room-panel`
+  ceiling-height chip, and the `.plan-wall-panel` card for the selected wall (built
+  from `.hint` + `.field-grid`).
 - **Feedback** — one `.hint` for guidance, one `.error` for failures (reuse them —
   don't roll new ones). `.score-badge` with `.score-good/-mid/-bad`; `.severity`
   with `.severity-1`…`-5` (5 = worst).
