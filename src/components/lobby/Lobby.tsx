@@ -1,6 +1,7 @@
 import { useDesignStore } from '../../store/useDesignStore';
 import { confirmDialog, promptDialog } from '../../store/useDialogStore';
 import { createRoomAndDraw, openRoomToFurnish, openRoomToPlan } from '../../lib/nav';
+import { Icon } from '../ui/Icon';
 
 /**
  * The lobby: the app's home surface, kept separate from furnishing. Here you
@@ -44,7 +45,7 @@ export function Lobby() {
           <h2>Create your first room</h2>
           <p>Start by drawing the floor plan; then you can furnish it in 3D.</p>
           <button type="button" className="btn btn-accent btn-lg" onClick={() => createRoomAndDraw()}>
-            <span aria-hidden="true">＋</span> Create a room
+            <Icon name="plus" /> Create a room
           </button>
         </div>
       ) : (
@@ -60,7 +61,7 @@ export function Lobby() {
                   onClick={() => (drawn ? openRoomToFurnish(r.id) : openRoomToPlan(r.id))}
                 >
                   <span className="room-card-thumb" aria-hidden="true">
-                    {drawn ? '▤' : '✎'}
+                    <Icon name={drawn ? 'square' : 'pencil'} />
                   </span>
                   <span className="room-card-name">{r.name}</span>
                   <span className="room-card-meta">
@@ -91,7 +92,7 @@ export function Lobby() {
                     title="Delete room"
                     onClick={() => remove(r.id, r.name)}
                   >
-                    ✕
+                    <Icon name="x" />
                   </button>
                 </div>
               </div>
@@ -100,7 +101,7 @@ export function Lobby() {
 
           <button type="button" className="room-card room-card-new" onClick={() => createRoomAndDraw()}>
             <span className="room-card-thumb" aria-hidden="true">
-              ＋
+              <Icon name="plus" />
             </span>
             <span className="room-card-name">New room</span>
             <span className="room-card-meta">Draw its floor plan</span>

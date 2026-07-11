@@ -1,5 +1,6 @@
 import { useUiStore } from '../../store/useUiStore';
 import { useEscape } from '../../lib/useEscape';
+import { Icon } from '../ui/Icon';
 import { AiProposalsPanel } from './AiProposalsPanel';
 import { ValidationPanel } from './ValidationPanel';
 
@@ -31,7 +32,7 @@ export function SidePanel() {
       <header className="side-panel-head">
         <span className="side-panel-title">{TITLES[panel]}</span>
         <button type="button" className="btn-icon" aria-label="Close" onClick={closePanel}>
-          ✕
+          <Icon name="x" />
         </button>
       </header>
       <div className="side-panel-body">

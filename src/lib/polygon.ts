@@ -384,12 +384,6 @@ export function formatCm(v: number): string {
   return `${Math.round(v * 100).toLocaleString('sv-SE')} cm`;
 }
 
-/** Icon glyph for a door/window, shared by every "add opening" control. */
-export const OPENING_ICON: Record<OpeningKind, string> = {
-  door: '⌷',
-  window: '⊞',
-};
-
 /**
  * The opening a fresh "Add door/window" control creates, in meters. A single
  * source of truth so the wall selection bar and the doors-&-windows editor add

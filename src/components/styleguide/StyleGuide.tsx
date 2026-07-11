@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Icon, ICON_NAMES } from '../ui/Icon';
+import { NumberField } from '../panel/fields';
 
 /**
  * Living component reference ("style guide") for RoomCraft's UI.
@@ -131,6 +132,8 @@ export function StyleGuide() {
   const [color, setColor] = useState('#b4532f');
   const [checked, setChecked] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [ceiling, setCeiling] = useState(240);
+  const [edge, setEdge] = useState(340);
 
   return (
     <div className="sg-root">
@@ -364,6 +367,106 @@ export function StyleGuide() {
               <p className="hint">Section bodies hold fields and controls.</p>
             </div>
           </details>
+        </Demo>
+
+        {/* ---------- Docks & floating plan chrome ---------- */}
+        <div className="sg-section-label">Docks &amp; plan chrome</div>
+
+        <Demo
+          title="Dock pill bar"
+          note="The floating rounded bar (.selection-bar) of .sel-action pills — the contextual selection bar in the 3D view and the tool bar in the plan editor. In the app three of these sit in a .selection-bar-wrap grid: add left · contextual centre · undo/redo right."
+        >
+          <div className="selection-bar" role="toolbar" aria-label="Example dock bar" style={{ animation: 'none' }}>
+            <button type="button" className="sel-action sel-active">
+              <span className="sel-icon" aria-hidden="true">
+                <Icon name="mouse-pointer" />
+              </span>
+              <span className="sel-label">Select</span>
+            </button>
+            <button type="button" className="sel-action">
+              <span className="sel-icon" aria-hidden="true">
+                <Icon name="square" />
+              </span>
+              <span className="sel-label">Exterior</span>
+            </button>
+            <span className="sel-divider" aria-hidden="true" />
+            <button type="button" className="sel-action sel-danger">
+              <span className="sel-icon" aria-hidden="true">
+                <Icon name="trash-2" />
+              </span>
+              <span className="sel-label">Delete</span>
+            </button>
+            <label className="sel-action sel-color" title="Wall colour">
+              <input
+                type="color"
+                className="sel-color-input"
+                value={color}
+                aria-label="Wall colour"
+                onChange={(e) => setColor(e.target.value)}
+              />
+              <span className="sel-label">Wall</span>
+            </label>
+            <span className="sel-divider" aria-hidden="true" />
+            <button type="button" className="sel-action sel-history" aria-label="Undo">
+              <span className="sel-icon" aria-hidden="true">
+                <Icon name="undo-2" />
+              </span>
+            </button>
+            <button type="button" className="sel-action sel-history" disabled aria-label="Redo">
+              <span className="sel-icon" aria-hidden="true">
+                <Icon name="redo-2" />
+              </span>
+            </button>
+          </div>
+        </Demo>
+
+        <Demo
+          title="Floating plan chrome"
+          note="Surfaces the floor-plan editor floats over the canvas: guidance (.plan-hint-pill) and failure (.plan-error-pill) pills top-centre, the .plan-length-input for typing an exact edge length, the .plan-room-panel chip and the .plan-wall-panel card. Shown static here; in the app each positions itself over the viewport."
+        >
+          <div className="sg-plan-stage">
+            <p className="plan-hint-pill sg-static-pill">
+              Press, drag out the wall, release to place a corner · Esc cancels
+            </p>
+            <p className="plan-error-pill sg-static-pill">
+              Draw an exterior outline before adding an interior wall.
+            </p>
+            <div className="plan-length-input sg-static-pill">
+              <span className="plan-length-label">Length</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                step={1}
+                value={edge}
+                aria-label="Edge length in centimetres"
+                onChange={(e) => setEdge(Number(e.target.value))}
+              />
+              <span className="plan-length-suffix">cm</span>
+            </div>
+            <div className="plan-room-panel sg-static-pill">
+              <div className="field-grid">
+                <NumberField
+                  label="Ceiling height"
+                  value={ceiling}
+                  min={200}
+                  max={600}
+                  step={1}
+                  suffix="cm"
+                  onChange={setCeiling}
+                />
+              </div>
+            </div>
+            <div className="plan-wall-panel sg-static-pill">
+              <p className="hint">
+                <strong>North wall</strong> · 340 cm
+              </p>
+              <div className="field-grid">
+                <NumberField label="Length" value={340} min={10} max={3000} step={1} onChange={() => {}} />
+                <NumberField label="From left" value={120} min={0} max={3000} step={1} onChange={() => {}} />
+              </div>
+            </div>
+          </div>
         </Demo>
       </div>
 

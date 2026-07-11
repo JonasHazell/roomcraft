@@ -91,9 +91,9 @@ export function AiProposalsPanel() {
           </header>
           <p className="ai-concept">{p.concept}</p>
           <p className="ai-palette">
-            <span className="swatch" style={{ background: validHexColor(p.wallColor) ?? '#ccc' }} />
+            <span className="swatch" style={{ background: validHexColor(p.wallColor) ?? 'var(--line)' }} />
             <span className="ai-dim">Walls</span>
-            <span className="swatch" style={{ background: validHexColor(p.floorColor) ?? '#ccc' }} />
+            <span className="swatch" style={{ background: validHexColor(p.floorColor) ?? 'var(--line)' }} />
             <span className="ai-dim">Floor</span>
           </p>
           <ul className="ai-furniture">

@@ -1,5 +1,6 @@
 import { FURNITURE_CATALOG, FURNITURE_KINDS } from '../../lib/furnitureCatalog';
 import type { FurnitureLibraryEntry } from '../../types';
+import { Icon } from '../ui/Icon';
 import { draftFor, draftFromLibrary, type FurnitureDraft } from './furnitureDraft';
 
 /** Which source the "Add furniture" picker is showing. */
@@ -90,7 +91,7 @@ export function FurniturePicker({
                 aria-label={`Remove ${entry.name} from library`}
                 onClick={() => onRemoveFromLibrary(entry.id)}
               >
-                ✕
+                <Icon name="x" />
               </button>
             </li>
           ))}

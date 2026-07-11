@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { Icon } from '../ui/Icon';
 
 /** One entry in a switcher list (a room or a furnishing proposal). */
 export interface SwitcherEntry {
@@ -110,7 +111,7 @@ export function SwitcherList({
                 onPointerUp={endDrag}
                 onPointerCancel={cancelDrag}
               >
-                ⠿
+                <Icon name="grip-vertical" />
               </span>
             )}
             <button
@@ -137,7 +138,7 @@ export function SwitcherList({
               aria-label={`Rename ${noun} ${entry.name}`}
               onClick={() => onRename(entry.id, entry.name)}
             >
-              ✎
+              <Icon name="pencil" />
             </button>
             <button
               type="button"
@@ -147,7 +148,7 @@ export function SwitcherList({
               disabled={!canDelete}
               onClick={() => onDelete(entry.id, entry.name)}
             >
-              ✕
+              <Icon name="x" />
             </button>
           </li>
         );

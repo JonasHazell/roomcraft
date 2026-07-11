@@ -704,9 +704,11 @@ select {
   color: var(--accent);
 }
 
+/* The active-row marker lives in a dropdown menu (chrome), so it uses the warm
+   --accent, never the canvas-only --select blue. */
 .switch-check {
   font-size: 10px;
-  color: var(--select);
+  color: var(--accent);
 }
 
 .switch-label {
@@ -1160,12 +1162,6 @@ select {
   border-radius: 12px;
   padding: 10px 12px;
   box-shadow: 0 4px 16px rgba(43, 38, 29, 0.16);
-}
-
-.plan-hint {
-  margin: 0;
-  font-size: 12px;
-  color: var(--muted);
 }
 
 .opening-list {
@@ -2518,6 +2514,20 @@ select {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+/* The floor-plan chrome positions itself absolutely over the viewport; in the
+   gallery we lay the pieces out in normal flow so they can simply be seen. */
+.sg-plan-stage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.sg-static-pill {
+  position: static;
+  transform: none;
 }
 
 .sg-footer {
