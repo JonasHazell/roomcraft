@@ -21,6 +21,7 @@ import { PlanWalls } from './PlanWalls';
 import { PlanCorners } from './PlanCorners';
 import { PlanDraft } from './PlanDraft';
 import { PlanToolbar } from './PlanToolbar';
+import { PlanLengthInput } from './PlanLengthInput';
 import { PlanWallPanel } from './PlanWallPanel';
 import { PlanRoomPanel } from './PlanRoomPanel';
 import { Icon } from '../ui/Icon';
@@ -58,12 +59,21 @@ export function PlanEditor() {
   // Walls whose length is actively changing under a drag, highlighted so the
   // relevant measurements stand out while the corner or edge moves.
   const [activeWallIds, setActiveWallIds] = useState<string[]>([]);
+  // The edge currently being aimed while drawing: its unit direction and live
+  // length, kept in state so the length box can show the distance and place the
+  // corner at an exact value. It survives the pointer leaving the canvas (to
+  // reach the box), and is cleared once a point is placed or the tool changes.
+  const [pending, setPending] = useState<{ dir: Point; len: number } | null>(null);
 
   // The start tool is a one-shot handoff from the lobby; clear it once consumed
   // so re-entering an existing plan later opens in select mode.
   useEffect(() => {
     useUiStore.getState().setPlanStartTool('select');
   }, []);
+
+  // A placed point (or a tool switch) invalidates the aimed edge: drop it so the
+  // length box waits for the next aim rather than reusing a stale direction.
+  useEffect(() => setPending(null), [draft.length, tool]);
 
   // While a drawing is in progress, undo/redo (buttons and Ctrl/Cmd+Z) step
   // through the placed points instead of the document history, so a misplaced
@@ -115,6 +125,18 @@ export function PlanEditor() {
     const result = commitExteriorPolygon(points);
     if (result.ok) draw.committed();
     else draw.setError(result.reason);
+  };
+
+  // Place the next corner at an exact distance (cm) along the currently aimed
+  // direction — the length box's Enter action. Works mid-draw, so an edge can be
+  // sized precisely before the room is closed.
+  const placeExactLength = (cm: number) => {
+    const last = draft[draft.length - 1];
+    if (!last || !pending || cm <= 0) return;
+    const m = cm / 100;
+    const round = (v: number) => Math.round(v * 1000) / 1000;
+    draw.place({ x: round(last.x + pending.dir.x * m), z: round(last.z + pending.dir.z * m) });
+    draw.clearHover();
   };
 
   // Ends the interior chain: turns the buffered points into walls as a single
@@ -230,6 +252,15 @@ export function PlanEditor() {
       target.guide,
       tool === 'exterior' && draft.length >= 4 && dist(raw, draft[0]) <= CLOSE_RADIUS,
     );
+    // Record the aimed edge so the length box can size it exactly. The direction
+    // is axis-locked (from drawTarget), so it is purely along x or z.
+    const last = draft[draft.length - 1];
+    if (last && !pointsEqual(target.point, last)) {
+      const dx = target.point.x - last.x;
+      const dz = target.point.z - last.z;
+      const len = Math.hypot(dx, dz);
+      setPending({ dir: { x: dx / len, z: dz / len }, len });
+    }
   };
 
   const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
@@ -283,6 +314,10 @@ export function PlanEditor() {
     const onKey = (e: KeyboardEvent) => {
       // Undo/redo are handled globally in App; don't also treat Ctrl+Z as a cancel.
       if (e.ctrlKey || e.metaKey) return;
+      // Enter/Esc while typing in a field (e.g. the length box) belong to that
+      // field, not to finishing/cancelling the draw.
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.isContentEditable)) return;
       if (e.key === 'Escape' && (draft.length > 0 || tool !== 'select')) {
         draw.committed();
       } else if (e.key === 'Enter' && tool === 'interior') {
@@ -372,6 +407,15 @@ export function PlanEditor() {
           dock — so the drawing stays visible, unlike the old full-width top panel. */}
       {tool === 'select' && <PlanRoomPanel />}
       {tool === 'select' && <PlanWallPanel />}
+
+      {/* While drawing an edge, offer an exact-length box so the wall can be sized
+          to the centimetre without waiting for the room to be closed. */}
+      {tool !== 'select' && draft.length > 0 && pending && (
+        <PlanLengthInput
+          lengthCm={Math.round(pending.len * 100)}
+          onCommit={placeExactLength}
+        />
+      )}
 
       <PlanToolbar
         tool={tool}

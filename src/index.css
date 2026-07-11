@@ -882,6 +882,16 @@ select {
   position: absolute;
   inset: 0;
   background: var(--paper-2);
+  /* Dragging walls or corners must never accidentally select the hint/label text
+     that floats over the canvas, so suppress text selection editor-wide. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* …but the property fields and the drawing length box still need to be typed in. */
+.plan-editor input {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 /* The canvas only — a direct child, so this must not reach the icon SVGs now
@@ -1044,6 +1054,43 @@ select {
   color: #fff;
   background: var(--danger);
   border-color: var(--danger);
+}
+
+/* While drawing, a small box to type the current edge's exact length: aim the
+   wall, type a number, press Enter to drop the corner at precisely that distance.
+   Sits just under the guidance pill, top-centre. */
+.plan-length-input {
+  position: absolute;
+  top: calc(50px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 56;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  background: rgba(245, 239, 226, 0.95);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 6px 4px 12px;
+  box-shadow: 0 2px 8px rgba(43, 38, 29, 0.12);
+}
+
+.plan-length-input input {
+  width: 66px;
+  font: inherit;
+  color: var(--ink);
+  text-align: right;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  padding: 3px 8px;
+}
+
+.plan-length-input .plan-length-suffix {
+  padding-right: 6px;
 }
 
 /* Ceiling height: a compact chip in the top-right corner, out of the drawing's
