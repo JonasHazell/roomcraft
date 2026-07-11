@@ -22,6 +22,7 @@ import { PlanDraft } from './PlanDraft';
 import { PlanToolbar } from './PlanToolbar';
 import { PlanWallPanel } from './PlanWallPanel';
 import { PlanRoomPanel } from './PlanRoomPanel';
+import { Icon } from '../ui/Icon';
 import { useViewport } from './useViewport';
 import { usePlanDraft } from './usePlanDraft';
 
@@ -221,11 +222,10 @@ export function PlanEditor() {
   const selectedWall =
     selection?.kind === 'wall' ? walls.find((w) => w.id === selection.id) : undefined;
 
-  const deleteDisabledReason = !selectedWall
-    ? 'Select an interior wall to delete it.'
-    : selectedWall.kind === 'exterior'
-      ? 'Exterior walls cannot be deleted individually — use "Redraw exterior walls…".'
-      : undefined;
+  const onDone = () => {
+    draw.setTool('select');
+    backToLobby();
+  };
 
   return (
     <div className="plan-editor">
@@ -250,38 +250,51 @@ export function PlanEditor() {
           <PlanDraft draft={draft} hover={hover} guide={guide} closable={closable} />
         )}
       </svg>
-      <div className="plan-overlay">
-        <PlanToolbar
-          tool={tool}
-          error={error}
-          coarse={coarse}
-          draftActive={draft.length > 0}
-          hasExterior={walls.some((w) => w.kind === 'exterior')}
-          canDelete={selectedWall?.kind === 'interior'}
-          deleteDisabledReason={deleteDisabledReason}
-          canResetView={viewport.isCustom}
-          onDone={() => {
-            draw.setTool('select');
-            backToLobby();
-          }}
-          onSelectTool={startSelect}
-          onExteriorTool={startExterior}
-          onInteriorTool={startInterior}
-          onResetView={viewport.reset}
-          onZoomIn={viewport.zoomIn}
-          onZoomOut={viewport.zoomOut}
-          onFinishDraft={draw.cancel}
-          onCancelDraft={startSelect}
-          onDelete={() => {
-            if (selectedWall) {
-              removeWall(selectedWall.id);
-              select(null);
-            }
-          }}
-        />
-        {tool === 'select' && <PlanRoomPanel />}
-        {tool === 'select' && <PlanWallPanel />}
+
+      {/* Top-left circular back button — the same compact control as the 3D view. */}
+      <div className="plan-topbar">
+        <button
+          type="button"
+          className="room-back"
+          onClick={onDone}
+          title="Done · back to your rooms"
+          aria-label="Done · back to your rooms"
+        >
+          <span aria-hidden="true">
+            <Icon name="arrow-left" />
+          </span>
+        </button>
       </div>
+
+      {/* Room + wall property editors float clear of the canvas: ceiling height as
+          a compact top-right chip, the selected wall's fields as a sheet above the
+          dock — so the drawing stays visible, unlike the old full-width top panel. */}
+      {tool === 'select' && <PlanRoomPanel />}
+      {tool === 'select' && <PlanWallPanel />}
+
+      <PlanToolbar
+        tool={tool}
+        error={error}
+        coarse={coarse}
+        draftActive={draft.length > 0}
+        hasExterior={walls.some((w) => w.kind === 'exterior')}
+        canDelete={selectedWall?.kind === 'interior'}
+        canResetView={viewport.isCustom}
+        onSelectTool={startSelect}
+        onExteriorTool={startExterior}
+        onInteriorTool={startInterior}
+        onResetView={viewport.reset}
+        onZoomIn={viewport.zoomIn}
+        onZoomOut={viewport.zoomOut}
+        onFinishDraft={draw.cancel}
+        onCancelDraft={startSelect}
+        onDelete={() => {
+          if (selectedWall) {
+            removeWall(selectedWall.id);
+            select(null);
+          }
+        }}
+      />
     </div>
   );
 }

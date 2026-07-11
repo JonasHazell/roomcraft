@@ -10,7 +10,6 @@ import { ValidationScore } from './components/panel/ValidationScore';
 import { ProposalSwitcher } from './components/panel/ProposalSwitcher';
 import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { DialogHost } from './components/panel/DialogHost';
-import { HistoryControls } from './components/panel/HistoryControls';
 import { Scene } from './components/scene/Scene';
 import { Icon } from './components/ui/Icon';
 import { PlanEditor } from './components/plan/PlanEditor';
@@ -83,7 +82,6 @@ function PlanView() {
   return (
     <main className="viewport">
       <PlanEditor />
-      <HistoryControls />
     </main>
   );
 }
