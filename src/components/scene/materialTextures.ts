@@ -53,29 +53,82 @@ function fillNoise(ctx: CanvasRenderingContext2D, lo: number, span: number, rnd:
 function build(id: string): Built {
   const out: Built = { map: null, bump: null };
 
-  // ---- Relief-only finishes (colour stays flat) ----
+  // ---- Patterned wood: planks with grain (colour + relief) ----
   if (id === 'wood') {
+    const m = canvas();
     const b = canvas();
-    if (b) {
+    if (m && b) {
       const rnd = prng(11);
+      const planks = 4;
+      const ph = SIZE / planks; // plank height (grain runs along the plank)
       b.ctx.fillStyle = '#808080';
       b.ctx.fillRect(0, 0, SIZE, SIZE);
-      for (let y = 0; y < SIZE; y += 2) {
-        const s = 128 + Math.round((rnd() - 0.5) * 70);
-        b.ctx.strokeStyle = `rgb(${s},${s},${s})`;
-        b.ctx.beginPath();
-        let yy = y;
-        b.ctx.moveTo(0, yy);
-        for (let x = 0; x <= SIZE; x += 16) {
-          yy += (rnd() - 0.5) * 3;
-          b.ctx.lineTo(x, yy);
+
+      // Traces one wavy grain line across the full width (so it tiles left↔right),
+      // on both the colour map and the relief.
+      const grainLine = (y: number, waves: number, amp: number, shade: number, alpha: number) => {
+        const path = (ctx: CanvasRenderingContext2D) => {
+          ctx.beginPath();
+          for (let x = 0; x <= SIZE; x += 8) {
+            const yy = y + Math.sin((x / SIZE) * Math.PI * 2 * waves) * amp;
+            if (x === 0) ctx.moveTo(x, yy);
+            else ctx.lineTo(x, yy);
+          }
+          ctx.stroke();
+        };
+        m.ctx.strokeStyle = `rgba(${shade},${shade},${shade},${alpha})`;
+        m.ctx.lineWidth = 0.6 + rnd() * 1.1;
+        path(m.ctx);
+        b.ctx.strokeStyle = `rgba(70,70,70,${alpha * 0.7})`;
+        b.ctx.lineWidth = m.ctx.lineWidth;
+        path(b.ctx);
+      };
+
+      for (let p = 0; p < planks; p++) {
+        const y0 = p * ph;
+        const base = 200 + Math.round((rnd() - 0.5) * 30); // per-plank tone
+        m.ctx.fillStyle = `rgb(${base},${base},${base})`;
+        m.ctx.fillRect(0, y0, SIZE, ph);
+        // Grain: many faint wavy lines following the plank.
+        const waves = 1 + Math.floor(rnd() * 2);
+        for (let i = 0; i < 24; i++) {
+          const y = y0 + rnd() * ph;
+          const shade = base - 26 - Math.floor(rnd() * 48);
+          grainLine(y, waves, 1 + rnd() * 2.5, Math.max(40, shade), 0.1 + rnd() * 0.22);
         }
+        // An occasional knot.
+        if (rnd() < 0.35) {
+          const kx = rnd() * SIZE;
+          const ky = y0 + ph * (0.3 + rnd() * 0.4);
+          for (let r = 2; r < 8; r += 2) {
+            m.ctx.strokeStyle = `rgba(70,55,35,0.28)`;
+            m.ctx.lineWidth = 1;
+            m.ctx.beginPath();
+            m.ctx.ellipse(kx, ky, r, r * 1.6, 0, 0, Math.PI * 2);
+            m.ctx.stroke();
+          }
+        }
+        // Plank seam (recessed, slightly darker) at the top edge — tiles vertically.
+        m.ctx.strokeStyle = 'rgba(70,55,38,0.5)';
+        m.ctx.lineWidth = 2;
+        m.ctx.beginPath();
+        m.ctx.moveTo(0, y0);
+        m.ctx.lineTo(SIZE, y0);
+        m.ctx.stroke();
+        b.ctx.strokeStyle = '#3c3c3c';
+        b.ctx.lineWidth = 3;
+        b.ctx.beginPath();
+        b.ctx.moveTo(0, y0);
+        b.ctx.lineTo(SIZE, y0);
         b.ctx.stroke();
       }
+      out.map = m.c;
       out.bump = b.c;
     }
     return out;
   }
+
+  // ---- Relief-only finishes (colour stays flat) ----
   if (id === 'fabric') {
     const b = canvas();
     if (b) {

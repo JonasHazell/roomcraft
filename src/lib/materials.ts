@@ -44,7 +44,7 @@ export interface MaterialSpec {
  */
 export const MATERIALS: MaterialSpec[] = [
   { id: 'matte', label: 'Matte paint', roughness: 0.9, metalness: 0, envMapIntensity: 0.18, bumpScale: 0, texScale: 0.5 },
-  { id: 'wood', label: 'Wood', roughness: 0.6, metalness: 0, envMapIntensity: 0.35, bumpScale: 0.05, texScale: 0.6 },
+  { id: 'wood', label: 'Wood', roughness: 0.55, metalness: 0, envMapIntensity: 0.4, bumpScale: 0.04, texScale: 0.95 },
   { id: 'fabric', label: 'Fabric', roughness: 1, metalness: 0, envMapIntensity: 0.1, bumpScale: 0.04, texScale: 0.4 },
   { id: 'carpet', label: 'Carpet', roughness: 1, metalness: 0, envMapIntensity: 0.06, bumpScale: 0.12, texScale: 0.3 },
   // Just under full metalness so a metal surface keeps a sliver of its own colour
