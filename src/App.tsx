@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { Lobby } from './components/lobby/Lobby';
+import { StyleGuide } from './components/styleguide/StyleGuide';
 import { SelectionBar } from './components/panel/SelectionBar';
 import { ActionBar } from './components/panel/ActionBar';
 import { WallBar } from './components/panel/WallBar';
@@ -86,8 +87,21 @@ function PlanView() {
   );
 }
 
+/** Subscribe to the URL hash so `#styleguide` can open the component reference. */
+function useHash(): string {
+  return useSyncExternalStore(
+    (cb) => {
+      window.addEventListener('hashchange', cb);
+      return () => window.removeEventListener('hashchange', cb);
+    },
+    () => window.location.hash,
+    () => '',
+  );
+}
+
 function App() {
   const appView = useUiStore((s) => s.appView);
+  const hash = useHash();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -152,6 +166,10 @@ function App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  // A dev/reference surface, reachable at #styleguide, that renders every shared
+  // UI primitive from the real classes so the app stays visually consistent.
+  if (hash === '#styleguide') return <StyleGuide />;
 
   return (
     <div className="app">
