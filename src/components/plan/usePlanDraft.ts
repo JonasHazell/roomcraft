@@ -9,6 +9,11 @@ export interface DraftState {
   tool: PlanTool;
   /** Points placed so far in the current draw (exterior outline or interior chain). */
   draft: Point[];
+  /**
+   * Points removed by {@link PlanDraft.undo}, newest last, available to re-place
+   * with {@link PlanDraft.redo}. Cleared the moment a fresh point is placed.
+   */
+  redo: Point[];
   /** The snapped cursor preview point. */
   hover: Point | null;
   /** Corner the cursor snapped to, for the guide line. */
@@ -20,17 +25,25 @@ export interface DraftState {
 
 type DraftAction =
   | { type: 'setTool'; tool: PlanTool }
-  | { type: 'appendExterior'; point: Point }
-  | { type: 'startChain'; point: Point }
+  | { type: 'place'; point: Point }
+  | { type: 'undo' }
+  | { type: 'redo' }
   | { type: 'hover'; point: Point | null; guide: Point | null; closable: boolean }
   | { type: 'clearHover' }
   | { type: 'cancel' }
   | { type: 'error'; message: string | null }
   | { type: 'committed' };
 
-const CLEARED = { draft: [] as Point[], error: null, closable: false, guide: null, hover: null };
+const CLEARED = {
+  draft: [] as Point[],
+  redo: [] as Point[],
+  error: null,
+  closable: false,
+  guide: null,
+  hover: null,
+};
 
-function reducer(state: DraftState, action: DraftAction): DraftState {
+export function reducer(state: DraftState, action: DraftAction): DraftState {
   switch (action.type) {
     case 'setTool':
       return { ...state, ...CLEARED, tool: action.tool };
@@ -38,16 +51,40 @@ function reducer(state: DraftState, action: DraftAction): DraftState {
       return { ...state, ...CLEARED, tool: 'select' };
     case 'cancel':
       return { ...state, ...CLEARED };
-    case 'appendExterior': {
+    case 'place': {
       const { draft } = state;
       const last = draft[draft.length - 1];
       if (last && pointsEqual(last, action.point)) return state;
       // Reject an edge that folds straight back along the previous edge.
       if (draft.length >= 2 && foldsBack(draft[draft.length - 2], last, action.point)) return state;
-      return { ...state, draft: [...draft, action.point], error: null };
+      // Placing a new point commits to this branch, so the redo trail is dropped.
+      return { ...state, draft: [...draft, action.point], redo: [], error: null };
     }
-    case 'startChain':
-      return { ...state, draft: [action.point] };
+    case 'undo': {
+      const { draft } = state;
+      if (draft.length === 0) return state;
+      const removed = draft[draft.length - 1];
+      // The cursor preview belonged to the point being removed, so clear it too.
+      return {
+        ...state,
+        draft: draft.slice(0, -1),
+        redo: [...state.redo, removed],
+        hover: null,
+        guide: null,
+        closable: false,
+      };
+    }
+    case 'redo': {
+      const { redo } = state;
+      if (redo.length === 0) return state;
+      // Re-placing points already drawn: the geometry was valid, so skip the guards.
+      return {
+        ...state,
+        draft: [...state.draft, redo[redo.length - 1]],
+        redo: redo.slice(0, -1),
+        error: null,
+      };
+    }
     case 'hover':
       return { ...state, hover: action.point, guide: action.guide, closable: action.closable };
     case 'clearHover':
@@ -60,8 +97,12 @@ function reducer(state: DraftState, action: DraftAction): DraftState {
 export interface PlanDraft {
   state: DraftState;
   setTool: (tool: PlanTool) => void;
-  appendExterior: (point: Point) => void;
-  startChain: (point: Point) => void;
+  /** Places the next corner/point of the current draw (exterior outline or interior chain). */
+  place: (point: Point) => void;
+  /** Removes the last placed point, keeping it for {@link redo}. */
+  undo: () => void;
+  /** Re-places the most recently undone point. */
+  redo: () => void;
   hover: (point: Point | null, guide: Point | null, closable: boolean) => void;
   clearHover: () => void;
   cancel: () => void;
@@ -74,6 +115,7 @@ export function usePlanDraft(initialTool: PlanTool): PlanDraft {
   const [state, dispatch] = useReducer(reducer, {
     tool: initialTool,
     draft: [],
+    redo: [],
     hover: null,
     guide: null,
     closable: false,
@@ -84,8 +126,9 @@ export function usePlanDraft(initialTool: PlanTool): PlanDraft {
     () => ({
       state,
       setTool: (tool) => dispatch({ type: 'setTool', tool }),
-      appendExterior: (point) => dispatch({ type: 'appendExterior', point }),
-      startChain: (point) => dispatch({ type: 'startChain', point }),
+      place: (point) => dispatch({ type: 'place', point }),
+      undo: () => dispatch({ type: 'undo' }),
+      redo: () => dispatch({ type: 'redo' }),
       hover: (point, guide, closable) => dispatch({ type: 'hover', point, guide, closable }),
       clearHover: () => dispatch({ type: 'clearHover' }),
       cancel: () => dispatch({ type: 'cancel' }),

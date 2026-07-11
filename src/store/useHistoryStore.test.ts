@@ -112,6 +112,39 @@ describe('history (undo/redo)', () => {
     expect(furnitureCount()).toBe(0);
   });
 
+  it('routes undo/redo to a live draft bridge while one is registered', () => {
+    // A committed document step exists behind the drawing in progress.
+    useDesignStore.getState().addFurniture('chair');
+
+    let undone = 0;
+    let redone = 0;
+    // A drawing in progress registers itself: undo/redo now peel back its points,
+    // not the document, and the flags mirror the draft's own steps.
+    useHistoryStore.getState().setDraftBridge({
+      canUndo: true,
+      canRedo: false,
+      undo: () => {
+        undone += 1;
+      },
+      redo: () => {
+        redone += 1;
+      },
+    });
+    expect(useHistoryStore.getState().canUndo).toBe(true);
+    expect(useHistoryStore.getState().canRedo).toBe(false);
+
+    useHistoryStore.getState().undo();
+    expect(undone).toBe(1);
+    // The document step must be untouched — the draft absorbed the undo.
+    expect(furnitureCount()).toBe(1);
+
+    // Once the draft empties it hands control back, and undo reaches the document.
+    useHistoryStore.getState().setDraftBridge(null);
+    expect(useHistoryStore.getState().canUndo).toBe(true);
+    useHistoryStore.getState().undo();
+    expect(furnitureCount()).toBe(0);
+  });
+
   it('keeps each variation redo stack across proposal switches', () => {
     const store = useDesignStore.getState;
     const p1 = store().design.activeProposalId;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Point } from '../../types';
 import {
   dist,
@@ -56,6 +56,24 @@ export function PlanEditor() {
     useUiStore.getState().setPlanStartTool('select');
   }, []);
 
+  // While a drawing is in progress, undo/redo (buttons and Ctrl/Cmd+Z) step
+  // through the placed points instead of the document history, so a misplaced
+  // corner can be taken back. The bridge is cleared once the draft empties, so
+  // undo then resumes reversing committed changes as usual.
+  const { redo: draftRedo, undo: draftUndo } = draw;
+  const redoDepth = draw.state.redo.length;
+  useEffect(() => {
+    const active = draft.length > 0 || redoDepth > 0;
+    useHistoryStore.getState().setDraftBridge(
+      active
+        ? { canUndo: draft.length > 0, canRedo: redoDepth > 0, undo: draftUndo, redo: draftRedo }
+        : null,
+    );
+  }, [draft.length, redoDepth, draftUndo, draftRedo]);
+
+  // On leaving the editor, drop the bridge so document undo/redo works elsewhere.
+  useEffect(() => () => useHistoryStore.getState().setDraftBridge(null), []);
+
   // The auto-fit view is derived from the placed walls only — never the
   // in-progress draft. Folding draft points in made the camera zoom/jump the
   // moment the first corner was clicked (a single point + padding is a tiny
@@ -90,6 +108,16 @@ export function PlanEditor() {
     else draw.setError(result.reason);
   };
 
+  // Ends the interior chain: turns the buffered points into walls as a single
+  // undo step, then clears the draft so the next chain starts fresh.
+  const finishInterior = useCallback(() => {
+    const history = useHistoryStore.getState();
+    history.beginBatch();
+    for (let i = 1; i < draft.length; i++) addInteriorWall(draft[i - 1], draft[i]);
+    history.endBatch();
+    draw.cancel();
+  }, [draft, addInteriorWall, draw]);
+
   const capture = (e: React.PointerEvent<SVGSVGElement>) =>
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
 
@@ -116,16 +144,11 @@ export function PlanEditor() {
     const raw = viewport.toWorld(e);
     if (tool === 'exterior') {
       if (draft.length >= 4 && dist(raw, draft[0]) <= CLOSE_RADIUS) tryClose(draft);
-      else draw.appendExterior(drawTarget(raw).point);
+      else draw.place(drawTarget(raw).point);
     } else if (tool === 'interior') {
-      const p = drawTarget(raw).point;
-      const last = draft[draft.length - 1];
-      if (!last) {
-        draw.startChain(p);
-      } else if (!pointsEqual(last, p)) {
-        addInteriorWall(last, p);
-        draw.startChain(p);
-      }
+      // Points are buffered like the exterior outline and committed as walls on
+      // finish, so each placement is a single undoable step while drawing.
+      draw.place(drawTarget(raw).point);
     } else {
       // Select mode: dragging on empty space pans, a click without dragging
       // deselects on release (walls stop propagation).
@@ -191,15 +214,17 @@ export function PlanEditor() {
   // Esc cancels the drawing in progress, Enter/double-click ends the interior wall chain.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Undo/redo are handled globally in App; don't also treat Ctrl+Z as a cancel.
+      if (e.ctrlKey || e.metaKey) return;
       if (e.key === 'Escape' && (draft.length > 0 || tool !== 'select')) {
         draw.committed();
       } else if (e.key === 'Enter' && tool === 'interior') {
-        draw.cancel();
+        finishInterior();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [draft.length, tool, draw]);
+  }, [draft.length, tool, draw, finishInterior]);
 
   const startExterior = async () => {
     if (walls.some((w) => w.kind === 'exterior')) {
@@ -243,7 +268,7 @@ export function PlanEditor() {
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
         onPointerLeave={draw.clearHover}
-        onDoubleClick={() => tool === 'interior' && draw.cancel()}
+        onDoubleClick={() => tool === 'interior' && finishInterior()}
       >
         <PlanGrid bounds={bounds} />
         <PlanWalls
@@ -291,7 +316,7 @@ export function PlanEditor() {
         onResetView={viewport.reset}
         onZoomIn={viewport.zoomIn}
         onZoomOut={viewport.zoomOut}
-        onFinishDraft={draw.cancel}
+        onFinishDraft={finishInterior}
         onCancelDraft={startSelect}
         onDelete={() => {
           if (selectedWall) {
