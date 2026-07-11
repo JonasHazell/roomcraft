@@ -138,9 +138,10 @@ export function createPlanSlice(set: DesignSet, get: DesignGet): PlanActions {
 
     addOpening: (o) => {
       const d = get().design;
-      if (!wallById(d, o.wallId)) return;
+      if (!wallById(d, o.wallId)) return null;
       const opening = clampOpeningIn(d, { ...o, id: nanoid(8) });
       set({ design: touch({ ...d, openings: [...d.openings, opening] }) });
+      return opening.id;
     },
 
     updateOpening: (id, patch) => {

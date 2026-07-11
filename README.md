@@ -14,7 +14,8 @@ with its own floor plan and its own furnishing options.
   snapping to 0.1 m. Enter the floor-plan editor for a room with **Edit floor
   plan** in the sidebar; **Done** returns to the 3D view
 - Doors and windows per wall with position, width, height and height above the
-  floor — select a wall in the 3D view or floor plan and add one
+  floor — in the floor-plan editor select a wall and use **Add door** / **Add
+  window**, then fine-tune each opening; they appear in the 3D view too
 - 3D view with an orbit camera — the outer walls closest to the camera are
   hidden automatically
 - Furniture (bed, sofa, table, chair, desk, nightstand, TV, mirror, plant,
