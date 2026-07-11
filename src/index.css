@@ -886,6 +886,12 @@ select {
      that floats over the canvas, so suppress text selection editor-wide. */
   user-select: none;
   -webkit-user-select: none;
+  /* Block the browser's own pan/zoom so a finger drag draws (or drags) instead of
+     scrolling the page. This lives on the editor div — not only the <svg> — because
+     Safari/iOS ignores touch-action on SVG elements, so a drag to draw a wall would
+     scroll the whole view there. The floating panels are cards, not scroll areas,
+     so suppressing panning over them costs nothing. */
+  touch-action: none;
 }
 
 /* …but the property fields and the drawing length box still need to be typed in. */
