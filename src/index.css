@@ -2262,11 +2262,12 @@ select {
   border-radius: 999px;
   background: var(--card);
   box-shadow: 0 6px 20px rgba(43, 38, 29, 0.18);
+  color: #000;
 }
 
 .room-back:hover {
   background: var(--paper-2);
-  color: var(--ink);
+  color: #000;
 }
 
 .room-back > [aria-hidden] {
