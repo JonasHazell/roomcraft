@@ -33,7 +33,7 @@ describe('furniture option specs', () => {
 
 describe('defaultOptions', () => {
   it('builds an object from the specs at their defaults', () => {
-    expect(defaultOptions('bed')).toEqual({ mattresses: 1, headboard: true });
+    expect(defaultOptions('bed')).toEqual({ mattresses: 1 });
     expect(defaultOptions('bookshelf')).toEqual({ shelves: 4, doors: false });
   });
 
@@ -59,7 +59,7 @@ describe('normalizeOptions', () => {
   });
 
   it('falls back on wrong-typed values and invalid choices', () => {
-    expect(normalizeOptions('bed', { headboard: 'yes' }).headboard).toBe(true);
+    expect(normalizeOptions('bookshelf', { doors: 'yes' }).doors).toBe(false);
     expect(normalizeOptions('rug', { pattern: 'polka' }).pattern).toBe('solid');
     expect(normalizeOptions('rug', { pattern: 'striped' }).pattern).toBe('striped');
   });
