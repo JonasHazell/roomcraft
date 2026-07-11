@@ -130,6 +130,23 @@ function createController() {
 
 let controller = createController();
 
+/**
+ * A live, uncommitted edit (currently the floor-plan drawing in progress) that
+ * wants to intercept undo/redo. While one is set, {@link HistoryState.undo}/redo
+ * and the canUndo/canRedo flags reflect *its* steps instead of the document
+ * history, so pressing Undo peels back the last placed corner rather than a
+ * committed change. Cleared once the draft is empty, so undo then resumes
+ * stepping through the document as usual.
+ */
+export interface DraftBridge {
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
+}
+
+let draftBridge: DraftBridge | null = null;
+
 interface HistoryState {
   canUndo: boolean;
   canRedo: boolean;
@@ -139,6 +156,11 @@ interface HistoryState {
   redo: () => void;
   /** Drops all recorded history — e.g. after loading a different project. */
   clear: () => void;
+  /**
+   * Registers (or clears with `null`) the active live-draft controller. While set,
+   * undo/redo and the flags route to it. See {@link DraftBridge}.
+   */
+  setDraftBridge: (bridge: DraftBridge | null) => void;
   /**
    * Starts coalescing: every document change until {@link HistoryState.endBatch}
    * folds into a single undo step. Used to record a whole drag as one step
@@ -150,8 +172,15 @@ interface HistoryState {
   cancelBatch: () => void;
 }
 
-/** Publishes canUndo/canRedo for the currently active variation. */
+/**
+ * Publishes canUndo/canRedo for whatever undo/redo currently targets: the live
+ * draft while one is registered, otherwise the active variation's document stack.
+ */
 function syncFlags() {
+  if (draftBridge) {
+    useHistoryStore.setState({ canUndo: draftBridge.canUndo, canRedo: draftBridge.canRedo });
+    return;
+  }
   const { past, future } = controller.stackFor(keyFor(useDesignStore.getState().design));
   useHistoryStore.setState({ canUndo: past.length > 0, canRedo: future.length > 0 });
 }
@@ -161,6 +190,11 @@ export const useHistoryStore = create<HistoryState>(() => ({
   canRedo: false,
 
   undo: () => {
+    // A live draft owns undo/redo until it is emptied (see DraftBridge).
+    if (draftBridge) {
+      draftBridge.undo();
+      return;
+    }
     const stack = controller.stackFor(keyFor(useDesignStore.getState().design));
     if (stack.past.length === 0) return;
     const prev = stack.past.pop() as Snapshot;
@@ -170,6 +204,10 @@ export const useHistoryStore = create<HistoryState>(() => ({
   },
 
   redo: () => {
+    if (draftBridge) {
+      draftBridge.redo();
+      return;
+    }
     const stack = controller.stackFor(keyFor(useDesignStore.getState().design));
     if (stack.future.length === 0) return;
     const next = stack.future.pop() as Snapshot;
@@ -180,6 +218,12 @@ export const useHistoryStore = create<HistoryState>(() => ({
 
   clear: () => {
     controller = createController();
+    draftBridge = null;
+    syncFlags();
+  },
+
+  setDraftBridge: (bridge) => {
+    draftBridge = bridge;
     syncFlags();
   },
 
