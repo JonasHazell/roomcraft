@@ -186,7 +186,7 @@ describe('parseProject', () => {
   it('backfills furniture options with the kind defaults for older saves', () => {
     // The v1 bed has no `options` field — it should load with the bed defaults.
     const room = activeRoom(parseProject(V1_DESIGN));
-    expect(room.furniture[0].options).toEqual({ mattresses: 1, pillows: 2, headboard: true });
+    expect(room.furniture[0].options).toEqual({ mattresses: 1, headboard: true });
   });
 
   it('normalizes stored options: clamps counts, keeps valid ones, drops unknown keys', () => {

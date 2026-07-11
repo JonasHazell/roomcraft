@@ -42,8 +42,7 @@ export type FurnitureOptionSpec = ToggleOptionSpec | CountOptionSpec | SelectOpt
  */
 export const FURNITURE_OPTIONS: Record<FurnitureKind, FurnitureOptionSpec[]> = {
   bed: [
-    { key: 'mattresses', label: 'Mattresses', type: 'count', min: 1, max: 2, default: 1, hint: 'Two mattresses read as a split double.' },
-    { key: 'pillows', label: 'Pillows', type: 'count', min: 0, max: 4, default: 2 },
+    { key: 'mattresses', label: 'Mattresses', type: 'count', min: 1, max: 2, default: 1, hint: 'Two mattresses read as a split double, each with its own pillow.' },
     { key: 'headboard', label: 'Headboard', type: 'toggle', default: true },
   ],
   sofa: [
