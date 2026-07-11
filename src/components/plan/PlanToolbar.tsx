@@ -31,15 +31,15 @@ const HINTS: Record<PlanTool, string> = {
   select:
     'Click a wall to select it and type its exact length · drag perpendicular to move · scroll to zoom, drag on empty space to pan',
   exterior:
-    'Press, drag out the wall, release to place a corner — or type an exact length + Enter · release on the start point to close · Esc cancels',
+    'Press, drag out the wall, release to place a corner — or type an exact length + Enter · click a drawn edge to retype its length · release on the start point to close · Esc cancels',
   interior:
-    'Press, drag out the wall, release to place a point — or type an exact length + Enter · Enter or double-click to finish · Esc cancels',
+    'Press, drag out the wall, release to place a point — or type an exact length + Enter · click a drawn edge to retype its length · Enter or double-click to finish · Esc cancels',
 };
 
 const TOUCH_HINTS: Record<PlanTool, string> = {
   select: 'Tap a wall to select it and type its exact length · drag it to move · drag empty space to pan · pinch to zoom',
-  exterior: 'Press, drag out the wall, release to drop a corner — or type an exact length + Enter · release on the start point to close',
-  interior: 'Press, drag out the wall, release to drop a point — or type an exact length + Enter · “Finish” ends the chain',
+  exterior: 'Press, drag out the wall, release to drop a corner — or type an exact length + Enter · tap a drawn edge to retype its length · release on the start point to close',
+  interior: 'Press, drag out the wall, release to drop a point — or type an exact length + Enter · tap a drawn edge to retype its length · “Finish” ends the chain',
 };
 
 /**

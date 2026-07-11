@@ -49,7 +49,7 @@ export function PlanEditor() {
   // A new room opens with the exterior tool armed so the user draws its outline
   // right away; editing an existing plan opens in select mode.
   const draw = usePlanDraft(useUiStore.getState().planStartTool);
-  const { tool, draft, hover, guide, closable, error } = draw.state;
+  const { tool, draft, hover, guide, closable, selectedEdge, error } = draw.state;
   // A wall being dragged in select mode (domain drag, distinct from viewport pan).
   const dragRef = useRef<{ id: string; horizontal: boolean } | null>(null);
   // A corner (shared point of two exterior walls) being dragged in select mode.
@@ -318,7 +318,10 @@ export function PlanEditor() {
       // field, not to finishing/cancelling the draw.
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.isContentEditable)) return;
-      if (e.key === 'Escape' && (draft.length > 0 || tool !== 'select')) {
+      if (e.key === 'Escape' && selectedEdge !== null) {
+        // A picked edge is released first, so the draw isn't cancelled outright.
+        draw.selectEdge(null);
+      } else if (e.key === 'Escape' && (draft.length > 0 || tool !== 'select')) {
         draw.committed();
       } else if (e.key === 'Enter' && tool === 'interior') {
         finishInterior();
@@ -326,7 +329,7 @@ export function PlanEditor() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [draft.length, tool, draw, finishInterior]);
+  }, [draft.length, tool, selectedEdge, draw, finishInterior]);
 
   const startExterior = async () => {
     if (walls.some((w) => w.kind === 'exterior')) {
@@ -383,7 +386,14 @@ export function PlanEditor() {
           <PlanCorners coarse={coarse} onCornerPointerDown={onCornerPointerDown} />
         )}
         {tool !== 'select' && (
-          <PlanDraft draft={draft} hover={hover} guide={guide} closable={closable} />
+          <PlanDraft
+            draft={draft}
+            hover={hover}
+            guide={guide}
+            closable={closable}
+            selectedEdge={selectedEdge}
+            onSelectEdge={draw.selectEdge}
+          />
         )}
       </svg>
 
@@ -408,13 +418,24 @@ export function PlanEditor() {
       {tool === 'select' && <PlanRoomPanel />}
       {tool === 'select' && <PlanWallPanel />}
 
-      {/* While drawing an edge, offer an exact-length box so the wall can be sized
-          to the centimetre without waiting for the room to be closed. */}
-      {tool !== 'select' && draft.length > 0 && pending && (
+      {/* While drawing, offer an exact-length box so a wall can be sized to the
+          centimetre without waiting for the room to be closed. When a placed edge
+          is picked it edits that edge's length; otherwise it sizes the edge being
+          aimed and places the next corner. */}
+      {tool !== 'select' && selectedEdge !== null && draft[selectedEdge] && draft[selectedEdge + 1] ? (
         <PlanLengthInput
-          lengthCm={Math.round(pending.len * 100)}
-          onCommit={placeExactLength}
+          key={`edge-${selectedEdge}`}
+          label="Edge"
+          autoFocus
+          lengthCm={Math.round(dist(draft[selectedEdge], draft[selectedEdge + 1]) * 100)}
+          onCommit={(cm) => draw.resizeEdge(selectedEdge, cm / 100)}
         />
+      ) : (
+        tool !== 'select' &&
+        draft.length > 0 &&
+        pending && (
+          <PlanLengthInput lengthCm={Math.round(pending.len * 100)} onCommit={placeExactLength} />
+        )
       )}
 
       <PlanToolbar

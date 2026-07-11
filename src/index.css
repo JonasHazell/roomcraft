@@ -1002,6 +1002,25 @@ select {
   stroke-width: 0.04;
 }
 
+/* Fat, invisible pick target over each placed draft edge so it can be tapped to
+   edit its exact length mid-draw. `stroke` hit-testing ignores the transparent
+   paint, and touch-action keeps the tap from panning. */
+.plan-draft .draft-edge-hit {
+  stroke: transparent;
+  stroke-width: 0.3;
+  fill: none;
+  cursor: pointer;
+  pointer-events: stroke;
+  touch-action: none;
+}
+
+/* The draft edge currently picked for length editing. */
+.plan-draft .draft-edge-selected {
+  stroke: var(--select);
+  stroke-width: 0.06;
+  pointer-events: none;
+}
+
 /* Draggable handles at every corner of the exterior outline (select mode). The
    hit target is a larger invisible circle so corners are easy to grab, especially
    on touch; the visible dot marks the corner. */
