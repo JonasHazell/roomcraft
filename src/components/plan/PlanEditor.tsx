@@ -2,12 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Point } from '../../types';
 import {
   dist,
-  axisLock,
+  drawSnap,
   pointsEqual,
   polygonBounds,
   snap,
   snapPoint,
-  snapToCornerAxis,
   type Bounds,
 } from '../../lib/polygon';
 import { useDesignStore } from '../../store/useDesignStore';
@@ -109,16 +108,15 @@ export function PlanEditor() {
   const bounds = viewport.bounds;
 
   /**
-   * Snapped, axis-locked cursor position; the free coordinate also snaps to
-   * already placed corners so the outline easily lines up with itself.
+   * Snapped, axis-locked cursor position. The coordinate the wall shares with the
+   * previous corner is kept exact (so a wall drawn from an exact-length, off-grid
+   * corner stays attached to it); the free coordinate snaps to already-placed
+   * corners so the outline lines up with itself, else to the grid.
    */
   const drawTarget = (raw: Point): { point: Point; guide: Point | null } => {
     const last = draft[draft.length - 1];
     if (!last) return { point: snapPoint(raw), guide: null };
-    const p = snapPoint(axisLock(last, raw));
-    const snapped = snapToCornerAxis(p, draft.slice(0, -1), p.z === last.z);
-    // A snap that collapses the point onto the previous corner prevents short walls.
-    return pointsEqual(snapped.point, last) ? { point: p, guide: null } : snapped;
+    return drawSnap(last, raw, draft.slice(0, -1));
   };
 
   const tryClose = (points: Point[]) => {

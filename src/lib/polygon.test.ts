@@ -5,6 +5,7 @@ import {
   WALL_T,
   axisLock,
   clampToPolygon,
+  drawSnap,
   exteriorEndExtension,
   floorPolygon,
   formatCm,
@@ -88,6 +89,55 @@ describe('snapToCornerAxis', () => {
     const r = snapToCornerAxis({ x: 3.9, z: 2 }, corners, true);
     expect(r.point).toEqual({ x: 4, z: 2 });
     expect(r.guide).toEqual({ x: 4, z: 0 });
+  });
+});
+
+describe('drawSnap', () => {
+  it('keeps a wall attached to an off-grid corner instead of snapping it to the grid', () => {
+    // Previous corner at an exact-length (off-grid) x. Dragging a vertical wall
+    // down from it must keep x = 5.23, not round it to the 0.1 m grid (5.2).
+    const last: Point = { x: 5.23, z: 0 };
+    const r = drawSnap(last, { x: 5.24, z: 2.04 }, [{ x: 0, z: 0 }]);
+    expect(r.point).toEqual({ x: 5.23, z: 2 });
+    expect(r.guide).toBeNull();
+  });
+
+  it('keeps the shared coordinate exact for a horizontal wall too', () => {
+    const last: Point = { x: 0, z: 1.37 };
+    const r = drawSnap(last, { x: 2.44, z: 1.38 }, []);
+    expect(r.point).toEqual({ x: 2.4, z: 1.37 });
+  });
+
+  it('snaps the free coordinate to a lined-up corner exactly (matching a typed length)', () => {
+    // Bottom wall dragged left toward a start corner at x = 0: it should land on
+    // x = 0 exactly so the closing wall is axis-aligned, giving the full length.
+    const last: Point = { x: 5.23, z: 2 };
+    const corners: Point[] = [
+      { x: 0, z: 0 },
+      { x: 5.23, z: 0 },
+    ];
+    const r = drawSnap(last, { x: 0.08, z: 2.01 }, corners);
+    expect(r.point).toEqual({ x: 0, z: 2 });
+    expect(r.guide).toEqual({ x: 0, z: 0 });
+  });
+
+  it('lines the free coordinate up with an off-grid corner exactly', () => {
+    // A later wall should be able to align to an earlier exact-length corner
+    // (x = 5.23) without the grid pulling it to 5.2.
+    const last: Point = { x: 2, z: 4 };
+    const corners: Point[] = [{ x: 5.23, z: 0 }];
+    const r = drawSnap(last, { x: 5.21, z: 4.02 }, corners);
+    expect(r.point).toEqual({ x: 5.23, z: 4 });
+    expect(r.guide).toEqual({ x: 5.23, z: 0 });
+  });
+
+  it('falls back to the grid (no guide) when a snap would collapse onto the previous corner', () => {
+    // Drawing a horizontal wall from (2,0); a corner at x = 2 would snap the free
+    // x back onto `last`, making a zero-length wall — so the grid position wins.
+    const last: Point = { x: 2, z: 0 };
+    const r = drawSnap(last, { x: 2.1, z: 0.01 }, [{ x: 2, z: 5 }]);
+    expect(r.point).toEqual({ x: 2.1, z: 0 });
+    expect(r.guide).toBeNull();
   });
 });
 

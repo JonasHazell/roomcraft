@@ -57,6 +57,38 @@ export function snapToCornerAxis(
   };
 }
 
+/**
+ * The snapped position of the next outline point while drawing a wall from
+ * `last`. The wall is locked to run purely horizontally or vertically, so the
+ * coordinate it shares with `last` is kept exactly — grid-snapping it would
+ * detach a wall drawn from an exact-length (off-grid) corner onto the 0.1 m
+ * grid and leave a diagonal edge that can never close. Only the free coordinate
+ * snaps: to an already-placed corner when one lines up (so off-grid typed
+ * lengths can be matched exactly), otherwise to the grid.
+ */
+export function drawSnap(
+  last: Point,
+  raw: Point,
+  corners: Point[],
+  tol = CORNER_SNAP,
+): { point: Point; guide: Point | null } {
+  const locked = axisLock(last, raw);
+  const horizontal = locked.z === last.z; // wall runs along x → x is the free coordinate
+  // Grid-snap only the free coordinate; the shared one stays exactly on `last`.
+  const gridded: Point = horizontal
+    ? { x: snap(locked.x), z: last.z }
+    : { x: last.x, z: snap(locked.z) };
+  // Prefer lining the free coordinate up with an existing corner (kept exact, so
+  // it matches off-grid typed lengths); otherwise fall back to the grid position.
+  const aligned = snapToCornerAxis(locked, corners, horizontal, tol);
+  const point = aligned.guide ? aligned.point : gridded;
+  // A snap that collapses onto the previous corner would make a zero-length wall;
+  // drop back to the grid position (and drop the guide) so short walls aren't made.
+  return pointsEqual(point, last)
+    ? { point: gridded, guide: null }
+    : { point, guide: aligned.guide };
+}
+
 export function dist(p: Point, q: Point): number {
   return Math.hypot(q.x - p.x, q.z - p.z);
 }
