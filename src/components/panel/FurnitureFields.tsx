@@ -1,6 +1,7 @@
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { FURNITURE_OPTIONS, normalizeOptions } from '../../lib/furnitureOptions';
-import { MATERIAL_CHOICES, normalizeMaterial } from '../../lib/materials';
+import { FURNITURE_PARTS, hasParts, normalizeMaterials } from '../../lib/furnitureParts';
+import { MATERIAL_CHOICES } from '../../lib/materials';
 import { ColorField, CountField, NumberField, SelectField, ToggleField } from './fields';
 import type { FurnitureDraft, FurnitureFieldPatch } from './furnitureDraft';
 
@@ -131,13 +132,51 @@ export function FurnitureFields({
         value={value.color}
         onChange={(color) => onChange({ color })}
       />
-      <SelectField
-        label="Material"
-        title="Surface finish — changes how light reflects off the piece"
-        value={normalizeMaterial(value.material)}
-        choices={MATERIAL_CHOICES}
-        onChange={(material) => onChange({ material })}
-      />
+      <FurnitureMaterialFields value={value} onChange={onChange} />
     </>
+  );
+}
+
+/**
+ * A material picker per configurable part (a bed's frame vs its bedding), driven
+ * by the kind's part specs. Kinds with a single part show one "Material" control.
+ */
+function FurnitureMaterialFields({
+  value,
+  onChange,
+}: {
+  value: FurnitureDraft;
+  onChange: (patch: FurnitureFieldPatch) => void;
+}) {
+  const parts = FURNITURE_PARTS[value.kind];
+  const materials = normalizeMaterials(value.kind, value.materials, value.material);
+
+  if (!hasParts(value.kind)) {
+    const part = parts[0];
+    return (
+      <SelectField
+        label={part.label}
+        title="Surface finish — changes how light reflects off the piece"
+        value={materials[part.key]}
+        choices={MATERIAL_CHOICES}
+        onChange={(m) => onChange({ materials: { [part.key]: m } })}
+      />
+    );
+  }
+
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      <p className="field-label">Materials</p>
+      {parts.map((part) => (
+        <SelectField
+          key={part.key}
+          label={part.label}
+          title={`Surface finish for the ${part.label.toLowerCase()}`}
+          value={materials[part.key]}
+          choices={MATERIAL_CHOICES}
+          onChange={(m) => onChange({ materials: { [part.key]: m } })}
+        />
+      ))}
+    </div>
   );
 }

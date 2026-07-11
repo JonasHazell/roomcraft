@@ -15,12 +15,20 @@ export interface FurnitureProps {
 export const SELECT_EMISSIVE = '#2f6fdd';
 
 /**
- * The finish for the piece currently being rendered. {@link FurnitureMesh} wraps
- * each piece in a provider so every {@link Mat} inside picks up the chosen
- * material without threading it through each component; the default is the plain
- * matte finish, so a piece rendered outside a provider looks as it always has.
+ * The finish for the piece currently being rendered — the fallback for meshes
+ * that don't name a part. {@link FurnitureMesh} wraps each piece in a provider so
+ * every {@link Mat} inside picks up the chosen material without threading it
+ * through each component; the default is the plain matte finish, so a piece
+ * rendered outside a provider looks as it always has.
  */
 export const MaterialContext = createContext<MaterialSpec>(materialSpec(undefined));
+
+/**
+ * Resolves a named part to its finish for the piece being rendered — the per-part
+ * counterpart of {@link MaterialContext}. A {@link Mat} given a `part` reads this;
+ * outside a provider it is null and Mat falls back to {@link MaterialContext}.
+ */
+export const PartsContext = createContext<((part: string) => MaterialSpec) | null>(null);
 
 const scratch = new THREE.Color();
 
@@ -31,21 +39,28 @@ export function shade(color: string, amt: number): string {
 
 /**
  * Standard material for a furniture surface. Roughness/metalness come from the
- * piece's chosen finish ({@link MaterialContext}); an explicit `roughness` or
- * `metalness` prop overrides it for a fixed detail (a screen, a metal handle).
+ * piece's chosen finish — the named `part`'s finish ({@link PartsContext}) if
+ * given, otherwise the piece fallback ({@link MaterialContext}). An explicit
+ * `roughness`/`metalness` prop overrides it for a fixed detail (a screen, a
+ * metal handle).
  */
 export function Mat({
   color,
   selected,
   roughness,
   metalness,
+  part,
 }: {
   color: string;
   selected: boolean;
   roughness?: number;
   metalness?: number;
+  /** Which configurable part this surface belongs to; see furnitureParts. */
+  part?: string;
 }) {
-  const finish = useContext(MaterialContext);
+  const fallback = useContext(MaterialContext);
+  const resolvePart = useContext(PartsContext);
+  const finish = part && resolvePart ? resolvePart(part) : fallback;
   // Tile the finish's pattern/relief a couple of times across each piece's faces.
   const bump = finish.bumpScale > 0 ? materialBump(finish.id, 'furniture', 2) : null;
   const map = materialMap(finish.id, 'furniture', 2);
@@ -80,6 +95,7 @@ export function Legs({
   thickness,
   color,
   selected,
+  part,
 }: {
   w: number;
   d: number;
@@ -89,6 +105,7 @@ export function Legs({
   thickness: number;
   color: string;
   selected: boolean;
+  part?: string;
 }) {
   return (
     <>
@@ -100,7 +117,7 @@ export function Legs({
             position={[sx * (w / 2 - inset), y, sz * (d / 2 - inset)]}
           >
             <boxGeometry args={[thickness, height, thickness]} />
-            <Mat color={color} selected={selected} />
+            <Mat color={color} selected={selected} part={part} />
           </mesh>
         )),
       )}

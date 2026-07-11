@@ -13,14 +13,14 @@ export function Table({ size, color, selected, options }: FurnitureProps) {
     <group>
       <mesh castShadow position={[0, h - top / 2, 0]}>
         <boxGeometry args={[w, top, d]} />
-        <Mat color={color} selected={selected} />
+        <Mat color={color} selected={selected} part="top" />
       </mesh>
       {legs === 'panel' ? (
         // Two solid end panels instead of four legs.
         [-1, 1].map((s) => (
           <mesh key={s} castShadow position={[s * (w / 2 - 0.03), legH / 2, 0]}>
             <boxGeometry args={[0.06, legH, Math.max(d - 0.12, 0.05)]} />
-            <Mat color={color} selected={selected} />
+            <Mat color={color} selected={selected} part="legs" />
           </mesh>
         ))
       ) : (
@@ -33,13 +33,14 @@ export function Table({ size, color, selected, options }: FurnitureProps) {
           thickness={0.06}
           color={color}
           selected={selected}
+          part="legs"
         />
       )}
       {/* optional lower shelf */}
       {shelf && (
         <mesh castShadow position={[0, Math.min(0.18, legH * 0.3), 0]}>
           <boxGeometry args={[Math.max(w - 0.16, 0.05), 0.03, Math.max(d - 0.16, 0.05)]} />
-          <Mat color={color} selected={selected} />
+          <Mat color={color} selected={selected} part="legs" />
         </mesh>
       )}
     </group>

@@ -4,6 +4,7 @@ import { clampFurniture, furnitureFits, slideFurniture } from '../../lib/collisi
 import { clampToPolygon, floorPolygon } from '../../lib/polygon';
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { defaultOptions, normalizeOptions } from '../../lib/furnitureOptions';
+import { defaultMaterials, normalizeMaterials } from '../../lib/furnitureParts';
 import {
   placeAtCenter,
   touch,
@@ -24,6 +25,7 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
         size: entry.defaultSize,
         elevation: 0,
         color: entry.defaultColor,
+        materials: defaultMaterials(kind),
         options: defaultOptions(kind),
       });
       set({ design: touch({ ...d, furniture: [...d.furniture, item] }) });
@@ -45,6 +47,8 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
         size: entry.size,
         elevation: entry.elevation,
         color: entry.color,
+        material: entry.material,
+        materials: normalizeMaterials(entry.kind, entry.materials, entry.material),
         options: normalizeOptions(entry.kind, entry.options),
       });
       set({ design: touch({ ...d, furniture: [...d.furniture, item] }) });
@@ -65,6 +69,7 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
           id: newId,
           size: { ...src.size },
           position: { x: src.position.x + nudge(), z: src.position.z + nudge() },
+          materials: src.materials ? { ...src.materials } : undefined,
           options: src.options ? { ...src.options } : undefined,
         },
         poly,
@@ -92,6 +97,11 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
               options: patch.options
                 ? { ...normalizeOptions(f.kind, f.options), ...patch.options }
                 : f.options,
+              // Same for per-part materials: merge onto a fully-resolved map so a
+              // single edited part never drops the piece's other parts.
+              materials: patch.materials
+                ? { ...normalizeMaterials(f.kind, f.materials, f.material), ...patch.materials }
+                : f.materials,
             };
             return clampFurniture(next, poly);
           }),

@@ -1,4 +1,5 @@
-import { MATERIAL_CHOICES, normalizeMaterial } from '../../lib/materials';
+import { FURNITURE_PARTS, normalizeMaterials, primaryPart } from '../../lib/furnitureParts';
+import { MATERIAL_CHOICES } from '../../lib/materials';
 import { useMediaQuery } from '../../lib/useMediaQuery';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
@@ -72,11 +73,21 @@ export function SelectionBar() {
           <SelBarDivider />
           <SelBarSelect
             label="Material"
-            title="Surface finish for this piece"
-            value={normalizeMaterial(selected.material)}
+            title="Set the finish for the whole piece (fine-tune each part under More)"
+            value={
+              normalizeMaterials(selected.kind, selected.materials, selected.material)[
+                primaryPart(selected.kind)
+              ]
+            }
             ariaLabel="Furniture material"
             choices={MATERIAL_CHOICES}
-            onChange={(material) => updateFurniture(selected.id, { material })}
+            onChange={(m) =>
+              updateFurniture(selected.id, {
+                materials: Object.fromEntries(
+                  FURNITURE_PARTS[selected.kind].map((p) => [p.key, m]),
+                ),
+              })
+            }
           />
         </>
       )}

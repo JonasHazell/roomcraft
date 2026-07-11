@@ -15,7 +15,7 @@ export function Wardrobe({ size, color, selected, options }: FurnitureProps) {
       {/* carcass */}
       <mesh castShadow position={[0, bodyY, 0]}>
         <boxGeometry args={[w, bodyH, d]} />
-        <Mat color={color} selected={selected} />
+        <Mat color={color} selected={selected} part="body" />
       </mesh>
       {/* door panels — one per door */}
       {Array.from({ length: doors }, (_, i) => {
@@ -26,7 +26,7 @@ export function Wardrobe({ size, color, selected, options }: FurnitureProps) {
           <group key={i}>
             <mesh position={[cx, bodyY, d / 2 + 0.005]}>
               <boxGeometry args={[Math.max(slotW - 0.03, 0.05), Math.max(bodyH - 0.08, 0.1), 0.015]} />
-              <Mat color={shade(color, 0.12)} selected={selected} />
+              <Mat color={shade(color, 0.12)} selected={selected} part="doors" />
             </mesh>
             <mesh position={[handleX, bodyY, d / 2 + 0.025]}>
               <boxGeometry args={[0.025, 0.22, 0.025]} />
@@ -41,7 +41,7 @@ export function Wardrobe({ size, color, selected, options }: FurnitureProps) {
           [-1, 1].map((sz) => (
             <mesh key={`${sx}${sz}`} castShadow position={[sx * (w / 2 - 0.06), legH / 2, sz * (d / 2 - 0.06)]}>
               <boxGeometry args={[0.05, legH, 0.05]} />
-              <Mat color={shade(color, 0.2)} selected={selected} />
+              <Mat color={shade(color, 0.2)} selected={selected} part="body" />
             </mesh>
           )),
         )}

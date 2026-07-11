@@ -140,6 +140,7 @@ export function FurnitureDialog() {
                   elevation: editItem.elevation,
                   color: editItem.color,
                   material: editItem.material,
+                  materials: editItem.materials ? { ...editItem.materials } : undefined,
                   options: editItem.options ? { ...editItem.options } : undefined,
                 });
                 setSavedForId(editItem.id);

@@ -89,11 +89,17 @@ export interface FurnitureItem {
   elevation: number;
   color: string;
   /**
-   * Surface finish id (see {@link ../lib/materials}). Optional: pieces created
-   * before the field existed — or by the AI — fall back to the default matte
-   * finish, resolved wherever the material is read.
+   * Legacy whole-piece surface finish (see {@link ../lib/materials}). Superseded
+   * by {@link materials}; kept so older saves load, and mirrored to the primary
+   * part for forward reads.
    */
   material?: string;
+  /**
+   * Per-part surface finishes, keyed by part id (a bed's `frame` vs `bedding`).
+   * Optional: pieces without it fall back to the kind's part defaults, resolved
+   * wherever a material is read (see {@link ../lib/furnitureParts}).
+   */
+  materials?: Record<string, string>;
   /**
    * Per-type customization (shelves, doors, pillows …). Optional: pieces created
    * before the field existed — or by the AI — fall back to the type's defaults,
@@ -110,8 +116,10 @@ export interface FurnitureLibraryEntry {
   size: FurnitureSize;
   elevation: number;
   color: string;
-  /** Saved surface finish; see {@link FurnitureItem.material}. */
+  /** Saved legacy whole-piece finish; see {@link FurnitureItem.material}. */
   material?: string;
+  /** Saved per-part finishes; see {@link FurnitureItem.materials}. */
+  materials?: Record<string, string>;
   /** Saved per-type customization; see {@link FurnitureItem.options}. */
   options?: FurnitureOptions;
 }

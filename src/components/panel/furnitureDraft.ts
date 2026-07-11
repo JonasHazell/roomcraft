@@ -1,6 +1,7 @@
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { defaultOptions, normalizeOptions } from '../../lib/furnitureOptions';
 import { DEFAULT_MATERIAL, normalizeMaterial } from '../../lib/materials';
+import { defaultMaterials, normalizeMaterials, type FurnitureMaterials } from '../../lib/furnitureParts';
 import type {
   FurnitureKind,
   FurnitureLibraryEntry,
@@ -16,6 +17,7 @@ export interface FurnitureDraft {
   elevation: number;
   color: string;
   material?: string;
+  materials?: FurnitureMaterials;
   options?: FurnitureOptions;
 }
 
@@ -25,6 +27,8 @@ export type FurnitureFieldPatch = {
   elevation?: number;
   color?: string;
   material?: string;
+  /** Per-part material changes, merged onto the current materials. */
+  materials?: FurnitureMaterials;
   /** Per-type option changes, merged onto the current options. */
   options?: FurnitureOptions;
 };
@@ -39,6 +43,7 @@ export function draftFor(kind: FurnitureKind): FurnitureDraft {
     elevation: 0,
     color: entry.defaultColor,
     material: DEFAULT_MATERIAL,
+    materials: defaultMaterials(kind),
     options: defaultOptions(kind),
   };
 }
@@ -52,6 +57,7 @@ export function draftFromLibrary(entry: FurnitureLibraryEntry): FurnitureDraft {
     elevation: entry.elevation,
     color: entry.color,
     material: normalizeMaterial(entry.material),
+    materials: normalizeMaterials(entry.kind, entry.materials, entry.material),
     options: normalizeOptions(entry.kind, entry.options),
   };
 }
@@ -68,5 +74,8 @@ export function applyPatch(draft: FurnitureDraft, patch: FurnitureFieldPatch): F
     options: patch.options
       ? { ...normalizeOptions(draft.kind, draft.options), ...patch.options }
       : draft.options,
+    materials: patch.materials
+      ? { ...normalizeMaterials(draft.kind, draft.materials, draft.material), ...patch.materials }
+      : draft.materials,
   };
 }
