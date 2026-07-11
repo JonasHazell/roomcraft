@@ -1,10 +1,9 @@
-import { optBool, optNum } from '../../../lib/furnitureOptions';
+import { optNum } from '../../../lib/furnitureOptions';
 import { Mat, shade, type FurnitureProps } from './shared';
 
 export function Bed({ size, color, selected, options }: FurnitureProps) {
   const { width: w, depth: d, height: h } = size;
   const mattresses = optNum(options, 'mattresses', 1);
-  const headboard = optBool(options, 'headboard', true);
 
   const mattressColor = shade(color, 0.4);
   const mattressW = Math.max(w - 0.12, 0.05);
@@ -34,7 +33,7 @@ export function Bed({ size, color, selected, options }: FurnitureProps) {
           <Mat color={mattressColor} selected={selected} />
         </mesh>
       ))}
-      {/* one pillow centered on each mattress, near the headboard (local -z) */}
+      {/* one pillow centered on each mattress, near the head end (local -z) */}
       {slots.map((slot, i) => {
         const pillowW = Math.min(0.5, slot.width - 0.12);
         return (
@@ -44,14 +43,6 @@ export function Bed({ size, color, selected, options }: FurnitureProps) {
           </mesh>
         );
       })}
-      {/* headboard — sits flush behind the frame (local -z) so it never overlaps the bed,
-          and runs the full height from the floor up */}
-      {headboard && (
-        <mesh castShadow position={[0, h * 0.55, -d / 2 - 0.03]}>
-          <boxGeometry args={[w, h * 1.1, 0.06]} />
-          <Mat color={shade(color, 0.15)} selected={selected} />
-        </mesh>
-      )}
     </group>
   );
 }

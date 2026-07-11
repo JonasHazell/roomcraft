@@ -24,7 +24,7 @@ export const FURNITURE_CATALOG: Record<FurnitureKind, CatalogEntry> = {
     label: 'Bed',
     defaultSize: { width: 1.6, depth: 2.0, height: 0.5 },
     defaultColor: '#7d8c72',
-    front: 'the foot end (the headboard is at the back, against a wall)',
+    front: 'the foot end (the head end is at the back, against a wall)',
     accessDepth: 0.6,
     blocks: true,
   },
