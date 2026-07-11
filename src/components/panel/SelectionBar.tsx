@@ -1,7 +1,9 @@
+import { MATERIAL_CHOICES, normalizeMaterial } from '../../lib/materials';
+import { useMediaQuery } from '../../lib/useMediaQuery';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useSelectedFurniture } from '../../store/selectors';
-import { SelBar, SelBarButton, SelBarDivider } from './SelBar';
+import { SelBar, SelBarButton, SelBarDivider, SelBarSelect } from './SelBar';
 import { Icon } from '../ui/Icon';
 
 /**
@@ -20,6 +22,9 @@ export function SelectionBar() {
   const updateFurniture = useDesignStore((s) => s.updateFurniture);
   const duplicateFurniture = useDesignStore((s) => s.duplicateFurniture);
   const removeFurniture = useDesignStore((s) => s.removeFurniture);
+  // The furniture bar is the busiest one; the inline material picker only fits
+  // alongside the actions on wider screens. On phones it stays under "More".
+  const showMaterial = useMediaQuery('(min-width: 620px)');
 
   if (appView !== 'furnish' || !selected) return null;
 
@@ -62,6 +67,19 @@ export function SelectionBar() {
           select(null);
         }}
       />
+      {showMaterial && (
+        <>
+          <SelBarDivider />
+          <SelBarSelect
+            label="Material"
+            title="Surface finish for this piece"
+            value={normalizeMaterial(selected.material)}
+            ariaLabel="Furniture material"
+            choices={MATERIAL_CHOICES}
+            onChange={(material) => updateFurniture(selected.id, { material })}
+          />
+        </>
+      )}
       <SelBarDivider />
       <SelBarButton
         icon={<Icon name="more-horizontal" />}
