@@ -189,6 +189,30 @@ export function floorPolygon(walls: Wall[]): Point[] {
   return walls.filter((w) => w.kind === 'exterior').map((w) => w.a);
 }
 
+/**
+ * Slides one wall perpendicular to itself so it lands on `coord` (its z if the
+ * wall is horizontal, its x if vertical). An interior wall just moves both of its
+ * endpoints; an exterior wall drags the two neighbouring exterior walls' shared
+ * endpoints along so the loop stays closed. Returns a fresh wall array — the
+ * caller validates and applies it. Shared by dragging a wall and dragging a corner.
+ */
+export function slideWall(walls: Wall[], wall: Wall, coord: number): Wall[] {
+  const horizontal = wall.a.z === wall.b.z;
+  const moved: Wall = horizontal
+    ? { ...wall, a: { ...wall.a, z: coord }, b: { ...wall.b, z: coord } }
+    : { ...wall, a: { ...wall.a, x: coord }, b: { ...wall.b, x: coord } };
+  if (wall.kind === 'interior') {
+    return walls.map((w) => (w.id === wall.id ? moved : w));
+  }
+  return walls.map((w) => {
+    if (w.id === wall.id) return moved;
+    if (w.kind !== 'exterior') return w;
+    const b = w.b.x === wall.a.x && w.b.z === wall.a.z ? moved.a : w.b;
+    const a = w.a.x === wall.b.x && w.a.z === wall.b.z ? moved.b : w.a;
+    return a === w.a && b === w.b ? w : { ...w, a, b };
+  });
+}
+
 function orient(p: Point, q: Point, r: Point): number {
   const v = (q.x - p.x) * (r.z - p.z) - (q.z - p.z) * (r.x - p.x);
   return Math.abs(v) < EPS ? 0 : Math.sign(v);

@@ -13,10 +13,17 @@ import { useDesignStore } from '../../store/useDesignStore';
 interface Props {
   dimExterior: boolean;
   selectedWallId: string | null;
+  /** Walls whose measurement is highlighted because a drag is changing its length. */
+  highlightWallIds?: string[];
   onWallPointerDown: (id: string, e: React.PointerEvent) => void;
 }
 
-export function PlanWalls({ dimExterior, selectedWallId, onWallPointerDown }: Props) {
+export function PlanWalls({
+  dimExterior,
+  selectedWallId,
+  highlightWallIds,
+  onWallPointerDown,
+}: Props) {
   const walls = useDesignStore((s) => s.design.walls);
   const openings = useDesignStore((s) => s.design.openings);
 
@@ -30,6 +37,7 @@ export function PlanWalls({ dimExterior, selectedWallId, onWallPointerDown }: Pr
           index={i}
           dimmed={dimExterior && w.kind === 'exterior'}
           selected={w.id === selectedWallId}
+          active={highlightWallIds?.includes(w.id) ?? false}
           interactive={!dimExterior}
           openings={openings.filter((o) => o.wallId === w.id)}
           onPointerDown={onWallPointerDown}
@@ -45,6 +53,7 @@ function WallShape({
   index,
   dimmed,
   selected,
+  active,
   interactive,
   openings,
   onPointerDown,
@@ -54,6 +63,7 @@ function WallShape({
   index: number;
   dimmed: boolean;
   selected: boolean;
+  active: boolean;
   interactive: boolean;
   openings: { id: string; kind: 'door' | 'window'; offset: number; width: number }[];
   onPointerDown: (id: string, e: React.PointerEvent) => void;
@@ -112,7 +122,7 @@ function WallShape({
         onPointerDown={(e) => onPointerDown(w.id, e)}
       />
       {!dimmed && (
-        <text x={labelX} y={labelY} className="wall-measure">
+        <text x={labelX} y={labelY} className={`wall-measure${active ? ' active' : ''}`}>
           {formatCm(wallLen(w))}
         </text>
       )}

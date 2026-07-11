@@ -321,6 +321,12 @@ export interface PlanActions {
   addInteriorWall: (a: Point, b: Point) => string | null;
   removeWall: (id: string) => void;
   moveWall: (id: string, coord: number) => void;
+  /**
+   * Drags a corner of the exterior loop — the point shared by two adjacent walls
+   * (one horizontal, one vertical) — so it lands at (x, z). Each wall slides
+   * perpendicular, keeping the outline rectilinear and closed.
+   */
+  moveCorner: (wallAId: string, wallBId: string, x: number, z: number) => void;
   resizeWall: (id: string, newLen: number) => void;
   addOpening: (o: Omit<WallOpening, 'id'>) => string | null;
   updateOpening: (id: string, patch: Partial<Omit<WallOpening, 'id'>>) => void;

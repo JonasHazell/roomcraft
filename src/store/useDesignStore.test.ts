@@ -84,6 +84,55 @@ describe('naming and reordering proposals', () => {
   });
 });
 
+describe('dragging an exterior corner', () => {
+  beforeEach(() => {
+    store().newProject();
+  });
+
+  // The default room is a 4×5 m rectangle: north/east/south/west in loop order.
+  const polygon = () => store().design.walls.filter((w) => w.kind === 'exterior').map((w) => w.a);
+
+  it('slides the two adjacent walls so the shared corner lands where dragged', () => {
+    const [north, east] = store().design.walls;
+    // NE corner is north.b === east.a === (2, -2.5). Drag it out to (3, -3).
+    store().moveCorner(north.id, east.id, 3, -3);
+    expect(polygon()).toEqual([
+      { x: -2, z: -3 },
+      { x: 3, z: -3 },
+      { x: 3, z: 2.5 },
+      { x: -2, z: 2.5 },
+    ]);
+  });
+
+  it('works regardless of the order the two adjacent walls are passed', () => {
+    const [north, east] = store().design.walls;
+    store().moveCorner(east.id, north.id, 3, -3);
+    expect(polygon()[1]).toEqual({ x: 3, z: -3 });
+  });
+
+  it('snaps the dragged corner to the grid', () => {
+    const [north, east] = store().design.walls;
+    store().moveCorner(north.id, east.id, 2.94, -3.06);
+    expect(polygon()[1]).toEqual({ x: 2.9, z: -3.1 });
+  });
+
+  it('rejects a drag that would collapse a wall to zero length', () => {
+    const before = polygon();
+    const [north, east] = store().design.walls;
+    // Pulling the NE corner onto the NW corner's x would make the north wall zero-length.
+    store().moveCorner(north.id, east.id, -2, -2.5);
+    expect(polygon()).toEqual(before);
+  });
+
+  it('ignores a corner whose two walls are not one horizontal and one vertical', () => {
+    const before = polygon();
+    const [north, , south] = store().design.walls;
+    // north and south are both horizontal — not a real corner.
+    store().moveCorner(north.id, south.id, 1, 1);
+    expect(polygon()).toEqual(before);
+  });
+});
+
 describe('discarding an undrawn new room', () => {
   const RECT = [
     { x: -2, z: -2.5 },

@@ -944,6 +944,14 @@ select {
   fill: var(--accent-dark);
 }
 
+/* The measurement of a wall whose length is changing under a drag (an edge slide
+   or a corner drag) — brought forward so the relevant numbers stand out. */
+.wall-measure.active {
+  fill: var(--accent-dark);
+  font-size: 0.32px;
+  font-weight: 700;
+}
+
 .plan-draft .draft-line {
   fill: none;
   stroke: var(--accent);
@@ -976,6 +984,23 @@ select {
   fill: none;
   stroke: var(--select);
   stroke-width: 0.04;
+}
+
+/* Draggable handles at every corner of the exterior outline (select mode). The
+   hit target is a larger invisible circle so corners are easy to grab, especially
+   on touch; the visible dot marks the corner. */
+.plan-corners .corner-hit {
+  fill: transparent;
+  stroke: none;
+  cursor: grab;
+  touch-action: none;
+}
+
+.plan-corners .corner-dot {
+  fill: var(--select);
+  stroke: var(--paper-2);
+  stroke-width: 0.03;
+  pointer-events: none;
 }
 
 /* Floor-plan editor laid out like the 3D view: the canvas is full-bleed and the
