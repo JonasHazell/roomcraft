@@ -7,10 +7,14 @@ interface Props {
   /** Corner whose coordinate the cursor has snapped in line with. */
   guide: Point | null;
   closable: boolean;
+  /** Index of the draft edge picked for exact-length editing, or null. */
+  selectedEdge: number | null;
+  /** Picks the draft edge `i` (spanning draft[i]..draft[i+1]) for length editing. */
+  onSelectEdge: (index: number) => void;
 }
 
 /** Drawing in progress: placed corners, rubber band to the cursor and live measurements. */
-export function PlanDraft({ draft, hover, guide, closable }: Props) {
+export function PlanDraft({ draft, hover, guide, closable, selectedEdge, onSelectEdge }: Props) {
   const last = draft[draft.length - 1];
   const rubber = last && hover && !closable ? { a: last, b: hover } : null;
   const rubberLen = rubber ? dist(rubber.a, rubber.b) : 0;
@@ -21,6 +25,43 @@ export function PlanDraft({ draft, hover, guide, closable }: Props) {
         <polyline
           points={draft.map((p) => `${p.x},${p.z}`).join(' ')}
           className="draft-line"
+        />
+      )}
+      {/* Each placed edge is a fat, invisible pick target: tapping it selects the
+          edge (highlighted below) so its exact length can be typed mid-draw,
+          before the outline is closed. Stopping the pointer keeps the click from
+          also placing a new corner on the canvas. The target stops short of both
+          corners so a tap on a corner still falls through — to close the outline
+          on the start corner, or to disambiguate the two edges meeting there. */}
+      {draft.slice(0, -1).map((p, i) => {
+        const q = draft[i + 1];
+        const len = dist(p, q);
+        if (len < 1e-6) return null;
+        const trim = Math.min(0.2, len / 3);
+        const ux = (q.x - p.x) / len;
+        const uz = (q.z - p.z) / len;
+        return (
+          <line
+            key={`edge-${i}`}
+            x1={p.x + ux * trim}
+            y1={p.z + uz * trim}
+            x2={q.x - ux * trim}
+            y2={q.z - uz * trim}
+            className="draft-edge-hit"
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              onSelectEdge(i);
+            }}
+          />
+        );
+      })}
+      {selectedEdge !== null && draft[selectedEdge] && draft[selectedEdge + 1] && (
+        <line
+          x1={draft[selectedEdge].x}
+          y1={draft[selectedEdge].z}
+          x2={draft[selectedEdge + 1].x}
+          y2={draft[selectedEdge + 1].z}
+          className="draft-edge-selected"
         />
       )}
       {rubber && rubberLen > 0.001 && (

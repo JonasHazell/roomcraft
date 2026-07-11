@@ -1,18 +1,23 @@
 import { useState } from 'react';
 
 interface Props {
-  /** The current (aimed) edge length in cm, shown live while not being edited. */
+  /** The current (aimed or selected) edge length in cm, shown while not editing. */
   lengthCm: number;
-  /** Drop the corner at exactly this many cm along the current drawing direction. */
+  /** Apply exactly this many cm — place the next corner, or resize a picked edge. */
   onCommit: (cm: number) => void;
+  /** Label before the field ("Length" while aiming, "Edge" for a picked edge). */
+  label?: string;
+  /** Focus and select the field on mount — used when an edge is picked to edit. */
+  autoFocus?: boolean;
 }
 
 /**
- * A small box for setting the exact length of the edge being drawn: point the
- * wall in a direction, type a length in cm and press Enter to place the corner
- * at precisely that distance — no need to close the room first to fine-tune it.
+ * A small box for setting the exact length of a wall while drawing: either the
+ * edge being aimed (point the wall, type a length, Enter drops the corner at that
+ * distance) or an already-placed edge picked for editing — no need to close the
+ * room first to fine-tune it.
  */
-export function PlanLengthInput({ lengthCm, onCommit }: Props) {
+export function PlanLengthInput({ lengthCm, onCommit, label = 'Length', autoFocus }: Props) {
   // Local text while the field is focused, so the live length doesn't overwrite
   // what is being typed; null means "not editing, follow the live value".
   const [text, setText] = useState<string | null>(null);
@@ -26,7 +31,7 @@ export function PlanLengthInput({ lengthCm, onCommit }: Props) {
 
   return (
     <div className="plan-length-input">
-      <span className="plan-length-label">Length</span>
+      <span className="plan-length-label">{label}</span>
       <input
         type="number"
         inputMode="numeric"
@@ -34,6 +39,7 @@ export function PlanLengthInput({ lengthCm, onCommit }: Props) {
         step={1}
         value={shown}
         aria-label="Edge length in centimetres"
+        autoFocus={autoFocus}
         onFocus={(e) => {
           setText(shown);
           e.currentTarget.select();
