@@ -128,34 +128,65 @@ function build(id: string): Built {
     return out;
   }
 
-  // ---- Relief-only finishes (colour stays flat) ----
+  // ---- Patterned fabric: a woven textile (colour + relief) ----
   if (id === 'fabric') {
+    const m = canvas();
     const b = canvas();
-    if (b) {
+    if (m && b) {
+      const rnd = prng(83);
+      const cell = 7; // one woven thread crossing
+      // Colour: a light near-white weave so the piece's colour still dominates and
+      // the threads only modulate it. Gaps between cells read as the weave shadow.
+      m.ctx.fillStyle = 'rgb(200,200,200)';
+      m.ctx.fillRect(0, 0, SIZE, SIZE);
       b.ctx.fillStyle = '#808080';
       b.ctx.fillRect(0, 0, SIZE, SIZE);
-      b.ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-      for (let x = 0; x < SIZE; x += 4) {
-        b.ctx.beginPath();
-        b.ctx.moveTo(x, 0);
-        b.ctx.lineTo(x, SIZE);
-        b.ctx.stroke();
+      for (let y = 0; y < SIZE; y += cell) {
+        for (let x = 0; x < SIZE; x += cell) {
+          // Basket weave: alternate which thread sits "over" for a woven look.
+          const over = ((x / cell + y / cell) & 1) === 0;
+          const v = (over ? 240 : 202) + Math.round((rnd() - 0.5) * 14);
+          m.ctx.fillStyle = `rgb(${v},${v},${v})`;
+          m.ctx.fillRect(x, y, cell - 1, cell - 1); // 1px gap = weave shadow
+          const bv = over ? 175 : 120;
+          b.ctx.fillStyle = `rgb(${bv},${bv},${bv})`;
+          b.ctx.fillRect(x, y, cell - 1, cell - 1);
+        }
       }
-      b.ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-      for (let y = 0; y < SIZE; y += 4) {
-        b.ctx.beginPath();
-        b.ctx.moveTo(0, y);
-        b.ctx.lineTo(SIZE, y);
-        b.ctx.stroke();
-      }
+      out.map = m.c;
       out.bump = b.c;
     }
     return out;
   }
+  // ---- Patterned carpet: a heathered pile (colour + relief) ----
   if (id === 'carpet') {
+    const m = canvas();
     const b = canvas();
-    if (b) {
+    if (m && b) {
+      const rnd = prng(97);
+      // Colour: heathered flecks over a light base, so it reads as carpet pile but
+      // keeps the piece's colour bright.
+      m.ctx.fillStyle = 'rgb(214,214,214)';
+      m.ctx.fillRect(0, 0, SIZE, SIZE);
+      for (let i = 0; i < 4200; i++) {
+        const x = rnd() * SIZE;
+        const y = rnd() * SIZE;
+        const v = 210 + Math.round((rnd() - 0.5) * 88);
+        m.ctx.fillStyle = `rgba(${v},${v},${v},0.5)`;
+        m.ctx.fillRect(x, y, 1.5 + rnd() * 2.5, 1.5 + rnd() * 2.5);
+      }
+      // Faint larger-scale mottling for a lived-in look.
+      for (let i = 0; i < 90; i++) {
+        const x = rnd() * SIZE;
+        const y = rnd() * SIZE;
+        const v = 214 + Math.round((rnd() - 0.5) * 26);
+        m.ctx.fillStyle = `rgba(${v},${v},${v},0.07)`;
+        m.ctx.beginPath();
+        m.ctx.arc(x, y, 8 + rnd() * 22, 0, Math.PI * 2);
+        m.ctx.fill();
+      }
       fillNoise(b.ctx, 90, 130, prng(23));
+      out.map = m.c;
       out.bump = b.c;
     }
     return out;
