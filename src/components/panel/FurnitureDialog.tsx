@@ -139,6 +139,7 @@ export function FurnitureDialog() {
                   size: { ...editItem.size },
                   elevation: editItem.elevation,
                   color: editItem.color,
+                  colors: editItem.colors ? { ...editItem.colors } : undefined,
                   material: editItem.material,
                   materials: editItem.materials ? { ...editItem.materials } : undefined,
                   options: editItem.options ? { ...editItem.options } : undefined,

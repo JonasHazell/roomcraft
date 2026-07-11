@@ -3,7 +3,9 @@ import {
   FURNITURE_PARTS,
   defaultMaterials,
   hasParts,
+  normalizeColors,
   normalizeMaterials,
+  partColorOverride,
   partMaterial,
   primaryPart,
 } from './furnitureParts';
@@ -61,5 +63,19 @@ describe('furniture parts', () => {
     expect(partMaterial('table', { top: 'marble' }, 'top')).toBe('marble');
     expect(partMaterial('table', {}, 'legs')).toBe('wood');
     expect(partMaterial('table', undefined, 'top')).toBe('wood');
+  });
+
+  it('keeps only valid per-part colour overrides for known parts', () => {
+    expect(
+      normalizeColors('bed', { frame: '#123456', bogus: '#ffffff', bedding: 'red' }),
+    ).toEqual({ frame: '#123456' });
+    expect(normalizeColors('bed', {})).toBeUndefined();
+    expect(normalizeColors('bed', undefined)).toBeUndefined();
+  });
+
+  it('reads a part colour override only when it is a valid colour', () => {
+    expect(partColorOverride({ frame: '#abcdef' }, 'frame')).toBe('#abcdef');
+    expect(partColorOverride({ frame: 'nope' }, 'frame')).toBeUndefined();
+    expect(partColorOverride(undefined, 'frame')).toBeUndefined();
   });
 });

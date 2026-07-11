@@ -89,6 +89,12 @@ export interface FurnitureItem {
   elevation: number;
   color: string;
   /**
+   * Per-part colour overrides, keyed by part id. A part without an entry uses the
+   * base {@link color}. Optional and sparse — only customised parts appear. See
+   * {@link ../lib/furnitureParts}.
+   */
+  colors?: Record<string, string>;
+  /**
    * Legacy whole-piece surface finish (see {@link ../lib/materials}). Superseded
    * by {@link materials}; kept so older saves load, and mirrored to the primary
    * part for forward reads.
@@ -116,6 +122,8 @@ export interface FurnitureLibraryEntry {
   size: FurnitureSize;
   elevation: number;
   color: string;
+  /** Saved per-part colour overrides; see {@link FurnitureItem.colors}. */
+  colors?: Record<string, string>;
   /** Saved legacy whole-piece finish; see {@link FurnitureItem.material}. */
   material?: string;
   /** Saved per-part finishes; see {@link FurnitureItem.materials}. */

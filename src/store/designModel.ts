@@ -17,7 +17,7 @@ import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, SCHEMA_VERSION } from '../type
 import { clampFurniture, clampOpening } from '../lib/collision';
 import { normalizeOptions } from '../lib/furnitureOptions';
 import { DEFAULT_MATERIAL, normalizeMaterial } from '../lib/materials';
-import { normalizeMaterials } from '../lib/furnitureParts';
+import { normalizeColors, normalizeMaterials } from '../lib/furnitureParts';
 import { floorPolygon, polygonCenter, type LoopValidation } from '../lib/polygon';
 import { activeRoom, syncActiveProposal, syncActiveRoom } from '../lib/persistence';
 
@@ -46,6 +46,7 @@ export function cloneFurniture(items: FurnitureItem[]): FurnitureItem[] {
     id: nanoid(8),
     size: { ...f.size },
     position: { ...f.position },
+    colors: f.colors ? { ...f.colors } : undefined,
     materials: f.materials ? { ...f.materials } : undefined,
     options: f.options ? { ...f.options } : undefined,
   }));
@@ -63,6 +64,7 @@ export interface FurnitureSpec {
   size: FurnitureSize;
   elevation: number;
   color: string;
+  colors?: Record<string, string>;
   material?: string;
   materials?: Record<string, string>;
   options?: FurnitureOptions;
@@ -281,6 +283,7 @@ export function placeAtCenter(d: Design, spec: FurnitureSpec): FurnitureItem {
       size: { ...spec.size },
       elevation: spec.elevation,
       color: spec.color,
+      colors: normalizeColors(spec.kind, spec.colors),
       material: normalizeMaterial(spec.material),
       materials: normalizeMaterials(spec.kind, spec.materials, spec.material),
       options: normalizeOptions(spec.kind, spec.options),

@@ -6,7 +6,7 @@ import { isAxisParallel, validateExteriorLoop } from './polygon';
 import { FURNITURE_KINDS } from './furnitureCatalog';
 import { normalizeOptions } from './furnitureOptions';
 import { DEFAULT_MATERIAL, normalizeMaterial } from './materials';
-import { normalizeMaterials } from './furnitureParts';
+import { normalizeColors, normalizeMaterials } from './furnitureParts';
 
 const color = z.string().regex(HEX_COLOR_RE, 'invalid color code (expected #rrggbb)');
 const meters = (max: number) => z.number().min(0).max(max);
@@ -40,6 +40,8 @@ const furnitureSchema = z
     /** Missing in saves made before the field existed — falls back to the floor. */
     elevation: meters(20).default(0),
     color,
+    /** Sparse per-part colour overrides; invalid entries are dropped on load. */
+    colors: z.record(z.string(), z.string()).optional(),
     /** Legacy whole-piece finish — superseded by per-part `materials`. */
     material: z.string().optional(),
     /** Missing in saves made before parts existed — seeded from the part defaults or `material`. */
@@ -47,9 +49,10 @@ const furnitureSchema = z
     /** Missing in saves made before the field existed — normalized to the kind's defaults. */
     options: furnitureOptionsSchema.optional(),
   })
-  // Normalize options/materials against the kind so stored/hand-edited data is always sound.
+  // Normalize options/materials/colours against the kind so stored data is always sound.
   .transform((f) => ({
     ...f,
+    colors: normalizeColors(f.kind, f.colors),
     material: normalizeMaterial(f.material),
     materials: normalizeMaterials(f.kind, f.materials, f.material),
     options: normalizeOptions(f.kind, f.options),
@@ -481,12 +484,14 @@ const libraryEntrySchema = z
     size: furnitureSizeSchema,
     elevation: meters(20).default(0),
     color,
+    colors: z.record(z.string(), z.string()).optional(),
     material: z.string().optional(),
     materials: z.record(z.string(), z.string()).optional(),
     options: furnitureOptionsSchema.optional(),
   })
   .transform((e) => ({
     ...e,
+    colors: normalizeColors(e.kind, e.colors),
     material: normalizeMaterial(e.material),
     materials: normalizeMaterials(e.kind, e.materials, e.material),
     options: normalizeOptions(e.kind, e.options),

@@ -30,6 +30,15 @@ export const MaterialContext = createContext<MaterialSpec>(materialSpec(undefine
  */
 export const PartsContext = createContext<((part: string) => MaterialSpec) | null>(null);
 
+/**
+ * Resolves a named part to its colour override, or `undefined` to keep the colour
+ * the component computed. {@link FurnitureMesh} provides it so a `Mat` given a
+ * `part` recolours just that part without threading colours through components.
+ */
+export const PartColorsContext = createContext<((part: string) => string | undefined) | null>(
+  null,
+);
+
 const scratch = new THREE.Color();
 
 /** Lighter shade of a hex color (amt 0–1 toward white). */
@@ -60,7 +69,11 @@ export function Mat({
 }) {
   const fallback = useContext(MaterialContext);
   const resolvePart = useContext(PartsContext);
+  const resolveColor = useContext(PartColorsContext);
   const finish = part && resolvePart ? resolvePart(part) : fallback;
+  // A per-part colour override recolours just this part; otherwise keep the colour
+  // the component computed (with its shade variations).
+  const finalColor = (part && resolveColor && resolveColor(part)) || color;
   // Tile the finish's pattern/relief a couple of times across each piece's faces.
   const bump = finish.bumpScale > 0 ? materialBump(finish.id, 'furniture', 2) : null;
   const map = materialMap(finish.id, 'furniture', 2);
@@ -69,7 +82,7 @@ export function Mat({
     // `map` changes the shader, which a plain prop update wouldn't recompile.
     <meshStandardMaterial
       key={finish.id}
-      color={color}
+      color={finalColor}
       map={map}
       roughness={roughness ?? finish.roughness}
       metalness={metalness ?? finish.metalness}

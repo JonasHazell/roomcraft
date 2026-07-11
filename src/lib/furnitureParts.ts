@@ -1,4 +1,4 @@
-import type { FurnitureKind } from '../types';
+import { isHexColor, type FurnitureKind } from '../types';
 import { DEFAULT_MATERIAL, normalizeMaterial } from './materials';
 
 /**
@@ -91,6 +91,34 @@ export function partMaterial(
   if (typeof v === 'string') return normalizeMaterial(v);
   const spec = FURNITURE_PARTS[kind].find((p) => p.key === key);
   return spec ? spec.default : DEFAULT_MATERIAL;
+}
+
+/** A part's colour override if it has a valid one, else `undefined` (use the base colour). */
+export function partColorOverride(
+  colors: Record<string, string> | undefined,
+  key: string,
+): string | undefined {
+  const v = colors?.[key];
+  return isHexColor(v) ? v : undefined;
+}
+
+/**
+ * Coerces stored/incoming per-part colours into a sparse map of valid overrides:
+ * only known parts with a valid #rrggbb colour are kept, everything else dropped.
+ * Returns `undefined` when nothing survives, so an un-customised piece stays lean.
+ */
+export function normalizeColors(
+  kind: FurnitureKind,
+  raw: unknown,
+): Record<string, string> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const src = raw as Record<string, unknown>;
+  const keys = new Set(FURNITURE_PARTS[kind].map((p) => p.key));
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(src)) {
+    if (keys.has(k) && typeof v === 'string' && isHexColor(v)) out[k] = v;
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 /**

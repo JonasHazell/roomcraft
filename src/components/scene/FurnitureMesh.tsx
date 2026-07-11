@@ -5,12 +5,18 @@ import * as THREE from 'three';
 import type { FurnitureKind } from '../../types';
 import { normalizeOptions } from '../../lib/furnitureOptions';
 import { materialSpec } from '../../lib/materials';
-import { normalizeMaterials, partMaterial, primaryPart } from '../../lib/furnitureParts';
+import {
+  normalizeMaterials,
+  partColorOverride,
+  partMaterial,
+  primaryPart,
+} from '../../lib/furnitureParts';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import {
   MaterialContext,
+  PartColorsContext,
   PartsContext,
   SELECT_EMISSIVE,
   type FurnitureProps,
@@ -54,11 +60,13 @@ function PartMaterials({
   kind,
   materials,
   legacy,
+  colors,
   children,
 }: {
   kind: FurnitureKind;
   materials: Record<string, string> | undefined;
   legacy: string | undefined;
+  colors: Record<string, string> | undefined;
   children: ReactNode;
 }) {
   const resolved = useMemo(
@@ -70,9 +78,15 @@ function PartMaterials({
     [kind, resolved],
   );
   const fallback = useMemo(() => materialSpec(resolved[primaryPart(kind)]), [kind, resolved]);
+  const resolveColor = useMemo(
+    () => (part: string) => partColorOverride(colors, part),
+    [colors],
+  );
   return (
     <PartsContext.Provider value={resolve}>
-      <MaterialContext.Provider value={fallback}>{children}</MaterialContext.Provider>
+      <PartColorsContext.Provider value={resolveColor}>
+        <MaterialContext.Provider value={fallback}>{children}</MaterialContext.Provider>
+      </PartColorsContext.Provider>
     </PartsContext.Provider>
   );
 }
@@ -147,7 +161,12 @@ export function FurnitureMesh({ id }: { id: string }) {
       }}
       onPointerOut={() => setHovered(false)}
     >
-      <PartMaterials kind={item.kind} materials={item.materials} legacy={item.material}>
+      <PartMaterials
+        kind={item.kind}
+        materials={item.materials}
+        legacy={item.material}
+        colors={item.colors}
+      >
         <Piece
           size={item.size}
           color={item.color}

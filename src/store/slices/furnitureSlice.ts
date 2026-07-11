@@ -4,7 +4,7 @@ import { clampFurniture, furnitureFits, slideFurniture } from '../../lib/collisi
 import { clampToPolygon, floorPolygon } from '../../lib/polygon';
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { defaultOptions, normalizeOptions } from '../../lib/furnitureOptions';
-import { defaultMaterials, normalizeMaterials } from '../../lib/furnitureParts';
+import { defaultMaterials, normalizeColors, normalizeMaterials } from '../../lib/furnitureParts';
 import {
   placeAtCenter,
   touch,
@@ -47,6 +47,7 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
         size: entry.size,
         elevation: entry.elevation,
         color: entry.color,
+        colors: normalizeColors(entry.kind, entry.colors),
         material: entry.material,
         materials: normalizeMaterials(entry.kind, entry.materials, entry.material),
         options: normalizeOptions(entry.kind, entry.options),
@@ -69,6 +70,7 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
           id: newId,
           size: { ...src.size },
           position: { x: src.position.x + nudge(), z: src.position.z + nudge() },
+          colors: src.colors ? { ...src.colors } : undefined,
           materials: src.materials ? { ...src.materials } : undefined,
           options: src.options ? { ...src.options } : undefined,
         },
@@ -102,6 +104,8 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
               materials: patch.materials
                 ? { ...normalizeMaterials(f.kind, f.materials, f.material), ...patch.materials }
                 : f.materials,
+              // Per-part colour overrides merge onto the existing sparse map.
+              colors: patch.colors ? { ...f.colors, ...patch.colors } : f.colors,
             };
             return clampFurniture(next, poly);
           }),
