@@ -40,15 +40,22 @@ gallery shows them live.
 | `--ink`           | Primary text; borders on strong controls         |
 | `--muted`         | Secondary text, labels, hints                    |
 | `--line`          | Hairline borders and dividers                    |
-| `--accent`        | Primary action, focus, active accents (terracotta) |
+| `--accent`        | Primary action, focus, active accents (near-black graphite) |
 | `--accent-dark`   | Accent hover/pressed                             |
 | `--select`        | Selection blue (3D/plan selection only)          |
 | `--danger`        | Destructive actions and errors                   |
 | `--danger-dark`   | Danger hover/pressed                             |
 
-Keep the palette **warm**. The only blue is `--select`, reserved for canvas
-selection — never introduce a stray blue into chrome. Score/severity bands use
-their own fixed greens/ambers/reds (see `.score-*`, `.severity-*`).
+Keep the palette **clean and neutral** — white surfaces (`--paper`/`--card`),
+a light grey app background (`--paper-2`), neutral grey text (`--muted`) and
+hairlines (`--line`). The accent is a near-black graphite. The only blue is
+`--select`, reserved for canvas selection — never introduce a stray blue into
+chrome. Score/severity bands use their own fixed greens/ambers/reds (see
+`.score-*`, `.severity-*`).
+
+Accent tints (hover washes, active rows, error backgrounds) are derived with
+`color-mix(in srgb, var(--accent|--danger|--select) …%, transparent)` so they
+always track their token — never hard-code a tint.
 
 ### Typography
 

@@ -18,11 +18,11 @@ export function Scene() {
 
   return (
     <Canvas shadows camera={{ position: [center.x + 7, 5.5, center.z + 8.5], fov: 45 }}>
-      <color attach="background" args={['#ece4d4']} />
-      <fog attach="fog" args={['#ece4d4', 28, 60]} />
+      <color attach="background" args={['#eceef1']} />
+      <fog attach="fog" args={['#eceef1', 28, 60]} />
 
-      <ambientLight intensity={0.72} />
-      <hemisphereLight args={['#fff6e4', '#c9b795', 0.52]} />
+      <ambientLight intensity={0.75} />
+      <hemisphereLight args={['#ffffff', '#dfe3e8', 0.55]} />
       <directionalLight
         position={[8, 12, 6]}
         intensity={1.05}
@@ -45,7 +45,7 @@ export function Scene() {
         onClick={deselectOnStillClick}
       >
         <circleGeometry args={[45, 64]} />
-        <meshStandardMaterial color="#ddd2ba" />
+        <meshStandardMaterial color="#e2e5e9" />
       </mesh>
 
       <Floor />
