@@ -3,6 +3,7 @@ import type { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { floorPolygon } from '../../lib/polygon';
 import { materialSpec } from '../../lib/materials';
+import { materialBump } from './materialTextures';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 
@@ -23,6 +24,8 @@ export function Floor() {
   const walls = useDesignStore((s) => s.design.walls);
   const floorColor = useDesignStore((s) => s.design.floorColor);
   const finish = materialSpec(useDesignStore((s) => s.design.floorMaterial));
+  // Floor UVs are in metres (ShapeGeometry), so ~2 tiles/m gives a 0.5 m pattern.
+  const bump = finish.bumpScale > 0 ? materialBump(finish.id, 'surface', 2) : null;
 
   const geometry = useMemo(() => {
     const poly = floorPolygon(walls);
@@ -45,6 +48,9 @@ export function Floor() {
         color={floorColor}
         roughness={finish.roughness}
         metalness={finish.metalness}
+        envMapIntensity={finish.envMapIntensity}
+        bumpMap={bump}
+        bumpScale={bump ? finish.bumpScale : 0}
       />
     </mesh>
   );

@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react';
 import * as THREE from 'three';
 import type { FurnitureOptions, FurnitureSize } from '../../../types';
 import { materialSpec, type MaterialSpec } from '../../../lib/materials';
+import { materialBump } from '../materialTextures';
 
 export interface FurnitureProps {
   size: FurnitureSize;
@@ -45,11 +46,16 @@ export function Mat({
   metalness?: number;
 }) {
   const finish = useContext(MaterialContext);
+  // Tile the finish's relief a few times across each piece's faces.
+  const bump = finish.bumpScale > 0 ? materialBump(finish.id, 'furniture', 2) : null;
   return (
     <meshStandardMaterial
       color={color}
       roughness={roughness ?? finish.roughness}
       metalness={metalness ?? finish.metalness}
+      envMapIntensity={finish.envMapIntensity}
+      bumpMap={bump}
+      bumpScale={bump ? finish.bumpScale : 0}
       emissive={selected ? SELECT_EMISSIVE : '#000000'}
       emissiveIntensity={selected ? 0.25 : 0}
     />

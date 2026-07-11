@@ -16,19 +16,33 @@ export interface MaterialSpec {
   roughness: number;
   /** PBR metalness, 0 (dielectric) … 1 (metal). */
   metalness: number;
+  /**
+   * How strongly the surface picks up the scene's environment reflections. Shiny
+   * finishes (metal, gloss) reflect fully; soft ones (fabric, carpet) barely at
+   * all. This is what makes the finishes read as visibly different.
+   */
+  envMapIntensity: number;
+  /**
+   * Depth of the procedural surface relief (a bump map keyed by {@link id}) — a
+   * woodgrain, a fabric weave, a carpet pile. 0 leaves the surface perfectly
+   * smooth (matte paint, gloss). See {@link ../components/scene/materialTextures}.
+   */
+  bumpScale: number;
 }
 
 /**
  * The finishes on offer. `matte` reproduces RoomCraft's original flat-painted look
  * and is the default, so designs made before materials existed are unchanged.
+ * The finishes are spread across the shiny↔soft and smooth↔textured axes so they
+ * read as clearly distinct once the scene has an environment map.
  */
 export const MATERIALS: MaterialSpec[] = [
-  { id: 'matte', label: 'Matte paint', roughness: 0.85, metalness: 0 },
-  { id: 'wood', label: 'Wood', roughness: 0.6, metalness: 0 },
-  { id: 'fabric', label: 'Fabric', roughness: 0.95, metalness: 0 },
-  { id: 'carpet', label: 'Carpet', roughness: 1, metalness: 0 },
-  { id: 'metal', label: 'Metal', roughness: 0.4, metalness: 0.85 },
-  { id: 'gloss', label: 'Gloss paint', roughness: 0.2, metalness: 0 },
+  { id: 'matte', label: 'Matte paint', roughness: 0.9, metalness: 0, envMapIntensity: 0.25, bumpScale: 0 },
+  { id: 'wood', label: 'Wood', roughness: 0.5, metalness: 0, envMapIntensity: 0.55, bumpScale: 0.05 },
+  { id: 'fabric', label: 'Fabric', roughness: 1, metalness: 0, envMapIntensity: 0.12, bumpScale: 0.04 },
+  { id: 'carpet', label: 'Carpet', roughness: 1, metalness: 0, envMapIntensity: 0.08, bumpScale: 0.12 },
+  { id: 'metal', label: 'Metal', roughness: 0.28, metalness: 1, envMapIntensity: 1, bumpScale: 0.02 },
+  { id: 'gloss', label: 'Gloss paint', roughness: 0.08, metalness: 0, envMapIntensity: 1, bumpScale: 0 },
 ];
 
 /** The finish every surface falls back to — the original flat matte look. */
