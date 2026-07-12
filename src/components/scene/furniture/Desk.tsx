@@ -15,7 +15,7 @@ export function Desk({ size, color, selected, options }: FurnitureProps) {
       {/* top */}
       <mesh castShadow position={[0, h - top / 2, 0]}>
         <boxGeometry args={[w, top, d]} />
-        <Mat color={color} selected={selected} />
+        <Mat color={color} selected={selected} part="top" />
       </mesh>
       {/* legs */}
       <Legs
@@ -27,18 +27,19 @@ export function Desk({ size, color, selected, options }: FurnitureProps) {
         thickness={0.05}
         color={color}
         selected={selected}
+        part="base"
       />
       {/* optional drawer pedestal on the right side */}
       {drawers && (
         <group>
           <mesh castShadow position={[w / 2 - 0.2, (h - top) / 2, 0]}>
             <boxGeometry args={[0.36, h - top, Math.max(d - 0.08, 0.05)]} />
-            <Mat color={shade(color, 0.1)} selected={selected} />
+            <Mat color={shade(color, 0.1)} selected={selected} part="base" />
           </mesh>
           {[0.28, 0.52, 0.76].map((f) => (
             <mesh key={f} position={[w / 2 - 0.2, (h - top) * f, d / 2 - 0.02]}>
               <boxGeometry args={[0.3, (h - top) * 0.18, 0.02]} />
-              <Mat color={shade(color, 0.28)} selected={selected} />
+              <Mat color={shade(color, 0.28)} selected={selected} part="base" />
             </mesh>
           ))}
         </group>
@@ -54,7 +55,7 @@ export function Desk({ size, color, selected, options }: FurnitureProps) {
             </mesh>
             <mesh castShadow position={[x, h + 0.03, -d / 2 + 0.12]}>
               <boxGeometry args={[0.18, 0.06, 0.12]} />
-              <Mat color={shade(color, 0.2)} selected={selected} />
+              <Mat color={shade(color, 0.2)} selected={selected} part="base" />
             </mesh>
           </group>
         );

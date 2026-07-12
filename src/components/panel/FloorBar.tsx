@@ -1,6 +1,7 @@
+import { MATERIAL_CHOICES } from '../../lib/materials';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
-import { SelBar, SelBarColor } from './SelBar';
+import { SelBar, SelBarColor, SelBarDivider, SelBarSelect } from './SelBar';
 
 /**
  * Action bar for the selected floor (3D view). Clicking the floor selects it and
@@ -11,6 +12,7 @@ export function FloorBar() {
   const appView = useUiStore((s) => s.appView);
   const selection = useUiStore((s) => s.selection);
   const floorColor = useDesignStore((s) => s.design.floorColor);
+  const floorMaterial = useDesignStore((s) => s.design.floorMaterial);
   const setColors = useDesignStore((s) => s.setColors);
 
   if (appView !== 'furnish' || selection?.kind !== 'floor') return null;
@@ -23,6 +25,15 @@ export function FloorBar() {
         value={floorColor}
         ariaLabel="Floor colour"
         onChange={(floorColor) => setColors({ floorColor })}
+      />
+      <SelBarDivider />
+      <SelBarSelect
+        label="Material"
+        title="Floor material (applies to the whole floor)"
+        value={floorMaterial}
+        ariaLabel="Floor material"
+        choices={MATERIAL_CHOICES}
+        onChange={(floorMaterial) => setColors({ floorMaterial })}
       />
     </SelBar>
   );

@@ -98,3 +98,39 @@ export function SelBarColor({
     </label>
   );
 }
+
+/** A dock pill wrapping a native `<select>` — a compact dropdown that sits in a
+ *  selection bar (e.g. the floor/wall material picker). */
+export function SelBarSelect({
+  label,
+  title,
+  value,
+  ariaLabel,
+  choices,
+  onChange,
+}: {
+  label: string;
+  title: string;
+  value: string;
+  ariaLabel: string;
+  choices: { value: string; label: string }[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="sel-action sel-select" title={title}>
+      <span className="sel-label">{label}</span>
+      <select
+        className="sel-select-input"
+        value={value}
+        aria-label={ariaLabel}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {choices.map((c) => (
+          <option key={c.value} value={c.value}>
+            {c.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}

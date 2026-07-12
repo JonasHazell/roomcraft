@@ -24,13 +24,13 @@ export function Bed({ size, color, selected, options }: FurnitureProps) {
       {/* base frame */}
       <mesh castShadow position={[0, h * 0.275, 0]}>
         <boxGeometry args={[w, h * 0.55, d]} />
-        <Mat color={color} selected={selected} />
+        <Mat color={color} selected={selected} part="frame" />
       </mesh>
       {/* one full mattress, or two split along the width */}
       {slots.map((slot, i) => (
         <mesh key={i} castShadow position={[slot.x, mattressY, 0]}>
           <boxGeometry args={[slot.width, mattressH, mattressD]} />
-          <Mat color={mattressColor} selected={selected} />
+          <Mat color={mattressColor} selected={selected} part="bedding" />
         </mesh>
       ))}
       {/* one pillow centered on each mattress, near the head end (local -z) */}
@@ -39,7 +39,7 @@ export function Bed({ size, color, selected, options }: FurnitureProps) {
         return (
           <mesh key={`p${i}`} castShadow position={[slot.x, h + 0.04, -d / 2 + 0.28]}>
             <boxGeometry args={[pillowW, 0.09, 0.32]} />
-            <Mat color={shade(color, 0.75)} selected={selected} />
+            <Mat color={shade(color, 0.75)} selected={selected} part="bedding" />
           </mesh>
         );
       })}

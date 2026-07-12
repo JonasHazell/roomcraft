@@ -16,6 +16,8 @@ import type {
 import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, SCHEMA_VERSION } from '../types';
 import { clampFurniture, clampOpening } from '../lib/collision';
 import { normalizeOptions } from '../lib/furnitureOptions';
+import { DEFAULT_MATERIAL, normalizeMaterial } from '../lib/materials';
+import { normalizeColors, normalizeMaterials } from '../lib/furnitureParts';
 import { floorPolygon, polygonCenter, type LoopValidation } from '../lib/polygon';
 import { activeRoom, syncActiveProposal, syncActiveRoom } from '../lib/persistence';
 
@@ -44,6 +46,8 @@ export function cloneFurniture(items: FurnitureItem[]): FurnitureItem[] {
     id: nanoid(8),
     size: { ...f.size },
     position: { ...f.position },
+    colors: f.colors ? { ...f.colors } : undefined,
+    materials: f.materials ? { ...f.materials } : undefined,
     options: f.options ? { ...f.options } : undefined,
   }));
 }
@@ -60,6 +64,9 @@ export interface FurnitureSpec {
   size: FurnitureSize;
   elevation: number;
   color: string;
+  colors?: Record<string, string>;
+  material?: string;
+  materials?: Record<string, string>;
   options?: FurnitureOptions;
 }
 
@@ -81,6 +88,8 @@ export function createDefaultRoom(name = 'Room 1'): Design {
     },
     floorColor: DEFAULT_FLOOR_COLOR,
     wallColor: DEFAULT_WALL_COLOR,
+    floorMaterial: DEFAULT_MATERIAL,
+    wallMaterial: DEFAULT_MATERIAL,
     walls: [north, east, south, west],
     proposals: [
       {
@@ -89,6 +98,8 @@ export function createDefaultRoom(name = 'Room 1'): Design {
         furniture: [],
         floorColor: DEFAULT_FLOOR_COLOR,
         wallColor: DEFAULT_WALL_COLOR,
+        floorMaterial: DEFAULT_MATERIAL,
+        wallMaterial: DEFAULT_MATERIAL,
       },
     ],
     activeProposalId: proposalId,
@@ -142,6 +153,8 @@ export function createEmptyRoom(name = 'Room 1'): Design {
     room: { height: 2.5 },
     floorColor: DEFAULT_FLOOR_COLOR,
     wallColor: DEFAULT_WALL_COLOR,
+    floorMaterial: DEFAULT_MATERIAL,
+    wallMaterial: DEFAULT_MATERIAL,
     walls: [],
     openings: [],
     proposals: [
@@ -151,6 +164,8 @@ export function createEmptyRoom(name = 'Room 1'): Design {
         furniture: [],
         floorColor: DEFAULT_FLOOR_COLOR,
         wallColor: DEFAULT_WALL_COLOR,
+        floorMaterial: DEFAULT_MATERIAL,
+        wallMaterial: DEFAULT_MATERIAL,
       },
     ],
     activeProposalId: proposalId,
@@ -199,6 +214,8 @@ export function cloneRoom(src: Design, name: string): Design {
       furniture: cloneFurniture(isActive ? src.furniture : p.furniture),
       floorColor: isActive ? src.floorColor : p.floorColor,
       wallColor: isActive ? src.wallColor : p.wallColor,
+      floorMaterial: isActive ? src.floorMaterial : p.floorMaterial,
+      wallMaterial: isActive ? src.wallMaterial : p.wallMaterial,
     };
   });
   const activeIdx = Math.max(0, src.proposals.findIndex((p) => p.id === src.activeProposalId));
@@ -210,6 +227,8 @@ export function cloneRoom(src: Design, name: string): Design {
     room: { ...src.room },
     floorColor: active.floorColor,
     wallColor: active.wallColor,
+    floorMaterial: active.floorMaterial,
+    wallMaterial: active.wallMaterial,
     walls,
     openings,
     proposals,
@@ -264,6 +283,9 @@ export function placeAtCenter(d: Design, spec: FurnitureSpec): FurnitureItem {
       size: { ...spec.size },
       elevation: spec.elevation,
       color: spec.color,
+      colors: normalizeColors(spec.kind, spec.colors),
+      material: normalizeMaterial(spec.material),
+      materials: normalizeMaterials(spec.kind, spec.materials, spec.material),
       options: normalizeOptions(spec.kind, spec.options),
     },
     poly,
@@ -310,10 +332,16 @@ export interface RoomActions {
   setName: (name: string) => void;
   setRoom: (patch: Partial<Room>) => void;
   /**
-   * Recolours the floor and/or walls of the active proposal. Different proposals
-   * of the same room can therefore carry different palettes.
+   * Recolours and/or re-finishes the floor and walls of the active proposal.
+   * Different proposals of the same room can therefore carry different palettes
+   * and materials.
    */
-  setColors: (patch: { floorColor?: string; wallColor?: string }) => void;
+  setColors: (patch: {
+    floorColor?: string;
+    wallColor?: string;
+    floorMaterial?: string;
+    wallMaterial?: string;
+  }) => void;
 }
 
 export interface PlanActions {

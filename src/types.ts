@@ -89,6 +89,24 @@ export interface FurnitureItem {
   elevation: number;
   color: string;
   /**
+   * Per-part colour overrides, keyed by part id. A part without an entry uses the
+   * base {@link color}. Optional and sparse — only customised parts appear. See
+   * {@link ../lib/furnitureParts}.
+   */
+  colors?: Record<string, string>;
+  /**
+   * Legacy whole-piece surface finish (see {@link ../lib/materials}). Superseded
+   * by {@link materials}; kept so older saves load, and mirrored to the primary
+   * part for forward reads.
+   */
+  material?: string;
+  /**
+   * Per-part surface finishes, keyed by part id (a bed's `frame` vs `bedding`).
+   * Optional: pieces without it fall back to the kind's part defaults, resolved
+   * wherever a material is read (see {@link ../lib/furnitureParts}).
+   */
+  materials?: Record<string, string>;
+  /**
    * Per-type customization (shelves, doors, pillows …). Optional: pieces created
    * before the field existed — or by the AI — fall back to the type's defaults,
    * resolved wherever the options are read (see {@link ../lib/furnitureOptions}).
@@ -104,6 +122,12 @@ export interface FurnitureLibraryEntry {
   size: FurnitureSize;
   elevation: number;
   color: string;
+  /** Saved per-part colour overrides; see {@link FurnitureItem.colors}. */
+  colors?: Record<string, string>;
+  /** Saved legacy whole-piece finish; see {@link FurnitureItem.material}. */
+  material?: string;
+  /** Saved per-part finishes; see {@link FurnitureItem.materials}. */
+  materials?: Record<string, string>;
   /** Saved per-type customization; see {@link FurnitureItem.options}. */
   options?: FurnitureOptions;
 }
@@ -120,6 +144,10 @@ export interface Proposal {
   floorColor: string;
   /** Wall colour for this furnishing variant (#rrggbb). */
   wallColor: string;
+  /** Floor surface finish for this variant; see {@link ../lib/materials}. */
+  floorMaterial: string;
+  /** Wall surface finish for this variant; see {@link ../lib/materials}. */
+  wallMaterial: string;
 }
 
 export const SCHEMA_VERSION = 5;
@@ -153,6 +181,10 @@ export interface Design {
   floorColor: string;
   /** The active proposal's wall colour — mirrored like `floorColor`. */
   wallColor: string;
+  /** The active proposal's floor finish — mirrored like `floorColor`. */
+  floorMaterial: string;
+  /** The active proposal's wall finish — mirrored like `floorColor`. */
+  wallMaterial: string;
   /** Named furnishing variants of this room; always at least one. */
   proposals: Proposal[];
   /** Which proposal `furniture`/`floorColor`/`wallColor` currently mirror. */

@@ -12,7 +12,7 @@ export function Mirror({ size, color, selected, options }: FurnitureProps) {
       {framed && (
         <mesh castShadow position={[0, h / 2, 0]}>
           <boxGeometry args={[w, h, d]} />
-          <Mat color={color} selected={selected} />
+          <Mat color={color} selected={selected} part="frame" />
         </mesh>
       )}
       {/* glass surface on the front (local +z) */}

@@ -91,10 +91,11 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
 - **Docked controls** — the floating rounded pill bar is `.selection-bar` filled
   with `.sel-action` pills (each an optional `.sel-icon` + `.sel-label`); variants
   `.sel-active` (ink-filled current mode), `.sel-danger`, `.sel-history` (icon-only
-  undo/redo), and `.sel-color` (a round `.sel-color-input` swatch), split by
-  `.sel-divider`. Three bars sit in a `.selection-bar-wrap` three-slot grid — add
-  left · contextual centre · undo/redo right — and the plan editor reuses the same
-  family inside its `.plan-dock`.
+  undo/redo), `.sel-color` (a round `.sel-color-input` swatch), and `.sel-select`
+  (a compact dropdown, `.sel-select-input`, for an in-dock choice such as the
+  floor/wall material), split by `.sel-divider`. Three bars sit in a
+  `.selection-bar-wrap` three-slot grid — add left · contextual centre · undo/redo
+  right — and the plan editor reuses the same family inside its `.plan-dock`.
 - **Floating plan chrome** — the floor-plan editor floats these over the canvas:
   `.plan-hint-pill` (guidance) and `.plan-error-pill` (failure) top-centre,
   `.plan-length-input` for typing an exact edge length, the `.plan-room-panel`

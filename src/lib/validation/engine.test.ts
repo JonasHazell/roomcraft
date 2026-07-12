@@ -32,11 +32,21 @@ function makeDesign(furniture: FurnitureItem[], openings?: Omit<WallOpening, 'id
     room: { height: 2.5 },
     floorColor: '#c9a878',
     wallColor: '#efe8da',
+    floorMaterial: 'matte',
+    wallMaterial: 'matte',
     walls,
     openings: (openings ?? defaultOpenings).map((o, i) => ({ ...o, id: `o${i}` })),
     furniture,
     proposals: [
-      { id: 'p0', name: 'Proposal 1', furniture, floorColor: '#c9a878', wallColor: '#efe8da' },
+      {
+        id: 'p0',
+        name: 'Proposal 1',
+        furniture,
+        floorColor: '#c9a878',
+        wallColor: '#efe8da',
+        floorMaterial: 'matte',
+        wallMaterial: 'matte',
+      },
     ],
     activeProposalId: 'p0',
   };

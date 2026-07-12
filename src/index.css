@@ -1926,6 +1926,26 @@ select {
   border-radius: 999px;
 }
 
+/* A compact dropdown that sits inside a pill bar (wall/floor material). The label
+   stays visible and the native select is trimmed to a small inline control so the
+   pill reads like the other dock actions. */
+.sel-select {
+  cursor: pointer;
+  padding-right: 8px;
+}
+
+.sel-select-input {
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+}
+
 /* Narrower viewports: drop the labels and keep icon-only actions so the three
    dock pills — add / contextual / undo-redo — still sit on one row. The
    breakpoint is set so the widest case (a furniture piece selected, five labelled

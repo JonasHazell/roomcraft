@@ -1,7 +1,10 @@
+import { FURNITURE_PARTS, normalizeMaterials, primaryPart } from '../../lib/furnitureParts';
+import { MATERIAL_CHOICES } from '../../lib/materials';
+import { useMediaQuery } from '../../lib/useMediaQuery';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useSelectedFurniture } from '../../store/selectors';
-import { SelBar, SelBarButton, SelBarDivider } from './SelBar';
+import { SelBar, SelBarButton, SelBarDivider, SelBarSelect } from './SelBar';
 import { Icon } from '../ui/Icon';
 
 /**
@@ -20,6 +23,9 @@ export function SelectionBar() {
   const updateFurniture = useDesignStore((s) => s.updateFurniture);
   const duplicateFurniture = useDesignStore((s) => s.duplicateFurniture);
   const removeFurniture = useDesignStore((s) => s.removeFurniture);
+  // The furniture bar is the busiest one; the inline material picker only fits
+  // alongside the actions on wider screens. On phones it stays under "More".
+  const showMaterial = useMediaQuery('(min-width: 620px)');
 
   if (appView !== 'furnish' || !selected) return null;
 
@@ -62,6 +68,29 @@ export function SelectionBar() {
           select(null);
         }}
       />
+      {showMaterial && (
+        <>
+          <SelBarDivider />
+          <SelBarSelect
+            label="Material"
+            title="Set the finish for the whole piece (fine-tune each part under More)"
+            value={
+              normalizeMaterials(selected.kind, selected.materials, selected.material)[
+                primaryPart(selected.kind)
+              ]
+            }
+            ariaLabel="Furniture material"
+            choices={MATERIAL_CHOICES}
+            onChange={(m) =>
+              updateFurniture(selected.id, {
+                materials: Object.fromEntries(
+                  FURNITURE_PARTS[selected.kind].map((p) => [p.key, m]),
+                ),
+              })
+            }
+          />
+        </>
+      )}
       <SelBarDivider />
       <SelBarButton
         icon={<Icon name="more-horizontal" />}

@@ -1,5 +1,13 @@
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { FURNITURE_OPTIONS, normalizeOptions } from '../../lib/furnitureOptions';
+import {
+  FURNITURE_PARTS,
+  hasParts,
+  normalizeMaterials,
+  partColorOverride,
+  primaryPart,
+} from '../../lib/furnitureParts';
+import { MATERIAL_CHOICES } from '../../lib/materials';
 import { ColorField, CountField, NumberField, SelectField, ToggleField } from './fields';
 import type { FurnitureDraft, FurnitureFieldPatch } from './furnitureDraft';
 
@@ -125,11 +133,96 @@ export function FurnitureFields({
         />
       </div>
       <FurnitureOptionFields value={value} onChange={onChange} />
-      <ColorField
-        label="Color"
-        value={value.color}
-        onChange={(color) => onChange({ color })}
-      />
+      <FurnitureColorFields value={value} onChange={onChange} />
+      <FurnitureMaterialFields value={value} onChange={onChange} />
     </>
+  );
+}
+
+/**
+ * A colour picker per configurable part (a bed's frame vs its bedding). The
+ * primary part edits the base colour (which cascades to any un-overridden part);
+ * the rest set a per-part override. Single-part kinds show one "Color" control.
+ */
+function FurnitureColorFields({
+  value,
+  onChange,
+}: {
+  value: FurnitureDraft;
+  onChange: (patch: FurnitureFieldPatch) => void;
+}) {
+  const parts = FURNITURE_PARTS[value.kind];
+
+  if (!hasParts(value.kind)) {
+    return (
+      <ColorField label="Color" value={value.color} onChange={(color) => onChange({ color })} />
+    );
+  }
+
+  const primary = primaryPart(value.kind);
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      <p className="field-label">Colours</p>
+      {parts.map((part) => {
+        const isPrimary = part.key === primary;
+        const current = isPrimary
+          ? value.color
+          : (partColorOverride(value.colors, part.key) ?? value.color);
+        return (
+          <ColorField
+            key={part.key}
+            label={part.label}
+            value={current}
+            onChange={(c) =>
+              onChange(isPrimary ? { color: c } : { colors: { [part.key]: c } })
+            }
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * A material picker per configurable part (a bed's frame vs its bedding), driven
+ * by the kind's part specs. Kinds with a single part show one "Material" control.
+ */
+function FurnitureMaterialFields({
+  value,
+  onChange,
+}: {
+  value: FurnitureDraft;
+  onChange: (patch: FurnitureFieldPatch) => void;
+}) {
+  const parts = FURNITURE_PARTS[value.kind];
+  const materials = normalizeMaterials(value.kind, value.materials, value.material);
+
+  if (!hasParts(value.kind)) {
+    const part = parts[0];
+    return (
+      <SelectField
+        label={part.label}
+        title="Surface finish — changes how light reflects off the piece"
+        value={materials[part.key]}
+        choices={MATERIAL_CHOICES}
+        onChange={(m) => onChange({ materials: { [part.key]: m } })}
+      />
+    );
+  }
+
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      <p className="field-label">Materials</p>
+      {parts.map((part) => (
+        <SelectField
+          key={part.key}
+          label={part.label}
+          title={`Surface finish for the ${part.label.toLowerCase()}`}
+          value={materials[part.key]}
+          choices={MATERIAL_CHOICES}
+          onChange={(m) => onChange({ materials: { [part.key]: m } })}
+        />
+      ))}
+    </div>
   );
 }

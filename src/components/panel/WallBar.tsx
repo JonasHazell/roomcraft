@@ -1,7 +1,8 @@
+import { MATERIAL_CHOICES } from '../../lib/materials';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useSelectedWall } from '../../store/selectors';
-import { SelBar, SelBarColor } from './SelBar';
+import { SelBar, SelBarColor, SelBarDivider, SelBarSelect } from './SelBar';
 
 /**
  * Action bar for a selected wall (3D view). Mirrors the furniture selection bar:
@@ -17,6 +18,7 @@ export function WallBar() {
 
   const wall = useSelectedWall();
   const wallColor = useDesignStore((s) => s.design.wallColor);
+  const wallMaterial = useDesignStore((s) => s.design.wallMaterial);
   const setColors = useDesignStore((s) => s.setColors);
 
   if (appView !== 'furnish' || !wall) return null;
@@ -29,6 +31,15 @@ export function WallBar() {
         value={wallColor}
         ariaLabel="Wall colour"
         onChange={(wallColor) => setColors({ wallColor })}
+      />
+      <SelBarDivider />
+      <SelBarSelect
+        label="Material"
+        title="Wall material (applies to every wall)"
+        value={wallMaterial}
+        ariaLabel="Wall material"
+        choices={MATERIAL_CHOICES}
+        onChange={(wallMaterial) => setColors({ wallMaterial })}
       />
     </SelBar>
   );

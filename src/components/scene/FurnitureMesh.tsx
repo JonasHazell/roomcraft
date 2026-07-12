@@ -1,13 +1,26 @@
-import { useRef, useState, type ComponentType } from 'react';
+import { useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
 import type { ThreeEvent } from '@react-three/fiber';
 import { useCursor } from '@react-three/drei';
 import * as THREE from 'three';
 import type { FurnitureKind } from '../../types';
 import { normalizeOptions } from '../../lib/furnitureOptions';
+import { materialSpec } from '../../lib/materials';
+import {
+  normalizeMaterials,
+  partColorOverride,
+  partMaterial,
+  primaryPart,
+} from '../../lib/furnitureParts';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
-import { SELECT_EMISSIVE, type FurnitureProps } from './furniture/shared';
+import {
+  MaterialContext,
+  PartColorsContext,
+  PartsContext,
+  SELECT_EMISSIVE,
+  type FurnitureProps,
+} from './furniture/shared';
 import { Bed } from './furniture/Bed';
 import { Sofa } from './furniture/Sofa';
 import { Table } from './furniture/Table';
@@ -37,6 +50,46 @@ const COMPONENTS: Record<FurnitureKind, ComponentType<FurnitureProps>> = {
   rug: Rug,
   box: GenericBox,
 };
+
+/**
+ * Provides the per-part material resolver ({@link PartsContext}) and the primary
+ * part as the fallback finish ({@link MaterialContext}) for a piece, so every
+ * `Mat` inside — whether it names a part or not — renders the right finish.
+ */
+function PartMaterials({
+  kind,
+  materials,
+  legacy,
+  colors,
+  children,
+}: {
+  kind: FurnitureKind;
+  materials: Record<string, string> | undefined;
+  legacy: string | undefined;
+  colors: Record<string, string> | undefined;
+  children: ReactNode;
+}) {
+  const resolved = useMemo(
+    () => normalizeMaterials(kind, materials, legacy),
+    [kind, materials, legacy],
+  );
+  const resolve = useMemo(
+    () => (part: string) => materialSpec(partMaterial(kind, resolved, part)),
+    [kind, resolved],
+  );
+  const fallback = useMemo(() => materialSpec(resolved[primaryPart(kind)]), [kind, resolved]);
+  const resolveColor = useMemo(
+    () => (part: string) => partColorOverride(colors, part),
+    [colors],
+  );
+  return (
+    <PartsContext.Provider value={resolve}>
+      <PartColorsContext.Provider value={resolveColor}>
+        <MaterialContext.Provider value={fallback}>{children}</MaterialContext.Provider>
+      </PartColorsContext.Provider>
+    </PartsContext.Provider>
+  );
+}
 
 // Drag against the mathematical floor plane (not a mesh) so the drag continues
 // even when the pointer leaves the furniture's silhouette.
@@ -108,12 +161,19 @@ export function FurnitureMesh({ id }: { id: string }) {
       }}
       onPointerOut={() => setHovered(false)}
     >
-      <Piece
-        size={item.size}
-        color={item.color}
-        selected={selected}
-        options={normalizeOptions(item.kind, item.options)}
-      />
+      <PartMaterials
+        kind={item.kind}
+        materials={item.materials}
+        legacy={item.material}
+        colors={item.colors}
+      >
+        <Piece
+          size={item.size}
+          color={item.color}
+          selected={selected}
+          options={normalizeOptions(item.kind, item.options)}
+        />
+      </PartMaterials>
       {selected && (
         // The selection is projected down onto the floor so the footprint is
         // visible even when the furniture hangs above it.

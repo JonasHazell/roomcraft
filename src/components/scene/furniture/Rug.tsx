@@ -12,7 +12,7 @@ export function Rug({ size, color, selected, options }: FurnitureProps) {
       {/* rug body */}
       <mesh castShadow receiveShadow position={[0, h / 2, 0]}>
         <boxGeometry args={[w, h, d]} />
-        <Mat color={color} selected={selected} />
+        <Mat color={color} selected={selected} part="rug" />
       </mesh>
       {/* inset border */}
       {pattern === 'border' && (

@@ -26,13 +26,23 @@ function makeRoom(): Design {
     room: { height: 2.4 },
     floorColor: '#ffffff',
     wallColor: '#ffffff',
+    floorMaterial: 'matte',
+    wallMaterial: 'matte',
     walls,
     openings: [
       { id: 'd0', kind: 'door', wallId: 'w0', offset: 1.5, width: 1.0, height: 2.0, elevation: 0 },
     ],
     furniture: [],
     proposals: [
-      { id: 'p0', name: 'Proposal 1', furniture: [], floorColor: '#ffffff', wallColor: '#ffffff' },
+      {
+        id: 'p0',
+        name: 'Proposal 1',
+        furniture: [],
+        floorColor: '#ffffff',
+        wallColor: '#ffffff',
+        floorMaterial: 'matte',
+        wallMaterial: 'matte',
+      },
     ],
     activeProposalId: 'p0',
   };

@@ -86,6 +86,14 @@ describe('migration to the project schema', () => {
     expect(room.proposals[0].floorColor).toBe('#c9a878');
     expect(room.proposals[0].wallColor).toBe('#efe8da');
   });
+
+  it('defaults every surface to the matte finish for saves made before materials', () => {
+    expect(room.floorMaterial).toBe('matte');
+    expect(room.wallMaterial).toBe('matte');
+    expect(room.proposals[0].floorMaterial).toBe('matte');
+    expect(room.proposals[0].wallMaterial).toBe('matte');
+    expect(room.furniture[0].material).toBe('matte');
+  });
 });
 
 describe('rooms', () => {
@@ -210,6 +218,37 @@ describe('parseProject', () => {
     };
     const parsed = activeRoom(parseProject(JSON.parse(JSON.stringify(withOptions))));
     expect(parsed.furniture[0].options).toEqual({ shelves: 6, doors: true });
+  });
+
+  it('keeps a valid surface material and normalizes unknown ones to matte', () => {
+    const base = parseProject(V1_DESIGN);
+    const room = base.rooms[0];
+    const metalBed = { ...room.furniture[0], material: 'metal' };
+    const bogusBed = { ...room.furniture[0], id: 'f2', material: 'unobtanium' };
+    const withMaterials = {
+      ...base,
+      rooms: [
+        {
+          ...room,
+          furniture: [metalBed, bogusBed],
+          floorMaterial: 'wood',
+          wallMaterial: 'not-a-material',
+          proposals: [
+            {
+              ...room.proposals[0],
+              furniture: [metalBed, bogusBed],
+              floorMaterial: 'wood',
+              wallMaterial: 'not-a-material',
+            },
+          ],
+        },
+      ],
+    };
+    const parsed = activeRoom(parseProject(JSON.parse(JSON.stringify(withMaterials))));
+    expect(parsed.furniture[0].material).toBe('metal');
+    expect(parsed.furniture[1].material).toBe('matte');
+    expect(parsed.floorMaterial).toBe('wood');
+    expect(parsed.wallMaterial).toBe('matte');
   });
 
   it('rejects garbage and broken structures', () => {

@@ -5,6 +5,8 @@ import type { Wall, WallOpening } from '../../types';
 import { WALL_T, buildWallGeometry, wallTransform } from '../../lib/geometry';
 import type { ThreeEvent } from '@react-three/fiber';
 import { exteriorEndExtension, outwardNormal, wallLen, wallMidpoint } from '../../lib/polygon';
+import { materialSpec } from '../../lib/materials';
+import { materialBump, materialMap } from './materialTextures';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { SELECT_EMISSIVE } from './furniture/shared';
@@ -82,6 +84,13 @@ function WallMesh({
 }) {
   const height = useDesignStore((s) => s.design.room.height);
   const wallColor = useDesignStore((s) => s.design.wallColor);
+  const finish = materialSpec(useDesignStore((s) => s.design.wallMaterial));
+  // Wall UVs are in metres (ExtrudeGeometry world UVs), so tile at the real size.
+  const repeat = 1 / finish.texScale;
+  const bump = finish.bumpScale > 0 ? materialBump(finish.id, 'surface', repeat) : null;
+  const map = materialMap(finish.id, 'surface', repeat);
+  // Cap wall reflectivity like the floor, so a shiny finish can't flare to white.
+  const envIntensity = Math.min(finish.envMapIntensity, 0.4);
   const openings = useDesignStore((s) => s.design.openings);
   const selected = useUiStore(
     (s) => s.selection?.kind === 'wall' && s.selection.id === wall.id,
@@ -118,9 +127,15 @@ function WallMesh({
           castShadow stays on even when faded — the shadow depth pass ignores opacity. */}
       <mesh geometry={geometry} castShadow receiveShadow onClick={onClick}>
         <meshStandardMaterial
+          key={finish.id}
           ref={matRef}
           color={wallColor}
-          roughness={0.95}
+          map={map}
+          roughness={finish.roughness}
+          metalness={finish.metalness}
+          envMapIntensity={envIntensity}
+          bumpMap={bump}
+          bumpScale={bump ? finish.bumpScale : 0}
           transparent={fadeable}
           emissive={selected ? SELECT_EMISSIVE : '#000000'}
           emissiveIntensity={selected ? 0.25 : 0}
