@@ -1,11 +1,12 @@
 import { nanoid } from 'nanoid';
 import type { FurnitureItem } from '../../types';
 import { clampFurniture, furnitureFits, slideFurniture } from '../../lib/collision';
-import { clampToPolygon, floorPolygon } from '../../lib/polygon';
+import { clampToPolygon, floorPolygon, pointInPolygon } from '../../lib/polygon';
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { defaultOptions, normalizeOptions } from '../../lib/furnitureOptions';
 import { defaultMaterials, normalizeColors, normalizeMaterials } from '../../lib/furnitureParts';
 import {
+  placeAt,
   placeAtCenter,
   touch,
   type DesignGet,
@@ -35,6 +36,16 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
     addFurnitureConfigured: (config) => {
       const d = get().design;
       const item = placeAtCenter(d, config);
+      set({ design: touch({ ...d, furniture: [...d.furniture, item] }) });
+      return item.id;
+    },
+
+    addFurnitureConfiguredAt: (config, point) => {
+      const d = get().design;
+      // A drop outside the floor (or before any outline is drawn) falls back to
+      // the room-centre placement, so nothing lands off the floor.
+      const inside = pointInPolygon(point, floorPolygon(d.walls));
+      const item = inside ? placeAt(d, config, point) : placeAtCenter(d, config);
       set({ design: touch({ ...d, furniture: [...d.furniture, item] }) });
       return item.id;
     },

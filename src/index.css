@@ -2028,6 +2028,21 @@ select {
   animation: dialog-fade 0.15s ease;
 }
 
+/* While dragging a piece out of the "Add furniture" palette, fade the covering
+   modal right down and let pointer/drag events fall through to the room canvas
+   so the piece can be dropped where the user points. */
+body.furniture-dragging .modal-backdrop {
+  opacity: 0.12;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+
+/* Palette and library items advertise that they can be dragged into the room. */
+.palette-btn,
+.save-name {
+  cursor: grab;
+}
+
 .modal {
   display: flex;
   flex-direction: column;

@@ -1,5 +1,6 @@
 import { FURNITURE_CATALOG, FURNITURE_KINDS } from '../../lib/furnitureCatalog';
 import type { FurnitureLibraryEntry } from '../../types';
+import { beginFurnitureDrag, endFurnitureDrag } from '../../lib/furnitureDnd';
 import { Icon } from '../ui/Icon';
 import { draftFor, draftFromLibrary, type FurnitureDraft } from './furnitureDraft';
 
@@ -48,19 +49,28 @@ export function FurniturePicker({
       </div>
 
       {source === 'generic' ? (
-        <div className="palette">
-          {FURNITURE_KINDS.map((kind) => (
-            <button
-              type="button"
-              key={kind}
-              className="palette-btn"
-              onClick={() => onPick(draftFor(kind))}
-            >
-              <span className="swatch" style={{ background: FURNITURE_CATALOG[kind].defaultColor }} />
-              {FURNITURE_CATALOG[kind].label}
-            </button>
-          ))}
-        </div>
+        <>
+          <p className="hint">Drag a piece into the room to place it, or click to set it up first.</p>
+          <div className="palette">
+            {FURNITURE_KINDS.map((kind) => (
+              <button
+                type="button"
+                key={kind}
+                className="palette-btn"
+                draggable
+                onDragStart={(e) => beginFurnitureDrag(e, draftFor(kind))}
+                onDragEnd={endFurnitureDrag}
+                onClick={() => onPick(draftFor(kind))}
+              >
+                <span
+                  className="swatch"
+                  style={{ background: FURNITURE_CATALOG[kind].defaultColor }}
+                />
+                {FURNITURE_CATALOG[kind].label}
+              </button>
+            ))}
+          </div>
+        </>
       ) : libraryEntries.length === 0 ? (
         <p className="hint">
           No saved furniture yet. Select a piece in the room and choose “Save to library” to reuse
@@ -73,7 +83,10 @@ export function FurniturePicker({
               <button
                 type="button"
                 className="save-name"
-                title={`Use “${entry.name}”`}
+                title={`Use “${entry.name}” — drag into the room or click to set it up`}
+                draggable
+                onDragStart={(e) => beginFurnitureDrag(e, draftFromLibrary(entry))}
+                onDragEnd={endFurnitureDrag}
                 onClick={() => onPick(draftFromLibrary(entry))}
               >
                 <span className="lib-name">

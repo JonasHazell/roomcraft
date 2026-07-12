@@ -3,6 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { floorPolygon, polygonCenter } from '../../lib/polygon';
+import { setFloorProjector } from '../../lib/furnitureDnd';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { deselectOnStillClick, Floor } from './Floor';
@@ -60,6 +61,34 @@ function SceneEnvironment() {
   return null;
 }
 
+/**
+ * Registers a screen→floor projector (see furnitureDnd) so a piece dragged from
+ * the palette and dropped over the canvas can be placed under the cursor. Lives
+ * inside the Canvas so it can read the live camera; unregisters on unmount.
+ */
+function FloorDropProjector() {
+  const camera = useThree((s) => s.camera);
+  const gl = useThree((s) => s.gl);
+  useEffect(() => {
+    const raycaster = new THREE.Raycaster();
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const hit = new THREE.Vector3();
+    setFloorProjector((clientX, clientY) => {
+      const rect = gl.domElement.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return null;
+      const ndc = new THREE.Vector2(
+        ((clientX - rect.left) / rect.width) * 2 - 1,
+        -(((clientY - rect.top) / rect.height) * 2 - 1),
+      );
+      raycaster.setFromCamera(ndc, camera);
+      if (!raycaster.ray.intersectPlane(plane, hit)) return null;
+      return { x: hit.x, z: hit.z };
+    });
+    return () => setFloorProjector(null);
+  }, [camera, gl]);
+  return null;
+}
+
 export function Scene() {
   const roomHeight = useDesignStore((s) => s.design.room.height);
   const walls = useDesignStore((s) => s.design.walls);
@@ -103,6 +132,7 @@ export function Scene() {
         <meshStandardMaterial color="#e2e5e9" />
       </mesh>
 
+      <FloorDropProjector />
       <Floor />
       <Walls />
       <FurnitureLayer />

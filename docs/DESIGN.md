@@ -114,6 +114,11 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   inside a room.
 - **Selection shortcuts** (furniture): `R` / `Shift+R` rotate, `Ctrl/Cmd+D`
   duplicate, `Delete`/`Backspace` remove. Suppressed while a text input is focused.
+- **Add furniture** — palette and library items can be **dragged into the room**
+  to drop a piece under the cursor (the covering modal fades via
+  `body.furniture-dragging` so the room shows through); off-floor drops fall back
+  to a room-centre placement. Clicking an item still opens the set-up form, which
+  is the touch path (HTML5 drag-and-drop is pointer-only).
 - **Touch** — interactive controls keep a ≥44px hit area on coarse pointers.
 - **Disabled actions** — wrap in `.btn-tooltip-wrap` with a `title` so the reason
   shows on hover.

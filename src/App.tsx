@@ -18,6 +18,12 @@ import { useUiStore } from './store/useUiStore';
 import { useDialogStore } from './store/useDialogStore';
 import { useHistoryStore } from './store/useHistoryStore';
 import { backToLobby } from './lib/nav';
+import {
+  endFurnitureDrag,
+  peekFurnitureDrag,
+  projectToFloor,
+  takeFurnitureDrag,
+} from './lib/furnitureDnd';
 
 // three.js and the whole 3D scene are the bulk of the bundle; load them only
 // when a room is actually opened so the lobby/first paint stays light.
@@ -35,8 +41,35 @@ function FurnishView() {
   const proposalMenuOpen = useUiStore((s) => s.proposalMenuOpen);
   const dialogActive = useDialogStore((s) => s.active);
   const overlayOpen = !!panel || !!furnitureDialog || !!dialogActive || proposalMenuOpen;
+
+  const addFurnitureConfigured = useDesignStore((s) => s.addFurnitureConfigured);
+  const addFurnitureConfiguredAt = useDesignStore((s) => s.addFurnitureConfiguredAt);
+  const select = useUiStore((s) => s.select);
+  const closeFurnitureDialog = useUiStore((s) => s.closeFurnitureDialog);
+
+  // Allow a piece dragged from the palette to be dropped onto the room.
+  const onViewportDragOver = (e: React.DragEvent) => {
+    if (!peekFurnitureDrag()) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+  const onViewportDrop = (e: React.DragEvent) => {
+    const payload = takeFurnitureDrag();
+    endFurnitureDrag();
+    if (!payload) return;
+    e.preventDefault();
+    // Place under the cursor; a spot off the floor (or no projector yet) falls
+    // back to the room-centre placement inside the store action.
+    const point = projectToFloor(e.clientX, e.clientY);
+    const id = point
+      ? addFurnitureConfiguredAt(payload, point)
+      : addFurnitureConfigured(payload);
+    select({ kind: 'furniture', id });
+    closeFurnitureDialog();
+  };
+
   return (
-    <main className="viewport">
+    <main className="viewport" onDragOver={onViewportDragOver} onDrop={onViewportDrop}>
       <Suspense fallback={<div className="scene-loading">Loading 3D view…</div>}>
         <Scene />
       </Suspense>

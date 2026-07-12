@@ -264,6 +264,24 @@ export function syncedProject(project: Project, design: Design): Project {
   return syncActiveRoom(project, syncActiveProposal(design));
 }
 
+/** Turns a caller spec into a full furniture item at `position` (no clamping). */
+function buildPiece(spec: FurnitureSpec, position: Point): FurnitureItem {
+  return {
+    id: nanoid(8),
+    kind: spec.kind,
+    name: spec.name,
+    position,
+    rotationY: 0,
+    size: { ...spec.size },
+    elevation: spec.elevation,
+    color: spec.color,
+    colors: normalizeColors(spec.kind, spec.colors),
+    material: normalizeMaterial(spec.material),
+    materials: normalizeMaterials(spec.kind, spec.materials, spec.material),
+    options: normalizeOptions(spec.kind, spec.options),
+  };
+}
+
 /**
  * Builds a furniture piece placed at the room centre with a small random nudge
  * (so several added pieces don't hide each other) and clamped inside the walls.
@@ -273,23 +291,16 @@ export function placeAtCenter(d: Design, spec: FurnitureSpec): FurnitureItem {
   const poly = floorPolygon(d.walls);
   const center = polygonCenter(poly);
   const nudge = () => (Math.random() - 0.5) * 0.6;
-  return clampFurniture(
-    {
-      id: nanoid(8),
-      kind: spec.kind,
-      name: spec.name,
-      position: { x: center.x + nudge(), z: center.z + nudge() },
-      rotationY: 0,
-      size: { ...spec.size },
-      elevation: spec.elevation,
-      color: spec.color,
-      colors: normalizeColors(spec.kind, spec.colors),
-      material: normalizeMaterial(spec.material),
-      materials: normalizeMaterials(spec.kind, spec.materials, spec.material),
-      options: normalizeOptions(spec.kind, spec.options),
-    },
-    poly,
-  );
+  return clampFurniture(buildPiece(spec, { x: center.x + nudge(), z: center.z + nudge() }), poly);
+}
+
+/**
+ * Builds a furniture piece dropped at a specific floor point (drag-and-drop from
+ * the palette), clamped inside the walls. No random nudge — the point is chosen.
+ */
+export function placeAt(d: Design, spec: FurnitureSpec, point: Point): FurnitureItem {
+  const poly = floorPolygon(d.walls);
+  return clampFurniture(buildPiece(spec, { x: point.x, z: point.z }), poly);
 }
 
 // ---- Store shape ----
@@ -365,6 +376,11 @@ export interface FurnitureActions {
   addFurniture: (kind: FurnitureKind) => string;
   /** Places a piece with caller-supplied name/size/color/options at the room center (the "Add furniture" dialog). */
   addFurnitureConfigured: (config: FurnitureSpec) => string;
+  /**
+   * Places a piece at a specific floor point (drag-and-drop from the palette).
+   * A point outside the floor polygon falls back to the room-centre placement.
+   */
+  addFurnitureConfiguredAt: (config: FurnitureSpec, point: Point) => string;
   /** Places a saved library furniture piece at the center of the room and returns its id. */
   addFurnitureFromLibrary: (entry: FurnitureLibraryEntry) => string;
   duplicateFurniture: (id: string) => string | null;
