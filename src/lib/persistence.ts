@@ -48,6 +48,15 @@ const furnitureSchema = z
     materials: z.record(z.string(), z.string()).optional(),
     /** Missing in saves made before the field existed — normalized to the kind's defaults. */
     options: furnitureOptionsSchema.optional(),
+    /**
+     * An imported custom model, saved inline as a data URL. Capped well under the
+     * localStorage budget; an oversized or malformed entry is dropped on load
+     * (the piece then falls back to a plain box) rather than failing the parse.
+     */
+    model: z
+      .object({ src: z.string().min(1).max(8_000_000), name: z.string().max(200) })
+      .optional()
+      .catch(undefined),
   })
   // Normalize options/materials/colours against the kind so stored data is always sound.
   .transform((f) => ({

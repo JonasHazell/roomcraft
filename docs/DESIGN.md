@@ -114,6 +114,11 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   inside a room.
 - **Selection shortcuts** (furniture): `R` / `Shift+R` rotate, `Ctrl/Cmd+D`
   duplicate, `Delete`/`Backspace` remove. Suppressed while a text input is focused.
+- **Import 3D model** — the "Add furniture" picker's generic tab has an
+  `.import-model` block (a `.btn` + `.hint`, with a `.error` on failure) to import
+  a GLTF/GLB as a `box`-kind piece. The model saves inline with the room; a broken
+  model renders a marked error box in the scene (see `ImportedModel`) rather than
+  crashing.
 - **Touch** — interactive controls keep a ≥44px hit area on coarse pointers.
 - **Disabled actions** — wrap in `.btn-tooltip-wrap` with a `title` so the reason
   shows on hover.

@@ -283,3 +283,38 @@ describe('parseProject', () => {
     expect(migrated.openings).toHaveLength(2);
   });
 });
+
+describe('imported furniture models', () => {
+  const withModel = (model: unknown): unknown => {
+    const p = parseProject(V1_DESIGN); // a valid one-room v5 project
+    const piece = {
+      id: 'm1',
+      kind: 'box',
+      name: 'Custom model',
+      position: { x: 0, z: 0 },
+      rotationY: 0,
+      size: { width: 1, depth: 1, height: 1 },
+      color: '#aabbcc',
+      model,
+    };
+    const room = p.rooms[0];
+    // Both the live mirror and the active proposal carry the piece.
+    return {
+      ...p,
+      rooms: [{ ...room, furniture: [piece], proposals: [{ ...room.proposals[0], furniture: [piece] }] }],
+    };
+  };
+
+  it('round-trips an imported model on a box piece', () => {
+    const model = { src: 'data:model/gltf-binary;base64,AAAA', name: 'thing.glb' };
+    const parsed = parseProject(withModel(model));
+    expect(activeRoom(parsed).furniture[0].model).toEqual(model);
+  });
+
+  it('drops an oversized model instead of failing the whole load', () => {
+    const parsed = parseProject(withModel({ src: 'x'.repeat(8_000_001), name: 'huge.glb' }));
+    // The piece survives as a plain box; only the unusable model is dropped.
+    expect(activeRoom(parsed).furniture[0].model).toBeUndefined();
+    expect(activeRoom(parsed).furniture[0].kind).toBe('box');
+  });
+});

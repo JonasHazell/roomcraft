@@ -21,6 +21,7 @@ import {
   SELECT_EMISSIVE,
   type FurnitureProps,
 } from './furniture/shared';
+import { ImportedModel } from './furniture/ImportedModel';
 import { Bed } from './furniture/Bed';
 import { Sofa } from './furniture/Sofa';
 import { Table } from './furniture/Table';
@@ -161,19 +162,25 @@ export function FurnitureMesh({ id }: { id: string }) {
       }}
       onPointerOut={() => setHovered(false)}
     >
-      <PartMaterials
-        kind={item.kind}
-        materials={item.materials}
-        legacy={item.material}
-        colors={item.colors}
-      >
-        <Piece
-          size={item.size}
-          color={item.color}
-          selected={selected}
-          options={normalizeOptions(item.kind, item.options)}
-        />
-      </PartMaterials>
+      {item.model ? (
+        // An imported custom model replaces the generic box geometry; it carries
+        // its own materials, so the part-material provider is skipped.
+        <ImportedModel src={item.model.src} size={item.size} />
+      ) : (
+        <PartMaterials
+          kind={item.kind}
+          materials={item.materials}
+          legacy={item.material}
+          colors={item.colors}
+        >
+          <Piece
+            size={item.size}
+            color={item.color}
+            selected={selected}
+            options={normalizeOptions(item.kind, item.options)}
+          />
+        </PartMaterials>
+      )}
       {selected && (
         // The selection is projected down onto the floor so the footprint is
         // visible even when the furniture hangs above it.

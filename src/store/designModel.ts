@@ -68,6 +68,8 @@ export interface FurnitureSpec {
   material?: string;
   materials?: Record<string, string>;
   options?: FurnitureOptions;
+  /** An imported custom 3D model; see {@link FurnitureItem.model}. */
+  model?: { src: string; name: string };
 }
 
 // ---- Factories ----
@@ -287,6 +289,7 @@ export function placeAtCenter(d: Design, spec: FurnitureSpec): FurnitureItem {
       material: normalizeMaterial(spec.material),
       materials: normalizeMaterials(spec.kind, spec.materials, spec.material),
       options: normalizeOptions(spec.kind, spec.options),
+      model: spec.model,
     },
     poly,
   );

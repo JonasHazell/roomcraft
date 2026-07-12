@@ -25,6 +25,8 @@ export interface FurnitureDraft {
   material?: string;
   materials?: FurnitureMaterials;
   options?: FurnitureOptions;
+  /** An imported custom 3D model; see {@link ../../types.FurnitureItem.model}. */
+  model?: { src: string; name: string };
 }
 
 export type FurnitureFieldPatch = {

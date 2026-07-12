@@ -543,6 +543,20 @@ select {
   gap: 8px;
 }
 
+/* "Import 3D model" affordance under the generic palette. */
+.import-model {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.import-model .btn {
+  align-self: flex-start;
+}
+
 .palette-btn {
   display: flex;
   align-items: center;

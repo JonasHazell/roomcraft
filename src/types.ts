@@ -112,6 +112,14 @@ export interface FurnitureItem {
    * resolved wherever the options are read (see {@link ../lib/furnitureOptions}).
    */
   options?: FurnitureOptions;
+  /**
+   * An imported custom 3D model (a `box`-kind piece whose geometry is replaced by
+   * a user-supplied GLTF/GLB). `src` is a self-contained data URL so the model is
+   * saved with the room; `name` is the original file name for display. Its size
+   * (and therefore its collision footprint) is the model's bounding box, set on
+   * import. Absent for every built-in piece. See {@link ../components/scene/furniture/ImportedModel}.
+   */
+  model?: { src: string; name: string };
 }
 
 /** A saved furniture piece in the library — reusable properties without placement. */
