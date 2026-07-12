@@ -1,23 +1,23 @@
-# RoomCraft — review-decision playbook
+# RoomCraft — handle a review decision (playbook)
 
 Self-contained, executable instructions for handling a maintainer's decision —
 **approve** or **changes-requested / close** — on the open Claude PR.
 
 Written so a **fresh session** (e.g. one started by a Routine, which carries no
 prior conversation) can run it top to bottom. The *why* lives in
-[`../AGENT-WORKFLOW.md`](../AGENT-WORKFLOW.md); this is the checklist that both the
+[`../FEATURE-WORKFLOW.md`](../FEATURE-WORKFLOW.md); this is the checklist that both the
 Routine and a live `subscribe_pr_activity` session follow, so behaviour is identical
 whichever path triggers it.
 
 Everything it needs is in the repo — nothing depends on session memory:
 
 - Repo: `JonasHazell/roomcraft` · Claude branches: `claude/*`
-- Protocol: [`../AGENT-WORKFLOW.md`](../AGENT-WORKFLOW.md)
-- Ledger you read and update: [`../PREFERENCES.md`](../PREFERENCES.md)
+- Protocol: [`../FEATURE-WORKFLOW.md`](../FEATURE-WORKFLOW.md)
+- Ledger you read and update: [`../LEARNED-PREFERENCES.md`](../LEARNED-PREFERENCES.md)
 
 ## 0. Orient
 
-Read `docs/AGENT-WORKFLOW.md` and `docs/PREFERENCES.md`. That is the full context.
+Read `docs/FEATURE-WORKFLOW.md` and `docs/LEARNED-PREFERENCES.md`. That is the full context.
 
 ## 1. Find the PR and its decision
 
@@ -32,7 +32,7 @@ Read `docs/AGENT-WORKFLOW.md` and `docs/PREFERENCES.md`. That is the full contex
 
 This can re-fire (cron re-runs, overlapping subscription events). Before any write:
 
-- If `PREFERENCES.md`'s **Rejection log** already has a row for this PR **and** the
+- If `LEARNED-PREFERENCES.md`'s **Rejection log** already has a row for this PR **and** the
   decision has not changed since → **End silently.**
 - Act only on the newest, unprocessed decision.
 
@@ -47,7 +47,7 @@ This can re-fire (cron re-runs, overlapping subscription events). Before any wri
 ## 4. Approve
 
 1. If the comment praises a specific choice, record it as a **Direction** or
-   **Execution** signal in `PREFERENCES.md` (dedupe — skip if this PR is already
+   **Execution** signal in `LEARNED-PREFERENCES.md` (dedupe — skip if this PR is already
    cited). Commit `docs: record preference from PR #NN approval` and push.
 2. **Merge:** leave to the maintainer by default. Approval and merge are separate
    actions; do not merge your own PR unless merge-on-approval has been explicitly
@@ -59,11 +59,11 @@ This can re-fire (cron re-runs, overlapping subscription events). Before any wri
 Run this in order; the learning commit is the deliverable even if the code is thrown
 away.
 
-1. **Classify** direction vs execution (see the table in `AGENT-WORKFLOW.md`). If
+1. **Classify** direction vs execution (see the table in `FEATURE-WORKFLOW.md`). If
    genuinely ambiguous, `AskUserQuestion` before acting.
 2. **Distil a general rule** — one that applies to the next feature, not a
    restatement of this PR.
-3. **Update `PREFERENCES.md`:** put the rule under **Direction**, **Execution**, or
+3. **Update `LEARNED-PREFERENCES.md`:** put the rule under **Direction**, **Execution**, or
    **Avoid** (generalise, dedupe, merge with any existing rule), and append one row
    to the **Rejection log** citing the PR.
 4. **Commit** `docs: record preference from PR #NN feedback` and push.

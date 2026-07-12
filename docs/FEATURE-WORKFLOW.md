@@ -5,7 +5,7 @@ for it, and **learns from the maintainer's decisions** so each round is better
 aimed than the last.
 
 This document is the *process*. The accumulated *taste* — what to build and how —
-lives in [`PREFERENCES.md`](PREFERENCES.md), which this workflow reads before
+lives in [`LEARNED-PREFERENCES.md`](LEARNED-PREFERENCES.md), which this workflow reads before
 building and updates after every rejection.
 
 ## The loop
@@ -23,7 +23,7 @@ building and updates after every rejection.
                                                           ACCEPT              REJECT
                                                         (merge, done)   5. LEARN → back to PICK
                                                                         (record the lesson in
-                                                                         PREFERENCES.md so it
+                                                                         LEARNED-PREFERENCES.md so it
                                                                          is never repeated)
 ```
 
@@ -37,7 +37,7 @@ Before choosing anything, read, in this order:
 1. [`STRATEGY.md`](STRATEGY.md) — the north star. Only propose work that makes the
    **core room-planning experience** better. Depth over breadth. Nothing shaped by
    monetization.
-2. [`PREFERENCES.md`](PREFERENCES.md) — the maintainer's accumulated taste.
+2. [`LEARNED-PREFERENCES.md`](LEARNED-PREFERENCES.md) — the maintainer's accumulated taste.
    - Honour everything under **Direction — what to build** (lean into these).
    - Never propose anything under **Avoid** — those were rejected at the idea
      level. Re-proposing a rejected idea is the one unforgivable mistake here.
@@ -79,7 +79,7 @@ Link the STRATEGY principle this serves (depth, craft, reliability, clarity) and
 say which core flow it improves.
 
 ## Preference signals used
-Which entries in PREFERENCES.md pointed toward this (or "none yet" for early PRs).
+Which entries in LEARNED-PREFERENCES.md pointed toward this (or "none yet" for early PRs).
 
 ## How to review
 The fastest path to see it working — a screen/route, a #styleguide section, or
@@ -102,7 +102,7 @@ teaching signal; read it carefully (it may be in Swedish or English).
 ### Accepted / merged
 Nothing to learn unless the approval comment asks for a follow-up. If it praises a
 specific choice ("love that you reused the existing modal"), you may record that as
-a positive **Direction** or **Execution** signal in `PREFERENCES.md`.
+a positive **Direction** or **Execution** signal in `LEARNED-PREFERENCES.md`.
 
 ### Rejected — classify first
 Every rejection is one of two kinds. Decide which before touching code:
@@ -122,7 +122,7 @@ without scrolling back.
    - ✗ "Don't add a teal export button to the 3D view."
    - ✓ "Export lives in the top bar, not floating on the canvas; never introduce
      new accent colours — use `--accent`."
-2. **Update [`PREFERENCES.md`](PREFERENCES.md)**:
+2. **Update [`LEARNED-PREFERENCES.md`](LEARNED-PREFERENCES.md)**:
    - Put the rule under **Direction**, **Execution**, or **Avoid** (see its own
      maintenance rules — generalise, dedupe, keep it skimmable).
    - Append one row to the **Rejection log** linking the PR, the reason, and the
@@ -144,7 +144,7 @@ without scrolling back.
 ### Reacting to a review decision (approve / reject)
 
 The learning step (§5) and the approve path (§4) are packaged as one executable
-playbook, [`playbooks/review-decision.md`](playbooks/review-decision.md), so the
+playbook, [`playbooks/handle-review-decision.md`](playbooks/handle-review-decision.md), so the
 same behaviour runs whichever way a decision arrives:
 
 - **Event-speed:** a live session subscribed via `subscribe_pr_activity` runs the
@@ -165,6 +165,6 @@ fire time the outcome isn't known yet.
 
 - One open PR at a time; one idea per PR.
 - Never merge your own PR.
-- Never re-propose anything under **Avoid** in `PREFERENCES.md`.
-- Always read `STRATEGY.md` + `PREFERENCES.md` before picking.
-- A rejection is never "done" until the lesson is recorded in `PREFERENCES.md`.
+- Never re-propose anything under **Avoid** in `LEARNED-PREFERENCES.md`.
+- Always read `STRATEGY.md` + `LEARNED-PREFERENCES.md` before picking.
+- A rejection is never "done" until the lesson is recorded in `LEARNED-PREFERENCES.md`.

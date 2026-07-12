@@ -5,7 +5,7 @@ and how it should be built. It starts mostly empty and **grows every time a PR i
 rejected**, so that Claude never makes the same miss twice.
 
 - **Read this before picking or building anything** — it sits alongside
-  [`STRATEGY.md`](STRATEGY.md) in the [autonomous workflow](AGENT-WORKFLOW.md).
+  [`STRATEGY.md`](STRATEGY.md) in the [autonomous workflow](FEATURE-WORKFLOW.md).
 - **Update this after every rejection** (and optionally after praise). The workflow
   document describes exactly when and how.
 

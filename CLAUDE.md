@@ -18,13 +18,13 @@ during this phase — see below.
 ## Proposing your own work: the autonomous feature workflow
 
 When you propose and build improvements on your own (self-directed PRs, or the
-`/propose-feature` command), follow [`docs/AGENT-WORKFLOW.md`](docs/AGENT-WORKFLOW.md).
+`/propose-feature` command), follow [`docs/FEATURE-WORKFLOW.md`](docs/FEATURE-WORKFLOW.md).
 It defines the loop — pick one strategy-fit change, build it to the quality bar,
 open one reviewable PR — and, crucially, the **learning protocol**: when a PR is
 rejected, read the reason, distil a general rule, and record it in
-[`docs/PREFERENCES.md`](docs/PREFERENCES.md) so the same miss never repeats.
+[`docs/LEARNED-PREFERENCES.md`](docs/LEARNED-PREFERENCES.md) so the same miss never repeats.
 
-Always read `docs/PREFERENCES.md` (the maintainer's accumulated taste) alongside
+Always read `docs/LEARNED-PREFERENCES.md` (the maintainer's accumulated taste) alongside
 `docs/STRATEGY.md` before picking what to build. Never re-propose anything listed
 under **Avoid** there.
 
