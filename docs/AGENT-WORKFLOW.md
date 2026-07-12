@@ -141,6 +141,26 @@ without scrolling back.
   Keep it to **one open Claude PR at a time** so review stays manageable and each
   round can learn from the last before the next is built.
 
+### Reacting to a review decision (approve / reject)
+
+The learning step (§5) and the approve path (§4) are packaged as one executable
+playbook, [`playbooks/review-decision.md`](playbooks/review-decision.md), so the
+same behaviour runs whichever way a decision arrives:
+
+- **Event-speed:** a live session subscribed via `subscribe_pr_activity` runs the
+  playbook the moment a review lands.
+- **Durable fallback:** a Routine (a **fresh session** each fire, since the playbook
+  needs no prior context — all state is in the repo) polls for an unprocessed
+  decision and runs the same playbook. This catches what webhooks miss (merges,
+  closes) and survives session reclamation.
+
+A Routine fires on a schedule or poke, **not** on the GitHub event itself — so pair
+it with the subscription for immediacy and let the Routine be the heartbeat. Keep
+the Routine prompt thin (point it at the playbook); never copy the protocol into the
+prompt, where it can't be reviewed and would drift from these docs. One dispatcher
+playbook that branches on the decision — not one Routine per outcome — because at
+fire time the outcome isn't known yet.
+
 ## Guardrails
 
 - One open PR at a time; one idea per PR.
