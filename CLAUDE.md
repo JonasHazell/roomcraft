@@ -5,6 +5,13 @@ in 3D (react-three-fiber), with a 2D floor-plan editor and a warm, print-inspire
 visual style. State is Zustand; the whole UI is styled from a single stylesheet,
 `src/index.css`, using CSS custom-property design tokens.
 
+## What the app is for
+
+RoomCraft's purpose is to make it **stupidly simple to get help finding the best
+interior design for your rooms** — see [`docs/PURPOSE.md`](docs/PURPOSE.md). Read
+it when you need the *why* behind a feature: any work should make it easier for
+someone to go from an empty room to one they love.
+
 ## Development strategy: build the core experience first
 
 Before proposing or building new work, read [`docs/STRATEGY.md`](docs/STRATEGY.md).
