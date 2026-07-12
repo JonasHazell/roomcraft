@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Icon, ICON_NAMES } from '../ui/Icon';
 import { NumberField } from '../panel/fields';
+import { ROOM_TEMPLATES, templatePath } from '../../lib/roomTemplates';
 
 /**
  * Living component reference ("style guide") for RoomCraft's UI.
@@ -307,6 +308,29 @@ export function StyleGuide() {
                 {p.label}
               </button>
             ))}
+          </div>
+        </Demo>
+
+        <Demo title="Room templates" note="Starting outlines in the New room picker: a .template-grid of .template-card buttons, each with an SVG .template-preview.">
+          <div className="template-grid" style={{ maxWidth: 460 }}>
+            {ROOM_TEMPLATES.slice(0, 3).map((t) => (
+              <button key={t.id} type="button" className="template-card">
+                <span className="template-preview" aria-hidden="true">
+                  <svg viewBox="0 0 40 40" width="40" height="40">
+                    <path d={templatePath(t.points)} />
+                  </svg>
+                </span>
+                <span className="template-name">{t.name}</span>
+                <span className="template-meta">{t.detail}</span>
+              </button>
+            ))}
+            <button type="button" className="template-card template-card-blank">
+              <span className="template-preview" aria-hidden="true">
+                <Icon name="pencil" />
+              </span>
+              <span className="template-name">Draw it yourself</span>
+              <span className="template-meta">Start from a blank canvas</span>
+            </button>
           </div>
         </Demo>
 

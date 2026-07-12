@@ -105,6 +105,9 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   don't roll new ones). `.score-badge` with `.score-good/-mid/-bad`; `.severity`
   with `.severity-1`…`-5` (5 = worst).
 - **Palette** — `.palette` grid of `.palette-btn`, each with a colour `.swatch`.
+- **Room templates** — the "New room" picker's `.template-grid` of `.template-card`
+  buttons (each an SVG `.template-preview` + `.template-name` + `.template-meta`);
+  `.template-card-blank` is the dashed "draw it yourself" variant.
 
 ## Behaviour conventions
 
