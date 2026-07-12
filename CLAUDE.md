@@ -15,6 +15,19 @@ over adding new surface area, and hold everything to the quality bar (design
 consistency, reliability, no rough edges). Monetization is intentionally parked
 during this phase — see below.
 
+## Proposing your own work: the autonomous feature workflow
+
+When you propose and build improvements on your own (self-directed PRs, or the
+`/propose-feature` command), follow [`docs/AGENT-WORKFLOW.md`](docs/AGENT-WORKFLOW.md).
+It defines the loop — pick one strategy-fit change, build it to the quality bar,
+open one reviewable PR — and, crucially, the **learning protocol**: when a PR is
+rejected, read the reason, distil a general rule, and record it in
+[`docs/PREFERENCES.md`](docs/PREFERENCES.md) so the same miss never repeats.
+
+Always read `docs/PREFERENCES.md` (the maintainer's accumulated taste) alongside
+`docs/STRATEGY.md` before picking what to build. Never re-propose anything listed
+under **Avoid** there.
+
 ## UI work: always consult the design reference first
 
 Before creating or updating **any** user-facing surface (a screen, panel, dialog,
