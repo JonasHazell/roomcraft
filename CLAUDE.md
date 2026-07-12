@@ -5,6 +5,16 @@ in 3D (react-three-fiber), with a 2D floor-plan editor and a warm, print-inspire
 visual style. State is Zustand; the whole UI is styled from a single stylesheet,
 `src/index.css`, using CSS custom-property design tokens.
 
+## Development strategy: build the core experience first
+
+Before proposing or building new work, read [`docs/STRATEGY.md`](docs/STRATEGY.md).
+It's the north star for **what we build right now**: the best possible
+room-planning experience with a **small number of well-built features**, not a
+long list of shallow ones. Prefer deepening and polishing existing core flows
+over adding new surface area, and hold everything to the quality bar (design
+consistency, reliability, no rough edges). Monetization is intentionally parked
+during this phase — see below.
+
 ## UI work: always consult the design reference first
 
 Before creating or updating **any** user-facing surface (a screen, panel, dialog,
@@ -44,6 +54,8 @@ Run the build/lint/test before committing UI changes.
 
 ## Monetization
 
-For ideas on how to make money from the app (freemium/subscription, furniture
-catalog affiliate links, credits, B2B licensing, etc.), see
-[`docs/MONETIZATION.md`](docs/MONETIZATION.md).
+Monetization is **parked for now** — we focus on the core experience first (see
+[`docs/STRATEGY.md`](docs/STRATEGY.md)) and choose a model later. For the future
+idea bank (freemium/subscription, furniture catalog affiliate links, credits,
+B2B licensing, etc.), see [`docs/MONETIZATION.md`](docs/MONETIZATION.md) — treat
+it as a reference, not a current mandate for what to build.
