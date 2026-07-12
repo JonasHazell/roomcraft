@@ -1,6 +1,11 @@
 import { nanoid } from 'nanoid';
-import type { FurnitureItem } from '../../types';
-import { clampFurniture, furnitureFits, slideFurniture } from '../../lib/collision';
+import type { Design, FurnitureItem, Point } from '../../types';
+import {
+  clampFurniture,
+  furnitureCorners,
+  furnitureFits,
+  slideFurniture,
+} from '../../lib/collision';
 import { clampToPolygon, floorPolygon } from '../../lib/polygon';
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { defaultOptions, normalizeOptions } from '../../lib/furnitureOptions';
@@ -12,6 +17,20 @@ import {
   type DesignSet,
   type FurnitureActions,
 } from '../designModel';
+
+/**
+ * The footprints a dragged piece must slide around: every other piece except
+ * rugs. Rugs lie flat on the floor and are meant to have furniture stand on them,
+ * so they never take part in furniture-to-furniture collision — a dragged rug
+ * gets an empty obstacle list, and rugs are skipped as obstacles for others.
+ */
+function collisionObstacles(d: Design, movingId: string): Point[][] {
+  const moving = d.furniture.find((f) => f.id === movingId);
+  if (moving?.kind === 'rug') return [];
+  return d.furniture
+    .filter((f) => f.id !== movingId && f.kind !== 'rug')
+    .map((f) => furnitureCorners(f, 0));
+}
 
 /** Furniture actions on the active proposal: add, duplicate, move, edit and remove pieces. */
 export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureActions {
@@ -116,6 +135,7 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
     moveFurniture: (id, x, z) => {
       const d = get().design;
       const poly = floorPolygon(d.walls);
+      const obstacles = collisionObstacles(d, id);
       set({
         design: touch({
           ...d,
@@ -125,7 +145,13 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
             // Already stuck in a wall (older design, rotation near a wall)?
             // Fall back to free center clamping so the piece can be freed.
             if (!furnitureFits(f, poly, d.walls)) return { ...f, position: target };
-            return { ...f, position: slideFurniture(f, target, poly, d.walls) };
+            // Already overlapping another piece (a resize, an AI layout, an older
+            // save)? Slide with walls only so it can be dragged clear instead of
+            // being frozen in place; once free, obstacle collision kicks back in.
+            if (!furnitureFits(f, poly, d.walls, obstacles)) {
+              return { ...f, position: slideFurniture(f, target, poly, d.walls) };
+            }
+            return { ...f, position: slideFurniture(f, target, poly, d.walls, obstacles) };
           }),
         }),
       });

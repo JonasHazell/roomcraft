@@ -2,6 +2,7 @@ import type { FurnitureItem, Point, Wall, WallOpening } from '../types';
 import {
   clamp,
   clampToPolygon,
+  convexOverlap,
   interiorWallQuad,
   pointInPolygon,
   rectCorners,
@@ -48,11 +49,18 @@ export function clampFurniture(item: FurnitureItem, floorPoly: Point[]): Furnitu
 }
 
 /**
- * True if the whole footprint lies in the floor polygon without crossing any wall.
- * Corner-in-polygon alone is not enough in e.g. L-shaped rooms (an edge can cut
- * across a notch), so edge-to-edge intersections are tested as well.
+ * True if the whole footprint lies in the floor polygon without crossing any wall
+ * or any of the `obstacles` (other pieces' footprints). Corner-in-polygon alone is
+ * not enough in e.g. L-shaped rooms (an edge can cut across a notch), so
+ * edge-to-edge intersections are tested as well. The footprint is already shrunk
+ * by {@link FIT_SHRINK}, so flush-against an obstacle is not counted as a hit.
  */
-export function furnitureFits(item: Footprint, floorPoly: Point[], walls: Wall[]): boolean {
+export function furnitureFits(
+  item: Footprint,
+  floorPoly: Point[],
+  walls: Wall[],
+  obstacles: Point[][] = [],
+): boolean {
   const corners = furnitureCorners(item);
   if (!corners.every((c) => pointInPolygon(c, floorPoly))) return false;
   for (let i = 0; i < corners.length; i++) {
@@ -66,6 +74,11 @@ export function furnitureFits(item: Footprint, floorPoly: Point[], walls: Wall[]
   }
   for (const w of walls) {
     if (w.kind === 'interior' && quadsOverlap(corners, interiorWallQuad(w))) return false;
+  }
+  // The shrunk footprint already tolerates touching, so test against the raw
+  // obstacle quads with no extra epsilon.
+  for (const obstacle of obstacles) {
+    if (convexOverlap(corners, obstacle, 0)) return false;
   }
   return true;
 }
@@ -82,28 +95,32 @@ function pathFits(
   to: Point,
   floorPoly: Point[],
   walls: Wall[],
+  obstacles: Point[][],
 ): boolean {
   const steps = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.z - from.z) / 0.05));
   for (let i = 1; i <= steps; i++) {
     const t = i / steps;
     const p = { x: from.x + (to.x - from.x) * t, z: from.z + (to.z - from.z) * t };
-    if (!furnitureFits({ ...item, position: p }, floorPoly, walls)) return false;
+    if (!furnitureFits({ ...item, position: p }, floorPoly, walls, obstacles)) return false;
   }
   return true;
 }
 
 /**
- * Moves a furniture piece toward target as far as possible without wall collision.
- * Per axis (x first, then z) the longest fitting stretch is found by binary
- * search, giving natural sliding along walls while dragging.
+ * Moves a furniture piece toward target as far as possible without colliding with
+ * a wall or any `obstacles` (other pieces' footprints). Per axis (x first, then z)
+ * the longest fitting stretch is found by binary search, giving natural sliding
+ * along walls — and now along other furniture — while dragging.
  */
 export function slideFurniture(
   item: Footprint,
   target: Point,
   floorPoly: Point[],
   walls: Wall[],
+  obstacles: Point[][] = [],
 ): Point {
-  const reachable = (from: Point, to: Point) => pathFits(item, from, to, floorPoly, walls);
+  const reachable = (from: Point, to: Point) =>
+    pathFits(item, from, to, floorPoly, walls, obstacles);
   if (reachable(item.position, target)) return target;
   let cur = item.position;
   for (const axis of ['x', 'z'] as const) {
