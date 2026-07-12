@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Point, Wall } from '../types';
-import { furnitureFits, slideFurniture } from './collision';
+import { furnitureCorners, furnitureFits, slideFurniture } from './collision';
 
 /** 4×5 m room with a corner at the origin, canonical winding. */
 const square: Point[] = [
@@ -53,6 +53,20 @@ describe('furnitureFits', () => {
     expect(furnitureFits(item(2, 2.5), square, [wall])).toBe(false);
     expect(furnitureFits(item(1, 2.5), square, [wall])).toBe(true);
   });
+
+  it('rejects furniture overlapping another piece', () => {
+    const other = furnitureCorners(item(2, 2.5), 0);
+    // Directly on top of the other piece → overlap.
+    expect(furnitureFits(item(2, 2.5), square, noWalls, [other])).toBe(false);
+    // A whole metre away → clear.
+    expect(furnitureFits(item(2, 3.6), square, noWalls, [other])).toBe(true);
+  });
+
+  it('treats flush-against another piece as fitting', () => {
+    const other = furnitureCorners(item(2, 2.5), 0);
+    // Two 1 m pieces exactly edge-to-edge (centres 1 m apart) — touching, not overlapping.
+    expect(furnitureFits(item(2, 3.5), square, noWalls, [other])).toBe(true);
+  });
 });
 
 describe('slideFurniture', () => {
@@ -78,5 +92,23 @@ describe('slideFurniture', () => {
     expect(p.x).toBeGreaterThan(1.3);
     expect(p.x).toBeLessThan(1.5);
     expect(furnitureFits(item(p.x, p.z), square, [wall])).toBe(true);
+  });
+
+  it('stops against another piece instead of overlapping it', () => {
+    // A 1 m piece at x=1 dragged right toward a piece centred at x=3: it should
+    // stop roughly edge-to-edge (centres ~1 m apart) and never overlap.
+    const other = furnitureCorners(item(3, 2.5), 0);
+    const p = slideFurniture(item(1, 2.5), { x: 3, z: 2.5 }, square, noWalls, [other]);
+    expect(p.x).toBeGreaterThan(1.5);
+    expect(p.x).toBeLessThan(2.05);
+    expect(furnitureFits(item(p.x, p.z), square, noWalls, [other])).toBe(true);
+  });
+
+  it('slides along another piece (moves on the free axis)', () => {
+    // Blocked in x by a piece at x=3, but free to travel in z.
+    const other = furnitureCorners(item(3, 2.5), 0);
+    const p = slideFurniture(item(1, 2.5), { x: 3, z: 4 }, square, noWalls, [other]);
+    expect(p.z).toBeCloseTo(4, 5);
+    expect(furnitureFits(item(p.x, p.z), square, noWalls, [other])).toBe(true);
   });
 });
