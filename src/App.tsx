@@ -18,6 +18,7 @@ import { useUiStore } from './store/useUiStore';
 import { useDialogStore } from './store/useDialogStore';
 import { useHistoryStore } from './store/useHistoryStore';
 import { backToLobby } from './lib/nav';
+import { ensureProjectsInitialized } from './lib/projects';
 
 // three.js and the whole 3D scene are the bulk of the bundle; load them only
 // when a room is actually opened so the lobby/first paint stays light.
@@ -107,6 +108,11 @@ function useHash(): string {
 function App() {
   const appView = useUiStore((s) => s.appView);
   const hash = useHash();
+
+  // Migrate the single existing workspace into the multi-project list (once).
+  useEffect(() => {
+    ensureProjectsInitialized();
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

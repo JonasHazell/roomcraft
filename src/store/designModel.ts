@@ -174,13 +174,30 @@ export function createEmptyRoom(name = 'Room 1'): Design {
 }
 
 /** An empty workspace: no rooms yet. The lobby shows the "create your first room" state. */
-export function createEmptyProject(): Project {
+export function createEmptyProject(name = 'My rooms'): Project {
   return {
     schemaVersion: SCHEMA_VERSION,
-    name: 'My rooms',
+    name,
     updatedAt: new Date().toISOString(),
     rooms: [],
     activeRoomId: '',
+  };
+}
+
+/**
+ * Deep-copies a whole project with fresh room ids — used by "duplicate project".
+ * Every room (and its walls, openings and proposals) gets new ids via
+ * {@link cloneRoom}, so the copy shares nothing mutable with the original.
+ */
+export function cloneProject(p: Project, name: string): Project {
+  const activeIdx = Math.max(0, p.rooms.findIndex((r) => r.id === p.activeRoomId));
+  const rooms = p.rooms.map((r) => cloneRoom(r, r.name));
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    name,
+    updatedAt: new Date().toISOString(),
+    rooms,
+    activeRoomId: rooms[activeIdx]?.id ?? rooms[0]?.id ?? '',
   };
 }
 

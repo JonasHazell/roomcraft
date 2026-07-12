@@ -2164,6 +2164,90 @@ select {
   margin: 0 auto 26px;
 }
 
+/* ---------- "My projects" bar (top of the lobby) ---------- */
+
+.project-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  max-width: 1120px;
+  margin: 0 auto 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.project-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.project-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-height: 44px;
+  padding: 6px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.project-tab:hover {
+  border-color: var(--accent);
+}
+
+.project-tab.active {
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 10%, var(--card));
+}
+
+.project-tab-name {
+  font-family: var(--display);
+  font-size: 15px;
+  font-variation-settings: 'wght' 560;
+  line-height: 1.15;
+}
+
+.project-tab-meta {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.project-tab-new {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-style: dashed;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.project-tab-new:hover {
+  color: var(--ink);
+}
+
+.project-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.project-actions .btn {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
 .lobby-brand h1 {
   font-family: var(--display);
   font-variation-settings: 'opsz' 60, 'wght' 560;

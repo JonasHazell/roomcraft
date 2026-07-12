@@ -310,6 +310,22 @@ export function StyleGuide() {
           </div>
         </Demo>
 
+        <Demo title="Project bar" note="The lobby's My-projects switcher: a .project-tabs row of .project-tab pills (active = .active), plus a dashed .project-tab-new.">
+          <div className="project-tabs">
+            <button type="button" className="project-tab active">
+              <span className="project-tab-name">My home</span>
+              <span className="project-tab-meta">3 rooms</span>
+            </button>
+            <button type="button" className="project-tab">
+              <span className="project-tab-name">Summer house</span>
+              <span className="project-tab-meta">2 rooms</span>
+            </button>
+            <button type="button" className="project-tab project-tab-new">
+              <Icon name="plus" /> New project
+            </button>
+          </div>
+        </Demo>
+
         <Demo title="Validation: score bands & severity" note="Score number is coloured by band; severity dots run 5 (worst) → 1.">
           <div className="sg-inline-row">
             <span className="score-badge score-good" style={{ position: 'static' }}>

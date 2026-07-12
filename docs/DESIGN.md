@@ -105,6 +105,10 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   don't roll new ones). `.score-badge` with `.score-good/-mid/-bad`; `.severity`
   with `.severity-1`…`-5` (5 = worst).
 - **Palette** — `.palette` grid of `.palette-btn`, each with a colour `.swatch`.
+- **Project bar** — the lobby's "My projects" switcher: a `.project-bar` holding a
+  `.project-tabs` row of `.project-tab` pills (`.active` for the current project,
+  each with a `.project-tab-name` + `.project-tab-meta`) and a dashed
+  `.project-tab-new`, with a `.project-actions` cluster of `.btn`s.
 
 ## Behaviour conventions
 

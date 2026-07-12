@@ -1,20 +1,55 @@
 import { useDesignStore } from '../../store/useDesignStore';
+import { useProjectsStore } from '../../store/useProjectsStore';
 import { confirmDialog, promptDialog } from '../../store/useDialogStore';
 import { createRoomAndDraw, openRoomToFurnish, openRoomToPlan } from '../../lib/nav';
+import {
+  createProject,
+  deleteProject,
+  duplicateProject,
+  renameProject,
+  switchProject,
+} from '../../lib/projects';
 import { Icon } from '../ui/Icon';
 
 /**
- * The lobby: the app's home surface, kept separate from furnishing. Here you
- * pick a room to furnish, create a new room (which opens the floor-plan editor
- * to draw it), edit an existing room's floor plan, and duplicate/rename/delete
- * rooms. Furnishing a room happens on its own surface, reached by opening a
- * room card.
+ * The lobby: the app's home surface, kept separate from furnishing. A "My
+ * projects" bar switches between separate local projects; below it you pick a
+ * room to furnish, create a new room (which opens the floor-plan editor to draw
+ * it), edit an existing room's floor plan, and duplicate/rename/delete rooms.
+ * Furnishing a room happens on its own surface, reached by opening a room card.
  */
 export function Lobby() {
   const rooms = useDesignStore((s) => s.project.rooms);
   const duplicateRoom = useDesignStore((s) => s.duplicateRoom);
   const renameRoom = useDesignStore((s) => s.renameRoom);
   const removeRoom = useDesignStore((s) => s.removeRoom);
+
+  const metas = useProjectsStore((s) => s.metas);
+  const activeId = useProjectsStore((s) => s.activeId);
+  const stash = useProjectsStore((s) => s.stash);
+  const activeName = useDesignStore((s) => s.project.name);
+
+  const roomCount = (id: string) =>
+    id === activeId ? rooms.length : (stash[id]?.rooms.length ?? 0);
+
+  const renameActiveProject = async () => {
+    const next = await promptDialog({
+      title: 'Rename project',
+      label: 'Project name',
+      initial: activeName,
+    });
+    if (next !== null) renameProject(activeId, next);
+  };
+
+  const deleteActiveProject = async () => {
+    const ok = await confirmDialog({
+      title: 'Delete project',
+      message: `Delete the project “${activeName}”? All of its rooms are removed too.`,
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (ok) deleteProject(activeId);
+  };
 
   const rename = async (id: string, current: string) => {
     const next = await promptDialog({ title: 'Rename room', label: 'Room name', initial: current });
@@ -33,9 +68,57 @@ export function Lobby() {
 
   return (
     <div className="lobby">
+      <div className="project-bar">
+        <div className="project-tabs" role="tablist" aria-label="My projects">
+          {metas.map((m) => {
+            const count = roomCount(m.id);
+            return (
+              <button
+                key={m.id}
+                type="button"
+                role="tab"
+                aria-selected={m.id === activeId}
+                className={`project-tab${m.id === activeId ? ' active' : ''}`}
+                title={m.id === activeId ? `“${m.name}” (current project)` : `Switch to “${m.name}”`}
+                onClick={() => switchProject(m.id)}
+              >
+                <span className="project-tab-name">{m.name}</span>
+                <span className="project-tab-meta">
+                  {count} room{count === 1 ? '' : 's'}
+                </span>
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            className="project-tab project-tab-new"
+            title="Start a new, separate project"
+            onClick={() => createProject()}
+          >
+            <Icon name="plus" /> New project
+          </button>
+        </div>
+        <div className="project-actions">
+          <button type="button" className="btn" onClick={renameActiveProject}>
+            Rename
+          </button>
+          <button
+            type="button"
+            className="btn"
+            title="Save a copy of this project (all its rooms)"
+            onClick={() => duplicateProject(activeId)}
+          >
+            Duplicate
+          </button>
+          <button type="button" className="btn" onClick={deleteActiveProject}>
+            Delete project
+          </button>
+        </div>
+      </div>
+
       <header className="lobby-head">
         <div className="lobby-brand">
-          <h1>Roomcraft</h1>
+          <h1>{activeName}</h1>
           <p>Pick a room to furnish, or create a new one.</p>
         </div>
       </header>
