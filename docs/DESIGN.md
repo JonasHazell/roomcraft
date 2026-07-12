@@ -25,6 +25,9 @@ Two halves, kept in sync:
 4. If you add a genuinely new primitive, **add it to the gallery too** and note its
    rule here — the reference must stay complete.
 
+For how these primitives behave across screen sizes — the mobile-first approach and
+the one-component-set rule — see [`MOBILE-FIRST.md`](MOBILE-FIRST.md).
+
 ## Design tokens
 
 All defined in `:root` at the top of `src/index.css`. These are the values; the
