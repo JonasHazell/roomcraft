@@ -247,7 +247,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--line);
   border-radius: 4px;
   padding: 0 8px;
@@ -327,7 +327,7 @@ select {
   font: inherit;
   font-size: 13px;
   color: inherit;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--line);
   border-radius: 4px;
   padding: 5px 6px;
@@ -391,7 +391,7 @@ select {
 .btn-accent {
   border-color: var(--accent);
   background: var(--accent);
-  color: #fff;
+  color: var(--paper);
 }
 
 .btn-accent:hover {
@@ -403,7 +403,7 @@ select {
 .btn-danger {
   border-color: var(--danger);
   background: var(--danger);
-  color: #fff;
+  color: var(--paper);
 }
 
 .btn-danger:hover {
@@ -416,13 +416,13 @@ select {
 .btn-done {
   border-color: var(--ink);
   background: var(--ink);
-  color: #fff;
+  color: var(--paper);
 }
 
 .btn-done:hover {
   background: #3f3f46;
   border-color: #3f3f46;
-  color: #fff;
+  color: var(--paper);
 }
 
 .btn-icon {
@@ -553,7 +553,7 @@ select {
   padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: #fff;
+  background: var(--card);
   color: var(--ink);
   cursor: pointer;
   transition: border-color 0.12s, transform 0.08s;
@@ -611,7 +611,7 @@ select {
   padding: 0;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #fff;
+  background: var(--card);
   overflow: hidden;
 }
 
@@ -667,7 +667,7 @@ select {
   padding: 0;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #fff;
+  background: var(--card);
   overflow: hidden;
 }
 
@@ -1116,7 +1116,7 @@ select {
 
 .plan-error-pill {
   top: calc(52px + env(safe-area-inset-top));
-  color: #fff;
+  color: var(--paper);
   background: var(--danger);
   border-color: var(--danger);
 }
@@ -1208,7 +1208,7 @@ select {
   padding: 0;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #fff;
+  background: var(--card);
   overflow: hidden;
 }
 
@@ -1251,7 +1251,7 @@ select {
   padding: 6px 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--card);
   color: var(--ink);
   cursor: pointer;
 }
@@ -1360,7 +1360,7 @@ select {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #fff;
+  color: var(--paper);
   background: var(--accent);
   padding: 2px 8px;
   border-radius: 999px;
@@ -1453,7 +1453,7 @@ select {
   border: 1px solid var(--line);
   border-radius: 4px;
   overflow: hidden;
-  background: #fff;
+  background: var(--card);
 }
 
 .count-step {
@@ -1563,7 +1563,7 @@ select {
   padding: 2px 7px;
   border-radius: 999px;
   background: var(--danger);
-  color: #fff;
+  color: var(--paper);
   letter-spacing: 0.03em;
 }
 
@@ -1691,7 +1691,7 @@ select {
   border-radius: 50%;
   font-size: 11px;
   font-weight: 700;
-  color: #fff;
+  color: var(--paper);
 }
 
 .severity-5 { background: #dc2626; }
@@ -2315,12 +2315,12 @@ select {
   border-radius: 999px;
   background: var(--card);
   box-shadow: 0 6px 20px rgba(24, 24, 27, 0.18);
-  color: #000;
+  color: var(--ink);
 }
 
 .room-back:hover {
   background: var(--paper-2);
-  color: #000;
+  color: var(--ink);
 }
 
 .room-back > [aria-hidden] {
