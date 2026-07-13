@@ -12,6 +12,14 @@ simple to state and hard to do well:
 > Make the best possible room-planning experience with a **small number of
 > well-built features** — not a long list of shallow ones.
 
+Above everything else, the app must be **simple and clear to use, and
+mobile-first**. A first-time user on a phone should be able to go from an empty
+room to one they love with as little friction as possible. Every screen is
+designed for the small, touch-first viewport first (see
+[`MOBILE-FIRST.md`](MOBILE-FIRST.md)); wider screens are an enhancement, never the
+starting point. When a change would make the app harder to understand or harder to
+use on a phone, it is the wrong change — even if it adds capability.
+
 We are deliberately **not** optimizing for a monetization model yet. No feature
 should be shaped by "how will this make money" at this stage. That question is
 parked on purpose (see [Monetization](#monetization-is-parked-for-now) below).
@@ -30,8 +38,10 @@ experience better?** Concretely, we prioritise:
 3. **Reliability.** The basics — creating rooms, placing furniture, 2D/3D
    editing, saving — should feel fast, predictable, and hard to break. A solid
    foundation is a feature.
-4. **Clarity.** Fewer, more obvious paths through the app. When in doubt, remove
-   a choice rather than add one.
+4. **Clarity and simplicity, mobile-first.** Fewer, more obvious paths through the
+   app, and every one of them easy to use on a phone. When in doubt, remove a
+   choice rather than add one. Simplicity is a feature — removing friction and
+   clutter counts as much as adding capability.
 
 ## What we say no to (for now)
 
