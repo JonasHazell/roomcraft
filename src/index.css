@@ -1244,20 +1244,14 @@ select {
   gap: 6px;
 }
 
-.opening-add button {
+/* Compact .btn override — same pattern as .room-card-actions .btn — shrinks
+   the shared primitive to fit this dense row instead of hand-rolling new
+   button styling. The base .btn's own coarse-pointer rule still gives it a
+   44px minimum hit area. */
+.opening-add .btn {
   flex: 1;
-  font: inherit;
   font-size: 12px;
   padding: 6px 8px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--card);
-  color: var(--ink);
-  cursor: pointer;
-}
-
-.opening-add button:hover {
-  background: color-mix(in srgb, var(--accent) 7%, transparent);
 }
 
 .opening-summary {
