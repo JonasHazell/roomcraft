@@ -74,8 +74,8 @@ function FurnitureOptionFields({
 /**
  * Name / dimensions / colour controls for a furniture piece. Rendered in the
  * "Add furniture" dialog (bound to a local draft) and in the "More" editor (bound
- * to the store). Rotation is not edited here — it's done with the Left/Right
- * buttons in the selection bar. Colour lives here rather than inline in the
+ * to the store). Rotation is not edited here — it's done with the in-scene ring
+ * handle or the R / Shift+R shortcuts. Colour lives here rather than inline in the
  * selection bar, so the bar stays focused on quick actions.
  */
 export function FurnitureFields({
