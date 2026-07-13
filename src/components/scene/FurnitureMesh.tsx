@@ -96,8 +96,8 @@ function PartMaterials({
 const FLOOR_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const hit = new THREE.Vector3();
 
-// While dragging the rotation handle with Shift held, snap the angle to 15°
-// increments for fine, predictable control.
+// Dragging the rotation handle snaps the angle to 15° increments for
+// predictable, tidy orientations.
 const ROTATE_SNAP = Math.PI / 12;
 
 // The rotation handle's accent colour. WebGL materials take a literal colour, so
@@ -150,9 +150,9 @@ export function FurnitureMesh({ id }: { id: string }) {
     const dz = hit.z - item.position.z;
     if (Math.hypot(dx, dz) < 0.02) return; // pointer over the pivot — angle undefined
     // Point the piece's front (local +z) toward the pointer; matches frontDir's
-    // (sin, cos) convention so the knob tracks the cursor.
-    let angle = Math.atan2(dx, dz);
-    if (e.shiftKey) angle = Math.round(angle / ROTATE_SNAP) * ROTATE_SNAP;
+    // (sin, cos) convention so the knob tracks the cursor. Snap to 15° so the
+    // piece lands on tidy, predictable angles.
+    const angle = Math.round(Math.atan2(dx, dz) / ROTATE_SNAP) * ROTATE_SNAP;
     updateFurniture(id, { rotationY: angle });
   };
 
@@ -237,8 +237,8 @@ export function FurnitureMesh({ id }: { id: string }) {
         </mesh>
       )}
       {selected && (
-        // Free-rotation handle: grab the ring or the front knob and spin. Hold
-        // Shift while dragging to snap to 15°. Keyboard R / Shift+R still work.
+        // Rotation handle: grab the ring or the front knob and spin. The angle
+        // snaps to 15° increments. Keyboard R / Shift+R still work.
         <group
           onPointerDown={beginRotate}
           onPointerMove={moveRotate}
