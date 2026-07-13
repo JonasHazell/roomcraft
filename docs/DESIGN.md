@@ -106,7 +106,10 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   from `.hint` + `.field-grid`).
 - **Feedback** — one `.hint` for guidance, one `.error` for failures (reuse them —
   don't roll new ones). `.score-badge` with `.score-good/-mid/-bad`; `.severity`
-  with `.severity-1`…`-5` (5 = worst).
+  with `.severity-1`…`-5` (5 = worst). `.score-badge` also doubles as the pill for
+  the global-panel triggers (AI furnishing, validation) — icon + `.score-badge-value`
+  label instead of a score number, toggling `.active` when its panel is open.
+  `.view-badges` pins the row of these triggers top-right of the 3D view.
 - **Palette** — `.palette` grid of `.palette-btn`, each with a colour `.swatch`.
 - **Room templates** — the "New room" picker's `.template-grid` of `.template-card`
   buttons (each an SVG `.template-preview` + `.template-name` + `.template-meta`);

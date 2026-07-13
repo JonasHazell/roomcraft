@@ -1487,14 +1487,23 @@ select {
   color: var(--danger);
 }
 
-/* Always-visible score chip, top-right of the 3D view, stacked under the
-   proposal switcher. Same rounded, card-filled, shadowed surface as the other
-   floating controls so it belongs to the family. */
-.score-badge {
+/* Pinned top-right row of the 3D view's global-panel triggers (AI furnishing,
+   validation). One absolute-positioned wrapper holds both `.score-badge` pills
+   in a flex row so they sit side by side instead of fighting over the same
+   corner. */
+.view-badges {
   position: absolute;
   top: calc(12px + env(safe-area-inset-top));
   right: calc(14px + env(safe-area-inset-right));
   z-index: 55;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Same rounded, card-filled, shadowed surface as the other floating controls
+   so every pill in `.view-badges` belongs to the family. */
+.score-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;

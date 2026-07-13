@@ -355,6 +355,21 @@ export function StyleGuide() {
           </div>
         </Demo>
 
+        <Demo
+          title="Global-panel triggers"
+          note="The .score-badge pill also hosts the AI-furnishing and validation triggers, pinned top-right of the 3D view in .view-badges. The active one inverts to the ink fill."
+        >
+          <div className="sg-inline-row">
+            <span className="score-badge" style={{ position: 'static' }}>
+              <Icon name="sparkles" />
+              <span className="score-badge-value">AI</span>
+            </span>
+            <span className="score-badge active" style={{ position: 'static' }}>
+              <span className="score-badge-value">92</span>
+            </span>
+          </div>
+        </Demo>
+
         <Demo title="Modal" note="Centred dialog on the shared --popup-* chrome. .modal-sm for short confirms.">
           <button type="button" className="btn btn-accent" onClick={() => setModalOpen(true)}>
             Open modal
