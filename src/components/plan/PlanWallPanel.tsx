@@ -77,10 +77,10 @@ export function PlanWallPanel() {
           <strong>Doors &amp; windows</strong>
         </p>
         <div className="opening-add">
-          <button type="button" onClick={() => add('door')}>
+          <button type="button" className="btn" onClick={() => add('door')}>
             <Icon name="door" /> Add door
           </button>
-          <button type="button" onClick={() => add('window')}>
+          <button type="button" className="btn" onClick={() => add('window')}>
             <Icon name="window" /> Add window
           </button>
         </div>
