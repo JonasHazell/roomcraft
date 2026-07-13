@@ -29,6 +29,12 @@ Repository: `JonasHazell/roomcraft`.
       earlier run), you may reclaim it.
    2. **Implement** the change on a new branch named `agent/issue-<N>-<slug>`, off
       the default branch. Keep the change small and faithful to the issue.
+      **Delegate the implementation to a fresh subagent** — spawn a new subagent
+      (via the `Agent` tool) for *each* issue and have it carry out that one
+      change end to end, so every change is built in its own clean context.
+      Give the subagent the issue's intent and the reading list above, and have
+      it return a summary of what it changed and how it verified it. Do not
+      implement multiple issues in a single subagent.
    3. **Verify:** run `npm run build`, `npm run lint`, and `npm test`. Fix what your
       change broke. For UI, follow the `DESIGN.md` behaviour conventions.
    4. **Open a pull request** with `Closes #<N>` in the body, targeting the default
