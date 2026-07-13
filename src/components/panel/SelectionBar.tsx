@@ -9,10 +9,12 @@ import { Icon } from '../ui/Icon';
 
 /**
  * Action bar for the selected furniture piece. It surfaces the most-used actions
- * (rotate, duplicate, delete) in a compact pill pinned to the bottom of the
- * viewport — on both desktop and mobile. Colour lives under "More", alongside the
- * piece's name and size, so the bar stays focused on quick actions. "More" opens
- * the full furniture dialog pre-filled with this piece's values.
+ * (duplicate, delete) in a compact pill pinned to the bottom of the viewport — on
+ * both desktop and mobile. Rotation is handled by the in-scene ring handle (and
+ * the R / Shift+R shortcuts), so it stays out of the bar. Colour lives under
+ * "More", alongside the piece's name and size, so the bar stays focused on quick
+ * actions. "More" opens the full furniture dialog pre-filled with this piece's
+ * values.
  */
 export function SelectionBar() {
   const appView = useUiStore((s) => s.appView);
@@ -33,20 +35,6 @@ export function SelectionBar() {
 
   return (
     <SelBar label="Furniture actions">
-      <SelBarButton
-        icon={<Icon name="rotate-ccw" />}
-        label="Left"
-        title="Rotate 90° left"
-        ariaLabel="Rotate 90 degrees left"
-        onClick={() => updateFurniture(selected.id, { rotationY: selected.rotationY + Math.PI / 2 })}
-      />
-      <SelBarButton
-        icon={<Icon name="rotate-cw" />}
-        label="Right"
-        title="Rotate 90° right"
-        ariaLabel="Rotate 90 degrees right"
-        onClick={() => updateFurniture(selected.id, { rotationY: selected.rotationY - Math.PI / 2 })}
-      />
       <SelBarButton
         icon={<Icon name="copy" />}
         label="Duplicate"
