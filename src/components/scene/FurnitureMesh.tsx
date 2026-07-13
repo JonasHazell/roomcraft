@@ -100,6 +100,15 @@ const hit = new THREE.Vector3();
 // increments for fine, predictable control.
 const ROTATE_SNAP = Math.PI / 12;
 
+// A right angle. Furniture usually wants to sit square to the walls, so the
+// ring "magnetises" to the nearest multiple of this (0/90/180/270°).
+const RIGHT_ANGLE = Math.PI / 2;
+// With no modifier held, the ring gently snaps to the nearest right angle once
+// the pointer comes within this arc of it (~7.5°). That makes aligning a piece
+// to the walls effortless without any key, while every other angle stays freely
+// reachable just outside the magnet.
+const RIGHT_ANGLE_MAGNET = Math.PI / 24;
+
 // The rotation handle's accent colour. WebGL materials take a literal colour, so
 // this mirrors the --accent token (terracotta) the way SELECT_EMISSIVE mirrors
 // --select; keep them in sync if the token changes.
@@ -152,7 +161,15 @@ export function FurnitureMesh({ id }: { id: string }) {
     // Point the piece's front (local +z) toward the pointer; matches frontDir's
     // (sin, cos) convention so the knob tracks the cursor.
     let angle = Math.atan2(dx, dz);
-    if (e.shiftKey) angle = Math.round(angle / ROTATE_SNAP) * ROTATE_SNAP;
+    if (e.shiftKey) {
+      angle = Math.round(angle / ROTATE_SNAP) * ROTATE_SNAP;
+    } else {
+      // Magnetically settle onto the nearest right angle when close, so a piece
+      // snaps square to the walls on its own — but leave everything outside the
+      // magnet as free rotation.
+      const nearest = Math.round(angle / RIGHT_ANGLE) * RIGHT_ANGLE;
+      if (Math.abs(angle - nearest) < RIGHT_ANGLE_MAGNET) angle = nearest;
+    }
     updateFurniture(id, { rotationY: angle });
   };
 
@@ -237,8 +254,9 @@ export function FurnitureMesh({ id }: { id: string }) {
         </mesh>
       )}
       {selected && (
-        // Free-rotation handle: grab the ring or the front knob and spin. Hold
-        // Shift while dragging to snap to 15°. Keyboard R / Shift+R still work.
+        // Free-rotation handle: grab the ring or the front knob and spin. It
+        // magnetises to right angles as you pass them; hold Shift while dragging
+        // for a finer 15° snap. Keyboard R / Shift+R still work.
         <group
           onPointerDown={beginRotate}
           onPointerMove={moveRotate}

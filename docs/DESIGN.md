@@ -121,8 +121,9 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
 - **Selection shortcuts** (furniture): `R` / `Shift+R` rotate in 90° steps,
   `Ctrl/Cmd+D` duplicate, `Delete`/`Backspace` remove. Suppressed while a text
   input is focused. A selected piece also shows a **rotation handle** in the 3D
-  view (a floor ring + front knob) for free-angle rotation; hold `Shift` while
-  dragging it to snap to 15°.
+  view (a floor ring + front knob) for free-angle rotation. It magnetises to the
+  nearest right angle (0/90/180/270°) as you pass it, so pieces square up to the
+  walls with no key; hold `Shift` while dragging for a finer 15° snap.
 - **Touch** — interactive controls keep a ≥44px hit area on coarse pointers.
 - **Disabled actions** — wrap in `.btn-tooltip-wrap` with a `title` so the reason
   shows on hover.
