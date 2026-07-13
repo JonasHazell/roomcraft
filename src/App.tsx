@@ -58,7 +58,7 @@ function FurnishView() {
       <ProposalSwitcher />
       <ValidationScore />
       <div className="viewport-hint">
-        Drag to orbit · scroll to zoom · drag a furniture piece to move it
+        Drag to orbit · scroll to zoom · drag a piece to move it, its ring to rotate
       </div>
       <SidePanel />
       {/* Bottom dock in three fixed slots: the add-furniture pill locked to the

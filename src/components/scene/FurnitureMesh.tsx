@@ -96,6 +96,15 @@ function PartMaterials({
 const FLOOR_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const hit = new THREE.Vector3();
 
+// While dragging the rotation handle with Shift held, snap the angle to 15°
+// increments for fine, predictable control.
+const ROTATE_SNAP = Math.PI / 12;
+
+// The rotation handle's accent colour. WebGL materials take a literal colour, so
+// this mirrors the --accent token (terracotta) the way SELECT_EMISSIVE mirrors
+// --select; keep them in sync if the token changes.
+const ROTATE_HANDLE_COLOR = '#b4532f';
+
 export function FurnitureMesh({ id }: { id: string }) {
   const item = useDesignStore((s) => s.design.furniture.find((f) => f.id === id));
   const selected = useUiStore(
@@ -104,12 +113,56 @@ export function FurnitureMesh({ id }: { id: string }) {
   const select = useUiStore((s) => s.select);
   const setDragging = useUiStore((s) => s.setDragging);
   const moveFurniture = useDesignStore((s) => s.moveFurniture);
+  const updateFurniture = useDesignStore((s) => s.updateFurniture);
   const dragOffset = useRef({ x: 0, z: 0 });
+  // True while the rotation handle is being dragged, so the move handler (which
+  // shares the group's pointer events) steps aside.
+  const rotatingRef = useRef(false);
   const [hovered, setHovered] = useState(false);
-  useCursor(hovered, 'grab');
+  const [rotHovered, setRotHovered] = useState(false);
+  useCursor(hovered || rotHovered, 'grab');
 
   if (!item) return null;
   const Piece = COMPONENTS[item.kind];
+
+  // The rotation handle: a ring on the floor around the piece with a knob at its
+  // front (local +z), so the knob doubles as an orientation marker. Sized off the
+  // footprint and given a generous grab radius so it stays an easy target.
+  const handleRadius = Math.max(item.size.width, item.size.depth) / 2 + 0.22;
+  // Sit just above the floor whatever the piece's elevation (the group is raised
+  // by `elevation`, so subtract it to land back near y = 0).
+  const handleY = 0.03 - item.elevation;
+
+  const beginRotate = (e: ThreeEvent<PointerEvent>) => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    (e.target as Element).setPointerCapture(e.pointerId);
+    rotatingRef.current = true;
+    // Disable OrbitControls (it keys off draggingId) so spinning doesn't orbit.
+    setDragging(id);
+    useHistoryStore.getState().beginBatch();
+  };
+
+  const moveRotate = (e: ThreeEvent<PointerEvent>) => {
+    if (!rotatingRef.current) return;
+    if (!e.ray.intersectPlane(FLOOR_PLANE, hit)) return;
+    const dx = hit.x - item.position.x;
+    const dz = hit.z - item.position.z;
+    if (Math.hypot(dx, dz) < 0.02) return; // pointer over the pivot — angle undefined
+    // Point the piece's front (local +z) toward the pointer; matches frontDir's
+    // (sin, cos) convention so the knob tracks the cursor.
+    let angle = Math.atan2(dx, dz);
+    if (e.shiftKey) angle = Math.round(angle / ROTATE_SNAP) * ROTATE_SNAP;
+    updateFurniture(id, { rotationY: angle });
+  };
+
+  const endRotate = (e: ThreeEvent<PointerEvent>) => {
+    if (!rotatingRef.current) return;
+    (e.target as Element).releasePointerCapture(e.pointerId);
+    rotatingRef.current = false;
+    setDragging(null);
+    useHistoryStore.getState().endBatch();
+  };
 
   const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
     if (e.button !== 0) return; // right button is left to camera panning
@@ -130,6 +183,7 @@ export function FurnitureMesh({ id }: { id: string }) {
   };
 
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
+    if (rotatingRef.current) return; // the rotation handle owns this drag
     if (useUiStore.getState().draggingId !== id) return;
     if (!e.ray.intersectPlane(FLOOR_PLANE, hit)) return;
     moveFurniture(id, hit.x + dragOffset.current.x, hit.z + dragOffset.current.z);
@@ -181,6 +235,30 @@ export function FurnitureMesh({ id }: { id: string }) {
           <planeGeometry args={[item.size.width + 0.14, item.size.depth + 0.14]} />
           <meshBasicMaterial color={SELECT_EMISSIVE} transparent opacity={0.5} />
         </mesh>
+      )}
+      {selected && (
+        // Free-rotation handle: grab the ring or the front knob and spin. Hold
+        // Shift while dragging to snap to 15°. Keyboard R / Shift+R still work.
+        <group
+          onPointerDown={beginRotate}
+          onPointerMove={moveRotate}
+          onPointerUp={endRotate}
+          onPointerCancel={endRotate}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            setRotHovered(true);
+          }}
+          onPointerOut={() => setRotHovered(false)}
+        >
+          <mesh position-y={handleY} rotation-x={-Math.PI / 2}>
+            <torusGeometry args={[handleRadius, 0.02, 8, 48]} />
+            <meshBasicMaterial color={ROTATE_HANDLE_COLOR} transparent opacity={0.85} />
+          </mesh>
+          <mesh position={[0, handleY, handleRadius]}>
+            <sphereGeometry args={[0.09, 20, 20]} />
+            <meshBasicMaterial color={ROTATE_HANDLE_COLOR} />
+          </mesh>
+        </group>
       )}
     </group>
   );

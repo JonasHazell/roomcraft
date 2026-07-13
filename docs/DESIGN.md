@@ -115,8 +115,11 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   at a time — see the handlers in `App.tsx` and `SidePanel.tsx`.
 - **Undo/redo** — `Ctrl/Cmd+Z`, `Shift` to redo (or `Ctrl/Cmd+Y`). Always available
   inside a room.
-- **Selection shortcuts** (furniture): `R` / `Shift+R` rotate, `Ctrl/Cmd+D`
-  duplicate, `Delete`/`Backspace` remove. Suppressed while a text input is focused.
+- **Selection shortcuts** (furniture): `R` / `Shift+R` rotate in 90° steps,
+  `Ctrl/Cmd+D` duplicate, `Delete`/`Backspace` remove. Suppressed while a text
+  input is focused. A selected piece also shows a **rotation handle** in the 3D
+  view (a floor ring + front knob) for free-angle rotation; hold `Shift` while
+  dragging it to snap to 15°.
 - **Touch** — interactive controls keep a ≥44px hit area on coarse pointers.
 - **Disabled actions** — wrap in `.btn-tooltip-wrap` with a `title` so the reason
   shows on hover.
