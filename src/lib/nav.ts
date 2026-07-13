@@ -80,3 +80,24 @@ export function backToLobby(): void {
   useUiStore.getState().select(null);
   useUiStore.getState().setAppView('lobby');
 }
+
+/**
+ * Finish the plan editor's "Done" action. A brand-new room — still carrying the
+ * `pendingRoomId` set by `createRoomAndDraw` — that now has a drawn outline hands
+ * off straight into furnishing it, so create → draw → furnish doesn't make the
+ * user land on the lobby only to tap the same room card again. A pending room
+ * left undrawn still falls back to `backToLobby`'s discard-if-abandoned
+ * safeguard, and an already-existing room being re-edited (never pending, e.g.
+ * via "Edit plan") keeps returning to the lobby as before, since the user may
+ * have arrived there from elsewhere.
+ */
+export function finishPlanEditing(): void {
+  const pendingId = useUiStore.getState().pendingRoomId;
+  const drawn = useDesignStore.getState().design.walls.some((w) => w.kind === 'exterior');
+  if (pendingId && drawn) {
+    useUiStore.getState().setPendingRoomId(null);
+    openRoomToFurnish(pendingId);
+    return;
+  }
+  backToLobby();
+}

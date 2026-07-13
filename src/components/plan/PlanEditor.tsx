@@ -13,7 +13,7 @@ import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { confirmDialog } from '../../store/useDialogStore';
-import { backToLobby } from '../../lib/nav';
+import { finishPlanEditing } from '../../lib/nav';
 import { COARSE_POINTER, useMediaQuery } from '../../lib/useMediaQuery';
 import { PlanGrid } from './PlanGrid';
 import { PlanWalls } from './PlanWalls';
@@ -357,7 +357,7 @@ export function PlanEditor() {
 
   const onDone = () => {
     draw.setTool('select');
-    backToLobby();
+    finishPlanEditing();
   };
 
   return (
