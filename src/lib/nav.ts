@@ -1,6 +1,7 @@
 import { useDesignStore } from '../store/useDesignStore';
 import { useUiStore } from '../store/useUiStore';
 import { useHistoryStore } from '../store/useHistoryStore';
+import type { Point } from '../types';
 
 /**
  * Navigation between the app's three surfaces (lobby, plan, furnish). Each
@@ -43,6 +44,24 @@ export function createRoomAndDraw(): string {
   // Remember it as provisional: if the user leaves without drawing an outline,
   // backToLobby discards it so no empty room is left behind.
   useUiStore.getState().setPendingRoomId(id);
+  useUiStore.getState().setAppView('plan');
+  return id;
+}
+
+/**
+ * Create a new room pre-filled with a template outline, then open its floor plan
+ * for editing. The walls are drawn straight away (so the room is never
+ * provisional) but stay fully editable, exactly like a hand-drawn outline.
+ */
+export function createRoomFromTemplate(points: Point[]): string {
+  const id = useDesignStore.getState().createRoom();
+  useDesignStore.getState().commitExteriorPolygon(points);
+  useHistoryStore.getState().clear();
+  useUiStore.getState().select(null);
+  // The outline already exists, so open in select mode and keep the room even if
+  // the user leaves without touching it.
+  useUiStore.getState().setPlanStartTool('select');
+  useUiStore.getState().setPendingRoomId(null);
   useUiStore.getState().setAppView('plan');
   return id;
 }
