@@ -6,8 +6,10 @@ decisions — which proposals got merged, which got edited before merge, which g
 rejected — and Stages A and B read it before proposing and building. This is what
 makes the loop get better over time.
 
-Keep entries **concise and actionable**: something a future agent can act on, with
-the issue/PR number for traceability. Group related lessons under a heading.
+Keep entries **concise, actionable, and general**: state the durable principle a
+future agent can apply across many situations (e.g. "controls must not hide other
+controls"), not a one-off note about a single PR. Cite the issue/PR number as the
+example the principle came from. Group related lessons under a heading.
 
 ---
 
