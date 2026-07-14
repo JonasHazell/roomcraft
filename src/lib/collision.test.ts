@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Point, Wall } from '../types';
-import { furnitureCorners, furnitureFits, slideFurniture } from './collision';
+import { findClearSpot, furnitureCorners, furnitureFits, slideFurniture } from './collision';
 
 /** 4×5 m room with a corner at the origin, canonical winding. */
 const square: Point[] = [
@@ -110,5 +110,26 @@ describe('slideFurniture', () => {
     const p = slideFurniture(item(1, 2.5), { x: 3, z: 4 }, square, noWalls, [other]);
     expect(p.z).toBeCloseTo(4, 5);
     expect(furnitureFits(item(p.x, p.z), square, noWalls, [other])).toBe(true);
+  });
+});
+
+describe('findClearSpot', () => {
+  it('keeps the candidate spot when it already fits', () => {
+    const p = findClearSpot(item(2, 2.5), { x: 2, z: 2.5 }, square, noWalls, []);
+    expect(p).toEqual({ x: 2, z: 2.5 });
+  });
+
+  it('moves off a spot that overlaps another piece, landing somewhere clear', () => {
+    const other = furnitureCorners(item(2, 2.5), 0);
+    const p = findClearSpot(item(2, 2.5), { x: 2, z: 2.5 }, square, noWalls, [other]);
+    expect(p).not.toEqual({ x: 2, z: 2.5 });
+    expect(furnitureFits(item(p.x, p.z), square, noWalls, [other])).toBe(true);
+  });
+
+  it('falls back to the candidate spot when the room is too full to find a clear one', () => {
+    // Fill the whole room with one giant obstacle — no ring candidate can fit.
+    const other = furnitureCorners(item(2, 2.5, 4, 5), 0);
+    const p = findClearSpot(item(2, 2.5), { x: 2, z: 2.5 }, square, noWalls, [other]);
+    expect(p).toEqual({ x: 2, z: 2.5 });
   });
 });

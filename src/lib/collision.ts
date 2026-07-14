@@ -1,4 +1,4 @@
-import type { FurnitureItem, Point, Wall, WallOpening } from '../types';
+import type { FurnitureItem, FurnitureKind, Point, Wall, WallOpening } from '../types';
 import {
   clamp,
   clampToPolygon,
@@ -46,6 +46,27 @@ export function clampFurniture(item: FurnitureItem, floorPoly: Point[]): Furnitu
   const p = clampToPolygon(item.position, floorPoly);
   if (p === item.position) return item;
   return { ...item, position: p };
+}
+
+/**
+ * The footprints a piece with the given kind must avoid overlapping: every other
+ * piece in `furniture` except rugs, and except `excludeId` itself (the piece being
+ * moved/placed, if it is already in the list). Rugs lie flat on the floor and are
+ * meant to have furniture stand on them, so they never take part in
+ * furniture-to-furniture collision — a rug being placed/moved gets no obstacles,
+ * and rugs are skipped as obstacles for everyone else. Shared by placement
+ * (`placeAtCenter`, `duplicateFurniture`) and drag-time sliding so both use the
+ * same notion of "other furniture in the way".
+ */
+export function furnitureObstacles(
+  furniture: FurnitureItem[],
+  kind: FurnitureKind,
+  excludeId?: string,
+): Point[][] {
+  if (kind === 'rug') return [];
+  return furniture
+    .filter((f) => f.id !== excludeId && f.kind !== 'rug')
+    .map((f) => furnitureCorners(f, 0));
 }
 
 /**
@@ -140,6 +161,39 @@ export function slideFurniture(
     cur = { ...cur, [axis]: cur[axis] + (target[axis] - cur[axis]) * lo };
   }
   return cur;
+}
+
+/** Ring radii (m) and angle steps tried by {@link findClearSpot}, outward from `from`. */
+const CLEAR_SPOT_MAX_RADIUS = 3;
+const CLEAR_SPOT_RADIUS_STEP = 0.3;
+const CLEAR_SPOT_ANGLE_STEPS = 12;
+
+/**
+ * Finds a spot near `from` where `item` fits without overlapping `obstacles` or a
+ * wall — used when placing a new or duplicated piece so it doesn't spawn embedded
+ * in furniture already in the room. `from` is tried first (so a caller's small
+ * random jitter is kept when it already clears); if that overlaps, candidates are
+ * tried in rings of growing radius around `from` until a clear one is found. Falls
+ * back to `from` itself if the room is too full to find a clear spot nearby —
+ * callers still clamp/nudge as before, so this only ever improves on that.
+ */
+export function findClearSpot(
+  item: Footprint,
+  from: Point,
+  floorPoly: Point[],
+  walls: Wall[],
+  obstacles: Point[][],
+): Point {
+  if (obstacles.length === 0) return from;
+  if (furnitureFits({ ...item, position: from }, floorPoly, walls, obstacles)) return from;
+  for (let radius = CLEAR_SPOT_RADIUS_STEP; radius <= CLEAR_SPOT_MAX_RADIUS; radius += CLEAR_SPOT_RADIUS_STEP) {
+    for (let i = 0; i < CLEAR_SPOT_ANGLE_STEPS; i++) {
+      const angle = (i / CLEAR_SPOT_ANGLE_STEPS) * Math.PI * 2;
+      const p = { x: from.x + Math.cos(angle) * radius, z: from.z + Math.sin(angle) * radius };
+      if (furnitureFits({ ...item, position: p }, floorPoly, walls, obstacles)) return p;
+    }
+  }
+  return from;
 }
 
 export function clampOpening(o: WallOpening, wall: Wall, roomHeight: number): WallOpening {
