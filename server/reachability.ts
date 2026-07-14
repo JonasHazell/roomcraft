@@ -9,12 +9,17 @@ const CELL = 0.1;
 
 /**
  * Furniture allowed to overlap without being flagged:
- * rugs may lie under anything, and chairs may be pushed in under tables/work surfaces.
+ * rugs may lie under anything, and chairs may be pushed in under tables, desks
+ * and boxes (work surfaces).
  */
 function overlapAllowed(a: ResolvedFurniture, b: ResolvedFurniture): boolean {
   if (a.kind === 'rug' || b.kind === 'rug') return true;
   const kinds = [a.kind, b.kind];
-  if (kinds.includes('chair') && (kinds.includes('table') || kinds.includes('box'))) return true;
+  if (
+    kinds.includes('chair') &&
+    (kinds.includes('table') || kinds.includes('desk') || kinds.includes('box'))
+  )
+    return true;
   return false;
 }
 

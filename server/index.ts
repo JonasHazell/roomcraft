@@ -21,6 +21,7 @@ import {
 } from './auth.ts';
 import { runClaude, type ChatMessages } from './claude.ts';
 import { autoFixProposals } from './autofix.ts';
+import { placeDeskChairs } from './deskChair.ts';
 import { resolveProposals } from './orient.ts';
 import { PROPOSAL_BRIEFS, SYSTEM_PROMPT, buildRepairPrompt, buildUserPrompt } from './prompt.ts';
 import { buildPlanBrief, generatePlan } from './planning.ts';
@@ -406,15 +407,20 @@ function parseRequest(raw: string): ProposalRequest {
 }
 
 /**
- * Resolves a single raw proposal (facing/againstWall → rotation, colours, etc.)
- * and applies the deterministic auto-fix pass, wrapping it in the one-element
- * proposal-set shape the resolve/validate/fix pipeline works on.
+ * Resolves a single raw proposal (facing/againstWall → rotation, colours, etc.),
+ * applies the deterministic auto-fix pass and seats each desk's chair on the
+ * desk's working side, wrapping it in the one-element proposal-set shape the
+ * resolve/validate/fix pipeline works on.
  */
 function prepareOne(structuredOutput: unknown, design: Design): ResolvedProposals {
-  return autoFixProposals(
+  const fixed = autoFixProposals(
     resolveProposals(proposalsSchema.parse({ proposals: [structuredOutput] }), design),
     design,
   );
+  // Seat each desk's chair centred on the desk's working side (see deskChair.ts).
+  // Runs last so it aligns to the auto-fixed desk positions and its tucked-in
+  // chairs aren't nudged back out as overlaps.
+  return placeDeskChairs(fixed, design);
 }
 
 /**
