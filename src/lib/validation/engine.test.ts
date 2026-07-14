@@ -103,6 +103,23 @@ describe('inferRoomTypes', () => {
     expect(inferRoomTypes(makeDesign([table, piece('chair', 2, 3, { width: 0.45, depth: 0.45 })])))
       .toEqual(new Set(['matplats']));
   });
+
+  it('infers a kitchen from any kitchen appliance', () => {
+    expect(inferRoomTypes(makeDesign([piece('counter', 2, 2)]))).toEqual(new Set(['kök']));
+    expect(inferRoomTypes(makeDesign([piece('stove', 2, 2)]))).toEqual(new Set(['kök']));
+    expect(inferRoomTypes(makeDesign([piece('fridge', 2, 2)]))).toEqual(new Set(['kök']));
+    expect(
+      inferRoomTypes(
+        makeDesign([piece('counter', 2, 2), piece('stove', 3, 2), piece('fridge', 4, 2)]),
+      ),
+    ).toEqual(new Set(['kök']));
+  });
+
+  it('infers a bathroom from any bathroom fixture', () => {
+    expect(inferRoomTypes(makeDesign([piece('toilet', 2, 2)]))).toEqual(new Set(['badrum']));
+    expect(inferRoomTypes(makeDesign([piece('bathtub', 2, 2)]))).toEqual(new Set(['badrum']));
+    expect(inferRoomTypes(makeDesign([piece('sink', 2, 2)]))).toEqual(new Set(['badrum']));
+  });
 });
 
 describe('SAF-02 door swing', () => {

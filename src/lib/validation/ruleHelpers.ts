@@ -150,6 +150,8 @@ export function inferRoomTypes(design: Design): Set<RoomType> {
   if (kinds.has('sofa')) types.add('vardagsrum');
   if (kinds.has('desk')) types.add('hemmakontor');
   if (design.furniture.some(isDiningTable) && kinds.has('chair')) types.add('matplats');
+  if (kinds.has('counter') || kinds.has('stove') || kinds.has('fridge')) types.add('kök');
+  if (kinds.has('toilet') || kinds.has('bathtub') || kinds.has('sink')) types.add('badrum');
   return types;
 }
 

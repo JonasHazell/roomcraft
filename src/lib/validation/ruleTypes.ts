@@ -24,13 +24,21 @@ export const CATEGORY_ORDER: RuleCategory[] = [
   'Aesthetics',
 ];
 
-export type RoomType = 'sovrum' | 'vardagsrum' | 'hemmakontor' | 'matplats';
+export type RoomType =
+  | 'sovrum'
+  | 'vardagsrum'
+  | 'hemmakontor'
+  | 'matplats'
+  | 'kök'
+  | 'badrum';
 
 export const ROOM_TYPE_LABEL: Record<RoomType, string> = {
   sovrum: 'Bedroom',
   vardagsrum: 'Living room',
   hemmakontor: 'Home office',
   matplats: 'Dining area',
+  kök: 'Kitchen',
+  badrum: 'Bathroom',
 };
 
 /** Score weight per importance level according to the rule catalog. */
