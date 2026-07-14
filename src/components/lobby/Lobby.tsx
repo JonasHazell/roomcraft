@@ -10,6 +10,7 @@ import {
 import type { RoomTemplate } from '../../lib/roomTemplates';
 import { Icon } from '../ui/Icon';
 import { RoomTemplatePicker } from './RoomTemplatePicker';
+import { AccountControl } from '../auth/AccountControl';
 
 /**
  * The lobby: the app's home surface, kept separate from furnishing. Here you
@@ -57,6 +58,7 @@ export function Lobby() {
           <h1>Roomcraft</h1>
           <p>Pick a room to furnish, or create a new one.</p>
         </div>
+        <AccountControl />
       </header>
 
       {rooms.length === 0 ? (

@@ -5,6 +5,7 @@
     "lib": ["ES2023"],
     "types": ["node"],
     "skipLibCheck": true,
+    "esModuleInterop": true,
 
     /* Körs direkt med `node` (inbyggd type stripping) — därav .ts-ändelser i importerna. */
     "module": "esnext",

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import {
   fetchProposals,
   toFurnitureItem,
@@ -13,6 +14,9 @@ export function AiProposalsPanel() {
   const design = useDesignStore((s) => s.design);
   const addProposalFromFurniture = useDesignStore((s) => s.addProposalFromFurniture);
   const select = useUiStore((s) => s.select);
+  const openAuthDialog = useUiStore((s) => s.openAuthDialog);
+  const authEnabled = useAuthStore((s) => s.enabled);
+  const signedIn = useAuthStore((s) => s.user !== null);
 
   const [needs, setNeeds] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,6 +34,9 @@ export function AiProposalsPanel() {
       setResult(await fetchProposals(design, needs));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong.');
+      // The session may have lapsed server-side (401); re-sync so the panel can
+      // fall back to the sign-in prompt instead of showing a stale form.
+      if (authEnabled) void useAuthStore.getState().refresh();
     } finally {
       setLoading(false);
     }
@@ -44,6 +51,22 @@ export function AiProposalsPanel() {
     });
     select(null);
     setAppliedTitle(proposal.title);
+  }
+
+  // When the server has sign-in configured, AI furnishing is for signed-in users
+  // only (each call runs on the owner's Claude login). Prompt to sign in instead
+  // of showing the form.
+  if (authEnabled && !signedIn) {
+    return (
+      <div className="stack">
+        <p className="hint">Sign in to describe your needs and get AI furnishing suggestions.</p>
+        <div className="button-row">
+          <button type="button" className="btn btn-accent" onClick={openAuthDialog}>
+            Sign in
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

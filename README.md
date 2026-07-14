@@ -31,7 +31,9 @@ with its own floor plan and its own furnishing options.
   colours are part of each furnishing proposal, so different proposals of the
   same room can have their own palette
 - AI furnishing suggestions: describe your needs and the backend asks Claude to
-  propose a furniture layout for the room, each with its own floor/wall palette
+  propose a furniture layout for the room, each with its own floor/wall palette.
+  When the server has a database configured, this feature is gated behind a
+  simple email + password sign-in (see **Accounts** below)
 - Undo/redo for every editing step — moving and editing furniture, walls, doors,
   windows, colours and more. Use the ↶/↷ buttons in the bottom-right corner (they
   work on mobile too) or the keyboard shortcuts below; a whole drag counts as a
@@ -81,10 +83,39 @@ This listens on port 8787 (override with the `PORT` env var). You only need it
 running if you want to use the AI suggestion feature; the rest of the app works
 with just the frontend.
 
+#### Accounts (sign-in)
+
+Sign-in is **opt-in via a database**. When `DATABASE_URL` is set, the backend:
+
+- creates two tables on boot (`users`, `sessions`) — no migration step to run;
+- serves `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`
+  and `GET /api/auth/me`;
+- gates `POST /api/proposals` behind a valid session, so only signed-in users can
+  spend AI calls.
+
+Passwords are hashed with Node's built-in scrypt (no native dependency). Sessions
+are opaque random tokens stored in the database and sent as a `HttpOnly`,
+`SameSite=Lax` cookie (`Secure` is added automatically over HTTPS), so there is no
+signing secret to configure. Cross-origin POSTs are rejected as a CSRF guard.
+
+With **no** `DATABASE_URL`, sign-in is disabled and the AI feature stays open —
+the app is unchanged for frontend-only/local development.
+
+To try accounts locally, point `DATABASE_URL` at any Postgres, e.g.:
+
+```bash
+DATABASE_URL=postgres://user:pass@localhost:5432/roomcraft npm run server
+```
+
 Optional environment variables:
 
 - `PORT` — backend port (default `8787`)
 - `AI_MODEL` — Claude model to use (default `sonnet`)
+- `DATABASE_URL` — Postgres connection string. **Setting this enables sign-in**
+  (accounts + sessions) and gates the AI feature behind it. Leave it unset to run
+  without a database — sign-in is then disabled and the AI feature is open, which
+  is convenient for local, single-user development. See **Accounts** below.
+- `DATABASE_POOL_MAX` — max Postgres connections in the pool (default `5`)
 - `AI_MAX_CONCURRENT` — how many AI proposals may run at once (default `2`)
 - `AI_MAX_QUEUE` — how many extra requests may wait for a slot before the server
   sheds load with a 503 (default `8`)
@@ -108,7 +139,21 @@ Dockerfile automatically.
 1. **Create the project** — on [railway.app](https://railway.app), *New Project
    → Deploy from GitHub repo* and pick this repo. Railway detects the
    `Dockerfile` and builds it.
-2. **Authenticate the Claude Code CLI** — the server logs in non-interactively
+2. **Add a Postgres database** (needed for sign-in) — in the project, *New →
+   Database → Add PostgreSQL*. Railway provisions it and exposes its connection
+   string. Then, in the **app service's** *Variables* tab, add a reference
+   variable so the app reads the database URL:
+
+   - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`
+
+   Use the reference (the `${{ … }}` form) rather than pasting the raw URL, so it
+   stays correct if Railway rotates credentials. Prefer the private URL Railway
+   provides (`*.railway.internal`) — the server connects without SSL over the
+   private network and with SSL otherwise. The tables are created automatically
+   on the first boot; there is no migration command to run. Skip this step if you
+   want to run without accounts (the AI feature is then open to anyone with the
+   URL).
+3. **Authenticate the Claude Code CLI** — the server logs in non-interactively
    via an OAuth token. On your own machine run:
 
    ```bash
@@ -121,8 +166,8 @@ Dockerfile automatically.
    - `AI_MODEL` — optional, e.g. `sonnet` (default) or `opus`
 
    Do **not** set `PORT` — Railway injects it and the server reads it.
-3. **Expose it** — in *Settings → Networking*, click *Generate Domain*. That URL
-   serves the app; the AI feature works out of the box because the API lives on
+4. **Expose it** — in *Settings → Networking*, click *Generate Domain*. That URL
+   serves the app; the API (auth + AI) works out of the box because it lives on
    the same origin.
 
 Redeploys happen automatically on every push to the deployed branch.
@@ -132,9 +177,11 @@ Notes:
 - The AI calls are long-running (up to a few minutes), which is why the backend
   needs an always-on container rather than a serverless/edge function — those
   time out well before Claude responds.
-- The OAuth token authenticates as **your** Claude account. That is fine for
+- The OAuth token authenticates as **your** Claude account. Requiring sign-in
+  limits AI usage to accounts you allow, but every AI call still bills **your**
+  personal Claude account regardless of which user made it. That is fine for
   personal use or a demo; for a public multi-user service, switch the backend to
-  the Anthropic API with an API key instead.
+  the Anthropic API with an API key and meter usage per account.
 
 ## Development
 
