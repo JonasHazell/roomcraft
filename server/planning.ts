@@ -146,7 +146,7 @@ export async function generatePlan(
   design: Design,
   needs: string,
   model: string,
-): Promise<FurniturePlan> {
+): Promise<{ plan: FurniturePlan; costUsd: number; calls: number }> {
   const shared = buildUserPrompt(design, needs);
   const messages: ChatMessages = [
     { role: 'user', content: [{ type: 'text', text: shared, cache_control: { type: 'ephemeral' } }] },
@@ -158,9 +158,19 @@ export async function generatePlan(
     jsonSchema: planJsonSchema,
     model,
   });
+  // Accumulate cost/calls so the caller can fold the planning phase into the
+  // per-request total alongside the placement calls.
+  let costUsd = first.costUsd;
+  let calls = 1;
+  console.log(
+    `[proposals] plan: first response done (${(first.durationMs / 1000).toFixed(1)} s, ` +
+      `~$${first.costUsd.toFixed(4)}; tokens in ${first.usage.inputTokens}, ` +
+      `cache write ${first.usage.cacheWriteTokens}, cache read ${first.usage.cacheReadTokens}, ` +
+      `out ${first.usage.outputTokens})`,
+  );
   let plan = planSchema.parse(first.structuredOutput);
   const findings = checkPlan(plan);
-  if (findings.length === 0) return plan;
+  if (findings.length === 0) return { plan, costUsd, calls };
 
   messages.push(first.assistant, { role: 'user', content: buildPlanRepairPrompt(findings) });
   const repaired = await runClaude({
@@ -169,8 +179,16 @@ export async function generatePlan(
     jsonSchema: planJsonSchema,
     model,
   });
+  costUsd += repaired.costUsd;
+  calls += 1;
+  console.log(
+    `[proposals] plan: repair done (${(repaired.durationMs / 1000).toFixed(1)} s, ` +
+      `~$${repaired.costUsd.toFixed(4)}; tokens in ${repaired.usage.inputTokens}, ` +
+      `cache write ${repaired.usage.cacheWriteTokens}, cache read ${repaired.usage.cacheReadTokens}, ` +
+      `out ${repaired.usage.outputTokens})`,
+  );
   const revised = planSchema.parse(repaired.structuredOutput);
   // Only accept the revision if it fixed things (fewer problems), never if it made them worse.
   if (checkPlan(revised).length < findings.length) plan = revised;
-  return plan;
+  return { plan, costUsd, calls };
 }
