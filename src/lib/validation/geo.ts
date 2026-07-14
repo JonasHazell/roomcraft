@@ -227,26 +227,27 @@ export function erodedGrid(design: Design, erode: number, except: Set<string> = 
 }
 
 /**
- * Sizes (in cells) of every connected component of free cells, using
- * 4-connectivity — how the walkable floor breaks into separate pockets. A
- * single component means everything is reachable at the grid's erosion width.
+ * Every connected component of free cells, using 4-connectivity, as a list of
+ * cell indices per component — how the walkable floor breaks into separate
+ * pockets. A single component means everything is reachable at the grid's
+ * erosion width.
  */
-export function freeComponentSizes(grid: Grid): number[] {
+export function freeComponents(grid: Grid): number[][] {
   const { cols, rows, free, idx } = grid;
   const seen = new Uint8Array(cols * rows);
-  const sizes: number[] = [];
+  const components: number[][] = [];
   for (let c = 0; c < cols; c++) {
     for (let r = 0; r < rows; r++) {
       const start = idx(c, r);
       if (!free[start] || seen[start]) continue;
-      let size = 0;
+      const cells: number[] = [];
       const queue = [start];
       seen[start] = 1;
       for (let head = 0; head < queue.length; head++) {
         const cell = queue[head];
         const cc = cell % cols;
         const rr = (cell - cc) / cols;
-        size++;
+        cells.push(cell);
         for (const [dc, dr] of [
           [1, 0],
           [-1, 0],
@@ -263,10 +264,15 @@ export function freeComponentSizes(grid: Grid): number[] {
           }
         }
       }
-      sizes.push(size);
+      components.push(cells);
     }
   }
-  return sizes;
+  return components;
+}
+
+/** Sizes (in cells) of every connected component of free cells. */
+export function freeComponentSizes(grid: Grid): number[] {
+  return freeComponents(grid).map((cells) => cells.length);
 }
 
 /** Flood fill from seed cells; returns the reached cells. */
