@@ -1,15 +1,12 @@
 # Roomcraft — single container that builds the frontend and serves it together
 # with the AI proposal API. Node 24 runs the TypeScript server directly via
-# native type stripping, and the Claude Code CLI powers the AI suggestions.
+# native type stripping, and the Anthropic API powers the AI suggestions.
 FROM node:24-slim
 
-# Tools the Claude Code CLI may shell out to (git) plus CA certs for HTTPS.
+# CA certs for outbound HTTPS to the Anthropic API.
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends git ca-certificates \
+  && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/*
-
-# Claude Code CLI — the backend spawns `claude` in headless mode.
-RUN npm install -g @anthropic-ai/claude-code
 
 WORKDIR /app
 

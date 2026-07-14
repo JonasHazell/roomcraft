@@ -19,18 +19,22 @@ import {
   serializeClearCookie,
   serializeSessionCookie,
 } from './auth.ts';
-import { runClaude } from './claude.ts';
+import { runClaude, type ChatMessages } from './claude.ts';
 import { resolveProposals } from './orient.ts';
 import { SYSTEM_PROMPT, buildRepairPrompt, buildUserPrompt } from './prompt.ts';
 import { proposalsJsonSchema, proposalsSchema, type ResolvedProposals } from './schema.ts';
 import { validateProposals } from './validate.ts';
 
 const PORT = Number(process.env.PORT ?? 8787);
-const MODEL = process.env.AI_MODEL ?? 'sonnet';
+const MODEL = process.env.AI_MODEL ?? 'claude-opus-4-8';
 const MAX_BODY = 2 * 1024 * 1024;
 
-// AI calls spawn a `claude` subprocess that can run for minutes, so unbounded
-// concurrency would exhaust the container's CPU/memory. Cap how many run at once
+// True when an Anthropic API credential is present. The AI endpoint needs it;
+// without it the call fails fast with a clear message instead of a 502.
+const aiConfigured = Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
+
+// Each AI request makes one or two Messages API calls that can run for a minute,
+// so unbounded concurrency would pile up in-flight work. Cap how many run at once
 // and how many may wait; everything beyond that is shed with a 503 rather than
 // piling up. Both are overridable so a bigger box can serve more.
 const MAX_CONCURRENT = Math.max(1, Number(process.env.AI_MAX_CONCURRENT ?? 2));
@@ -361,14 +365,17 @@ function parseRequest(raw: string): ProposalRequest {
 
 async function generateProposals(design: Design, needs: string) {
   console.log(`[proposals] generating with model "${MODEL}" …`);
+  // The full conversation is resent on every call (the API is stateless); the
+  // repair turn below appends to this same history.
+  const messages: ChatMessages = [{ role: 'user', content: buildUserPrompt(design, needs) }];
   const first = await runClaude({
-    prompt: buildUserPrompt(design, needs),
+    messages,
     systemPrompt: SYSTEM_PROMPT,
     jsonSchema: proposalsJsonSchema,
     model: MODEL,
   });
   console.log(
-    `[proposals] first response done (${Math.round(first.durationMs / 1000)} s, $${first.costUsd.toFixed(2)})`,
+    `[proposals] first response done (${Math.round(first.durationMs / 1000)} s, ~$${first.costUsd.toFixed(2)})`,
   );
 
   let data: ResolvedProposals = resolveProposals(proposalsSchema.parse(first.structuredOutput), design);
@@ -376,14 +383,15 @@ async function generateProposals(design: Design, needs: string) {
   if (errors.length === 0) return { data, warnings: [] as string[] };
 
   console.log(`[proposals] ${errors.length} validation errors — requesting a fix …`);
+  messages.push(first.assistant, { role: 'user', content: buildRepairPrompt(errors) });
   const repaired = await runClaude({
-    prompt: buildRepairPrompt(errors),
-    resume: first.sessionId,
+    messages,
+    systemPrompt: SYSTEM_PROMPT,
     jsonSchema: proposalsJsonSchema,
     model: MODEL,
   });
   console.log(
-    `[proposals] repair done (${Math.round(repaired.durationMs / 1000)} s, $${repaired.costUsd.toFixed(2)})`,
+    `[proposals] repair done (${Math.round(repaired.durationMs / 1000)} s, ~$${repaired.costUsd.toFixed(2)})`,
   );
 
   const repairedData = resolveProposals(proposalsSchema.parse(repaired.structuredOutput), design);
@@ -433,6 +441,10 @@ const server = createServer((req, res) => {
     }
     if (req.url !== '/api/proposals') {
       return json(res, 404, { error: 'Unknown endpoint. Use POST /api/proposals.' });
+    }
+    // No API credential → the AI call can't run; fail fast with a clear message.
+    if (!aiConfigured) {
+      return json(res, 503, { error: 'AI furnishing is not configured on this server.' });
     }
     // When auth is configured, AI furnishing requires a signed-in user (each call
     // costs real money and runs on the owner's Claude login). With no database
@@ -492,7 +504,11 @@ if (authEnabled) {
 server.listen(PORT, () => {
   console.log(`Roomcraft server listening on port ${PORT} (model: ${MODEL})`);
   console.log('Serves the built frontend from dist/ and AI proposals on POST /api/proposals.');
-  console.log('AI requests run through the Claude Code CLI using its stored login.');
+  if (aiConfigured) {
+    console.log('AI requests use the Anthropic API (ANTHROPIC_API_KEY).');
+  } else {
+    console.log('AI furnishing disabled — set ANTHROPIC_API_KEY to enable it.');
+  }
 });
 
 // Stop accepting connections and drain in-flight work when the platform asks the
