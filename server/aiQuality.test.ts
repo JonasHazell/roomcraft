@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { Design, Wall } from '../src/types.ts';
 import { autoFixProposals } from './autofix.ts';
 import { buildRepairPrompt } from './prompt.ts';
-import { blockingCount, collectFindings, repairFindings } from './ruleValidation.ts';
+import {
+  blockingCount,
+  collectFindings,
+  isBetter,
+  repairFindings,
+  scoreProposals,
+} from './ruleValidation.ts';
 import type { ResolvedFurniture, ResolvedProposals } from './schema.ts';
 
 /** 4×4 m square room with a door in the middle of the bottom wall (z=0). */
@@ -75,6 +81,42 @@ describe('collectFindings', () => {
     for (let i = 1; i < findings.length; i++) {
       expect(findings[i - 1].importance).toBeGreaterThanOrEqual(findings[i].importance);
     }
+  });
+});
+
+describe('scoreProposals', () => {
+  it('reports blocking findings and a 0–100 quality for an out-of-bounds piece', () => {
+    const design = makeRoom();
+    const score = scoreProposals(proposal([box({ name: 'Sticking out', x: 3.9 })]), design);
+    expect(score.blocking).toBeGreaterThan(0);
+    expect(score.quality).toBeGreaterThanOrEqual(0);
+    expect(score.quality).toBeLessThanOrEqual(100);
+    // The findings match what collectFindings returns on its own.
+    expect(score.findings).toEqual(collectFindings(proposal([box({ name: 'Sticking out', x: 3.9 })]), design));
+  });
+
+  it('reports no blocking findings for a single in-bounds piece', () => {
+    const design = makeRoom();
+    const score = scoreProposals(proposal([box({ kind: 'table', name: 'Table', z: 2 })]), design);
+    expect(score.blocking).toBe(0);
+  });
+});
+
+describe('isBetter', () => {
+  const score = (blocking: number, quality: number) => ({ findings: [], blocking, quality });
+
+  it('prefers fewer blocking findings even when quality is lower', () => {
+    expect(isBetter(score(0, 40), score(1, 100))).toBe(true);
+    expect(isBetter(score(1, 100), score(0, 40))).toBe(false);
+  });
+
+  it('breaks a blocking tie on the higher quality score', () => {
+    expect(isBetter(score(0, 80), score(0, 60))).toBe(true);
+    expect(isBetter(score(0, 60), score(0, 80))).toBe(false);
+  });
+
+  it('does not count an identical score as better (an unchanged round never wins)', () => {
+    expect(isBetter(score(0, 70), score(0, 70))).toBe(false);
   });
 });
 

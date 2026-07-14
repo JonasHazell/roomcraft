@@ -25,7 +25,15 @@ import { resolveProposals } from './orient.ts';
 import { PROPOSAL_BRIEFS, SYSTEM_PROMPT, buildRepairPrompt, buildUserPrompt } from './prompt.ts';
 import { buildPlanBrief, generatePlan } from './planning.ts';
 import { proposalJsonSchema, proposalsSchema, type ResolvedProposals } from './schema.ts';
-import { blockingCount, collectFindings, repairFindings, type Finding } from './ruleValidation.ts';
+import {
+  blockingCount,
+  isBetter,
+  repairFindings,
+  scoreProposals,
+  type Finding,
+  type ProposalScore,
+} from './ruleValidation.ts';
+import { JUDGE_ENABLED, rankByJudge } from './judge.ts';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const MODEL = process.env.AI_MODEL ?? 'claude-sonnet-5';
@@ -42,10 +50,21 @@ const TWO_PHASE = !['0', 'false', 'off', 'no'].includes(
   (process.env.AI_TWO_PHASE ?? '').trim().toLowerCase(),
 );
 
-// How many repair round-trips to the model are allowed after the first response.
-// Each round re-sends the full history, so keep this small; the deterministic
-// auto-fix pass resolves most simple geometry before any repair call is made.
+// How many repair round-trips to the model are allowed while a proposal still has
+// blocking findings. Each round re-sends the full history, so keep this small; the
+// deterministic auto-fix pass resolves most simple geometry before any repair call.
 const MAX_REPAIRS = Math.max(0, Number(process.env.AI_MAX_REPAIRS ?? 2));
+
+// Once no hard requirement is violated, how many extra "polish" rounds may run to
+// improve the soft quality score (ergonomics/feng-shui). Bounded separately from
+// MAX_REPAIRS so raising the safety budget doesn't silently multiply cost, and set
+// to 0 to keep the old behaviour (stop the moment nothing blocks).
+const POLISH_ROUNDS = Math.max(0, Number(process.env.AI_POLISH_ROUNDS ?? 1));
+
+// Minimum gain in the 0–100 quality score for a polish round to count as progress.
+// Once nothing blocks, the loop stops as soon as a round fails to clear this bar, so
+// it doesn't keep spending calls chasing rounding-level wiggles that never converge.
+const MIN_QUALITY_GAIN = Math.max(0, Number(process.env.AI_MIN_QUALITY_GAIN ?? 2));
 
 // Cap on how many leftover remarks are surfaced to the user, so the panel stays
 // readable when several proposals each carry minor ergonomic notes.
@@ -424,6 +443,7 @@ async function generateOneProposal(
   design: Design,
 ): Promise<{
   proposal: ResolvedProposals['proposals'][number];
+  score: ProposalScore;
   warnings: Finding[];
   costUsd: number;
   calls: number;
@@ -458,16 +478,30 @@ async function generateOneProposal(
   );
 
   let assistant = first.assistant;
-  let data = prepareOne(first.structuredOutput, design);
-  let findings = collectFindings(data, design);
-  // Keep the response with the fewest hard failures across all rounds.
-  let best = { data, findings };
+  // Keep the strongest response across all rounds — ranked on hard failures first,
+  // then the soft 0–100 quality score (see isBetter), so a round that arranges the
+  // room better without clearing a hard requirement can still win.
+  let best = { data: prepareOne(first.structuredOutput, design) };
+  let score = scoreProposals(best.data, design);
+  let bestScore = score;
 
-  for (let round = 1; round <= MAX_REPAIRS && blockingCount(best.findings) > 0; round++) {
-    const toFix = repairFindings(findings);
-    if (toFix.length === 0) break; // only cosmetic remarks left — not worth a round.
+  // Two budgets so cost is predictable: MAX_REPAIRS rounds may run while something
+  // blocks, and POLISH_ROUNDS more may run purely to raise the quality score once
+  // nothing blocks. Polishing also stops early the moment a round stops paying off.
+  let repairsUsed = 0;
+  let polishUsed = 0;
+  while (true) {
+    const clearing = bestScore.blocking > 0;
+    if (clearing ? repairsUsed >= MAX_REPAIRS : polishUsed >= POLISH_ROUNDS) break;
+    const toFix = repairFindings(bestScore.findings);
+    if (toFix.length === 0) break; // nothing worth a round (only cosmetic remarks left).
+
+    const prev = bestScore;
+    if (clearing) repairsUsed++;
+    else polishUsed++;
     console.log(
-      `[proposals] ${label}: repair ${round}/${MAX_REPAIRS}: ${blockingCount(findings)} blocking, ${toFix.length} to fix …`,
+      `[proposals] ${label}: ${clearing ? 'repair' : 'polish'} ` +
+        `(${bestScore.blocking} blocking, quality ${Math.round(bestScore.quality)}, ${toFix.length} to address) …`,
     );
     messages.push(assistant, { role: 'user', content: buildRepairPrompt(toFix) });
     const repaired = await runClaude({
@@ -479,18 +513,34 @@ async function generateOneProposal(
     costUsd += repaired.costUsd;
     calls += 1;
     console.log(
-      `[proposals] ${label}: repair ${round} done (${(repaired.durationMs / 1000).toFixed(1)} s, ` +
+      `[proposals] ${label}: round done (${(repaired.durationMs / 1000).toFixed(1)} s, ` +
         `~${formatUsd(repaired.costUsd)}; tokens in ${repaired.usage.inputTokens}, ` +
         `cache write ${repaired.usage.cacheWriteTokens}, cache read ${repaired.usage.cacheReadTokens}, ` +
         `out ${repaired.usage.outputTokens})`,
     );
     assistant = repaired.assistant;
-    data = prepareOne(repaired.structuredOutput, design);
-    findings = collectFindings(data, design);
-    if (blockingCount(findings) < blockingCount(best.findings)) best = { data, findings };
+    const data = prepareOne(repaired.structuredOutput, design);
+    score = scoreProposals(data, design);
+    if (isBetter(score, bestScore)) {
+      best = { data };
+      bestScore = score;
+    }
+
+    // Adaptive stop: once nothing blocks, keep going only while quality is still
+    // climbing by a meaningful margin; otherwise we've plateaued — stop spending calls.
+    const plateaued =
+      bestScore.blocking === 0 &&
+      !(bestScore.blocking < prev.blocking || bestScore.quality >= prev.quality + MIN_QUALITY_GAIN);
+    if (plateaued) break;
   }
 
-  return { proposal: best.data.proposals[0], warnings: repairFindings(best.findings), costUsd, calls };
+  return {
+    proposal: best.data.proposals[0],
+    score: bestScore,
+    warnings: repairFindings(bestScore.findings),
+    costUsd,
+    calls,
+  };
 }
 
 async function generateProposals(design: Design, needs: string) {
@@ -551,8 +601,16 @@ async function generateProposals(design: Design, needs: string) {
     if (r.status === 'rejected') console.error('[proposals] a direction failed:', r.reason);
   }
 
-  const proposals = ok.map((r) => r.value.proposal);
-  const remaining = ok.reduce((n, r) => n + blockingCount(r.value.warnings), 0);
+  // Present the strongest suggestion first. The deterministic score ranks on hard
+  // failures then soft quality (isBetter); an optional LLM judge can re-rank the set
+  // holistically on top of that when AI_JUDGE is enabled. The user still sees every
+  // direction — only their order changes, so the best starting point leads.
+  const results = ok.map((r) => r.value);
+  results.sort((a, b) => (isBetter(a.score, b.score) ? -1 : isBetter(b.score, a.score) ? 1 : 0));
+  const ranked = JUDGE_ENABLED ? await rankByJudge(results, needs, MODEL) : results;
+
+  const proposals = ranked.map((r) => r.proposal);
+  const remaining = ranked.reduce((n, r) => n + blockingCount(r.warnings), 0);
   console.log(
     remaining === 0
       ? `[proposals] ${proposals.length} proposal(s) ready; all hard requirements satisfied.`
@@ -573,8 +631,8 @@ async function generateProposals(design: Design, needs: string) {
   // drop purely cosmetic ones and cap the list so the panel stays readable.
   const seen = new Set<string>();
   const warnings: string[] = [];
-  for (const r of ok) {
-    for (const f of r.value.warnings) {
+  for (const r of ranked) {
+    for (const f of r.warnings) {
       if (seen.has(f.message)) continue;
       seen.add(f.message);
       warnings.push(f.message);
