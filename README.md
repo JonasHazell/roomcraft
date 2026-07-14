@@ -128,6 +128,20 @@ Optional environment variables:
 - `AI_RATE_LIMIT_MAX` / `AI_RATE_LIMIT_WINDOW_MS` — per-IP request cap and window
   for `/api/proposals` (default `20` requests per `60000` ms)
 
+Proposal quality / auto-iteration (each proposal is refined against a rule-based
+0–100 quality score, then the set is ranked best-first):
+
+- `AI_MAX_REPAIRS` — repair rounds allowed while a proposal still violates a hard
+  requirement (default `2`)
+- `AI_POLISH_ROUNDS` — extra rounds allowed, once nothing blocks, to raise the soft
+  quality score (ergonomics/feng-shui). Stops early when a round stops improving.
+  Set `0` to skip polishing entirely (default `1`)
+- `AI_MIN_QUALITY_GAIN` — minimum gain in the 0–100 score for a polish round to
+  count as progress; below it the loop has plateaued and stops (default `2`)
+- `AI_JUDGE` — set to `1`/`true` to add one model call that re-ranks the generated
+  proposals holistically (best first) on top of the deterministic score. Off by
+  default; it costs one extra call per request and never drops a proposal
+
 The server also exposes `GET /api/health` for platform health checks and sends
 baseline security headers (a strict CSP, `X-Content-Type-Options`,
 `X-Frame-Options`, `Referrer-Policy`) on every response.
