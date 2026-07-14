@@ -2,7 +2,8 @@
 
 > You are running as **Routine C** of the RoomCraft agent pipeline (see
 > [`AGENT_PIPELINE.md`](AGENT_PIPELINE.md)). Your job is to learn from what the
-> human did with each agent proposal and pull request, and write those lessons into
+> human did with each agent proposal and pull request — **and from the PRs the
+> human built and merged themselves** — and write those lessons into
 > [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md) so Stages A and B improve over time.
 
 **Your primary job is to extract general principles, not to log one-off events.**
@@ -18,15 +19,51 @@ Repository: `JonasHazell/roomcraft`.
 
 ## What to look at each run
 
-Find everything from the pipeline that has reached a decision but is **not** yet
-labelled `agent:analyzed`:
+Find everything that has reached a decision but is **not** yet labelled
+`agent:analyzed`:
 
-- **Pull requests** opened by Stage B (labelled `agent:built`) that are now
+- **Agent pull requests** opened by Stage B (labelled `agent:built`) that are now
   **merged** or **closed**.
 - **Issues** labelled `agent:ready` that the human **closed** without a merged PR
   (i.e. rejected before/instead of building).
+- **The human's own merged pull requests** — PRs the human authored and hand-built
+  themselves (see [How to read the human's own PRs](#how-to-read-the-humans-own-prs)
+  for why these are worth learning from). These are the *richest positive examples
+  of what "good" looks like in this repo*, so learn from them too.
 
-Process each one, then mark it `agent:analyzed` so it's never counted twice.
+**Skip** — do not analyse or label:
+
+- **The human's own *closed* (un-merged) PRs.** A human closing their own PR is
+  noise, not a rejection signal (superseded by another PR, an abandoned spike, a
+  change of mind), so there's no durable lesson in it.
+- **The pipeline's own meta-PRs**, including this stage's own `agent:learnings`
+  update PR (branch `agent/learnings-update`) — never analyse your own output.
+
+### Identifying the human's own PRs
+
+There is **no author signal to rely on**: every PR in this repo — agent-built and
+hand-built alike — is authored by the same GitHub account and carries a "Generated
+with Claude Code" footer. So classify by **label and branch, not by author**:
+
+- **Agent-built PR** → carries the `agent:built` label (branch `agent/…`). Read it
+  with the agent-outcome recipe below.
+- **The human's own PR** → a **merged** PR that does **not** carry `agent:built`
+  (typically a `claude/…` branch). Read it with the human's-own recipe below.
+
+Two things to get right when querying:
+
+- **Trust `merged_at`, not the `merged` boolean.** The PR-list API reports
+  `"merged": false` even on PRs that were in fact merged; a PR is merged iff its
+  `merged_at` is non-null.
+- **Only look at PRs merged on or after 2026-07-14** (the day this scope was
+  introduced). Do **not** trawl the full history — older merged PRs are out of
+  scope so the first runs don't drown in a historical backlog. Advance naturally
+  from there: anything already carrying `agent:analyzed` is skipped, so each run
+  only picks up what's new since the last one.
+
+Process each in-scope item, then mark it `agent:analyzed` so it's never counted
+twice — **including the human's own merged PRs** (yes, this stamps an agent label on
+hand-built PRs; that's the intended dedup mechanism).
 
 ## How to read each outcome
 
@@ -46,6 +83,30 @@ forward is the principle behind it:
   what kinds of proposals or approaches to avoid.
 - **Issue closed without a PR** → the proposal itself was rejected. Why wasn't it
   worth building? Turn it into a general rule for Stage A's proposal selection.
+
+### How to read the human's own PRs
+
+The human's own merged PRs need a **different reading recipe** from the agent
+outcomes above. There is no agent baseline to diff against — nobody proposed or
+pre-built this, so "what did the human change" doesn't apply. Instead, treat the
+merged PR as an **exemplar of work the human judged good enough to ship**, and mine
+it for what to *imitate*:
+
+- **What did they choose to build, and how big did they make it?** This is direct
+  evidence of what's worth a proposal and what scope reads as "reviewable" —
+  feed it back into Stage A's selection and Stage B's scoping.
+- **What patterns and conventions did they write by hand?** Design-token use, file
+  layout, how they structured the change, test coverage, PR-description shape.
+  State the reusable convention, not the one-off detail.
+- **Where are they actually investing?** Repeatedly hand-building in one area (e.g.
+  the floor-plan editor, mobile flows) tells Stage A which core flows deserve
+  proposals and which are being deliberately left alone.
+
+Not every merged PR carries a durable lesson. A purely mechanical change (a
+`.gitignore` line, a dependency bump, a typo fix) teaches nothing generalisable —
+in that case record **no** learning and simply mark it `agent:analyzed`. Only write
+an entry when there's a genuine, reusable principle; don't manufacture one to fill
+the log.
 
 ## Writing the learnings
 
@@ -84,5 +145,8 @@ regardless of whether your learnings PR is merged yet — that prevents re-analy
 
 ## Labels
 
-Set `agent:analyzed` on every issue/PR you process. Never set `agent:ready`,
-`agent:building`, or (except on your own learnings PR) `agent:built`.
+Set `agent:analyzed` on every issue/PR you process — this now includes the human's
+own merged PRs, which is how they're deduped across runs. Never set `agent:ready`,
+`agent:building`, or (except on your own learnings PR) `agent:built`. Never label
+the human's own *closed* (un-merged) PRs or the pipeline's own meta-PRs — those are
+out of scope and left untouched.

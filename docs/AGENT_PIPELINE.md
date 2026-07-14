@@ -16,10 +16,10 @@ labels) is the shared state** that carries work from one stage to the next.
 Routine A — Propose        Routine B — Build           Routine C — Analyse
   daily 06:00                every 2 hours               daily 22:00
       │                          │                            │
-  reads the docs +           picks EVERY open issue        reads merged / closed
-  AGENT_LEARNINGS.md,        labelled `agent:ready`,       agent PRs + rejected
-  creates issues             opens a PR (`Closes #N`),     issues, appends what it
-  labelled `agent:ready`     labels the PR `agent:built`   learned to AGENT_LEARNINGS.md
+  reads the docs +           picks EVERY open issue        reads merged/closed agent
+  AGENT_LEARNINGS.md,        labelled `agent:ready`,       PRs, rejected issues, and
+  creates issues             opens a PR (`Closes #N`),     the human's own merged PRs,
+  labelled `agent:ready`     labels the PR `agent:built`   appends to AGENT_LEARNINGS.md
       │                          │                            │
       └──── (no gate) ───────────┴──── YOU decide ────────────┘
                                        merge / edit+merge / close
