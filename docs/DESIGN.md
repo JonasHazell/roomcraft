@@ -128,9 +128,20 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   In the "Add furniture" picker the catalog and library are grouped by room type:
   a `.palette-groups` column of `.palette-group` blocks, each a `.palette-heading`
   (uppercase muted label) over its `.palette` grid or `.save-list`.
-- **Room templates** — the "New room" picker's `.template-grid` of `.template-card`
-  buttons (each an SVG `.template-preview` + `.template-name` + `.template-meta`);
-  `.template-card-blank` is the dashed "draw it yourself" variant.
+- **Room templates** — the `.template-grid` of `.template-card` buttons (each an SVG
+  `.template-preview` + `.template-name` + `.template-meta`); `.template-card-blank`
+  is the dashed "draw it yourself" variant. Used by the wizard's shape chooser.
+- **New-room wizard** — the guided create-a-room flow (`.wizard`): a `.wizard-head`
+  holding the `.wizard-steps` stepper (`.wizard-step` items flip `is-active` /
+  `is-done` / `is-upcoming`, an earlier step is tap-to-revisit) plus a `.wizard-close`;
+  a `.wizard-body` that swaps per step — the `.wizard-name` naming card, or the real
+  plan editor for the walls/openings steps; and a `.wizard-foot` that owns Back/Next
+  (the step's task shows in `.wizard-foot-title`). Its walls step floats the
+  `.plan-chooser` sheet (reusing the `.template-*` cards) over the canvas until the
+  room has walls. Navigation lives only in the frame, so the embedded plan editor
+  drops its own back button and centre mode-switcher (`PlanEditor`'s `wizardStep`
+  prop). Prefer this flow for room creation; the standalone plan editor is for
+  editing an existing plan.
 
 ## Behaviour conventions
 

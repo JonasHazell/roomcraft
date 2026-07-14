@@ -1,7 +1,6 @@
 import { useDesignStore } from '../store/useDesignStore';
 import { useUiStore } from '../store/useUiStore';
 import { useHistoryStore } from '../store/useHistoryStore';
-import type { Point } from '../types';
 
 /**
  * Navigation between the app's three surfaces (lobby, plan, furnish). Each
@@ -35,35 +34,49 @@ export function openRoomToPlan(id: string): void {
   useUiStore.getState().setAppView('plan');
 }
 
-/** Create a new, undrawn room and drop straight into drawing its outline. */
-export function createRoomAndDraw(): string {
+/**
+ * Start the guided "New room" wizard. Creates the room up front (so every step
+ * edits the live design) and marks it provisional, then opens on the naming
+ * step. Cancelling the wizard discards this room; finishing it keeps the room
+ * and drops the user into the 3D view.
+ */
+export function startNewRoomWizard(): string {
   const id = useDesignStore.getState().createRoom();
   useHistoryStore.getState().clear();
   useUiStore.getState().select(null);
-  useUiStore.getState().setPlanStartTool('exterior');
-  // Remember it as provisional: if the user leaves without drawing an outline,
-  // backToLobby discards it so no empty room is left behind.
   useUiStore.getState().setPendingRoomId(id);
+  useUiStore.getState().setWizardStep('name');
+  // Keep the app in the "plan" surface so in-room shortcuts (undo/redo) work
+  // while the wizard drives the floor-plan steps; the wizard chrome is what
+  // actually renders (see App.tsx).
   useUiStore.getState().setAppView('plan');
   return id;
 }
 
 /**
- * Create a new room pre-filled with a template outline, then open its floor plan
- * for editing. The walls are drawn straight away (so the room is never
- * provisional) but stay fully editable, exactly like a hand-drawn outline.
+ * Finish the wizard: keep the freshly built room and open it in the 3D
+ * furnishing view, ready to lay out furniture.
  */
-export function createRoomFromTemplate(points: Point[]): string {
-  const id = useDesignStore.getState().createRoom();
-  useDesignStore.getState().commitExteriorPolygon(points);
+export function finishNewRoomWizard(): void {
+  const id = useDesignStore.getState().design.id;
+  useUiStore.getState().setWizardStep(null);
+  useUiStore.getState().setPendingRoomId(null);
+  openRoomToFurnish(id);
+}
+
+/**
+ * Abandon the wizard: discard the provisional room entirely (the flow was never
+ * completed) and return to the lobby.
+ */
+export function cancelNewRoomWizard(): void {
+  const pendingId = useUiStore.getState().pendingRoomId;
+  if (pendingId) useDesignStore.getState().removeRoom(pendingId);
+  else useDesignStore.getState().exitToLobby();
+  useUiStore.getState().setPendingRoomId(null);
+  useUiStore.getState().setWizardStep(null);
   useHistoryStore.getState().clear();
   useUiStore.getState().select(null);
-  // The outline already exists, so open in select mode and keep the room even if
-  // the user leaves without touching it.
-  useUiStore.getState().setPlanStartTool('select');
-  useUiStore.getState().setPendingRoomId(null);
-  useUiStore.getState().setAppView('plan');
-  return id;
+  useUiStore.getState().setAppView('lobby');
 }
 
 /** Return to the lobby, folding the on-screen room back into the workspace. */

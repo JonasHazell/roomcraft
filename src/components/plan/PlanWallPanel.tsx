@@ -13,8 +13,19 @@ import { useSelectedWall } from '../../store/selectors';
 import { NumberField } from '../panel/fields';
 import { Icon } from '../ui/Icon';
 
-/** Fine-tuning in cm for the selected wall in the floor plan. */
-export function PlanWallPanel({ ref }: { ref?: Ref<HTMLDivElement> }) {
+/**
+ * Fine-tuning in cm for the selected wall in the floor plan. The doors/windows
+ * editor is shown by default but can be suppressed (`openings={false}`) — the
+ * wizard's walls step keeps this sheet to length-only, deferring openings to its
+ * own later step.
+ */
+export function PlanWallPanel({
+  ref,
+  openings: showOpenings = true,
+}: {
+  ref?: Ref<HTMLDivElement>;
+  openings?: boolean;
+}) {
   const walls = useDesignStore((s) => s.design.walls);
   const openings = useDesignStore((s) => s.design.openings);
   const resizeWall = useDesignStore((s) => s.resizeWall);
@@ -68,6 +79,7 @@ export function PlanWallPanel({ ref }: { ref?: Ref<HTMLDivElement> }) {
         </div>
 
         {/* Doors & windows on this wall — add one, then tune its position and size. */}
+        {showOpenings && (
         <div className="opening-editor">
           <div className="opening-add">
             <button type="button" className="btn" onClick={() => add('door')}>
@@ -92,6 +104,7 @@ export function PlanWallPanel({ ref }: { ref?: Ref<HTMLDivElement> }) {
             </ul>
           )}
         </div>
+        )}
       </div>
     </div>
   );

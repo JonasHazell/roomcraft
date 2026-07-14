@@ -393,6 +393,15 @@ select {
   color: var(--paper);
 }
 
+/* Disabled state, shared by every .btn variant: dimmed and inert, so hover never
+   flips its colours. Pair with .btn-tooltip-wrap to explain why (see DESIGN.md). */
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .btn-accent {
   border-color: var(--accent);
   background: var(--accent);
@@ -2559,6 +2568,260 @@ select {
 .template-meta {
   font-size: 12px;
   color: var(--muted);
+}
+
+/* ---------- New-room wizard (name · walls · doors & windows) ----------
+   A full-surface, stepped flow: a stepper header, a body that swaps per step
+   (the name form, or the real plan editor for the two floor-plan steps), and a
+   footer that owns Back/Next navigation. Built from the shared tokens and
+   primitives so it reads as the same product as the rest of the app. */
+
+.wizard {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper-2);
+  overflow: hidden;
+}
+
+.wizard-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 10px
+    calc(14px + env(safe-area-inset-left));
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.wizard-steps {
+  flex: 1;
+  min-width: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* A hairline connector between the step pills so the sequence reads as a path. */
+.wizard-step + .wizard-step::before {
+  content: '';
+  width: 14px;
+  height: 1.5px;
+  flex: none;
+  margin: 0 2px;
+  background: var(--line);
+}
+
+.wizard-step {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.wizard-step-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font: inherit;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.wizard-step-btn:disabled {
+  cursor: default;
+}
+
+.wizard-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  color: var(--muted);
+  font-family: var(--display);
+  font-size: 13px;
+  font-variation-settings: 'wght' 560;
+  line-height: 1;
+}
+
+.wizard-step-label {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wizard-step.is-active .wizard-step-btn,
+.wizard-step.is-done .wizard-step-btn {
+  color: var(--ink);
+}
+
+.wizard-step.is-active .wizard-step-num {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--paper);
+}
+
+.wizard-step.is-done .wizard-step-num {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--icon-sm);
+}
+
+.wizard-close {
+  flex: none;
+}
+
+.wizard-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.wizard-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px calc(16px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom))
+    calc(16px + env(safe-area-inset-left));
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.wizard-foot .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.wizard-foot-title {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-family: var(--display);
+  font-size: 15px;
+  font-variation-settings: 'wght' 560;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Step 1 — the naming form, a single card centred in the body. */
+.wizard-name {
+  width: 100%;
+  padding: 24px 16px;
+  overflow-y: auto;
+}
+
+.wizard-name-card {
+  width: min(420px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 28px 24px;
+  text-align: center;
+  background: var(--paper);
+  border: var(--popup-border);
+  border-radius: var(--popup-radius);
+  box-shadow: var(--popup-shadow);
+}
+
+.wizard-name-thumb {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  font-size: var(--icon);
+}
+
+.wizard-name-card h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 22px;
+  font-variation-settings: 'wght' 560;
+}
+
+.wizard-name-card .hint {
+  margin: 0;
+}
+
+.wizard-name-card .field {
+  margin-top: 4px;
+  text-align: left;
+}
+
+/* Only the current step keeps its label on narrow screens, so the header never
+   overflows; the numbered badges still show the whole sequence. */
+@media (max-width: 560px) {
+  .wizard-step:not(.is-active) .wizard-step-label {
+    display: none;
+  }
+  .wizard-foot-title {
+    display: none;
+  }
+}
+
+/* The wizard's "Draw the walls" empty state: pick a shape or draw by hand,
+   floated over the plan canvas until the room has walls. Reuses .template-*. */
+.plan-chooser {
+  position: absolute;
+  inset: 0;
+  z-index: 58;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--paper-2) 72%, transparent);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.plan-chooser-sheet {
+  width: min(520px, 100%);
+  margin: auto;
+  padding: 20px;
+  background: var(--paper);
+  border: var(--popup-border);
+  border-radius: var(--popup-radius);
+  box-shadow: var(--popup-shadow);
+}
+
+.plan-chooser-lede {
+  margin: 0;
+}
+
+/* On the wizard's openings step the guidance pill sits top-centre and the ceiling
+   chip top-right; on a narrow phone those would collide, so drop the chip just
+   below the pill — they stack instead of overlapping. */
+.plan-wizard-openings .plan-room-panel {
+  top: calc(52px + env(safe-area-inset-top));
 }
 
 /* ---------- In-room top bar (back to lobby + room name) ---------- */
