@@ -72,12 +72,15 @@ the backend on port 8787.
 ### Backend (BE)
 
 The backend is a small local server that powers the AI furnishing suggestions.
-It runs Claude Code in headless mode and uses your local Claude Code login, so
-no API key is required.
+It calls the Anthropic Messages API, so it needs an API key in the environment:
 
 ```bash
-npm run server
+ANTHROPIC_API_KEY=sk-ant-... npm run server
 ```
+
+Get a key from the [Anthropic Console](https://console.anthropic.com/). Without
+`ANTHROPIC_API_KEY` (or `ANTHROPIC_AUTH_TOKEN`) the server still serves the app,
+but `POST /api/proposals` returns a 503.
 
 This listens on port 8787 (override with the `PORT` env var). You only need it
 running if you want to use the AI suggestion feature; the rest of the app works
@@ -110,7 +113,10 @@ DATABASE_URL=postgres://user:pass@localhost:5432/roomcraft npm run server
 Optional environment variables:
 
 - `PORT` — backend port (default `8787`)
-- `AI_MODEL` — Claude model to use (default `sonnet`)
+- `ANTHROPIC_API_KEY` — Anthropic API key. **Required** for AI furnishing; the
+  SDK also accepts `ANTHROPIC_AUTH_TOKEN`.
+- `AI_MODEL` — model ID to use (default `claude-opus-4-8`). Set
+  `claude-sonnet-5` for a cheaper, faster option.
 - `DATABASE_URL` — Postgres connection string. **Setting this enables sign-in**
   (accounts + sessions) and gates the AI feature behind it. Leave it unset to run
   without a database — sign-in is then disabled and the AI feature is open, which
@@ -130,8 +136,8 @@ baseline security headers (a strict CSP, `X-Content-Type-Options`,
 
 In production the whole app runs as a **single always-on container**: the Node
 server serves the built frontend (`dist/`) and the `/api/proposals` endpoint
-from the same port, so there is no separate static host to configure. The
-container ships the Claude Code CLI, which powers the AI suggestions.
+from the same port, so there is no separate static host to configure. The AI
+suggestions are powered by the Anthropic Messages API.
 
 The repo includes a `Dockerfile` and `railway.json`; Railway builds from the
 Dockerfile automatically.
@@ -153,17 +159,12 @@ Dockerfile automatically.
    on the first boot; there is no migration command to run. Skip this step if you
    want to run without accounts (the AI feature is then open to anyone with the
    URL).
-3. **Authenticate the Claude Code CLI** — the server logs in non-interactively
-   via an OAuth token. On your own machine run:
+3. **Add your Anthropic API key** — get one from the
+   [Anthropic Console](https://console.anthropic.com/). In the Railway service's
+   *Variables* tab, add:
 
-   ```bash
-   claude setup-token
-   ```
-
-   Copy the token and, in the Railway service's *Variables* tab, add:
-
-   - `CLAUDE_CODE_OAUTH_TOKEN` — the token from the step above (**required**)
-   - `AI_MODEL` — optional, e.g. `sonnet` (default) or `opus`
+   - `ANTHROPIC_API_KEY` — the key from the Console (**required**)
+   - `AI_MODEL` — optional, e.g. `claude-opus-4-8` (default) or `claude-sonnet-5`
 
    Do **not** set `PORT` — Railway injects it and the server reads it.
 4. **Expose it** — in *Settings → Networking*, click *Generate Domain*. That URL
@@ -174,14 +175,14 @@ Redeploys happen automatically on every push to the deployed branch.
 
 Notes:
 
-- The AI calls are long-running (up to a few minutes), which is why the backend
-  needs an always-on container rather than a serverless/edge function — those
-  time out well before Claude responds.
-- The OAuth token authenticates as **your** Claude account. Requiring sign-in
-  limits AI usage to accounts you allow, but every AI call still bills **your**
-  personal Claude account regardless of which user made it. That is fine for
-  personal use or a demo; for a public multi-user service, switch the backend to
-  the Anthropic API with an API key and meter usage per account.
+- The AI calls can run for up to a minute or two, which is why the backend needs
+  an always-on container rather than a serverless/edge function — those time out
+  well before the model responds. The server streams the response so the request
+  doesn't hit an HTTP timeout.
+- Every AI call bills the account behind `ANTHROPIC_API_KEY`, regardless of which
+  user made it. Requiring sign-in (via `DATABASE_URL`) limits *who* can trigger
+  calls; to meter spend per user you'd track usage yourself and, if needed, issue
+  a separate key per tenant.
 
 ## Development
 
