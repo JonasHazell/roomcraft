@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useDesignStore } from './useDesignStore';
+import { useHistoryStore } from './useHistoryStore';
 import { furnitureCorners, furnitureFits } from '../lib/collision';
 import { defaultOpening, floorPolygon } from '../lib/polygon';
+import { runValidation } from '../lib/validation/engine';
 import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR } from '../types';
 
 const store = () => useDesignStore.getState();
@@ -82,6 +84,48 @@ describe('naming and reordering proposals', () => {
     store().reorderProposals(first, first);
     store().reorderProposals('nope', third);
     expect(store().design.proposals.map((p) => p.id)).toEqual([second, third, first]);
+  });
+});
+
+describe('auto-arranging the current furniture', () => {
+  beforeEach(() => {
+    store().newProject();
+    useHistoryStore.getState().clear();
+  });
+
+  const score = () => runValidation(store().design).total ?? 0;
+
+  it('raises the design score in one undoable step, keeping the pieces', () => {
+    // A bed and a nightstand dropped in the middle of the default room score
+    // poorly (headboard off the wall, no bed access, stray nightstand).
+    const bedId = store().addFurniture('bed');
+    const nsId = store().addFurniture('nightstand');
+    store().updateFurniture(bedId, { position: { x: 0, z: 0 } });
+    store().updateFurniture(nsId, { position: { x: -1.5, z: 1.8 } });
+    const idsBefore = store().design.furniture.map((f) => f.id).sort();
+    const before = score();
+
+    const result = store().autoArrange();
+
+    expect(result).not.toBeNull();
+    expect(result!.after).toBeGreaterThan(result!.before);
+    expect(score()).toBeGreaterThan(before);
+    // Same set of pieces, same ids — only their poses changed.
+    expect(store().design.furniture.map((f) => f.id).sort()).toEqual(idsBefore);
+
+    // The whole rearrange is a single undo step back to the prior layout.
+    const arranged = score();
+    useHistoryStore.getState().undo();
+    expect(score()).toBe(before);
+    useHistoryStore.getState().redo();
+    expect(score()).toBe(arranged);
+  });
+
+  it('is a no-op that records no history when the room is empty', () => {
+    const design = store().design;
+    expect(store().autoArrange()).toBeNull();
+    expect(store().design).toBe(design); // untouched reference — no write, no undo entry
+    expect(useHistoryStore.getState().canUndo).toBe(false);
   });
 });
 

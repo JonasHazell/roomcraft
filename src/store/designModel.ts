@@ -378,6 +378,13 @@ export interface FurnitureActions {
   removeFurniture: (id: string) => void;
   /** Replaces the entire furnishing of the active proposal. */
   setFurniture: (items: Omit<FurnitureItem, 'id'>[]) => void;
+  /**
+   * Rearranges the existing pieces (move + rotate, same set and ids) to raise the
+   * design score, in a single undoable step. Local and deterministic — no AI. Does
+   * nothing and returns null when it can't improve on the current layout;
+   * otherwise returns the before/after score (0–100) for optional feedback.
+   */
+  autoArrange: () => { before: number; after: number } | null;
 }
 
 export interface ProposalActions {
