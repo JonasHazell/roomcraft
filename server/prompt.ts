@@ -50,7 +50,7 @@ Ergonomics and function:
 - Bed sides that are used need about 0.6 m of free space.
 
 ## Task
-Produce 2–3 deliberately different proposals (e.g. "maximize space", "maximize coziness", "work focus").
+Produce exactly 3 deliberately different proposals (e.g. "maximize space", "maximize coziness", "work focus").
 Each proposal: a title, a short concept, and a complete furnishing that meets the user's needs.
 Start from the catalog's default dimensions but adjust sizes reasonably when needed (e.g. bed 1.4/1.6/1.8 m).
 Use "box" with a descriptive name for furniture missing from the catalog (e.g. desk, TV bench, armchair).

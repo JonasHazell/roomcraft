@@ -912,6 +912,7 @@ select {
 
 .proposal-menu-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 12px 16px 16px;
   border-top: 1px solid var(--line);
@@ -919,6 +920,12 @@ select {
 
 .proposal-menu-actions .btn {
   flex: 1;
+}
+
+/* The AI suggestions button is the highlighted, get-help-first action, so it
+   takes its own full-width row above the two manual create buttons. */
+.proposal-menu-actions .proposal-menu-ai {
+  flex-basis: 100%;
 }
 
 /* ---------- Floor plan (2D) ---------- */

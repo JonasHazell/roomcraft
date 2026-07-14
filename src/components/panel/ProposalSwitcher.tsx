@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { confirmDialog, promptDialog } from '../../store/useDialogStore';
 import { useEscape } from '../../lib/useEscape';
 import { SwitcherList } from './SwitcherList';
@@ -23,6 +24,12 @@ export function ProposalSwitcher() {
   const removeProposal = useDesignStore((s) => s.removeProposal);
   const select = useUiStore((s) => s.select);
   const appView = useUiStore((s) => s.appView);
+  const openPanel = useUiStore((s) => s.openPanel);
+  const openAuthDialog = useUiStore((s) => s.openAuthDialog);
+  // AI furnishing runs on the owner's Claude login, so when the server has
+  // sign-in configured it's gated behind an account.
+  const authEnabled = useAuthStore((s) => s.enabled);
+  const signedIn = useAuthStore((s) => s.user !== null);
   // Menu open state lives in the store so the contextual selection bar can
   // treat it as another open overlay and step aside for it.
   const open = useUiStore((s) => s.proposalMenuOpen);
@@ -65,6 +72,20 @@ export function ProposalSwitcher() {
     addProposal({ copyCurrent });
     select(null);
     setOpen(false);
+  };
+
+  // Third way to create furnishings, beside the two manual ones: let Claude
+  // suggest three complete layouts. Opens the AI panel (where you describe the
+  // room's needs and each suggestion is saved as its own proposal). If sign-in
+  // is required and the user isn't signed in, prompt to sign in first.
+  const aiSuggest = () => {
+    setOpen(false);
+    select(null);
+    if (authEnabled && !signedIn) {
+      openAuthDialog();
+      return;
+    }
+    openPanel('ai');
   };
 
   const rename = async (id: string, current: string) => {
@@ -153,7 +174,14 @@ export function ProposalSwitcher() {
             />
           </div>
           <div className="proposal-menu-actions">
-            <button type="button" className="btn btn-accent" onClick={() => create(true)}>
+            <button
+              type="button"
+              className="btn btn-accent proposal-menu-ai"
+              onClick={aiSuggest}
+            >
+              <Icon name="star" /> 3 AI suggestions
+            </button>
+            <button type="button" className="btn" onClick={() => create(true)}>
               <Icon name="plus" /> New from current
             </button>
             <button type="button" className="btn" onClick={() => create(false)}>
