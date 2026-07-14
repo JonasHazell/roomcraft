@@ -61,7 +61,7 @@ export function ValidationPanel() {
             {report.byCategory
               .filter((c) => c.applicable > 0)
               .map((c) => (
-                <li key={c.category}>
+                <li key={c.category} className={scoreClass(c.score)}>
                   <span>{c.category}</span>
                   <span className={`validation-score ${scoreClass(c.score)}`}>
                     {c.score === null ? '–' : `${c.score}`}

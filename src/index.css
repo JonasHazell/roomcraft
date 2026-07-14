@@ -10,6 +10,11 @@
   --select: #2f6fdd;
   --danger: #dc2626;
   --danger-dark: #b91c1c;
+  /* Fixed score bands (deliberately not the accent) — red/amber/green must read
+     the same regardless of brand colour. Shared by .score-badge,
+     .validation-score and the .validation-categories row cues. */
+  --score-good: #15803d;
+  --score-mid: #b45309;
 
   /* Shared chrome for every floating surface (modal, side panel, dropdown menu)
      so they read as one family. */
@@ -1521,11 +1526,11 @@ select {
 /* Colour the score number by band, matching the validation panel. The active
    (panel-open) state inverts to the ink fill, so keep the number legible there. */
 .score-badge.score-good .score-badge-value {
-  color: #15803d;
+  color: var(--score-good);
 }
 
 .score-badge.score-mid .score-badge-value {
-  color: #b45309;
+  color: var(--score-mid);
 }
 
 .score-badge.score-bad .score-badge-value {
@@ -1601,12 +1606,12 @@ select {
 
 .score-good strong,
 .validation-score.score-good {
-  color: #15803d;
+  color: var(--score-good);
 }
 
 .score-mid strong,
 .validation-score.score-mid {
-  color: #b45309;
+  color: var(--score-mid);
 }
 
 .score-bad strong,
@@ -1623,12 +1628,33 @@ select {
   gap: 2px;
 }
 
+/* Each row gets a left-border + background tint keyed off the same
+   score-good/-mid/-bad band as the number, so severity reads at a glance
+   without relying on the small coloured digit alone (issue #132). */
 .validation-categories li {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 8px;
   font-size: 12.5px;
-  padding: 3px 4px;
+  padding: 3px 6px 3px 8px;
+  border-left: 3px solid transparent;
   border-bottom: 1px dashed var(--line);
+}
+
+.validation-categories li.score-good {
+  border-left-color: var(--score-good);
+  background: color-mix(in srgb, var(--score-good) 10%, transparent);
+}
+
+.validation-categories li.score-mid {
+  border-left-color: var(--score-mid);
+  background: color-mix(in srgb, var(--score-mid) 10%, transparent);
+}
+
+.validation-categories li.score-bad {
+  border-left-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
 }
 
 .validation-score {

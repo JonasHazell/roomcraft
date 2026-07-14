@@ -54,11 +54,14 @@ a light grey app background (`--paper-2`), neutral grey text (`--muted`) and
 hairlines (`--line`). The single accent is a warm terracotta — the one spot of
 colour against the neutral chrome. The only blue is `--select`, reserved for
 canvas selection — never introduce a stray blue into chrome. Score/severity
-bands use their own fixed greens/ambers/reds (see `.score-*`, `.severity-*`).
+bands use their own fixed greens/ambers/reds, held in the `--score-good`/
+`--score-mid` tokens (bad reuses `--danger`) and referenced by `.score-*`,
+`.severity-*` and the `.validation-categories` row cues below.
 
 Accent tints (hover washes, active rows, error backgrounds) are derived with
 `color-mix(in srgb, var(--accent|--danger|--select) …%, transparent)` so they
-always track their token — never hard-code a tint.
+always track their token — never hard-code a tint. The same convention applies
+to fixed score-band tints, e.g. `color-mix(in srgb, var(--score-good) 10%, transparent)`.
 
 ### Typography
 
@@ -106,7 +109,11 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   from `.hint` + `.field-grid`).
 - **Feedback** — one `.hint` for guidance, one `.error` for failures (reuse them —
   don't roll new ones). `.score-badge` with `.score-good/-mid/-bad`; `.severity`
-  with `.severity-1`…`-5` (5 = worst).
+  with `.severity-1`…`-5` (5 = worst). Each `.validation-categories li` also
+  takes a `.score-good/-mid/-bad` class, giving the row a left border + a
+  `color-mix` background tint in the same band as its score number — so a
+  category's severity reads at a glance, not only from the small coloured
+  digit (see the "Validation: category row cues" gallery entry).
 - **Palette** — `.palette` grid of `.palette-btn`, each with a colour `.swatch`.
 - **Room templates** — the "New room" picker's `.template-grid` of `.template-card`
   buttons (each an SVG `.template-preview` + `.template-name` + `.template-meta`);
