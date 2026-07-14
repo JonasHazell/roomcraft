@@ -42,6 +42,8 @@ interface UiState {
    */
   pendingRoomId: string | null;
   furnitureDialog: FurnitureDialog;
+  /** Whether the sign-in / create-account dialog is open. */
+  authDialogOpen: boolean;
   panel: Panel;
   /**
    * Whether the proposal switcher's dropdown menu is open. Lifted out of the
@@ -58,6 +60,8 @@ interface UiState {
   openAddFurniture: () => void;
   openEditFurniture: (id: string) => void;
   closeFurnitureDialog: () => void;
+  openAuthDialog: () => void;
+  closeAuthDialog: () => void;
   openPanel: (panel: Exclude<Panel, null>) => void;
   closePanel: () => void;
 }
@@ -71,6 +75,7 @@ export const useUiStore = create<UiState>()((set) => ({
   planStartTool: 'select',
   pendingRoomId: null,
   furnitureDialog: null,
+  authDialogOpen: false,
   panel: null,
   proposalMenuOpen: false,
   select: (selection) =>
@@ -91,6 +96,8 @@ export const useUiStore = create<UiState>()((set) => ({
   openEditFurniture: (id) =>
     set({ selection: { kind: 'furniture', id }, furnitureDialog: { mode: 'edit', id } }),
   closeFurnitureDialog: () => set({ furnitureDialog: null }),
+  openAuthDialog: () => set({ authDialogOpen: true }),
+  closeAuthDialog: () => set({ authDialogOpen: false }),
   openPanel: (panel) => set({ panel }),
   closePanel: () => set({ panel: null }),
 }));

@@ -2207,6 +2207,22 @@ select {
   font-size: 15px;
 }
 
+.lobby-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lobby-account-email {
+  color: var(--muted);
+  font-size: 14px;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .lobby-empty {
   max-width: 560px;
   margin: 8vh auto 0;

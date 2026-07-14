@@ -11,12 +11,14 @@ import { ValidationScore } from './components/panel/ValidationScore';
 import { ProposalSwitcher } from './components/panel/ProposalSwitcher';
 import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { DialogHost } from './components/panel/DialogHost';
+import { AuthDialog } from './components/auth/AuthDialog';
 import { Icon } from './components/ui/Icon';
 import { PlanEditor } from './components/plan/PlanEditor';
 import { useDesignStore } from './store/useDesignStore';
 import { useUiStore } from './store/useUiStore';
 import { useDialogStore } from './store/useDialogStore';
 import { useHistoryStore } from './store/useHistoryStore';
+import { useAuthStore } from './store/useAuthStore';
 import { backToLobby } from './lib/nav';
 
 // three.js and the whole 3D scene are the bulk of the bundle; load them only
@@ -108,6 +110,12 @@ function App() {
   const appView = useUiStore((s) => s.appView);
   const hash = useHash();
 
+  // Establish the session once on load; the store's `enabled`/`user` then drive
+  // whether sign-in is shown and whether AI furnishing is gated behind it.
+  useEffect(() => {
+    void useAuthStore.getState().refresh();
+  }, []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
@@ -120,9 +128,16 @@ function App() {
       ) {
         return;
       }
-      // While the furniture dialog or a confirm/prompt dialog is open it owns the
-      // keyboard (Esc closes it), so don't also deselect or rotate behind it.
-      if (useUiStore.getState().furnitureDialog || useDialogStore.getState().active) return;
+      // While the furniture dialog, a confirm/prompt dialog or the auth dialog is
+      // open it owns the keyboard (Esc closes it), so don't also deselect or
+      // rotate behind it.
+      if (
+        useUiStore.getState().furnitureDialog ||
+        useUiStore.getState().authDialogOpen ||
+        useDialogStore.getState().active
+      ) {
+        return;
+      }
       // Editing shortcuts only apply inside a room, never in the lobby.
       if (useUiStore.getState().appView === 'lobby') return;
       // Undo/redo work regardless of the current selection.
@@ -187,6 +202,7 @@ function App() {
       {appView === 'furnish' && <FurnishView />}
       <FurnitureDialog />
       <DialogHost />
+      <AuthDialog />
     </div>
   );
 }

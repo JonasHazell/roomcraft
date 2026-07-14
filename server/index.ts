@@ -3,6 +3,22 @@ import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Design } from '../src/types.ts';
+import { authEnabled, initSchema } from './db.ts';
+import {
+  EmailTakenError,
+  MIN_PASSWORD_LENGTH,
+  SESSION_COOKIE,
+  authenticate,
+  createSession,
+  createUser,
+  deleteSession,
+  getSessionUser,
+  isValidPassword,
+  normalizeEmail,
+  parseCookies,
+  serializeClearCookie,
+  serializeSessionCookie,
+} from './auth.ts';
 import { runClaude } from './claude.ts';
 import { resolveProposals } from './orient.ts';
 import { SYSTEM_PROMPT, buildRepairPrompt, buildUserPrompt } from './prompt.ts';
@@ -121,12 +137,116 @@ const SECURITY_HEADERS: Record<string, string> = {
   'referrer-policy': 'no-referrer',
 };
 
-function json(res: ServerResponse, status: number, payload: unknown) {
+function json(
+  res: ServerResponse,
+  status: number,
+  payload: unknown,
+  headers?: Record<string, string>,
+) {
   res.writeHead(status, {
     ...SECURITY_HEADERS,
     'content-type': 'application/json; charset=utf-8',
+    ...headers,
   });
   res.end(JSON.stringify(payload));
+}
+
+/**
+ * True when the request reached us over HTTPS. Behind Railway's proxy the
+ * original scheme is in `x-forwarded-proto`; locally we fall back to the socket.
+ * Drives whether the session cookie gets the `Secure` attribute (which would
+ * stop it working on `http://localhost`).
+ */
+function isSecureRequest(req: IncomingMessage): boolean {
+  const proto = req.headers['x-forwarded-proto'];
+  const first = Array.isArray(proto) ? proto[0] : proto;
+  if (first) return first.split(',')[0].trim() === 'https';
+  return Boolean((req.socket as { encrypted?: boolean }).encrypted);
+}
+
+/**
+ * Rejects cross-site POSTs as a second CSRF guard on top of the session cookie's
+ * `SameSite=Lax`. When a browser sends an `Origin`, it must match our host; a
+ * missing `Origin` (non-browser clients, some same-origin requests) is allowed.
+ */
+function isSameOrigin(req: IncomingMessage): boolean {
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  try {
+    return new URL(origin).host === req.headers.host;
+  } catch {
+    return false;
+  }
+}
+
+/** The session token from the request's cookies, if any. */
+function sessionToken(req: IncomingMessage): string | undefined {
+  return parseCookies(req.headers.cookie)[SESSION_COOKIE];
+}
+
+interface Credentials {
+  email: string | null;
+  password: unknown;
+}
+
+/** Parses `{ email, password }` from a request body, normalising the email. */
+function parseCredentials(raw: string): Credentials {
+  const body = JSON.parse(raw) as { email?: unknown; password?: unknown };
+  return { email: normalizeEmail(body.email), password: body.password };
+}
+
+async function handleRegister(req: IncomingMessage, res: ServerResponse) {
+  let creds: Credentials;
+  try {
+    creds = parseCredentials(await readBody(req));
+  } catch {
+    return json(res, 400, { error: 'Invalid request.' });
+  }
+  if (!creds.email) return json(res, 400, { error: 'Please enter a valid email address.' });
+  if (!isValidPassword(creds.password)) {
+    return json(res, 400, {
+      error: `The password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
+    });
+  }
+  try {
+    const user = await createUser(creds.email, creds.password);
+    const token = await createSession(user.id);
+    return json(res, 200, { user }, { 'set-cookie': serializeSessionCookie(token, isSecureRequest(req)) });
+  } catch (e) {
+    if (e instanceof EmailTakenError) return json(res, 409, { error: e.message });
+    console.error('[auth] register error:', e);
+    return json(res, 500, { error: 'Could not create the account. Please try again.' });
+  }
+}
+
+async function handleLogin(req: IncomingMessage, res: ServerResponse) {
+  let creds: Credentials;
+  try {
+    creds = parseCredentials(await readBody(req));
+  } catch {
+    return json(res, 400, { error: 'Invalid request.' });
+  }
+  if (!creds.email || typeof creds.password !== 'string') {
+    return json(res, 401, { error: 'Wrong email or password.' });
+  }
+  try {
+    const user = await authenticate(creds.email, creds.password);
+    if (!user) return json(res, 401, { error: 'Wrong email or password.' });
+    const token = await createSession(user.id);
+    return json(res, 200, { user }, { 'set-cookie': serializeSessionCookie(token, isSecureRequest(req)) });
+  } catch (e) {
+    console.error('[auth] login error:', e);
+    return json(res, 500, { error: 'Could not sign you in. Please try again.' });
+  }
+}
+
+async function handleLogout(req: IncomingMessage, res: ServerResponse) {
+  try {
+    await deleteSession(sessionToken(req));
+  } catch (e) {
+    console.error('[auth] logout error:', e);
+  }
+  return json(res, 200, { ok: true }, { 'set-cookie': serializeClearCookie(isSecureRequest(req)) });
 }
 
 /**
@@ -281,11 +401,44 @@ const server = createServer((req, res) => {
     if ((req.method === 'GET' || req.method === 'HEAD') && req.url === '/api/health') {
       return json(res, 200, { status: 'ok', pending: aiGate.pending });
     }
+    // Current user for the session cookie. `authEnabled` tells the frontend
+    // whether to show sign-in at all (false in dev with no DATABASE_URL).
+    if (req.method === 'GET' && req.url === '/api/auth/me') {
+      const user = await getSessionUser(sessionToken(req));
+      return json(res, 200, { user, authEnabled });
+    }
     if (req.method === 'GET' || req.method === 'HEAD') {
       return serveStatic(req, res);
     }
-    if (req.method !== 'POST' || req.url !== '/api/proposals') {
+    if (req.method !== 'POST') {
+      return json(res, 404, { error: 'Unknown endpoint.' });
+    }
+    // Every state-changing request is same-origin only (CSRF guard).
+    if (!isSameOrigin(req)) {
+      return json(res, 403, { error: 'Cross-origin request rejected.' });
+    }
+    // Auth endpoints. Rate-limited like the AI endpoint so credentials can't be
+    // brute-forced, and disabled with a clear 503 when no database is configured.
+    if (req.url === '/api/auth/register' || req.url === '/api/auth/login') {
+      if (!authEnabled) {
+        return json(res, 503, { error: 'Sign-in is not configured on this server.' });
+      }
+      if (!allowRequest(clientIp(req))) {
+        return json(res, 429, { error: 'Too many attempts. Please wait a moment and try again.' });
+      }
+      return req.url === '/api/auth/register' ? handleRegister(req, res) : handleLogin(req, res);
+    }
+    if (req.url === '/api/auth/logout') {
+      return handleLogout(req, res);
+    }
+    if (req.url !== '/api/proposals') {
       return json(res, 404, { error: 'Unknown endpoint. Use POST /api/proposals.' });
+    }
+    // When auth is configured, AI furnishing requires a signed-in user (each call
+    // costs real money and runs on the owner's Claude login). With no database
+    // the endpoint stays open so the frontend-only/local dev flow is unchanged.
+    if (authEnabled && !(await getSessionUser(sessionToken(req)))) {
+      return json(res, 401, { error: 'Please sign in to use AI furnishing.' });
     }
     if (!allowRequest(clientIp(req))) {
       return json(res, 429, { error: 'Too many requests. Please wait a moment and try again.' });
@@ -321,6 +474,20 @@ const server = createServer((req, res) => {
     }
   })();
 });
+
+// Ensure the auth tables exist before accepting traffic. If the database is
+// unreachable we log and carry on: the app and (dev) AI endpoint still work; only
+// the auth endpoints will error until the database comes back.
+if (authEnabled) {
+  try {
+    await initSchema();
+    console.log('Auth enabled — database schema is ready.');
+  } catch (e) {
+    console.error('Could not initialise the auth database schema:', e);
+  }
+} else {
+  console.log('Auth disabled — set DATABASE_URL to enable sign-in.');
+}
 
 server.listen(PORT, () => {
   console.log(`Roomcraft server listening on port ${PORT} (model: ${MODEL})`);
