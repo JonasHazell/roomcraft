@@ -23,12 +23,24 @@ import { runClaude, type ChatMessages } from './claude.ts';
 import { autoFixProposals } from './autofix.ts';
 import { resolveProposals } from './orient.ts';
 import { PROPOSAL_BRIEFS, SYSTEM_PROMPT, buildRepairPrompt, buildUserPrompt } from './prompt.ts';
+import { buildPlanBrief, generatePlan } from './planning.ts';
 import { proposalJsonSchema, proposalsSchema, type ResolvedProposals } from './schema.ts';
 import { blockingCount, collectFindings, repairFindings, type Finding } from './ruleValidation.ts';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const MODEL = process.env.AI_MODEL ?? 'claude-sonnet-5';
 const MAX_BODY = 2 * 1024 * 1024;
+
+// Two-phase generation: a shared planning step first chooses the furniture list
+// (need-to-have / nice-to-have), which is validated semantically and handed to every
+// direction's placement call. This fixes "wrong set of furniture" output (e.g. two
+// nightstands beside a single bed) that the geometric checks can't catch. On by
+// default; set AI_TWO_PHASE to 0/false/off to fall back to the single-phase flow (each
+// direction chooses and places its own furniture in one call). Planning failures also
+// degrade gracefully to single-phase for that request.
+const TWO_PHASE = !['0', 'false', 'off', 'no'].includes(
+  (process.env.AI_TWO_PHASE ?? '').trim().toLowerCase(),
+);
 
 // How many repair round-trips to the model are allowed after the first response.
 // Each round re-sends the full history, so keep this small; the deterministic
@@ -458,10 +470,31 @@ async function generateOneProposal(
 }
 
 async function generateProposals(design: Design, needs: string) {
-  console.log(`[proposals] generating ${PROPOSAL_BRIEFS.length} proposals with model "${MODEL}" …`);
-  // Room + catalog + needs — identical across directions, so build it once and
-  // let the cached block carry it into every call.
-  const shared = buildUserPrompt(design, needs);
+  // Phase 1 (two-phase mode only): choose the furniture once, shared across every
+  // direction. If it fails, fall back to the single-phase flow rather than the whole
+  // request — an empty brief leaves the placement prompt exactly as it was before.
+  let planBrief = '';
+  if (TWO_PHASE) {
+    try {
+      const plan = await generatePlan(design, needs, MODEL);
+      planBrief = `\n\n${buildPlanBrief(plan)}`;
+      const need = plan.items.filter((i) => i.priority === 'need').length;
+      const nice = plan.items.filter((i) => i.priority === 'nice').length;
+      console.log(
+        `[proposals] furniture plan ready: ${need} need-to-have, ${nice} nice-to-have item type(s).`,
+      );
+    } catch (e) {
+      console.error('[proposals] planning step failed; falling back to single-phase:', e);
+    }
+  }
+
+  console.log(
+    `[proposals] generating ${PROPOSAL_BRIEFS.length} proposals with model "${MODEL}" ` +
+      `(${planBrief ? 'two-phase' : 'single-phase'}) …`,
+  );
+  // Room + catalog + needs (+ the agreed plan in two-phase mode) — identical across
+  // directions, so build it once and let the cached block carry it into every call.
+  const shared = buildUserPrompt(design, needs) + planBrief;
 
   // One independent conversation per direction, all in flight at once.
   const settled = await Promise.allSettled(
