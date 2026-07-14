@@ -105,8 +105,11 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
 - **Floating plan chrome** — the floor-plan editor floats these over the canvas:
   `.plan-hint-pill` (guidance) and `.plan-error-pill` (failure) top-centre,
   `.plan-length-input` for typing an exact edge length, the `.plan-room-panel`
-  ceiling-height chip, and the `.plan-wall-panel` card for the selected wall (built
-  from `.hint` + `.field-grid`).
+  ceiling-height chip, and the `.plan-wall-panel` — the selected wall's editing
+  sheet, a `.plan-wall-title` header over a `.plan-wall-scroll` body of
+  `.field-grid` + the doors/windows editor. The sheet is height-capped and its
+  body scrolls, and the editor lifts the drawing clear of it (an auto-fit bottom
+  inset in `useViewport`) so a floating panel never hides the wall being edited.
 - **Feedback** — one `.hint` for guidance, one `.error` for failures (reuse them —
   don't roll new ones). `.score-badge` with `.score-good/-mid/-bad`; `.severity`
   with `.severity-1`…`-5` (5 = worst). Each `.validation-categories li` also

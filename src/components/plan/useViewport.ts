@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { Point } from '../../types';
 import type { Bounds } from '../../lib/polygon';
 
@@ -7,6 +7,19 @@ const MIN_SPAN = 2;
 const MAX_SPAN = 400;
 /** Pointer movement in pixels before a press counts as panning instead of a click. */
 const PAN_THRESHOLD = 4;
+
+/**
+ * Pixels to keep clear at the edges when auto-fitting, so a floating panel never
+ * covers the drawing: the content is centred in the band that's left, not in the
+ * whole canvas. Only the auto-fit view honours these — once the user pans/zooms
+ * they're in control.
+ */
+export interface ViewInsets {
+  top: number;
+  bottom: number;
+}
+
+const NO_INSETS: ViewInsets = { top: 0, bottom: 0 };
 
 interface PanState {
   x: number;
@@ -55,9 +68,47 @@ export interface Viewport {
  * the caller decides when a press is a pan, a draw or a drag and calls the
  * matching methods. `fitBounds` is the auto-fit view used until the user zooms.
  */
-export function useViewport(svgRef: RefObject<SVGSVGElement | null>, fitBounds: Bounds): Viewport {
+export function useViewport(
+  svgRef: RefObject<SVGSVGElement | null>,
+  content: Bounds,
+  insets: ViewInsets = NO_INSETS,
+): Viewport {
   /** The user's zoom/pan; null = auto-fit the view to the content. */
   const [view, setView] = useState<Bounds | null>(null);
+  /** Live canvas pixel size, so the auto-fit can reserve inset bands exactly. */
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const read = () => setSize({ w: svg.clientWidth, h: svg.clientHeight });
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(svg);
+    return () => ro.disconnect();
+  }, [svgRef]);
+
+  // Auto-fit that lands the content inside the band left by the insets. With no
+  // insets and a known size it reproduces the old centred fit exactly (the
+  // viewBox just matches the canvas aspect instead of relying on SVG letterboxing);
+  // a bottom inset lifts the drawing clear of a panel without shrinking it.
+  const { top, bottom } = insets;
+  const fitBounds = useMemo<Bounds>(() => {
+    const W = content.maxX - content.minX;
+    const H = content.maxZ - content.minZ;
+    if (!size || size.w <= 0 || size.h <= 0 || W <= 0 || H <= 0) return content;
+    const availH = Math.max(1, size.h - Math.max(0, top) - Math.max(0, bottom));
+    const scale = Math.min(size.w / W, availH / H);
+    const viewW = size.w / scale;
+    const viewH = size.h / scale;
+    const minX = content.minX - (viewW - W) / 2;
+    // Centre the content within the available vertical band, measured from the
+    // viewBox's top edge (which maps to the canvas top).
+    const bandTop = Math.max(0, top) / scale;
+    const minZ = content.minZ - (bandTop + (availH / scale - H) / 2);
+    return { minX, maxX: minX + viewW, minZ, maxZ: minZ + viewH };
+  }, [content, size, top, bottom]);
+
   const bounds = view ?? fitBounds;
   const boundsRef = useRef(bounds);
   boundsRef.current = bounds;

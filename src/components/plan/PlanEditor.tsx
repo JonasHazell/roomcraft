@@ -44,6 +44,11 @@ export function PlanEditor() {
   const select = useUiStore((s) => s.select);
 
   const svgRef = useRef<SVGSVGElement>(null);
+  // The selected-wall sheet floats over the bottom of the canvas; its measured
+  // reach is fed back to the viewport so the auto-fit lifts the drawing clear of
+  // it, instead of the sheet hiding the very wall being edited.
+  const wallPanelRef = useRef<HTMLDivElement>(null);
+  const [panelInset, setPanelInset] = useState(0);
   const coarse = useMediaQuery(COARSE_POINTER);
   // A new room opens with the exterior tool armed so the user draws its outline
   // right away; editing an existing plan opens in select mode.
@@ -104,8 +109,39 @@ export function PlanEditor() {
     return { minX: b.minX - PAD, maxX: b.maxX + PAD, minZ: b.minZ - PAD, maxZ: b.maxZ + PAD };
   }, [walls]);
 
-  const viewport = useViewport(svgRef, fitBounds);
+  // Reserve the sheet's footprint (plus a little top chrome) only while it's open,
+  // so the room recentres into the free band above it and snaps back when it closes.
+  const viewport = useViewport(svgRef, fitBounds, {
+    top: panelInset > 0 ? 56 : 0,
+    bottom: panelInset,
+  });
   const bounds = viewport.bounds;
+
+  // Track how far up the canvas the selected-wall sheet reaches, so the auto-fit
+  // can keep the drawing above it. Re-runs when the sheet appears/disappears; the
+  // ResizeObserver also catches it growing as openings are added or expanded.
+  useEffect(() => {
+    const svg = svgRef.current;
+    const panel = wallPanelRef.current;
+    if (!svg || !panel) {
+      setPanelInset(0);
+      return;
+    }
+    const measure = () => {
+      const s = svg.getBoundingClientRect();
+      const p = panel.getBoundingClientRect();
+      setPanelInset(Math.max(0, s.bottom - p.top + 8));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(panel);
+    ro.observe(svg);
+    window.addEventListener('resize', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [tool, selection]);
 
   /**
    * Snapped, axis-locked cursor position. The coordinate the wall shares with the
@@ -414,7 +450,7 @@ export function PlanEditor() {
           a compact top-right chip, the selected wall's fields as a sheet above the
           dock — so the drawing stays visible, unlike the old full-width top panel. */}
       {tool === 'select' && <PlanRoomPanel />}
-      {tool === 'select' && <PlanWallPanel />}
+      {tool === 'select' && <PlanWallPanel ref={wallPanelRef} />}
 
       {/* While drawing, offer an exact-length box so a wall can be sized to the
           centimetre without waiting for the room to be closed. When a placed edge

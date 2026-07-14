@@ -86,7 +86,9 @@ export function PlanToolbar({
 
       <div className="plan-dock" role="toolbar" aria-label="Floor plan tools">
         {/* Left: view controls. Touch relies on pinch/drag (as in the 3D view), so
-            the +/− buttons are mouse-only; Fit view is always offered. */}
+            the +/− buttons are mouse-only; Fit view is always offered. Redrawing the
+            whole outline is a rare, start-over action, so it sits here off to the
+            side as a small icon button rather than central among the mode switches. */}
         <div className="dock-slot dock-left">
           <div className="selection-bar">
             {!coarse && (
@@ -127,6 +129,22 @@ export function PlanToolbar({
                 <Icon name="scan" />
               </span>
             </button>
+            {!drawing && hasExterior && (
+              <>
+                <span className="sel-divider" aria-hidden="true" />
+                <button
+                  type="button"
+                  className="sel-action sel-history"
+                  onClick={onExteriorTool}
+                  title="Redraw exterior walls (start the outline over)"
+                  aria-label="Redraw exterior walls"
+                >
+                  <span className="sel-icon" aria-hidden="true">
+                    <Icon name="pencil" />
+                  </span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -176,18 +194,22 @@ export function PlanToolbar({
                 </span>
                 <span className="sel-label">Select</span>
               </button>
-              <button
-                type="button"
-                className="sel-action"
-                onClick={onExteriorTool}
-                title={hasExterior ? 'Redraw exterior walls' : 'Draw exterior walls'}
-                aria-label={hasExterior ? 'Redraw exterior walls' : 'Draw exterior walls'}
-              >
-                <span className="sel-icon" aria-hidden="true">
-                  <Icon name="square" />
-                </span>
-                <span className="sel-label">{hasExterior ? 'Redraw' : 'Exterior'}</span>
-              </button>
+              {/* Before an outline exists, drawing it is the primary task, so it
+                  stays central. Once drawn, "Redraw" moves to the side dock. */}
+              {!hasExterior && (
+                <button
+                  type="button"
+                  className="sel-action"
+                  onClick={onExteriorTool}
+                  title="Draw exterior walls"
+                  aria-label="Draw exterior walls"
+                >
+                  <span className="sel-icon" aria-hidden="true">
+                    <Icon name="square" />
+                  </span>
+                  <span className="sel-label">Exterior</span>
+                </button>
+              )}
               <button
                 type="button"
                 className="sel-action"
