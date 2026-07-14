@@ -20,6 +20,13 @@ Repository: `JonasHazell/roomcraft`.
 5. [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md) — **the most important input.** This
    is what the human actually merged, edited, or rejected in past rounds. Steer
    toward the patterns that got merged and away from the ones that got rejected.
+6. [`AGENT_METRICS.md`](AGENT_METRICS.md) — **measurability & monitoring.** The
+   current snapshot tells you where the loop is weak (a climbing issue-rejection rate
+   means your recent selection has been off) and, via the product-observability rows,
+   where the *app* is weak. A rising AI proposal latency or cost, or a non-trivial
+   failure rate, is a concrete, evidence-backed opening for a reliability/performance
+   proposal — the kind of problem the Playwright click-through can't see. Let the
+   numbers, not just intuition, point you at the highest-value gaps.
 
 ## Start every run by looking at the actual app
 
@@ -55,6 +62,11 @@ these categories, not just new features:
 - **GUI clarity & simplicity** — make the app **clearer and easier to use**:
   simpler layouts, more obvious controls, fewer choices, better mobile ergonomics.
   When in doubt, remove a choice rather than add one.
+- **Reliability & performance the metrics reveal** — problems the click-through
+  can't surface but the monitoring in [`AGENT_METRICS.md`](AGENT_METRICS.md) can: a
+  slow or expensive AI proposal path, a rising failure/timeout rate, a repair loop
+  that fans out into extra model calls. These are real, measurable degradations of
+  the core flow; a proposal that cites the trend and targets the cause is well-founded.
 
 ## What makes a good proposal
 

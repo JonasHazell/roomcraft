@@ -11,6 +11,13 @@ future agent can apply across many situations (e.g. "controls must not hide othe
 controls"), not a one-off note about a single PR. Cite the issue/PR number as the
 example the principle came from. Group related lessons under a heading.
 
+This file is the *qualitative* half of the loop's memory; its quantitative half lives
+in [`AGENT_METRICS.md`](AGENT_METRICS.md). The two work together: a lesson here that
+**keeps recurring**, or one that a metric confirms is costing merges, is Stage C's cue
+to **promote** it — bake it into the actual agent instructions (`AGENT_PROPOSALS.md` /
+`AGENT_BUILD.md`) so it's enforced by default, not just remembered. When that happens,
+note the promotion on the entry so the trail from evidence → rule stays traceable.
+
 ---
 
 ## Proposal selection (Stage A)
