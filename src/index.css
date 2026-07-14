@@ -542,6 +542,24 @@ select {
 
 /* ---------- Furniture palette ---------- */
 
+/* The catalog and library are grouped by room type; each group is a heading
+   over its palette grid or saved list. */
+.palette-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.palette-heading {
+  margin: 0 0 8px;
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
 .palette {
   display: grid;
   grid-template-columns: 1fr 1fr;

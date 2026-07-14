@@ -57,8 +57,28 @@ export type FurnitureKind =
   | 'plant'
   | 'wardrobe'
   | 'bookshelf'
+  | 'counter'
+  | 'stove'
+  | 'fridge'
+  | 'toilet'
+  | 'bathtub'
+  | 'sink'
   | 'rug'
   | 'box';
+
+/**
+ * The room type a furniture kind belongs to, used to group the catalog in the
+ * "Add furniture" picker. `anywhere` is for pieces that suit any room (rug,
+ * plant, mirror, custom box). The labels and display order live in
+ * {@link ../lib/furnitureCatalog}.
+ */
+export type FurnitureCategory =
+  | 'living'
+  | 'bedroom'
+  | 'kitchen'
+  | 'bathroom'
+  | 'workspace'
+  | 'anywhere';
 
 export interface FurnitureSize {
   width: number; // X in the furniture's own coordinate system

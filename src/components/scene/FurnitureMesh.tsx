@@ -34,6 +34,12 @@ import { Tv } from './furniture/Tv';
 import { Mirror } from './furniture/Mirror';
 import { Plant } from './furniture/Plant';
 import { Rug } from './furniture/Rug';
+import { Counter } from './furniture/Counter';
+import { Stove } from './furniture/Stove';
+import { Fridge } from './furniture/Fridge';
+import { Toilet } from './furniture/Toilet';
+import { Bathtub } from './furniture/Bathtub';
+import { Sink } from './furniture/Sink';
 
 const COMPONENTS: Record<FurnitureKind, ComponentType<FurnitureProps>> = {
   bed: Bed,
@@ -47,6 +53,12 @@ const COMPONENTS: Record<FurnitureKind, ComponentType<FurnitureProps>> = {
   plant: Plant,
   wardrobe: Wardrobe,
   bookshelf: Bookshelf,
+  counter: Counter,
+  stove: Stove,
+  fridge: Fridge,
+  toilet: Toilet,
+  bathtub: Bathtub,
+  sink: Sink,
   rug: Rug,
   box: GenericBox,
 };
