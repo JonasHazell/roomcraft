@@ -1,5 +1,7 @@
 import { nanoid } from 'nanoid';
 import type { FurnitureItem } from '../../types';
+import { autoArrange } from '../../lib/autoArrange';
+import { runValidation } from '../../lib/validation/engine';
 import {
   clampFurniture,
   findClearSpot,
@@ -162,6 +164,18 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
       const poly = floorPolygon(d.walls);
       const furniture = items.map((it) => clampFurniture({ ...it, id: nanoid(8) }, poly));
       set({ design: touch({ ...d, furniture }) });
+    },
+
+    autoArrange: () => {
+      const d = get().design;
+      const before = runValidation(d).total ?? 0;
+      const furniture = autoArrange(d);
+      // The optimiser returns the original array by reference when it can't beat
+      // the current layout — skip the write (and the undo entry) in that case.
+      if (furniture === d.furniture) return null;
+      set({ design: touch({ ...d, furniture }) });
+      const after = runValidation({ ...d, furniture }).total ?? 0;
+      return { before, after };
     },
   };
 }
