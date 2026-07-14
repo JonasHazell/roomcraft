@@ -477,6 +477,12 @@ Each rule has the following fields:
 - **Source:** Best practice
 - **Remedy:** The rug needs to be at least {table dimensions + 130} cm.
 
+### COL-08 — Rugs divide an open-plan room
+- **Category:** Color & textiles · **Room:** Living room + dining area (open plan) · **Importance:** 2 · **Measurability:** A
+- **Condition:** In an open-plan room with more than one activity zone, each zone (seating group, dining set) is anchored by its own rug so the areas read as distinct spaces; one rug does not run under two different zones and blur them together. (Coincides with FEN-26.)
+- **Source:** Best practice (zoning)
+- **Remedy:** Add a rug under {unanchored zone}; if one rug spans two zones, split it so each activity area has its own.
+
 ### COL-07 — Curtain hanging
 - **Category:** Color & textiles · **Room:** All · **Importance:** 2 · **Measurability:** A
 - **Condition:** Curtain rod/track sits 10–15 cm above the window frame or near the ceiling; the rod extends 15–25 cm beyond the frame on each side; curtain width 1.5–2 × the window's width; length to the floor (0–1 cm above) — not hovering at the bottom of the frame.
@@ -558,6 +564,12 @@ Each rule has the following fields:
 - **Condition:** The bathroom door is kept closed and the toilet lid down (symbolically: water drains chi); a bathroom door directly facing a bed or dining area is screened off.
 - **Source:** Feng shui
 - **Remedy:** Habit rule: close the door and lid; place a screen/plant between the bathroom door and {bed/table}.
+
+### FEN-26 — Rugs zone an open-plan room
+- **Category:** Feng shui · **Room:** Living room + dining area (open plan) · **Importance:** 2 · **Measurability:** A
+- **Condition:** In an open-plan room that holds more than one activity zone (e.g. a seating group and a dining set), each zone sits on its own rug so the areas read as separate "rooms" and each zone's energy (chi) stays grounded; a single rug does not span two different zones and merge them. (Coincides with COL-08.)
+- **Source:** Feng shui (grounding chi); best practice (zoning)
+- **Remedy:** Give the {zone} its own rug; split {oversized rug} into one per activity area so the zones stay distinct.
 
 ---
 
@@ -652,7 +664,7 @@ Each rule has the following fields:
 # Appendix — implementation tips for the rule engine
 
 - **Applicability:** Each rule is only tested if its `Room` matches and the room's objects make it relevant (no TV → ERG-02 is skipped). Report "not applicable" separately from "passed".
-- **Duplicates/reinforcements:** Some rules deliberately overlap across categories (ERG-08/FEN-03, SAF-10/FEN-06, ERG-05/FEN-13, ERG-09/FEN-20, ACC-10/FEN-11). The rule engine should link them so that the same geometric finding is not double-penalized in the total score, but they can be reported within their respective categories.
+- **Duplicates/reinforcements:** Some rules deliberately overlap across categories (ERG-08/FEN-03, SAF-10/FEN-06, ERG-05/FEN-13, ERG-09/FEN-20, ACC-10/FEN-11, FEN-26/COL-08). The rule engine should link them so that the same geometric finding is not double-penalized in the total score, but they can be reported within their respective categories.
 - **Measurability A** requires from the model: room polygon with doors/windows (position, width, swing direction), furniture with type, dimensions, rotation, and escape route markings. **D** requires object metadata (material, light source, color). **M** is handled with a checklist the user fills in.
 - **Score display:** one total score + sub-scores per category (Safety, Accessibility, Ergonomics, Feng shui, Light, Color & textiles, Acoustics & air, Aesthetics), a list of violated rules sorted by importance, with the `Remedy` template filled in with actual objects and measurements.
 - **Thresholds:** where ranges are given (e.g. 30–45 cm), the engine can award full points within the range, half points within ±20 %, and zero outside — this gives softer scoring than binary pass/fail.
