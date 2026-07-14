@@ -211,6 +211,26 @@ Each rule has the following fields:
 
 # Level 3 — Ergonomics, dimensions, and placement
 
+## Layout and zoning
+
+### ZON-01 — Each activity zone stays grouped together
+- **Category:** Layout & zoning · **Room:** All · **Importance:** 3 · **Measurability:** A
+- **Condition:** The room is read as functional zones inferred from the furniture (sleeping = bed + nightstands; seating = sofa + armchairs + coffee table; dining = table + chairs; work = desk + chair). Each zone's satellite pieces sit close to their anchor (nightstand hugging the bed, chair at the table/desk, armchair/coffee table within the seating group) so the zone reads as one group rather than scattered pieces.
+- **Source:** Best practice (zoning); feng shui (grouping chi)
+- **Remedy:** {Piece} belongs to the {zone} area but sits {measured} cm away from {anchor} — pull it in so the zone reads as one group.
+
+### ZON-02 — No storage marooned in the middle of the room
+- **Category:** Layout & zoning · **Room:** All · **Importance:** 3 · **Measurability:** A
+- **Condition:** Tall/storage pieces (wardrobe, bookshelf, chest) stand against a wall, or directly beside an activity zone where they work as a deliberate room divider. None floats in the centre with open floor all around it and nothing behind it. (Beds, sofas and tables are judged by their own placement rules, not here.)
+- **Source:** Best practice; feng shui (keep the centre open)
+- **Remedy:** Move {storage piece} against a wall, or place it beside a seating/sleeping area so it works as a room divider.
+
+### ZON-03 — Keep the open floor generous and in one piece
+- **Category:** Layout & zoning · **Room:** All · **Importance:** 3 · **Measurability:** A
+- **Condition:** In a room large enough to reason about (≥ 8 m²), the walkable floor keeps one generous, connected open area — either the largest uninterrupted open stretch is ≥ 30 % of the floor, or the open floor stays essentially in one piece rather than being chopped into isolated pockets by centrally placed furniture.
+- **Source:** Best practice; feng shui (free flow of chi)
+- **Remedy:** Pull furniture back against the walls so the room keeps one large, connected open area instead of scattered pockets.
+
 ## Living room
 
 ### ERG-01 — Distance sofa–coffee table

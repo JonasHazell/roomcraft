@@ -4,6 +4,7 @@ import type { OpeningInfo } from './geo';
 export type RuleCategory =
   | 'Safety'
   | 'Accessibility'
+  | 'Layout & zoning'
   | 'Ergonomics & dimensions'
   | 'Feng shui'
   | 'Light'
@@ -14,6 +15,7 @@ export type RuleCategory =
 export const CATEGORY_ORDER: RuleCategory[] = [
   'Safety',
   'Accessibility',
+  'Layout & zoning',
   'Ergonomics & dimensions',
   'Feng shui',
   'Light',
