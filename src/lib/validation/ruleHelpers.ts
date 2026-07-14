@@ -1,5 +1,5 @@
 import type { Design, FurnitureItem, FurnitureKind, Point } from '../../types';
-import { floorPolygon } from '../polygon';
+import { floorPolygon } from '../polygon.ts';
 import {
   add,
   blockers,
@@ -11,7 +11,7 @@ import {
   quadGap,
   rightDir,
   stripZone,
-} from './geo';
+} from './geo.ts';
 import type { RuleCtx, RoomType, RuleOutcome, Violation } from './ruleTypes';
 
 /** Minimum mattress width counted as a double bed (needs access on both sides). */

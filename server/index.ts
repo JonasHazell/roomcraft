@@ -20,14 +20,24 @@ import {
   serializeSessionCookie,
 } from './auth.ts';
 import { runClaude, type ChatMessages } from './claude.ts';
+import { autoFixProposals } from './autofix.ts';
 import { resolveProposals } from './orient.ts';
 import { SYSTEM_PROMPT, buildRepairPrompt, buildUserPrompt } from './prompt.ts';
-import { proposalsJsonSchema, proposalsSchema, type ResolvedProposals } from './schema.ts';
-import { validateProposals } from './validate.ts';
+import { proposalsJsonSchema, proposalsSchema } from './schema.ts';
+import { blockingCount, collectFindings, repairFindings, type Finding } from './ruleValidation.ts';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const MODEL = process.env.AI_MODEL ?? 'claude-opus-4-8';
 const MAX_BODY = 2 * 1024 * 1024;
+
+// How many repair round-trips to the model are allowed after the first response.
+// Each round re-sends the full history, so keep this small; the deterministic
+// auto-fix pass resolves most simple geometry before any repair call is made.
+const MAX_REPAIRS = Math.max(0, Number(process.env.AI_MAX_REPAIRS ?? 2));
+
+// Cap on how many leftover remarks are surfaced to the user, so the panel stays
+// readable when several proposals each carry minor ergonomic notes.
+const MAX_WARNINGS = 12;
 
 // True when an Anthropic API credential is present. The AI endpoint needs it;
 // without it the call fails fast with a clear message instead of a 502.
@@ -363,10 +373,15 @@ function parseRequest(raw: string): ProposalRequest {
   return { design, needs: body.needs };
 }
 
+/** Resolves a raw model response, then applies the deterministic auto-fix pass. */
+function prepare(structuredOutput: unknown, design: Design) {
+  return autoFixProposals(resolveProposals(proposalsSchema.parse(structuredOutput), design), design);
+}
+
 async function generateProposals(design: Design, needs: string) {
   console.log(`[proposals] generating with model "${MODEL}" …`);
-  // The full conversation is resent on every call (the API is stateless); the
-  // repair turn below appends to this same history.
+  // The full conversation is resent on every call (the API is stateless); each
+  // repair turn appends to this same history.
   const messages: ChatMessages = [{ role: 'user', content: buildUserPrompt(design, needs) }];
   const first = await runClaude({
     messages,
@@ -378,29 +393,46 @@ async function generateProposals(design: Design, needs: string) {
     `[proposals] first response done (${Math.round(first.durationMs / 1000)} s, ~$${first.costUsd.toFixed(2)})`,
   );
 
-  let data: ResolvedProposals = resolveProposals(proposalsSchema.parse(first.structuredOutput), design);
-  let errors = validateProposals(data, design);
-  if (errors.length === 0) return { data, warnings: [] as string[] };
+  let assistant = first.assistant;
+  let data = prepare(first.structuredOutput, design);
+  let findings = collectFindings(data, design);
+  // Keep the response with the fewest hard failures across all rounds.
+  let best = { data, findings };
 
-  console.log(`[proposals] ${errors.length} validation errors — requesting a fix …`);
-  messages.push(first.assistant, { role: 'user', content: buildRepairPrompt(errors) });
-  const repaired = await runClaude({
-    messages,
-    systemPrompt: SYSTEM_PROMPT,
-    jsonSchema: proposalsJsonSchema,
-    model: MODEL,
-  });
-  console.log(
-    `[proposals] repair done (${Math.round(repaired.durationMs / 1000)} s, ~$${repaired.costUsd.toFixed(2)})`,
-  );
-
-  const repairedData = resolveProposals(proposalsSchema.parse(repaired.structuredOutput), design);
-  const repairedErrors = validateProposals(repairedData, design);
-  if (repairedErrors.length <= errors.length) {
-    data = repairedData;
-    errors = repairedErrors;
+  for (let round = 1; round <= MAX_REPAIRS && blockingCount(best.findings) > 0; round++) {
+    const toFix = repairFindings(findings);
+    if (toFix.length === 0) break; // only cosmetic remarks left — not worth a round.
+    console.log(
+      `[proposals] repair ${round}/${MAX_REPAIRS}: ${blockingCount(findings)} blocking, ${toFix.length} to fix …`,
+    );
+    messages.push(assistant, { role: 'user', content: buildRepairPrompt(toFix) });
+    const repaired = await runClaude({
+      messages,
+      systemPrompt: SYSTEM_PROMPT,
+      jsonSchema: proposalsJsonSchema,
+      model: MODEL,
+    });
+    console.log(
+      `[proposals] repair ${round} done (${Math.round(repaired.durationMs / 1000)} s, ~$${repaired.costUsd.toFixed(2)})`,
+    );
+    assistant = repaired.assistant;
+    data = prepare(repaired.structuredOutput, design);
+    findings = collectFindings(data, design);
+    if (blockingCount(findings) < blockingCount(best.findings)) best = { data, findings };
   }
-  return { data, warnings: errors };
+
+  const remaining = blockingCount(best.findings);
+  console.log(
+    remaining === 0
+      ? `[proposals] all hard requirements satisfied.`
+      : `[proposals] ${remaining} hard finding(s) remain after ${MAX_REPAIRS} repair round(s); returning best.`,
+  );
+  // Surface the findings worth acting on (importance ≥ 3); drop purely cosmetic
+  // ones and cap the list so the panel stays readable.
+  const warnings = repairFindings(best.findings)
+    .map((f: Finding) => f.message)
+    .slice(0, MAX_WARNINGS);
+  return { data: best.data, warnings };
 }
 
 const server = createServer((req, res) => {

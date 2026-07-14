@@ -8,7 +8,7 @@ import {
   type RuleCategory,
   type RuleDef,
   type RuleOutcome,
-} from './rules';
+} from './rules.ts';
 
 export interface RuleResult {
   rule: RuleDef;
