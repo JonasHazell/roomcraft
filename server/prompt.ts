@@ -57,14 +57,32 @@ Ergonomics and function:
 - Bed sides that are used need about 0.6 m of free space.
 
 ## Task
-Produce exactly 3 deliberately different proposals (e.g. "maximize space", "maximize coziness", "work focus").
-Each proposal: a title, a short concept, and a complete furnishing that meets the user's needs.
+Produce ONE furnishing proposal that follows the design direction given at the end of the user
+message. A proposal is: a title, a short concept, and a complete furnishing that meets the user's needs.
 Start from the catalog's default dimensions but adjust sizes reasonably when needed (e.g. bed 1.4/1.6/1.8 m).
 Use "box" with a descriptive name for furniture missing from the catalog (e.g. desk, TV bench, armchair).
-Choose colors that give a cohesive palette per proposal — including the floor and wall colours
-(floorColor, wallColor) for the room, so different proposals can present distinct looks. Write all
+Choose colors that give a cohesive palette — including the floor and wall colours (floorColor,
+wallColor) for the room — so the proposal has a distinct look that fits its direction. Write all
 user-facing text in English.
 Respond only according to the given JSON schema.`;
+
+/**
+ * The distinct design directions requested in parallel — one model call per brief,
+ * so the three proposals come back roughly as fast as one used to (see
+ * server/index.ts). Kept deliberately different so the user gets a real choice,
+ * the way the single big prompt used to ask for "3 deliberately different proposals".
+ */
+export const PROPOSAL_BRIEFS: readonly string[] = [
+  '## Design direction: Maximise space\n' +
+    'Favour an open, airy layout with a small footprint and clear sightlines. Keep the floor as ' +
+    'uncluttered as possible and let the room breathe. Give it a fitting title and a light, spacious palette.',
+  '## Design direction: Maximise coziness\n' +
+    'Create a warm, inviting, layered room — soft groupings, a rug, and furniture arranged for comfort ' +
+    'and togetherness. Give it a fitting title and a warm, enveloping palette.',
+  '## Design direction: Work focus\n' +
+    'Prioritise a functional, well-lit workspace (desk near daylight, proper clearances) while still ' +
+    "meeting the user's other needs. Give it a fitting title and a calm, focused palette.",
+];
 
 const round = (v: number) => Math.round(v * 1000) / 1000;
 
@@ -175,7 +193,7 @@ export function buildRepairPrompt(findings: { message: string; blocking: boolean
   }
   lines.push(
     '',
-    'Respond with ALL proposals again, complete and following the same JSON schema.',
+    'Respond with the full proposal again, complete and following the same JSON schema.',
     'Move, resize or replace the furniture that violates a requirement; keep everything that is already correct.',
   );
   return lines.join('\n');

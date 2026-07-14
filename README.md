@@ -115,8 +115,8 @@ Optional environment variables:
 - `PORT` — backend port (default `8787`)
 - `ANTHROPIC_API_KEY` — Anthropic API key. **Required** for AI furnishing; the
   SDK also accepts `ANTHROPIC_AUTH_TOKEN`.
-- `AI_MODEL` — model ID to use (default `claude-opus-4-8`). Set
-  `claude-sonnet-5` for a cheaper, faster option.
+- `AI_MODEL` — model ID to use (default `claude-sonnet-5`, chosen for speed and
+  cost). Set `claude-opus-4-8` if you want the most capable model instead.
 - `DATABASE_URL` — Postgres connection string. **Setting this enables sign-in**
   (accounts + sessions) and gates the AI feature behind it. Leave it unset to run
   without a database — sign-in is then disabled and the AI feature is open, which
@@ -164,7 +164,7 @@ Dockerfile automatically.
    *Variables* tab, add:
 
    - `ANTHROPIC_API_KEY` — the key from the Console (**required**)
-   - `AI_MODEL` — optional, e.g. `claude-opus-4-8` (default) or `claude-sonnet-5`
+   - `AI_MODEL` — optional, e.g. `claude-sonnet-5` (default) or `claude-opus-4-8`
 
    Do **not** set `PORT` — Railway injects it and the server reads it.
 4. **Expose it** — in *Settings → Networking*, click *Generate Domain*. That URL
@@ -175,8 +175,11 @@ Redeploys happen automatically on every push to the deployed branch.
 
 Notes:
 
-- The AI calls can run for up to a minute or two, which is why the backend needs
-  an always-on container rather than a serverless/edge function — those time out
+- The three proposals are generated in parallel (one model call per design
+  direction), with the shared room/catalog context sent as a cached prompt
+  prefix, so a full set comes back in roughly the time a single proposal takes.
+  A call can still run for tens of seconds, which is why the backend needs an
+  always-on container rather than a serverless/edge function — those time out
   well before the model responds. The server streams the response so the request
   doesn't hit an HTTP timeout.
 - Every AI call bills the account behind `ANTHROPIC_API_KEY`, regardless of which

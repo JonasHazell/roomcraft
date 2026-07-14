@@ -21,9 +21,9 @@ const EXAMPLES = [
 // phases without pretending to a precise percentage.
 const STEPS: { after: number; label: string }[] = [
   { after: 0, label: 'Reading your room and needs …' },
-  { after: 15, label: 'Placing furniture and picking colours …' },
-  { after: 45, label: 'Checking clearances and walkways …' },
-  { after: 90, label: 'Finishing the three layouts …' },
+  { after: 10, label: 'Placing furniture and picking colours …' },
+  { after: 30, label: 'Checking clearances and walkways …' },
+  { after: 55, label: 'Finishing the three layouts …' },
 ];
 
 function stepFor(elapsed: number): string {
@@ -190,7 +190,7 @@ export function AiProposalsPanel() {
             </div>
             <div className="ai-progress-track" role="progressbar" aria-label="Generating suggestions" />
             <p className="hint">
-              This can take a couple of minutes. Keep RoomCraft open — switching apps can
+              This usually takes under a minute. Keep RoomCraft open — switching apps can
               interrupt the suggestions.
             </p>
           </div>
