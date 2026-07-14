@@ -355,6 +355,26 @@ export function StyleGuide() {
           </div>
         </Demo>
 
+        <Demo
+          title="Validation: category row cues"
+          note="Each .validation-categories row also takes the score-good/-mid/-bad class, adding a left border + color-mix tint so severity reads at a glance, not just the small coloured number."
+        >
+          <ul className="validation-categories" style={{ maxWidth: 320 }}>
+            <li className="score-good">
+              <span>Ergonomics & dimensions</span>
+              <span className="validation-score score-good">92</span>
+            </li>
+            <li className="score-mid">
+              <span>Acoustics & air</span>
+              <span className="validation-score score-mid">68</span>
+            </li>
+            <li className="score-bad">
+              <span>Feng shui</span>
+              <span className="validation-score score-bad">34</span>
+            </li>
+          </ul>
+        </Demo>
+
         <Demo title="Modal" note="Centred dialog on the shared --popup-* chrome. .modal-sm for short confirms.">
           <button type="button" className="btn btn-accent" onClick={() => setModalOpen(true)}>
             Open modal
