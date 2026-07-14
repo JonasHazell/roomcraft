@@ -11,6 +11,9 @@ Repository: `JonasHazell/roomcraft`.
 
 1. [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md) — how past PRs were received; apply
    the patterns that got merged cleanly and avoid the ones that got edited/rejected.
+   [`AGENT_METRICS.md`](AGENT_METRICS.md) — the current health snapshot. A high edit
+   rate or creeping PR size is a direct signal to tighten your own diffs: build the
+   smallest faithful change and reuse existing primitives so the human merges it as-is.
 2. [`DESIGN.md`](DESIGN.md) + the `#styleguide` gallery — for any UI change, reuse
    existing primitives and design tokens. Never hard-code a colour/font/radius/shadow.
 3. [`STRATEGY.md`](STRATEGY.md) / [`PURPOSE.md`](PURPOSE.md) — keep the change true

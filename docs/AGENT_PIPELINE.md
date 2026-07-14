@@ -5,6 +5,14 @@ Agents **propose** changes as issues, **build** every approved proposal into a p
 request for you to review, and **analyse** what you did with each one so the next
 round of proposals gets better.
 
+The analyse stage closes the loop on **three** channels, not one: durable *lessons*
+([`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md)), *measurement & monitoring*
+([`AGENT_METRICS.md`](AGENT_METRICS.md) — how often work gets merged/edited/rejected,
+PR sizes, and the app's own AI latency/cost/reliability telemetry), and
+*self-improvement* — editing the agent instruction docs and the loop itself when a
+lesson or metric has proven itself. So the pipeline doesn't just get better at *what*
+it proposes; it gets better at *how it runs*.
+
 The whole thing is driven by three [Routines](https://code.claude.com/docs/en/claude-code-on-the-web)
 (scheduled triggers). Each Routine fires into a **fresh session** on a schedule and
 does one job. The stages don't share memory — **GitHub (issues, pull requests, and
@@ -17,13 +25,18 @@ Routine A — Propose        Routine B — Build           Routine C — Analyse
   daily 06:00                every 2 hours               daily 22:00
       │                          │                            │
   reads the docs +           picks EVERY open issue        reads merged/closed agent
-  AGENT_LEARNINGS.md,        labelled `agent:ready`,       PRs, rejected issues, and
-  creates issues             opens a PR (`Closes #N`),     the human's own merged PRs,
-  labelled `agent:ready`     labels the PR `agent:built`   appends to AGENT_LEARNINGS.md
+  AGENT_LEARNINGS.md +       labelled `agent:ready`,       PRs, rejected issues, and
+  AGENT_METRICS.md,          opens a PR (`Closes #N`),     the human's own merged PRs;
+  creates issues             labels the PR `agent:built`   updates LEARNINGS + METRICS,
+  labelled `agent:ready`                                   tunes the agent docs/loop
       │                          │                            │
       └──── (no gate) ───────────┴──── YOU decide ────────────┘
                                        merge / edit+merge / close
 ```
+
+Stage C's outputs — the lessons, the metrics snapshot, and any tuning of the
+instruction docs — feed straight back into Stages A and B on their next run. That
+feedback edge is what makes this a *loop* rather than a one-way conveyor.
 
 There is **no human gate between propose and build** — everything proposed gets
 built so you can look at real, working changes before deciding. Your only decision
@@ -63,9 +76,11 @@ Two layers, on purpose:
 
 The taste — *what* is worth building — comes from the docs the agents read:
 [`STRATEGY.md`](STRATEGY.md), [`PURPOSE.md`](PURPOSE.md), [`DESIGN.md`](DESIGN.md),
-and the growing [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md) (written by Stage C).
-That last file is what closes the loop: your merge decisions feed back into the
-next round of proposals.
+and the two files Stage C keeps current: [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md)
+(qualitative lessons) and [`AGENT_METRICS.md`](AGENT_METRICS.md) (quantitative health
++ product monitoring). Those two files are what close the loop: your merge decisions,
+turned into lessons and numbers, feed back into the next round of proposals — and,
+when a pattern is strong enough, into the agent instructions themselves.
 
 ## Guardrails
 
@@ -75,6 +90,11 @@ next round of proposals.
   generate a flood of PRs at once.
 - **Nothing auto-merges.** Every change waits for you.
 - **One issue = one small PR.** Keep scope tight and reviewable.
+- **Self-improvement stays reviewable too.** Stage C may edit the agent instruction
+  docs and the loop's levers (caps, cadence, steps), but only inside a normal PR you
+  merge — never product code, and never a wholesale rewrite. It changes the script
+  conservatively, when a lesson recurs or a metric trends (see
+  [`AGENT_METRICS.md`](AGENT_METRICS.md) → *Acting on the metrics*).
 
 ## Activation note
 

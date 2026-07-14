@@ -1,10 +1,19 @@
 # Agent pipeline — Stage C: Analyse
 
 > You are running as **Routine C** of the RoomCraft agent pipeline (see
-> [`AGENT_PIPELINE.md`](AGENT_PIPELINE.md)). Your job is to learn from what the
-> human did with each agent proposal and pull request — **and from the PRs the
-> human built and merged themselves** — and write those lessons into
-> [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md) so Stages A and B improve over time.
+> [`AGENT_PIPELINE.md`](AGENT_PIPELINE.md)). Your job is to close the loop: learn
+> from what the human did with each agent proposal and pull request — **and from the
+> PRs the human built and merged themselves** — then feed that back three ways so the
+> pipeline keeps getting better:
+>
+> 1. **Lessons** → append durable principles to [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md).
+> 2. **Measurement** → refresh the metrics & monitoring snapshot in
+>    [`AGENT_METRICS.md`](AGENT_METRICS.md).
+> 3. **Self-improvement** → when a lesson or a metric has proven itself, edit the
+>    **agent script** (the instruction docs) and the **loop** itself so the
+>    improvement is baked in, not just remembered.
+>
+> Stages A and B read all three before proposing and building.
 
 **Your primary job is to extract general principles, not to log one-off events.**
 Every specific thing the human did is only evidence. The lesson you record must be
@@ -126,11 +135,74 @@ Each entry should be a **general principle** a future Stage A or Stage B agent c
 
 Because this runs in a fresh session, land your changes as a **pull request**
 (branch `agent/learnings-update`, targeting the default branch) titled something
-like `chore(agent): update learnings`. The human merges it. You may label that PR
-`agent:built` so it shows up in the normal review queue.
+like `chore(agent): update learnings, metrics & pipeline`. The metrics refresh and
+any agent-script/loop edits below go in this **same PR** — one reviewable pipeline
+update per run. The human merges it. You may label that PR `agent:built` so it shows
+up in the normal review queue.
 
 **Important:** mark the source issues/PRs `agent:analyzed` during this run
-regardless of whether your learnings PR is merged yet — that prevents re-analysis.
+regardless of whether your PR is merged yet — that prevents re-analysis.
+
+## Refreshing the metrics & monitoring snapshot
+
+Beyond the qualitative lessons, quantify how the loop is doing and overwrite the
+snapshot in [`AGENT_METRICS.md`](AGENT_METRICS.md). Read that file first — it defines
+every metric and where each number comes from. In short, each run:
+
+- **Compute the outcome metrics** from the items you already reviewed this run
+  (merge rate, clean-merge vs edit rate, rejection rates, median PR size,
+  time-to-decision). You are looking at these PRs and issues anyway — tallying them
+  is nearly free.
+- **Compute the pipeline-health metrics** from label state (ready backlog,
+  stuck-`agent:building` items, duplicate-rejection count, empty-run rate).
+- **Sample the product observability metrics** (AI proposal latency, cost, calls,
+  failure rate) from `[proposals]` server logs *if* you can reach them from this
+  session; otherwise mark those rows **"not sampled this run"** rather than guessing.
+- **Overwrite** the `METRICS-SNAPSHOT` block with current values, a direction arrow
+  since last run, and the window each was computed over. It is a live dashboard —
+  replace it, don't append.
+
+Ground every number in something real (GitHub state or a log line). A blank marked
+"not sampled" is honest; a fabricated figure poisons the loop.
+
+## Improving the agent script and the loop
+
+Recording a lesson is not enough on its own — a principle that only lives in
+`AGENT_LEARNINGS.md` still relies on a future agent reading and applying it. When a
+lesson has **proven itself** or a **metric has moved the wrong way across more than
+one run**, promote it: edit the agent script (the instruction docs) and, where
+warranted, the shape of the loop, so the improvement is enforced by default.
+
+**What you may edit in this stage** (agent pipeline docs only — never product code):
+
+- **The stage instructions** — `AGENT_PROPOSALS.md`, `AGENT_BUILD.md`, this file
+  (`AGENT_ANALYSIS.md`). Turn a recurring learning into a hard rule at the point where
+  the relevant stage will actually act on it. Example: if the edit rate keeps climbing
+  because Stage B forgets a design token, add that as an explicit check in
+  `AGENT_BUILD.md`, not just a note in the learnings.
+- **The loop itself** — `AGENT_PIPELINE.md`. Tune the levers the metrics expose:
+  proposal/PR caps, cadence, the label state machine, or the steps a stage runs. If
+  the ready backlog is growing every run, that's evidence to rebalance Stage A's and
+  Stage B's caps — make the change and say why in the PR.
+- **The metrics themselves** — `AGENT_METRICS.md`. Add a metric when you find a blind
+  spot; retire one that never informs a decision.
+
+**Promotion criteria — be conservative.** The instructions are load-bearing; churning
+them every run makes the pipeline unstable and unreviewable. Only promote when:
+
+- the same lesson has recurred (the `AGENT_LEARNINGS.md` guidance already says to
+  *strengthen* a repeated entry — recurrence is the trigger to harden it into a rule),
+  **or** a metric shows a consistent trend across at least two runs, and
+- the rule you'd add is **general** (applies to a class of future work, not one PR),
+  and
+- the edit is **small and surgical** — a tightened criterion, a new check, a changed
+  cap — not a rewrite of a stage's philosophy.
+
+When you do make a script/loop edit, **note it in the PR description** ("promoted the
+#128 primitive-override learning into `AGENT_BUILD.md`") so the human can review the
+behaviour change deliberately, and add a matching note in `AGENT_LEARNINGS.md` so the
+provenance is traceable. If nothing meets the promotion bar this run, change no
+instructions — an unchanged script is a fine outcome.
 
 ## Guardrails
 
@@ -141,12 +213,22 @@ regardless of whether your learnings PR is merged yet — that prevents re-analy
   eyeballing pixel values (the human tightened spacing to the 8px token in #42)"
   beats both the vague "improve quality" and the too-narrow "change the spacing in
   #42." Never invent a principle the evidence doesn't support.
-- Only edit `AGENT_LEARNINGS.md`. Don't change product code in this stage.
+- **Stay inside the agent pipeline docs.** You may edit `AGENT_LEARNINGS.md`,
+  `AGENT_METRICS.md`, and — under the promotion criteria above — the instruction docs
+  (`AGENT_PROPOSALS.md`, `AGENT_BUILD.md`, `AGENT_ANALYSIS.md`, `AGENT_PIPELINE.md`).
+  **Never change product code (`src/`, `server/`) in this stage** — behaviour changes
+  to the app are Stage A/B's job, proposed and built through the normal queue.
+- **Never fabricate a metric.** If you can't derive a number from GitHub state or a
+  server log, mark it "not sampled this run." A blank is honest; a made-up figure
+  silently steers the whole loop wrong.
+- **Don't thrash the script.** One noisy run is not a trend. Promote a learning into
+  the instructions only when it recurs or a metric holds across runs, and keep each
+  edit small and surgical.
 
 ## Labels
 
 Set `agent:analyzed` on every issue/PR you process — this now includes the human's
 own merged PRs, which is how they're deduped across runs. Never set `agent:ready`,
-`agent:building`, or (except on your own learnings PR) `agent:built`. Never label
-the human's own *closed* (un-merged) PRs or the pipeline's own meta-PRs — those are
-out of scope and left untouched.
+`agent:building`, or (except on your own learnings/metrics/pipeline PR) `agent:built`.
+Never label the human's own *closed* (un-merged) PRs or the pipeline's own meta-PRs —
+those are out of scope and left untouched.
