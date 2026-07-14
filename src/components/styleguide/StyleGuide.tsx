@@ -36,14 +36,29 @@ const CHROME_TOKENS = ['--popup-radius', '--popup-border', '--popup-shadow'];
 const TYPE_TOKENS = ['--display', '--body'];
 const ICON_TOKENS = ['--icon', '--icon-sm'];
 
-/** A representative slice of the furniture palette, mirroring the real swatches. */
+/** A representative slice of the furniture palette, grouped by room type like the real picker. */
 const PALETTE_SAMPLE = [
-  { label: 'Bed', color: '#8a6f52' },
-  { label: 'Sofa', color: '#6f7f7a' },
-  { label: 'Table', color: '#a3855c' },
-  { label: 'Rug', color: '#b4532f' },
-  { label: 'Plant', color: '#4a7a3a' },
-  { label: 'Wardrobe', color: '#6b5b45' },
+  {
+    heading: 'Living room',
+    items: [
+      { label: 'Sofa', color: '#b06a45' },
+      { label: 'TV', color: '#3a3a3d' },
+    ],
+  },
+  {
+    heading: 'Kitchen',
+    items: [
+      { label: 'Kitchen counter', color: '#e3ddcf' },
+      { label: 'Fridge', color: '#d7dade' },
+    ],
+  },
+  {
+    heading: 'Bathroom',
+    items: [
+      { label: 'Toilet', color: '#f2f0ec' },
+      { label: 'Bathtub', color: '#f2f0ec' },
+    ],
+  },
 ];
 
 function tokenValue(name: string): string {
@@ -324,13 +339,23 @@ export function StyleGuide() {
           </div>
         </Demo>
 
-        <Demo title="Furniture palette" note="Grid of .palette-btn, each with a colour .swatch.">
-          <div className="palette" style={{ maxWidth: 320 }}>
-            {PALETTE_SAMPLE.map((p) => (
-              <button key={p.label} type="button" className="palette-btn">
-                <span className="swatch" style={{ background: p.color }} />
-                {p.label}
-              </button>
+        <Demo
+          title="Furniture palette"
+          note="The catalog, grouped by room type: a .palette-groups column of .palette-group blocks, each a .palette-heading over a .palette grid of .palette-btn (colour .swatch)."
+        >
+          <div className="palette-groups" style={{ maxWidth: 320 }}>
+            {PALETTE_SAMPLE.map((group) => (
+              <div key={group.heading} className="palette-group">
+                <h3 className="palette-heading">{group.heading}</h3>
+                <div className="palette">
+                  {group.items.map((p) => (
+                    <button key={p.label} type="button" className="palette-btn">
+                      <span className="swatch" style={{ background: p.color }} />
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </Demo>

@@ -125,6 +125,9 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   category's severity reads at a glance, not only from the small coloured
   digit (see the "Validation: category row cues" gallery entry).
 - **Palette** — `.palette` grid of `.palette-btn`, each with a colour `.swatch`.
+  In the "Add furniture" picker the catalog and library are grouped by room type:
+  a `.palette-groups` column of `.palette-group` blocks, each a `.palette-heading`
+  (uppercase muted label) over its `.palette` grid or `.save-list`.
 - **Room templates** — the "New room" picker's `.template-grid` of `.template-card`
   buttons (each an SVG `.template-preview` + `.template-name` + `.template-meta`);
   `.template-card-blank` is the dashed "draw it yourself" variant.

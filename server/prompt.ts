@@ -172,6 +172,7 @@ export function buildUserPrompt(design: Design, needs: string): string {
   const catalog = Object.entries(FURNITURE_CATALOG).map(([kind, e]) => ({
     kind,
     namn: e.label,
+    rumstyp: e.category,
     standardmatt_m: e.defaultSize,
     framsida: e.front,
     fri_yta_framfor_m: e.accessDepth,

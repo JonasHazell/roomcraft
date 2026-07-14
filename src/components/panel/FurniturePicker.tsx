@@ -1,4 +1,8 @@
-import { FURNITURE_CATALOG, FURNITURE_KINDS } from '../../lib/furnitureCatalog';
+import {
+  FURNITURE_CATALOG,
+  FURNITURE_CATEGORIES,
+  kindsInCategory,
+} from '../../lib/furnitureCatalog';
 import type { FurnitureLibraryEntry } from '../../types';
 import { Icon } from '../ui/Icon';
 import { draftFor, draftFromLibrary, type FurnitureDraft } from './furnitureDraft';
@@ -48,18 +52,34 @@ export function FurniturePicker({
       </div>
 
       {source === 'generic' ? (
-        <div className="palette">
-          {FURNITURE_KINDS.map((kind) => (
-            <button
-              type="button"
-              key={kind}
-              className="palette-btn"
-              onClick={() => onPick(draftFor(kind))}
-            >
-              <span className="swatch" style={{ background: FURNITURE_CATALOG[kind].defaultColor }} />
-              {FURNITURE_CATALOG[kind].label}
-            </button>
-          ))}
+        // The catalog, grouped by room type so kitchen and bathroom pieces sit
+        // together and each room's furniture is easy to find.
+        <div className="palette-groups">
+          {FURNITURE_CATEGORIES.map((group) => {
+            const kinds = kindsInCategory(group.id);
+            if (kinds.length === 0) return null;
+            return (
+              <div key={group.id} className="palette-group">
+                <h3 className="palette-heading">{group.label}</h3>
+                <div className="palette">
+                  {kinds.map((kind) => (
+                    <button
+                      type="button"
+                      key={kind}
+                      className="palette-btn"
+                      onClick={() => onPick(draftFor(kind))}
+                    >
+                      <span
+                        className="swatch"
+                        style={{ background: FURNITURE_CATALOG[kind].defaultColor }}
+                      />
+                      {FURNITURE_CATALOG[kind].label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : libraryEntries.length === 0 ? (
         <p className="hint">
@@ -67,35 +87,49 @@ export function FurniturePicker({
           it here.
         </p>
       ) : (
-        <ul className="save-list">
-          {libraryEntries.map((entry) => (
-            <li key={entry.id}>
-              <button
-                type="button"
-                className="save-name"
-                title={`Use “${entry.name}”`}
-                onClick={() => onPick(draftFromLibrary(entry))}
-              >
-                <span className="lib-name">
-                  <span className="swatch" style={{ background: entry.color }} />
-                  {entry.name}
-                </span>
-                <span className="save-date">
-                  {cm(entry.size.width)}×{cm(entry.size.depth)}×{cm(entry.size.height)} cm
-                </span>
-              </button>
-              <button
-                type="button"
-                className="btn-icon"
-                title="Remove from library"
-                aria-label={`Remove ${entry.name} from library`}
-                onClick={() => onRemoveFromLibrary(entry.id)}
-              >
-                <Icon name="x" />
-              </button>
-            </li>
-          ))}
-        </ul>
+        // Saved pieces, grouped by the room type of their furniture kind.
+        <div className="palette-groups">
+          {FURNITURE_CATEGORIES.map((group) => {
+            const entries = libraryEntries.filter(
+              (e) => FURNITURE_CATALOG[e.kind].category === group.id,
+            );
+            if (entries.length === 0) return null;
+            return (
+              <div key={group.id} className="palette-group">
+                <h3 className="palette-heading">{group.label}</h3>
+                <ul className="save-list">
+                  {entries.map((entry) => (
+                    <li key={entry.id}>
+                      <button
+                        type="button"
+                        className="save-name"
+                        title={`Use “${entry.name}”`}
+                        onClick={() => onPick(draftFromLibrary(entry))}
+                      >
+                        <span className="lib-name">
+                          <span className="swatch" style={{ background: entry.color }} />
+                          {entry.name}
+                        </span>
+                        <span className="save-date">
+                          {cm(entry.size.width)}×{cm(entry.size.depth)}×{cm(entry.size.height)} cm
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        title="Remove from library"
+                        aria-label={`Remove ${entry.name} from library`}
+                        onClick={() => onRemoveFromLibrary(entry.id)}
+                      >
+                        <Icon name="x" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

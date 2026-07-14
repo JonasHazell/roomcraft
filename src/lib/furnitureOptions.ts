@@ -84,6 +84,33 @@ export const FURNITURE_OPTIONS: Record<FurnitureKind, FurnitureOptionSpec[]> = {
     { key: 'shelves', label: 'Shelves', type: 'count', min: 1, max: 6, default: 4, hint: 'Interior shelves between top and bottom.' },
     { key: 'doors', label: 'Cabinet doors', type: 'toggle', default: false },
   ],
+  counter: [
+    { key: 'cabinets', label: 'Cabinet doors', type: 'count', min: 0, max: 4, default: 3 },
+    { key: 'sink', label: 'Built-in sink', type: 'toggle', default: false },
+  ],
+  stove: [
+    { key: 'burners', label: 'Cooktop burners', type: 'count', min: 1, max: 6, default: 4 },
+    { key: 'handle', label: 'Oven handle', type: 'toggle', default: true },
+  ],
+  fridge: [
+    {
+      key: 'style',
+      label: 'Style',
+      type: 'select',
+      default: 'freezer-below',
+      choices: [
+        { value: 'freezer-below', label: 'Fridge-freezer' },
+        { value: 'single', label: 'Single door' },
+        { value: 'side-by-side', label: 'Side by side' },
+      ],
+    },
+  ],
+  toilet: [{ key: 'lidUp', label: 'Lid up', type: 'toggle', default: false }],
+  bathtub: [{ key: 'tap', label: 'Tap & spout', type: 'toggle', default: true }],
+  sink: [
+    { key: 'pedestal', label: 'Pedestal', type: 'toggle', default: true, hint: 'Off = wall-hung basin.' },
+    { key: 'mirror', label: 'Mirror above', type: 'toggle', default: false },
+  ],
   rug: [
     {
       key: 'pattern',
