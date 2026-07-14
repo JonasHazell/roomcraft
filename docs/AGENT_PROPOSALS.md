@@ -49,11 +49,13 @@ you propose.
 
 ## What to look for
 
-From the code analysis and the click-through, look for improvements in **all** of
-these categories, not just new features:
+The focus of each run is **new features**: 10 concrete additions that make the app
+better at planning and furnishing a room. Ground them in the code analysis and the
+click-through, and let these categories shape the *kind* of feature you add:
 
-- **New features** — only when genuinely core to planning and furnishing a room
-  (new surface area needs a strong justification; see below).
+- **New features** — the core of every run. Each should be genuinely useful for
+  planning and furnishing a room, and buildable to the quality bar as a small,
+  self-contained addition.
 - **Changes to existing features** — deepen, finish, or fix a flow that's already
   there so it works better.
 - **Removing unnecessary features** — cut things that add clutter, confuse the core
@@ -80,8 +82,9 @@ these categories, not just new features:
   single sitting. If it needs a large refactor, it's too big — split it or skip it.
 - **Concrete.** Names the files/areas involved and describes the change precisely
   enough that Stage B can implement it without guessing the intent.
-- **Deepening over new surface.** Prefer polishing/finishing something that exists
-  over adding new features. New surface area needs a strong, core justification.
+- **A real addition.** Each feature adds something new that serves the core
+  experience — but keep it small enough to land cleanly and fit the existing design
+  system rather than sprawling into a new surface of its own.
 - **Buildable to the quality bar** (design consistency, tests, no rough edges).
 
 ## Algorithm for each run
@@ -95,8 +98,12 @@ these categories, not just new features:
 3. **Generate candidates.** From what you read and saw, find the highest-value,
    in-scope improvements available right now, across all the categories above (new
    features, changes to existing features, removals, and GUI clarity/simplicity).
-4. **Select up to `N` = 3** of the best. Fewer is fine. Quality over quantity —
-   every proposal becomes a real PR the human has to review.
+4. **Select `N` = 10** of the best. Aim to fill the quota every run — each run
+   should produce 10 concrete proposals for new features. Hold every one to the
+   quality bar; if truly great candidates are scarce, keep digging (more code
+   analysis, more click-through, more categories) until you have 10 that serve the
+   core experience. Every proposal becomes a real PR the human reviews, so make
+   each one count.
 5. **Create one issue per proposal** in the format below, labelled `agent:ready`.
 
 ## Issue format
@@ -117,12 +124,15 @@ these categories, not just new features:
 
 ## Guardrails
 
-- **Hard cap of `N` = 3 new issues per run.** This is the main brake on how many
-  PRs the human has to review. When in doubt, propose fewer.
+- **Target of `N` = 10 new-feature issues per run.** Each run should create 10
+  concrete proposals for new features — that is the intended volume, not a ceiling
+  to stay under. The human reviews every resulting PR, so the brake is *quality*,
+  not count: never pad the list with weak or duplicate ideas to hit the number.
 - **No monetization-driven proposals** — that phase is parked (`STRATEGY.md`).
 - **No speculative infrastructure** — build for the experience in front of us.
-- If nothing meets the bar this run, **create nothing**. An empty run is a valid,
-  good outcome.
+- If, after a thorough look at the app, you genuinely cannot find 10 in-scope,
+  quality proposals, create as many strong ones as you can rather than filling the
+  quota with filler.
 
 ## Labels
 

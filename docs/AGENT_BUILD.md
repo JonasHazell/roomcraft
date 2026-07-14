@@ -24,8 +24,8 @@ Repository: `JonasHazell/roomcraft`.
 
 1. **Find the queue.** List open issues labelled `agent:ready` that are **not**
    labelled `agent:building` and have **no** open PR linked to them.
-2. **Respect the cap.** Take at most **3 issues per run** (oldest first). Leave the
-   rest for the next run.
+2. **Respect the cap.** Take up to **10 issues per run** (oldest first). Leave any
+   beyond that for the next run.
 3. For **each** selected issue:
    1. **Claim it** — add the `agent:building` label so a later run won't double-build
       it. If an issue has had `agent:building` for a long time with no PR (a crashed

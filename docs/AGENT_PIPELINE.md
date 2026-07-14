@@ -84,10 +84,11 @@ when a pattern is strong enough, into the agent instructions themselves.
 
 ## Guardrails
 
-- **Volume is controlled at Stage A.** With no approval gate, the proposal cap
-  (`N` per day, default 2–3) is the main brake on how many PRs you get. Keep it low.
-- **Stage B caps PRs per run** (default 3) so a large `agent:ready` backlog can't
-  generate a flood of PRs at once.
+- **Volume is set at Stage A.** With no approval gate, the proposal target
+  (`N` per day, currently 10 new features) sets how many PRs you get. The brake is
+  quality, not count — every proposal must clear the bar.
+- **Stage B builds up to 10 PRs per run** so the day's proposals all get
+  implemented, while a larger backlog still drains in order rather than all at once.
 - **Nothing auto-merges.** Every change waits for you.
 - **One issue = one small PR.** Keep scope tight and reviewable.
 - **Self-improvement stays reviewable too.** Stage C may edit the agent instruction
