@@ -187,6 +187,34 @@ describe('ACC-13 over-furnishing', () => {
   });
 });
 
+describe('ACC-14 usable clearance in front of a function', () => {
+  it('flags a desk whose seating side is blocked by a bed', () => {
+    // Desk against the north wall, front (rotation 0) toward +z into the room.
+    const desk = piece('desk', 2, 0.4, { width: 1.2, depth: 0.7, height: 0.74 });
+    // A wide bed sits right in front of the desk, covering the clearance it needs.
+    const bed = piece('bed', 2, 1.85, { width: 1.6, depth: 2, height: 0.5 });
+    const outcome = outcomeOf(makeDesign([desk, bed]), 'ACC-14');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].furnitureIds).toContain(desk.id);
+      expect(outcome.violations[0].furnitureIds).toContain(bed.id);
+    }
+  });
+
+  it('passes a desk with clear space in front', () => {
+    const desk = piece('desk', 2, 0.4, { width: 1.2, depth: 0.7, height: 0.74 });
+    const bed = piece('bed', 3, 3.5, { width: 1.2, depth: 2, height: 0.5, rotationY: -Math.PI / 2 });
+    expect(outcomeOf(makeDesign([desk, bed]), 'ACC-14').status).toBe('passed');
+  });
+
+  it('does not flag a sofa for its own coffee table', () => {
+    // Sofa against the north wall facing +z, coffee table just in front of it.
+    const sofa = piece('sofa', 2, 0.5, { width: 2, depth: 0.9, height: 0.8 });
+    const coffee = piece('table', 2, 1.3, { width: 1.1, depth: 0.6, height: 0.4 });
+    expect(outcomeOf(makeDesign([sofa, coffee]), 'ACC-14').status).toBe('passed');
+  });
+});
+
 describe('ACO-03 plants', () => {
   it('flags a room without a plant and passes one with', () => {
     const sofa = piece('sofa', 2, 2, { width: 2, depth: 0.9 });

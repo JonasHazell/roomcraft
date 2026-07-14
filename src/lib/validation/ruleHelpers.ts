@@ -1,5 +1,5 @@
 import type { Design, FurnitureItem, FurnitureKind, Point } from '../../types';
-import { floorPolygon } from '../polygon.ts';
+import { floorPolygon, pointInPolygon } from '../polygon.ts';
 import {
   add,
   blockers,
@@ -66,6 +66,49 @@ export function frontZone(f: FurnitureItem, depth: number): Point[] {
   const s = add(faceMid, right, -f.size.width / 2);
   const e = add(faceMid, right, f.size.width / 2);
   return stripZone(s, e, fwd, depth);
+}
+
+/**
+ * Fraction (0–1) of the clearance rectangle in front of `f` — as wide as the
+ * piece and `depth` deep — that is inside the room and free of blocking
+ * furniture, sampled on a ~10 cm grid. This measures how *usable* the space in
+ * front of a piece really is, rather than just whether a single sliver is free:
+ * a bed shoved against the front of a desk drives the fraction toward zero even
+ * though a walking path still reaches the last free cell. `ignore` exempts
+ * blockers that legitimately belong in the zone (e.g. a coffee table in front of
+ * a sofa). Non-blocking pieces (chairs, rugs) never count against the clearance.
+ */
+export function frontClearFraction(
+  design: Design,
+  poly: Point[],
+  f: FurnitureItem,
+  depth: number,
+  ignore: (b: FurnitureItem) => boolean = () => false,
+): number {
+  const fwd = frontDir(f.rotationY);
+  const right = rightDir(f.rotationY);
+  const faceMid = add(f.position, fwd, f.size.depth / 2);
+  const obstacles = blockers(design.furniture, new Set([f.id]))
+    .filter((b) => !ignore(b))
+    .map(footprint);
+  const nu = Math.max(1, Math.round(f.size.width / 0.1));
+  const nv = Math.max(1, Math.round(depth / 0.1));
+  let total = 0;
+  let clear = 0;
+  for (let iu = 0; iu < nu; iu++) {
+    for (let iv = 0; iv < nv; iv++) {
+      const p = add(
+        add(faceMid, right, ((iu + 0.5) / nu - 0.5) * f.size.width),
+        fwd,
+        ((iv + 0.5) / nv) * depth,
+      );
+      total++;
+      if (!pointInPolygon(p, poly)) continue; // outside the room / behind a wall
+      if (obstacles.some((q) => pointInPolygon(p, q))) continue; // under a blocker
+      clear++;
+    }
+  }
+  return total > 0 ? clear / total : 1;
 }
 
 /** Blocking furniture that overlaps the zone. */
