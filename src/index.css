@@ -535,6 +535,49 @@ select {
   gap: 8px;
 }
 
+/* Ambient "still working" cue for long-running async actions (e.g. the AI
+   furnishing panel while Claude generates proposals). Pairs a sweeping accent
+   bar with a .hint line so the wait stays legible for its full duration
+   instead of reading as stalled. Under prefers-reduced-motion: reduce the bar
+   is hidden, leaving the hint text as the sole, static signal. */
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.loading-bar {
+  display: block;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  overflow: hidden;
+}
+
+.loading-bar-fill {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  animation: loading-bar-sweep 1.3s ease-in-out infinite;
+}
+
+@keyframes loading-bar-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-bar {
+    display: none;
+  }
+}
+
 /* ---------- Furniture palette ---------- */
 
 .palette {

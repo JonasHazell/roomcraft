@@ -106,7 +106,12 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   from `.hint` + `.field-grid`).
 - **Feedback** — one `.hint` for guidance, one `.error` for failures (reuse them —
   don't roll new ones). `.score-badge` with `.score-good/-mid/-bad`; `.severity`
-  with `.severity-1`…`-5` (5 = worst).
+  with `.severity-1`…`-5` (5 = worst). `.loading-indicator` (a `.loading-bar`
+  sweep paired with a `.hint` line) for a long-running async action — e.g. the AI
+  furnishing panel while Claude generates proposals — so the wait reads as
+  in-progress rather than stalled. The bar is hidden under
+  `prefers-reduced-motion: reduce`, leaving the hint text as the sole, static
+  signal.
 - **Palette** — `.palette` grid of `.palette-btn`, each with a colour `.swatch`.
 - **Room templates** — the "New room" picker's `.template-grid` of `.template-card`
   buttons (each an SVG `.template-preview` + `.template-name` + `.template-meta`);

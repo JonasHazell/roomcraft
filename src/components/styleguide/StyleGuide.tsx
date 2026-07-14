@@ -300,6 +300,18 @@ export function StyleGuide() {
           </p>
         </Demo>
 
+        <Demo
+          title="Loading indicator"
+          note="Ambient 'still working' cue for long-running async actions (e.g. the AI furnishing panel while Claude generates proposals). Pairs a sweeping .loading-bar with a .hint line so the wait reads as in-progress, not stalled. The bar is hidden under prefers-reduced-motion: reduce, leaving the hint text as the sole signal."
+        >
+          <div className="loading-indicator" role="status" style={{ maxWidth: 320 }}>
+            <span className="loading-bar" aria-hidden="true">
+              <span className="loading-bar-fill" />
+            </span>
+            <p className="hint">This can take a couple of minutes while Claude works out the layout.</p>
+          </div>
+        </Demo>
+
         <Demo title="Furniture palette" note="Grid of .palette-btn, each with a colour .swatch.">
           <div className="palette" style={{ maxWidth: 320 }}>
             {PALETTE_SAMPLE.map((p) => (

@@ -75,7 +75,12 @@ export function AiProposalsPanel() {
       </div>
 
       {loading && (
-        <p className="hint">This can take a couple of minutes while Claude works out the layout.</p>
+        <div className="loading-indicator" role="status">
+          <span className="loading-bar" aria-hidden="true">
+            <span className="loading-bar-fill" />
+          </span>
+          <p className="hint">This can take a couple of minutes while Claude works out the layout.</p>
+        </div>
       )}
       {error && <p className="error">{error}</p>}
 
