@@ -60,7 +60,8 @@ export function toFurnitureItem(f: AiFurniture): Omit<FurnitureItem, 'id'> {
 
 /**
  * Asks the AI server (npm run server) for furnishing proposals for the room.
- * Can take a couple of minutes — Claude works out the layout behind the scenes.
+ * Can take up to a minute — Claude works out the layout behind the scenes (the
+ * proposals are generated in parallel on the server, so it is not slower for more).
  *
  * Pass an {@link AbortSignal} to make the request cancellable (a user "Cancel",
  * or a timeout guard). An abort surfaces as the native `AbortError`, which the

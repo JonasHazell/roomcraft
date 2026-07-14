@@ -43,6 +43,18 @@ const client = new Anthropic();
  * response to `jsonSchema`. Streams the response so long generations don't hit
  * the HTTP timeout, then returns the parsed JSON. Uses an API key — no local
  * Claude Code login or `claude` subprocess involved.
+ *
+ * The system prompt is sent as a cached block (`cache_control`): it is identical
+ * across every proposal and repair call, so after the first request it is served
+ * from cache — cheaper and faster to first token. Caching of the shared room /
+ * catalog context is set up by the caller (a `cache_control` breakpoint on that
+ * block); see server/index.ts.
+ *
+ * Thinking is disabled: the previous model (Opus 4.8) ran without it, structured
+ * output already blocks any stray reasoning from leaking into the JSON, and for a
+ * latency-sensitive endpoint the extra thinking tokens would eat into the speedup
+ * from running the proposals in parallel. Flip to `{ type: 'adaptive' }` if a
+ * future model needs the reasoning depth.
  */
 export async function runClaude(opts: ClaudeRunOptions): Promise<ClaudeRunResult> {
   const start = Date.now();
@@ -50,7 +62,10 @@ export async function runClaude(opts: ClaudeRunOptions): Promise<ClaudeRunResult
     .stream({
       model: opts.model,
       max_tokens: opts.maxTokens ?? 16000,
-      system: opts.systemPrompt,
+      thinking: { type: 'disabled' },
+      system: opts.systemPrompt
+        ? [{ type: 'text', text: opts.systemPrompt, cache_control: { type: 'ephemeral' } }]
+        : undefined,
       messages: opts.messages,
       output_config: { format: { type: 'json_schema', schema: opts.jsonSchema } },
     })

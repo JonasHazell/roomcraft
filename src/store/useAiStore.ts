@@ -4,9 +4,10 @@ import { fetchProposals, type ProposalsResponse } from '../lib/aiProposals';
 import { useAuthStore } from './useAuthStore';
 
 /**
- * A generation runs Claude on the server and can take a couple of minutes; abort
- * it if it runs past this so a stalled request never leaves the panel stuck on
- * "thinking" forever (mobile networks drop; the server can hang).
+ * A generation runs Claude on the server (proposals in parallel) and usually
+ * finishes in under a minute; this is a generous safety cap so a stalled request
+ * never leaves the panel stuck on "thinking" forever (mobile networks drop; the
+ * server can hang).
  */
 const TIMEOUT_MS = 4 * 60 * 1000;
 

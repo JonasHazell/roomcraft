@@ -22,12 +22,12 @@ import {
 import { runClaude, type ChatMessages } from './claude.ts';
 import { autoFixProposals } from './autofix.ts';
 import { resolveProposals } from './orient.ts';
-import { SYSTEM_PROMPT, buildRepairPrompt, buildUserPrompt } from './prompt.ts';
-import { proposalsJsonSchema, proposalsSchema } from './schema.ts';
+import { PROPOSAL_BRIEFS, SYSTEM_PROMPT, buildRepairPrompt, buildUserPrompt } from './prompt.ts';
+import { proposalJsonSchema, proposalsSchema, type ResolvedProposals } from './schema.ts';
 import { blockingCount, collectFindings, repairFindings, type Finding } from './ruleValidation.ts';
 
 const PORT = Number(process.env.PORT ?? 8787);
-const MODEL = process.env.AI_MODEL ?? 'claude-opus-4-8';
+const MODEL = process.env.AI_MODEL ?? 'claude-sonnet-5';
 const MAX_BODY = 2 * 1024 * 1024;
 
 // How many repair round-trips to the model are allowed after the first response.
@@ -43,10 +43,11 @@ const MAX_WARNINGS = 12;
 // without it the call fails fast with a clear message instead of a 502.
 const aiConfigured = Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
 
-// Each AI request makes one or two Messages API calls that can run for a minute,
-// so unbounded concurrency would pile up in-flight work. Cap how many run at once
-// and how many may wait; everything beyond that is shed with a 503 rather than
-// piling up. Both are overridable so a bigger box can serve more.
+// Each AI request fans out to one Messages API call per proposal (plus any repair
+// turns), all in flight at once, so unbounded concurrency would pile up in-flight
+// work fast. Cap how many requests run at once and how many may wait; everything
+// beyond that is shed with a 503 rather than piling up. Both are overridable so a
+// bigger box can serve more.
 const MAX_CONCURRENT = Math.max(1, Number(process.env.AI_MAX_CONCURRENT ?? 2));
 const MAX_QUEUE = Math.max(0, Number(process.env.AI_MAX_QUEUE ?? 8));
 
@@ -373,28 +374,60 @@ function parseRequest(raw: string): ProposalRequest {
   return { design, needs: body.needs };
 }
 
-/** Resolves a raw model response, then applies the deterministic auto-fix pass. */
-function prepare(structuredOutput: unknown, design: Design) {
-  return autoFixProposals(resolveProposals(proposalsSchema.parse(structuredOutput), design), design);
+/**
+ * Resolves a single raw proposal (facing/againstWall → rotation, colours, etc.)
+ * and applies the deterministic auto-fix pass, wrapping it in the one-element
+ * proposal-set shape the resolve/validate/fix pipeline works on.
+ */
+function prepareOne(structuredOutput: unknown, design: Design): ResolvedProposals {
+  return autoFixProposals(
+    resolveProposals(proposalsSchema.parse({ proposals: [structuredOutput] }), design),
+    design,
+  );
 }
 
-async function generateProposals(design: Design, needs: string) {
-  console.log(`[proposals] generating with model "${MODEL}" …`);
+/**
+ * Generates one proposal for a single design direction, then runs the per-proposal
+ * repair loop on it. Because each direction is an independent conversation, the
+ * three proposals are produced concurrently (see {@link generateProposals}) — so
+ * the whole set comes back in roughly the time one proposal used to take, instead
+ * of three in sequence.
+ *
+ * `shared` is the room + catalog + needs context, identical for every direction;
+ * it is sent as a cached block so the second and third calls (and every repair
+ * turn) reuse it rather than re-reading it. `brief` is the direction-specific
+ * instruction appended after it.
+ */
+async function generateOneProposal(
+  shared: string,
+  brief: string,
+  label: string,
+  design: Design,
+): Promise<{ proposal: ResolvedProposals['proposals'][number]; warnings: Finding[] }> {
   // The full conversation is resent on every call (the API is stateless); each
-  // repair turn appends to this same history.
-  const messages: ChatMessages = [{ role: 'user', content: buildUserPrompt(design, needs) }];
+  // repair turn appends to this same history. The shared context carries a cache
+  // breakpoint so only the short direction/repair turns are re-read.
+  const messages: ChatMessages = [
+    {
+      role: 'user',
+      content: [
+        { type: 'text', text: shared, cache_control: { type: 'ephemeral' } },
+        { type: 'text', text: brief },
+      ],
+    },
+  ];
   const first = await runClaude({
     messages,
     systemPrompt: SYSTEM_PROMPT,
-    jsonSchema: proposalsJsonSchema,
+    jsonSchema: proposalJsonSchema,
     model: MODEL,
   });
   console.log(
-    `[proposals] first response done (${Math.round(first.durationMs / 1000)} s, ~$${first.costUsd.toFixed(2)})`,
+    `[proposals] ${label}: first response done (${Math.round(first.durationMs / 1000)} s, ~$${first.costUsd.toFixed(2)})`,
   );
 
   let assistant = first.assistant;
-  let data = prepare(first.structuredOutput, design);
+  let data = prepareOne(first.structuredOutput, design);
   let findings = collectFindings(data, design);
   // Keep the response with the fewest hard failures across all rounds.
   let best = { data, findings };
@@ -403,36 +436,76 @@ async function generateProposals(design: Design, needs: string) {
     const toFix = repairFindings(findings);
     if (toFix.length === 0) break; // only cosmetic remarks left — not worth a round.
     console.log(
-      `[proposals] repair ${round}/${MAX_REPAIRS}: ${blockingCount(findings)} blocking, ${toFix.length} to fix …`,
+      `[proposals] ${label}: repair ${round}/${MAX_REPAIRS}: ${blockingCount(findings)} blocking, ${toFix.length} to fix …`,
     );
     messages.push(assistant, { role: 'user', content: buildRepairPrompt(toFix) });
     const repaired = await runClaude({
       messages,
       systemPrompt: SYSTEM_PROMPT,
-      jsonSchema: proposalsJsonSchema,
+      jsonSchema: proposalJsonSchema,
       model: MODEL,
     });
     console.log(
-      `[proposals] repair ${round} done (${Math.round(repaired.durationMs / 1000)} s, ~$${repaired.costUsd.toFixed(2)})`,
+      `[proposals] ${label}: repair ${round} done (${Math.round(repaired.durationMs / 1000)} s, ~$${repaired.costUsd.toFixed(2)})`,
     );
     assistant = repaired.assistant;
-    data = prepare(repaired.structuredOutput, design);
+    data = prepareOne(repaired.structuredOutput, design);
     findings = collectFindings(data, design);
     if (blockingCount(findings) < blockingCount(best.findings)) best = { data, findings };
   }
 
-  const remaining = blockingCount(best.findings);
+  return { proposal: best.data.proposals[0], warnings: repairFindings(best.findings) };
+}
+
+async function generateProposals(design: Design, needs: string) {
+  console.log(`[proposals] generating ${PROPOSAL_BRIEFS.length} proposals with model "${MODEL}" …`);
+  // Room + catalog + needs — identical across directions, so build it once and
+  // let the cached block carry it into every call.
+  const shared = buildUserPrompt(design, needs);
+
+  // One independent conversation per direction, all in flight at once.
+  const settled = await Promise.allSettled(
+    PROPOSAL_BRIEFS.map((brief, i) =>
+      generateOneProposal(shared, brief, `#${i + 1}`, design),
+    ),
+  );
+
+  const ok = settled.filter(
+    (r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof generateOneProposal>>> =>
+      r.status === 'fulfilled',
+  );
+  // If every direction failed, surface the failure; otherwise return what we got —
+  // two good proposals beat none.
+  if (ok.length === 0) {
+    const firstError = settled.find((r) => r.status === 'rejected');
+    throw firstError && firstError.status === 'rejected'
+      ? firstError.reason
+      : new Error('All proposals failed to generate.');
+  }
+  for (const r of settled) {
+    if (r.status === 'rejected') console.error('[proposals] a direction failed:', r.reason);
+  }
+
+  const proposals = ok.map((r) => r.value.proposal);
+  const remaining = ok.reduce((n, r) => n + blockingCount(r.value.warnings), 0);
   console.log(
     remaining === 0
-      ? `[proposals] all hard requirements satisfied.`
-      : `[proposals] ${remaining} hard finding(s) remain after ${MAX_REPAIRS} repair round(s); returning best.`,
+      ? `[proposals] ${proposals.length} proposal(s) ready; all hard requirements satisfied.`
+      : `[proposals] ${proposals.length} proposal(s) ready; ${remaining} hard finding(s) remain after repairs; returning best.`,
   );
-  // Surface the findings worth acting on (importance ≥ 3); drop purely cosmetic
-  // ones and cap the list so the panel stays readable.
-  const warnings = repairFindings(best.findings)
-    .map((f: Finding) => f.message)
-    .slice(0, MAX_WARNINGS);
-  return { data: best.data, warnings };
+
+  // Surface the findings worth acting on (importance ≥ 3, deduped across proposals);
+  // drop purely cosmetic ones and cap the list so the panel stays readable.
+  const seen = new Set<string>();
+  const warnings: string[] = [];
+  for (const r of ok) {
+    for (const f of r.value.warnings) {
+      if (seen.has(f.message)) continue;
+      seen.add(f.message);
+      warnings.push(f.message);
+    }
+  }
+  return { data: { proposals }, warnings: warnings.slice(0, MAX_WARNINGS) };
 }
 
 const server = createServer((req, res) => {
