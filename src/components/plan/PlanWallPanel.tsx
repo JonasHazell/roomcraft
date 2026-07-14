@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type Ref } from 'react';
 import {
   defaultOpening,
   floorPolygon,
@@ -14,7 +14,7 @@ import { NumberField } from '../panel/fields';
 import { Icon } from '../ui/Icon';
 
 /** Fine-tuning in cm for the selected wall in the floor plan. */
-export function PlanWallPanel() {
+export function PlanWallPanel({ ref }: { ref?: Ref<HTMLDivElement> }) {
   const walls = useDesignStore((s) => s.design.walls);
   const openings = useDesignStore((s) => s.design.openings);
   const resizeWall = useDesignStore((s) => s.resizeWall);
@@ -39,73 +39,60 @@ export function PlanWallPanel() {
   };
 
   return (
-    <div className="plan-wall-panel">
-      <p className="hint">
+    <div className="plan-wall-panel" ref={ref}>
+      <p className="plan-wall-title">
         <strong>{wallLabel(walls, wall.id)}</strong> · {formatCm(wallLen(wall))}
       </p>
-      <div className="field-grid">
-        <NumberField
-          label="Length"
-          value={lenCm}
-          min={10}
-          max={3000}
-          step={1}
-          suffix="cm"
-          onChange={(cm) => resizeWall(wall.id, cm / 100)}
-        />
-        {wall.kind === 'interior' && (
+      <div className="plan-wall-scroll">
+        <div className="field-grid">
           <NumberField
-            label={vertical ? 'From left' : 'From top'}
-            value={distCm}
-            min={0}
+            label="Length"
+            value={lenCm}
+            min={10}
             max={3000}
             step={1}
             suffix="cm"
-            onChange={(cm) => moveWall(wall.id, (vertical ? bounds.minX : bounds.minZ) + cm / 100)}
+            onChange={(cm) => resizeWall(wall.id, cm / 100)}
           />
-        )}
-      </div>
-      <p className="hint">
-        {wall.kind === 'exterior'
-          ? 'The length changes at the wall’s end (the arrow); the adjacent wall follows.'
-          : 'The length changes at the wall’s end (the arrow).'}
-      </p>
-
-      {/* Doors & windows on this wall — add one, then tune its position and size. */}
-      <div className="opening-editor">
-        <p className="hint">
-          <strong>Doors &amp; windows</strong>
-        </p>
-        <div className="opening-add">
-          <button type="button" className="btn" onClick={() => add('door')}>
-            <Icon name="door" /> Add door
-          </button>
-          <button type="button" className="btn" onClick={() => add('window')}>
-            <Icon name="window" /> Add window
-          </button>
+          {wall.kind === 'interior' && (
+            <NumberField
+              label={vertical ? 'From left' : 'From top'}
+              value={distCm}
+              min={0}
+              max={3000}
+              step={1}
+              suffix="cm"
+              onChange={(cm) => moveWall(wall.id, (vertical ? bounds.minX : bounds.minZ) + cm / 100)}
+            />
+          )}
         </div>
-        {wallOpenings.length > 0 && (
-          <ul className="opening-list">
-            {wallOpenings.map((o) => (
-              <OpeningRow
-                key={o.id}
-                opening={o}
-                wallLenCm={lenCm}
-                expanded={editingId === o.id}
-                onToggle={() => setEditingId(editingId === o.id ? null : o.id)}
-                onClosed={() => setEditingId(null)}
-              />
-            ))}
-          </ul>
-        )}
-      </div>
 
-      {wall.kind === 'exterior' && (
-        <p className="hint">
-          Exterior walls cannot be deleted one by one — the outline must stay closed. Use
-          &ldquo;Redraw exterior walls…&rdquo; to change the shape of the room.
-        </p>
-      )}
+        {/* Doors & windows on this wall — add one, then tune its position and size. */}
+        <div className="opening-editor">
+          <div className="opening-add">
+            <button type="button" className="btn" onClick={() => add('door')}>
+              <Icon name="door" /> Add door
+            </button>
+            <button type="button" className="btn" onClick={() => add('window')}>
+              <Icon name="window" /> Add window
+            </button>
+          </div>
+          {wallOpenings.length > 0 && (
+            <ul className="opening-list">
+              {wallOpenings.map((o) => (
+                <OpeningRow
+                  key={o.id}
+                  opening={o}
+                  wallLenCm={lenCm}
+                  expanded={editingId === o.id}
+                  onToggle={() => setEditingId(editingId === o.id ? null : o.id)}
+                  onClosed={() => setEditingId(null)}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

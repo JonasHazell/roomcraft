@@ -1186,7 +1186,9 @@ select {
 }
 
 /* Selected wall's fine-tuning: a card floating just above the bottom dock, so it
-   sits clear of both the canvas and the tools. */
+   sits clear of both the canvas and the tools. Height is capped and its body
+   scrolls, so adding several doors/windows can never grow it to swallow the
+   drawing — the viewport also lifts the room clear of it (see useViewport). */
 .plan-wall-panel {
   position: absolute;
   left: calc(12px + env(safe-area-inset-left));
@@ -1194,6 +1196,7 @@ select {
   bottom: calc(82px + env(safe-area-inset-bottom));
   z-index: 55;
   max-width: 360px;
+  max-height: min(48vh, 460px);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -1205,6 +1208,30 @@ select {
   border-radius: 12px;
   padding: 10px 12px;
   box-shadow: 0 4px 16px rgba(24, 24, 27, 0.16);
+}
+
+/* Sheet header: the wall's name + length, pinned above the scrolling body. */
+.plan-wall-title {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.plan-wall-title strong {
+  color: var(--ink);
+}
+
+/* Everything below the header scrolls within the capped sheet. `pan-y` re-enables
+   the vertical scroll the editor-wide `touch-action: none` would otherwise block. */
+.plan-wall-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  margin: 0 -12px -10px;
+  padding: 2px 12px 10px;
 }
 
 .opening-list {
