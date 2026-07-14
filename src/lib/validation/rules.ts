@@ -10,6 +10,7 @@ import {
 } from '../polygon.ts';
 import {
   add,
+  blockers,
   clearanceZones,
   convexOverlap,
   distToQuad,
@@ -17,7 +18,7 @@ import {
   erodedGrid,
   floodFill,
   footprint,
-  freeComponentSizes,
+  freeComponents,
   frontDir,
   norm,
   quadGap,
@@ -213,14 +214,44 @@ export const RULES: RuleDef[] = [
       if (Math.abs(signedArea(ctx.poly)) < 2) return na; // too small to reason about circulation
       // Walkable floor for a 90 cm passage (0.45 m erosion each side).
       const grid = erodedGrid(ctx.design, 0.45);
-      // Ignore pockets < 0.8 m² (80 cells) — small nooks behind furniture, not routes.
-      const rooms = freeComponentSizes(grid).filter((n) => n >= 80);
-      if (rooms.length <= 1) return ok;
+      // Connected walkable regions, largest first. Ignore pockets < 0.4 m²
+      // (40 cells) — true slivers behind furniture nobody needs to walk to.
+      // Anything bigger is a part of the room people should be able to reach;
+      // if more than one such region survives, furniture is walling one off so
+      // you cannot pass by it at 90 cm (only fully split at the old 0.8 m²
+      // threshold was caught before, which let beds barricading a strip of the
+      // room slip through).
+      const regions = freeComponents(grid)
+        .filter((cells) => cells.length >= 40)
+        .sort((a, b) => b.length - a.length);
+      if (regions.length <= 1) return ok;
+      // The largest region is the main floor; every other region is cut off
+      // from it — you would have to climb over furniture to reach it.
+      const walledOff = regions
+        .slice(1)
+        .flat()
+        .map((i) => grid.center(i % grid.cols, Math.floor(i / grid.cols)));
+      // The furniture forming the barrier: blockers hugging the cut-off floor.
+      const barrier = blockers(ctx.design.furniture).filter((f) => {
+        const quad = footprint(f);
+        return walledOff.some((p) => distToQuad(p, quad) < 0.55);
+      });
+      const xs = walledOff.map((p) => p.x);
+      const zs = walledOff.map((p) => p.z);
+      const zone: Point[] = [
+        { x: Math.min(...xs) - 0.05, z: Math.min(...zs) - 0.05 },
+        { x: Math.max(...xs) + 0.05, z: Math.min(...zs) - 0.05 },
+        { x: Math.max(...xs) + 0.05, z: Math.max(...zs) + 0.05 },
+        { x: Math.min(...xs) - 0.05, z: Math.max(...zs) + 0.05 },
+      ];
       return fail([
         {
           message:
-            'The walkable floor is split into separate areas by a passage narrower than 90 cm — widen the gap between the furniture (or between furniture and wall) so you can move through at 90 cm.',
-          furnitureIds: [],
+            barrier.length > 0
+              ? `${names(barrier)} blocks the way through the room — there is no 90 cm passage past it to the rest of the floor. Move it, or open a gap beside it, so you can walk past.`
+              : 'Part of the walkable floor is cut off by a passage narrower than 90 cm — widen the gap between the furniture (or between furniture and wall) so you can move through at 90 cm.',
+          furnitureIds: barrier.map((f) => f.id),
+          zones: [zone],
         },
       ]);
     },

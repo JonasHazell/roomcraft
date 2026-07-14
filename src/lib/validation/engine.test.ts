@@ -231,9 +231,30 @@ describe('ACC-01 main passages', () => {
     expect(outcomeOf(makeDesign([divider]), 'ACC-01').status).toBe('violated');
   });
 
+  it('flags two beds that wall off a strip of the room', () => {
+    // Two beds side by side span the room and seal the strip between them and
+    // the north wall. That cut-off strip is only ~0.6 m² — under the old 0.8 m²
+    // threshold, so the rule used to pass it — yet you still cannot pass by the
+    // beds to reach it. The barrier furniture is named and highlighted.
+    const bedA = piece('bed', 1.2, 2.05, { width: 1.6, depth: 2, height: 0.5, name: 'bed A' });
+    const bedB = piece('bed', 2.8, 2.05, { width: 1.6, depth: 2, height: 0.5, name: 'bed B' });
+    const outcome = outcomeOf(makeDesign([bedA, bedB]), 'ACC-01');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].furnitureIds).toContain(bedA.id);
+      expect(outcome.violations[0].furnitureIds).toContain(bedB.id);
+      expect(outcome.violations[0].zones?.length).toBeGreaterThan(0);
+    }
+  });
+
   it('passes an open room', () => {
     const sofa = piece('sofa', 2, 2, { width: 2, depth: 0.9 });
     expect(outcomeOf(makeDesign([sofa]), 'ACC-01').status).toBe('passed');
+  });
+
+  it('passes a single bed against the wall', () => {
+    const bed = piece('bed', 3, 2.5, { width: 1.2, depth: 2, height: 0.5, rotationY: -Math.PI / 2 });
+    expect(outcomeOf(makeDesign([bed]), 'ACC-01').status).toBe('passed');
   });
 });
 
