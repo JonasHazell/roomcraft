@@ -1865,7 +1865,10 @@ select {
   .palette-btn,
   select,
   .sel-action,
-  .prompt-chip {
+  .prompt-chip,
+  .count-step,
+  .check-field,
+  .source-toggle button {
     min-height: 44px;
   }
 
