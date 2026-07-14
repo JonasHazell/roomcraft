@@ -1,44 +1,97 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useAuthStore } from '../../store/useAuthStore';
-import {
-  fetchProposals,
-  toFurnitureItem,
-  validHexColor,
-  type AiProposal,
-  type ProposalsResponse,
-} from '../../lib/aiProposals';
+import { useAiStore } from '../../store/useAiStore';
+import { toFurnitureItem, validHexColor, type AiProposal } from '../../lib/aiProposals';
+
+// Tap-to-fill starting points, so getting a first result costs a tap instead of
+// composing a sentence on a phone keyboard. Each appends a phrase to the needs
+// field rather than replacing it, so they stack into a fuller brief.
+const EXAMPLES = [
+  'Bedroom for two',
+  'A reading nook',
+  'Home office corner',
+  'Room for a wardrobe',
+  'Calm and cosy',
+];
+
+// Rough narration of the two-pass generate-then-repair run. The server doesn't
+// stream step-by-step, so these are paced by elapsed time — honest about the
+// phases without pretending to a precise percentage.
+const STEPS: { after: number; label: string }[] = [
+  { after: 0, label: 'Reading your room and needs …' },
+  { after: 15, label: 'Placing furniture and picking colours …' },
+  { after: 45, label: 'Checking clearances and walkways …' },
+  { after: 90, label: 'Finishing the three layouts …' },
+];
+
+function stepFor(elapsed: number): string {
+  let label = STEPS[0].label;
+  for (const s of STEPS) if (elapsed >= s.after) label = s.label;
+  return label;
+}
+
+function formatElapsed(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+/** Ticks once a second while a run is in flight so the elapsed readout updates. */
+function useElapsedSeconds(startedAt: number | null): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (startedAt == null) return;
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [startedAt]);
+  return startedAt == null ? 0 : Math.max(0, Math.floor((now - startedAt) / 1000));
+}
 
 export function AiProposalsPanel() {
   const design = useDesignStore((s) => s.design);
   const addProposalFromFurniture = useDesignStore((s) => s.addProposalFromFurniture);
   const select = useUiStore((s) => s.select);
+  const closePanel = useUiStore((s) => s.closePanel);
   const openAuthDialog = useUiStore((s) => s.openAuthDialog);
   const authEnabled = useAuthStore((s) => s.enabled);
   const signedIn = useAuthStore((s) => s.user !== null);
 
-  const [needs, setNeeds] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<ProposalsResponse | null>(null);
-  const [appliedTitle, setAppliedTitle] = useState<string | null>(null);
+  const needs = useAiStore((s) => s.needs);
+  const setNeeds = useAiStore((s) => s.setNeeds);
+  const loading = useAiStore((s) => s.loading);
+  const startedAt = useAiStore((s) => s.startedAt);
+  const error = useAiStore((s) => s.error);
+  const result = useAiStore((s) => s.result);
+  const appliedTitle = useAiStore((s) => s.appliedTitle);
+  const interrupted = useAiStore((s) => s.interrupted);
+  const generate = useAiStore((s) => s.generate);
+  const cancel = useAiStore((s) => s.cancel);
+  const markHidden = useAiStore((s) => s.markHidden);
+  const setApplied = useAiStore((s) => s.setApplied);
 
-  async function generate() {
-    if (loading || needs.trim().length === 0) return;
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    setAppliedTitle(null);
-    try {
-      setResult(await fetchProposals(design, needs));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong.');
-      // The session may have lapsed server-side (401); re-sync so the panel can
-      // fall back to the sign-in prompt instead of showing a stale form.
-      if (authEnabled) void useAuthStore.getState().refresh();
-    } finally {
-      setLoading(false);
+  const elapsed = useElapsedSeconds(startedAt);
+
+  // Mobile browsers throttle/suspend background tabs, which can silently kill an
+  // in-flight request. Note when the tab goes hidden mid-run so a later failure
+  // can be explained rather than looking random.
+  useEffect(() => {
+    if (!loading) return;
+    const onVisibility = () => {
+      if (document.hidden) markHidden();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [loading, markHidden]);
+
+  function addExample(phrase: string) {
+    const current = needs.trim();
+    if (current.length === 0) {
+      setNeeds(phrase);
+    } else if (!current.toLowerCase().includes(phrase.toLowerCase())) {
+      setNeeds(`${current}, ${phrase.charAt(0).toLowerCase()}${phrase.slice(1)}`);
     }
   }
 
@@ -50,7 +103,7 @@ export function AiProposalsPanel() {
       wallColor: validHexColor(proposal.wallColor),
     });
     select(null);
-    setAppliedTitle(proposal.title);
+    setApplied(proposal.title);
   }
 
   // When the server has sign-in configured, AI furnishing is for signed-in users
@@ -69,6 +122,8 @@ export function AiProposalsPanel() {
     );
   }
 
+  const canGenerate = needs.trim().length > 0;
+
   return (
     <div className="stack">
       <p className="hint">
@@ -86,60 +141,116 @@ export function AiProposalsPanel() {
           />
         </span>
       </label>
-      <div className="button-row">
-        <button
-          type="button"
-          className="btn btn-accent"
-          disabled={loading || needs.trim().length === 0}
-          onClick={generate}
-        >
-          {loading ? 'Claude is thinking …' : 'Suggest furnishing'}
-        </button>
+
+      <div className="prompt-chips" aria-label="Example needs to add">
+        {EXAMPLES.map((phrase) => (
+          <button
+            key={phrase}
+            type="button"
+            className="prompt-chip"
+            disabled={loading}
+            onClick={() => addExample(phrase)}
+          >
+            {phrase}
+          </button>
+        ))}
       </div>
 
-      {loading && (
-        <p className="hint">This can take a couple of minutes while Claude works out the layout.</p>
-      )}
-      {error && <p className="error">{error}</p>}
-
-      {result && result.proposals.length === 0 && !error && (
-        <p className="hint">No proposals came back. Try describing your needs a bit more clearly.</p>
-      )}
-
-      {result?.proposals.map((p) => (
-        <article className="ai-proposal" key={p.title}>
-          <header className="ai-proposal-head">
-            <h4>{p.title}</h4>
-            {appliedTitle === p.title && <span className="ai-applied">In use</span>}
-          </header>
-          <p className="ai-concept">{p.concept}</p>
-          <p className="ai-palette">
-            <span className="swatch" style={{ background: validHexColor(p.wallColor) ?? 'var(--line)' }} />
-            <span className="ai-dim">Walls</span>
-            <span className="swatch" style={{ background: validHexColor(p.floorColor) ?? 'var(--line)' }} />
-            <span className="ai-dim">Floor</span>
-          </p>
-          <ul className="ai-furniture">
-            {p.furniture.map((f, i) => (
-              <li key={i}>
-                <span className="swatch" style={{ background: f.color }} />
-                <span>
-                  <strong>{f.name}</strong>{' '}
-                  <span className="ai-dim">
-                    {Math.round(f.size.width * 100)}×{Math.round(f.size.depth * 100)} cm
-                  </span>
-                  <span className="ai-reason">{f.reasoning}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <div className="button-row">
-            <button type="button" className="btn" onClick={() => apply(p)}>
-              Save as proposal
+      <div className="button-row">
+        {loading ? (
+          <>
+            <button type="button" className="btn btn-accent" disabled>
+              Claude is thinking …
             </button>
+            <button type="button" className="btn" onClick={cancel}>
+              Cancel
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-accent"
+            disabled={!canGenerate}
+            onClick={() => generate(design)}
+          >
+            {result ? 'Suggest again' : 'Suggest furnishing'}
+          </button>
+        )}
+      </div>
+
+      {/* Status region — announced to screen readers as it changes. */}
+      <div aria-live="polite">
+        {loading && (
+          <div className="ai-progress">
+            <div className="ai-progress-head">
+              <span className="ai-progress-step">{stepFor(elapsed)}</span>
+              <span className="ai-elapsed" aria-hidden="true">
+                {formatElapsed(elapsed)}
+              </span>
+            </div>
+            <div className="ai-progress-track" role="progressbar" aria-label="Generating suggestions" />
+            <p className="hint">
+              This can take a couple of minutes. Keep RoomCraft open — switching apps can
+              interrupt the suggestions.
+            </p>
           </div>
-        </article>
-      ))}
+        )}
+
+        {result && result.proposals.length === 0 && !error && (
+          <p className="hint">No proposals came back. Try describing your needs a bit more clearly.</p>
+        )}
+      </div>
+
+      {error && (
+        <p className="error" role="alert">
+          {error}
+          {interrupted && ' The tab was in the background while Claude was working, which can interrupt it — try again with RoomCraft in the foreground.'}
+        </p>
+      )}
+
+      {result?.proposals.map((p) => {
+        const inUse = appliedTitle === p.title;
+        return (
+          <article className="ai-proposal" key={p.title}>
+            <header className="ai-proposal-head">
+              <h4>{p.title}</h4>
+              {inUse && <span className="ai-applied">In use</span>}
+            </header>
+            <p className="ai-concept">{p.concept}</p>
+            <p className="ai-palette">
+              <span className="swatch" style={{ background: validHexColor(p.wallColor) ?? 'var(--line)' }} />
+              <span className="ai-dim">Walls</span>
+              <span className="swatch" style={{ background: validHexColor(p.floorColor) ?? 'var(--line)' }} />
+              <span className="ai-dim">Floor</span>
+            </p>
+            <ul className="ai-furniture">
+              {p.furniture.map((f, i) => (
+                <li key={i}>
+                  <span className="swatch" style={{ background: f.color }} />
+                  <span>
+                    <strong>{f.name}</strong>{' '}
+                    <span className="ai-dim">
+                      {Math.round(f.size.width * 100)}×{Math.round(f.size.depth * 100)} cm
+                    </span>
+                    <span className="ai-reason">{f.reasoning}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="button-row">
+              {inUse ? (
+                <button type="button" className="btn" onClick={closePanel}>
+                  View in room
+                </button>
+              ) : (
+                <button type="button" className="btn btn-accent" onClick={() => apply(p)}>
+                  Save as proposal
+                </button>
+              )}
+            </div>
+          </article>
+        );
+      })}
 
       {result && result.warnings.length > 0 && (
         <div className="ai-warnings">
@@ -149,6 +260,19 @@ export function AiProposalsPanel() {
               <li key={i}>{w}</li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {result && result.proposals.length > 0 && !loading && (
+        <div className="button-row">
+          <button
+            type="button"
+            className="btn"
+            disabled={!canGenerate}
+            onClick={() => generate(design)}
+          >
+            More suggestions
+          </button>
         </div>
       )}
     </div>

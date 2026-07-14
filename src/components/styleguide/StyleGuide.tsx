@@ -300,6 +300,30 @@ export function StyleGuide() {
           </p>
         </Demo>
 
+        <Demo
+          title="Prompt chips & AI progress"
+          note="Tap-to-fill .prompt-chip buttons seed a text field (interactive, unlike the tag-only .chip). While an AI run is in flight, .ai-progress shows a rotating step label + live elapsed clock over an indeterminate .ai-progress-track bar."
+        >
+          <div className="prompt-chips" style={{ maxWidth: 360 }}>
+            <button type="button" className="prompt-chip">
+              Bedroom for two
+            </button>
+            <button type="button" className="prompt-chip">
+              A reading nook
+            </button>
+            <button type="button" className="prompt-chip">
+              Home office corner
+            </button>
+          </div>
+          <div className="ai-progress" style={{ maxWidth: 360, marginTop: 14 }}>
+            <div className="ai-progress-head">
+              <span className="ai-progress-step">Placing furniture and picking colours …</span>
+              <span className="ai-elapsed">0:42</span>
+            </div>
+            <div className="ai-progress-track" role="progressbar" aria-label="Generating suggestions" />
+          </div>
+        </Demo>
+
         <Demo title="Furniture palette" note="Grid of .palette-btn, each with a colour .swatch.">
           <div className="palette" style={{ maxWidth: 320 }}>
             {PALETTE_SAMPLE.map((p) => (

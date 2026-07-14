@@ -91,7 +91,8 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   `.stack`. Also `.check-field`, `.count-field` (stepper), `.color-field`,
   `.source-toggle` (segmented), and bare `select`.
 - **Surfaces** — `.card` + `.card-head` for repeated records; `.chip` (`.door` /
-  `.window`) to tag kind; `.section` (`<details>`) for collapsible groups; `.modal`
+  `.window`) to tag kind (a static tag, not a button); `.section` (`<details>`)
+  for collapsible groups; `.modal`
   (+ `.modal-sm`, `.modal-head`, `.modal-body`, `.modal-foot`, `.modal-message`)
   for dialogs; `.side-panel` for the right-hand panel.
 - **Docked controls** — the floating rounded pill bar is `.selection-bar` filled
@@ -110,6 +111,12 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   `.field-grid` + the doors/windows editor. The sheet is height-capped and its
   body scrolls, and the editor lifts the drawing clear of it (an auto-fit bottom
   inset in `useViewport`) so a floating panel never hides the wall being edited.
+- **Prompt & AI** — `.prompt-chips` is a wrap row of `.prompt-chip` buttons:
+  tap-to-fill pills that seed a text field (interactive, unlike the tag-only
+  `.chip`). `.ai-progress` is the in-flight readout for a long AI run — a rotating
+  `.ai-progress-step` label and a live `.ai-elapsed` clock over an indeterminate
+  `.ai-progress-track` bar (the server streams no percentage, so the bar is
+  deliberately indeterminate and the elapsed time is the honest signal).
 - **Feedback** — one `.hint` for guidance, one `.error` for failures (reuse them —
   don't roll new ones). `.score-badge` with `.score-good/-mid/-bad`; `.severity`
   with `.severity-1`…`-5` (5 = worst). Each `.validation-categories li` also
