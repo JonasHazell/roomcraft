@@ -13,6 +13,7 @@ import {
   blockers,
   clearanceZones,
   convexOverlap,
+  distToNearestWall,
   distToQuad,
   dot,
   erodedGrid,
@@ -47,6 +48,7 @@ import {
   topOf,
 } from './ruleHelpers.ts';
 import type { RuleDef, Violation } from './ruleTypes';
+import { inferZones, zoneAnchors, ZONE_GAP, ZONE_LABEL } from './zones.ts';
 
 // The rule catalog's taxonomy and types live in ruleTypes.ts and the rule-local
 // geometry helpers (plus buildCtx/inferRoomTypes) in ruleHelpers.ts; both are
@@ -500,6 +502,98 @@ export const RULES: RuleDef[] = [
         });
       }
       return fail(violations);
+    },
+  },
+
+  // ---- Layout & zoning ----
+  {
+    id: 'ZON-01',
+    title: 'Each activity zone stays grouped together',
+    category: 'Layout & zoning',
+    importance: 3,
+    source: 'Best practice (zoning); feng shui (grouping chi)',
+    check(ctx) {
+      const zones = inferZones(ctx.design);
+      if (zones.length === 0) return na;
+      const violations: Violation[] = [];
+      for (const zone of zones) {
+        const label = ZONE_LABEL[zone.kind];
+        for (const m of zone.members) {
+          if (m.anchor) continue; // anchors define the zone; they can't stray from themselves
+          if (m.gapToAnchor <= ZONE_GAP[zone.kind]) continue;
+          const anchorNames = names(zone.anchors);
+          violations.push({
+            message: `"${m.item.name}" belongs to the ${label} area but sits ${formatCm(
+              m.gapToAnchor,
+            )} away from ${anchorNames} — pull it in so the ${label} zone reads as one group instead of scattered pieces.`,
+            furnitureIds: [m.item.id, ...zone.anchors.map((a) => a.id)],
+          });
+        }
+      }
+      return fail(violations);
+    },
+  },
+  {
+    id: 'ZON-02',
+    title: 'No storage marooned in the middle of the room',
+    category: 'Layout & zoning',
+    importance: 3,
+    source: 'Best practice; feng shui (keep the centre open)',
+    check(ctx) {
+      // Only tall/storage pieces read as "stranded" when they float centrally;
+      // beds, sofas and tables are judged by their own placement rules.
+      const STORAGE = new Set<FurnitureKind>(['wardrobe', 'bookshelf', 'box']);
+      const subjects = ctx.design.furniture.filter((f) => STORAGE.has(f.kind));
+      if (subjects.length === 0) return na;
+      const anchors = zoneAnchors(ctx.design);
+      const violations: Violation[] = [];
+      for (const f of subjects) {
+        const quad = footprint(f);
+        // Against a wall (perimeter)? Any corner close to a wall line counts.
+        const nearWall = quad.some((c) => distToNearestWall(ctx.design, c) <= 0.35);
+        if (nearWall) continue;
+        // Functional in the middle: standing right beside an activity zone it can
+        // serve or divide (e.g. a bookshelf back-to-back with a sofa).
+        const dividesZone = anchors.some((a) => quadGap(quad, footprint(a)) <= 0.8);
+        if (dividesZone) continue;
+        violations.push({
+          message: `"${f.name}" stands in the middle of the room with open floor all around it and no wall or activity behind it — a marooned storage piece cramps the room and breaks up sightlines. Move it against a wall, or place it directly beside a seating/sleeping area so it works as a room divider.`,
+          furnitureIds: [f.id],
+        });
+      }
+      return fail(violations);
+    },
+  },
+  {
+    id: 'ZON-03',
+    title: 'Keep the open floor generous and in one piece',
+    category: 'Layout & zoning',
+    importance: 3,
+    source: 'Best practice; feng shui (free flow of chi)',
+    check(ctx) {
+      if (ctx.design.furniture.length === 0) return na;
+      const roomArea = Math.abs(signedArea(ctx.poly));
+      if (roomArea < 8) return na; // a small room is simply full; nothing to open up
+      // Walkable floor for a comfortable 60 cm passage (0.3 m erosion each side).
+      const grid = erodedGrid(ctx.design, 0.3);
+      const comps = freeComponents(grid);
+      const totalFree = comps.reduce((s, c) => s + c.length, 0);
+      const largest = comps.reduce((m, c) => Math.max(m, c.length), 0);
+      // A 10 cm grid ⇒ each cell is 0.01 m².
+      const openArea = largest * 0.01;
+      const roomFrac = openArea / roomArea; // largest open expanse vs the whole floor
+      const contiguity = totalFree > 0 ? largest / totalFree : 0; // is the open floor one piece?
+      // Pass if there is a genuinely generous open expanse, or if what open floor
+      // there is stays essentially in one piece rather than chopped into pockets.
+      if (roomFrac >= 0.3 || contiguity >= 0.75) return ok;
+      return fail([
+        {
+          message: `The largest uninterrupted open area is only about ${Math.round(
+            roomFrac * 100,
+          )}% of the floor and the open space is broken into pockets — pull furniture back against the walls so the room keeps one generous, connected open area.`,
+          furnitureIds: [],
+        },
+      ]);
     },
   },
 

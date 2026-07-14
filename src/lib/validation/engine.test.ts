@@ -3,6 +3,7 @@ import type { Design, FurnitureItem, FurnitureKind, WallOpening } from '../../ty
 import { wallsFromPolygon } from '../polygon';
 import { runValidation } from './engine';
 import { inferRoomTypes } from './rules';
+import { inferZones } from './zones';
 
 /**
  * 4×5 m room with a corner at the origin: north (z=0), east (x=4), south (z=5), west (x=0).
@@ -376,6 +377,90 @@ describe('FEN-26 rugs zone an open-plan room', () => {
     if (outcome.status === 'violated') {
       expect(outcome.violations.some((v) => v.furnitureIds.includes(bigRug.id))).toBe(true);
     }
+  });
+});
+
+describe('inferZones', () => {
+  it('groups anchors with their satellites and routes chairs by proximity', () => {
+    const d = makeDesign([
+      piece('bed', 2, 1.4, { width: 1.6, depth: 2, height: 0.5 }),
+      piece('nightstand', 3, 0.6, { width: 0.4, depth: 0.4, height: 0.5 }),
+      piece('desk', 0.7, 4.3, { width: 1.2, depth: 0.7, height: 0.74 }),
+      piece('chair', 0.7, 3.6, { width: 0.5, depth: 0.5 }), // desk chair
+    ]);
+    const zones = inferZones(d);
+    const sleeping = zones.find((z) => z.kind === 'sleeping');
+    const work = zones.find((z) => z.kind === 'work');
+    expect(sleeping?.members.length).toBe(2); // bed + nightstand
+    expect(work?.members.some((m) => m.item.kind === 'chair' && !m.anchor)).toBe(true);
+  });
+
+  it('creates no zone for a satellite with no anchor', () => {
+    // A nightstand but no bed → nothing to anchor the sleeping zone to.
+    const d = makeDesign([piece('nightstand', 2, 2, { width: 0.4, depth: 0.4, height: 0.5 })]);
+    expect(inferZones(d)).toEqual([]);
+  });
+});
+
+describe('ZON-01 zone cohesion', () => {
+  it('flags a nightstand stranded far from the bed', () => {
+    const bed = piece('bed', 2, 2, { width: 1.6, depth: 2, height: 0.5 });
+    const ns = piece('nightstand', 0.5, 4.5, { width: 0.4, depth: 0.4, height: 0.5 });
+    const outcome = outcomeOf(makeDesign([bed, ns]), 'ZON-01');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].furnitureIds).toContain(ns.id);
+      expect(outcome.violations[0].furnitureIds).toContain(bed.id);
+    }
+  });
+
+  it('passes a nightstand tucked against the bed', () => {
+    const bed = piece('bed', 2, 2, { width: 1.6, depth: 2, height: 0.5 });
+    const ns = piece('nightstand', 3, 1.3, { width: 0.4, depth: 0.4, height: 0.5 });
+    expect(outcomeOf(makeDesign([bed, ns]), 'ZON-01').status).toBe('passed');
+  });
+
+  it('is not applicable without any zone anchor', () => {
+    expect(outcomeOf(makeDesign([piece('plant', 1, 1)]), 'ZON-01').status).toBe('not-applicable');
+  });
+});
+
+describe('ZON-02 marooned storage', () => {
+  it('flags a storage piece stranded in the middle of the room', () => {
+    const box = piece('box', 2, 2.5, { width: 0.8, depth: 0.8, height: 1.2 });
+    const outcome = outcomeOf(makeDesign([box]), 'ZON-02');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].furnitureIds).toContain(box.id);
+    }
+  });
+
+  it('passes a wardrobe against the wall', () => {
+    const wardrobe = piece('wardrobe', 2, 0.3, { width: 1.2, depth: 0.6, height: 2 });
+    expect(outcomeOf(makeDesign([wardrobe]), 'ZON-02').status).toBe('passed');
+  });
+
+  it('passes a bookshelf acting as a divider beside a sofa', () => {
+    const sofa = piece('sofa', 2, 1, { width: 2, depth: 0.9, height: 0.8 });
+    const shelf = piece('bookshelf', 2, 1.9, { width: 1.5, depth: 0.4, height: 1.8 });
+    expect(outcomeOf(makeDesign([sofa, shelf]), 'ZON-02').status).toBe('passed');
+  });
+});
+
+describe('ZON-03 open floor', () => {
+  it('passes an airy room with furniture on the wall', () => {
+    const sofa = piece('sofa', 2, 0.5, { width: 2, depth: 0.9, height: 0.8 });
+    expect(outcomeOf(makeDesign([sofa]), 'ZON-03').status).toBe('passed');
+  });
+
+  it('flags a room whose open floor is crammed and broken into pockets', () => {
+    const boxes = [
+      piece('box', 1, 1.2, { width: 1.9, depth: 2.3, height: 1 }),
+      piece('box', 3, 1.2, { width: 1.9, depth: 2.3, height: 1 }),
+      piece('box', 1, 3.6, { width: 1.9, depth: 2.3, height: 1 }),
+      piece('box', 3, 3.6, { width: 1.9, depth: 2.3, height: 1 }),
+    ];
+    expect(outcomeOf(makeDesign(boxes), 'ZON-03').status).toBe('violated');
   });
 });
 

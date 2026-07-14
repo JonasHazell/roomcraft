@@ -211,6 +211,26 @@ Varje regel har följande fält:
 
 # Nivå 3 — Ergonomi, mått och placering
 
+## Planlösning och zoner
+
+### ZON-01 — Varje aktivitetszon hålls samlad
+- **Kategori:** Planlösning & zoner · **Rum:** Alla · **Viktighet:** 3 · **Mätbarhet:** A
+- **Villkor:** Rummet tolkas som funktionszoner utifrån möblerna (sovzon = säng + sängbord; sittgrupp = soffa + fåtöljer + soffbord; matplats = bord + stolar; arbetsplats = skrivbord + stol). Varje zons kringmöbler står nära sitt ankare (sängbord intill sängen, stol vid bordet/skrivbordet, fåtölj/soffbord inom sittgruppen) så att zonen läses som en grupp i stället för utspridda möbler.
+- **Källa:** Best practice (zonindelning); feng shui (samla chi)
+- **Åtgärd:** {Möbel} hör till {zon} men står {uppmätt} cm från {ankare} — dra in den så att zonen hänger ihop.
+
+### ZON-02 — Ingen förvaring strandsatt mitt i rummet
+- **Kategori:** Planlösning & zoner · **Rum:** Alla · **Viktighet:** 3 · **Mätbarhet:** A
+- **Villkor:** Höga möbler/förvaring (garderob, bokhylla, byrå) står mot en vägg, eller direkt intill en aktivitetszon där de fungerar som medveten rumsavdelare. Ingen flyter fritt mitt i rummet med öppen golvyta runt om och inget bakom sig. (Säng, soffa och bord bedöms av sina egna placeringsregler, inte här.)
+- **Källa:** Best practice; feng shui (håll mitten öppen)
+- **Åtgärd:** Flytta {förvaringsmöbel} mot en vägg, eller placera den intill en sitt-/sovzon så att den fungerar som rumsavdelare.
+
+### ZON-03 — Håll den öppna golvytan generös och i ett stycke
+- **Kategori:** Planlösning & zoner · **Rum:** Alla · **Viktighet:** 3 · **Mätbarhet:** A
+- **Villkor:** I ett rum som är tillräckligt stort att resonera om (≥ 8 m²) behåller den gångbara golvytan en generös, sammanhängande öppen yta — antingen är den största obrutna öppna ytan ≥ 30 % av golvet, eller så hålls den öppna ytan i stort sett i ett stycke i stället för att styckas upp i isolerade fickor av centralt placerade möbler.
+- **Källa:** Best practice; feng shui (fri flödande chi)
+- **Åtgärd:** Dra tillbaka möbler mot väggarna så att rummet behåller en stor, sammanhängande öppen yta i stället för spridda fickor.
+
 ## Vardagsrum
 
 ### ERG-01 — Avstånd soffa–soffbord

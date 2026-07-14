@@ -52,6 +52,14 @@ Feng shui:
 - Keep the straight line between a door and a window (see "nyckeltal.dorr_fonster_avstand_m") clear of the
   bed and the main seat, so the chi/draft does not run straight across where people rest.
 - Balance: avoid putting all the visual weight on one side of the room.
+Layout and zoning:
+- Identify the room's activity zones from the furniture (sleeping = bed + nightstands; seating = sofa +
+  armchairs + coffee table; dining = table + chairs; work = desk + chair) and keep each zone's pieces
+  grouped tightly together so it reads as one area, not scattered pieces.
+- Push furniture back against the walls and keep the middle of the room open — a large, connected stretch
+  of clear floor. Do not strand a storage piece (wardrobe, bookshelf, chest) out in the open: give it a
+  wall, or place it directly beside a zone so it works as a deliberate room divider. Never leave tall
+  storage marooned in the centre with open floor all around it.
 Ergonomics and function:
 - Desk/workspace near a window with daylight at an angle from the side.
 - A desk chair sits centred at the desk's working side — the long front the person sits behind — never
