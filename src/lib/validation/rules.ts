@@ -158,7 +158,9 @@ export const RULES: RuleDef[] = [
     source: 'BBR 5:323',
     appliesTo: ['sovrum', 'vardagsrum'],
     check(ctx) {
-      const escapeWindows = ctx.windows.filter((w) => w.sill <= 1.3);
+      // BBR 5:323: a window counts as an escape route when the lower edge of the
+      // opening sits at most 1.2 m above the floor.
+      const escapeWindows = ctx.windows.filter((w) => w.sill <= 1.2);
       if (escapeWindows.length === 0) return na;
       const violations: Violation[] = [];
       for (const win of escapeWindows) {
@@ -1194,8 +1196,11 @@ export const RULES: RuleDef[] = [
       const violations: Violation[] = [];
       for (const win of ctx.windows) {
         for (const zone of clearanceZones(win, 0.35)) {
+          // Any furniture taller than 120 cm shades the window — a deep wardrobe
+          // blocks daylight more than a shallow shelf, not less, so depth is not a
+          // qualifier here (the catalog condition is height-only).
           const tallInWay = ctx.design.furniture.filter(
-            (f) => topOf(f) > 1.2 && f.size.depth <= 0.6 && convexOverlap(footprint(f), zone),
+            (f) => topOf(f) > 1.2 && convexOverlap(footprint(f), zone),
           );
           if (tallInWay.length > 0) {
             violations.push({
