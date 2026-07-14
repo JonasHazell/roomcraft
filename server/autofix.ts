@@ -18,13 +18,14 @@ function footprintOf(f: ResolvedFurniture): Footprint {
 /**
  * Obstacle footprints for testing `target`, honouring the same overlap
  * exceptions as the validator: rugs may lie under anything (never obstacles) and
- * a chair may be pushed under a table/box (those aren't obstacles for it).
+ * a chair may be pushed under a table/desk/box (those aren't obstacles for it).
  */
 function obstaclesFor(target: ResolvedFurniture, others: ResolvedFurniture[]): Point[][] {
   return others
     .filter((o) => {
       if (o.kind === 'rug') return false;
-      if (target.kind === 'chair' && (o.kind === 'table' || o.kind === 'box')) return false;
+      if (target.kind === 'chair' && (o.kind === 'table' || o.kind === 'desk' || o.kind === 'box'))
+        return false;
       return true;
     })
     .map((o) => furnitureCorners(footprintOf(o)));

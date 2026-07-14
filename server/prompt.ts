@@ -54,6 +54,8 @@ Feng shui:
 - Balance: avoid putting all the visual weight on one side of the room.
 Ergonomics and function:
 - Desk/workspace near a window with daylight at an angle from the side.
+- A desk chair sits centred at the desk's working side — the long front the person sits behind — never
+  at a short end. Put it just in front of that side (it may tuck slightly under) with its front toward the desk.
 - About 0.6 m of table edge per seat at a dining table; chairs need 0.75 m behind the table edge to be pulled out.
 - Sofa–coffee table about 0.4 m; sofa–TV/bookshelf at least 2 m for viewing distance.
 - Bed sides that are used need about 0.6 m of free space.
