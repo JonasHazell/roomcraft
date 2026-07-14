@@ -322,6 +322,60 @@ describe('FEN-14 poison arrows', () => {
   });
 });
 
+describe('SAF-03 escape window reachable', () => {
+  // Window on the north wall at x 1.2–2.6 (sill 0.9 m — an escape window).
+  it('flags a wardrobe blocking the floor in front of the escape window', () => {
+    const bed = piece('bed', 2, 3.5, { width: 1.6, depth: 2, height: 0.5 });
+    const wardrobe = piece('wardrobe', 1.9, 0.4, { width: 1.2, depth: 0.6, height: 2 });
+    const outcome = outcomeOf(makeDesign([bed, wardrobe]), 'SAF-03');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].furnitureIds).toContain(wardrobe.id);
+    }
+  });
+
+  it('passes when the floor in front of the escape window is clear', () => {
+    const bed = piece('bed', 2, 3.5, { width: 1.6, depth: 2, height: 0.5 });
+    expect(outcomeOf(makeDesign([bed]), 'SAF-03').status).toBe('passed');
+  });
+
+  it('is not applicable when the only window sits above the escape sill', () => {
+    // A high window (sill 1.5 m > BBR's 1.2 m) does not count as an escape route.
+    const north = wallsFromPolygon(
+      [
+        { x: 0, z: 0 },
+        { x: 4, z: 0 },
+        { x: 4, z: 5 },
+        { x: 0, z: 5 },
+      ],
+      () => 'w',
+    )[0];
+    const d = makeDesign(
+      [piece('bed', 2, 2.5, { width: 1.6, depth: 2, height: 0.5 })],
+      [{ kind: 'window', wallId: north.id, offset: 1.2, width: 1.4, height: 0.6, elevation: 1.5 }],
+    );
+    expect(outcomeOf(d, 'SAF-03').status).toBe('not-applicable');
+  });
+});
+
+describe('LGT-05 daylight at the window', () => {
+  it('flags a deep wardrobe standing in front of the window', () => {
+    // A tall, deep wardrobe by the north window — it shades daylight even though
+    // its depth is over 60 cm.
+    const wardrobe = piece('wardrobe', 1.9, 0.4, { width: 1.2, depth: 0.65, height: 2 });
+    const outcome = outcomeOf(makeDesign([wardrobe]), 'LGT-05');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].furnitureIds).toContain(wardrobe.id);
+    }
+  });
+
+  it('passes a low piece in front of the window', () => {
+    const bench = piece('box', 1.9, 0.4, { width: 1.2, depth: 0.4, height: 0.5 });
+    expect(outcomeOf(makeDesign([bench]), 'LGT-05').status).toBe('passed');
+  });
+});
+
 describe('LGT-06 screen reflections', () => {
   it('flags a TV facing the window', () => {
     const tv = piece('tv', 1.9, 2, { width: 1.3, depth: 0.35, height: 0.8, rotationY: Math.PI });
