@@ -17,6 +17,18 @@ export interface ClaudeRunOptions {
   maxTokens?: number;
 }
 
+/** Token counts for one Messages API call, split so cache tokens are visible. */
+export interface ClaudeUsage {
+  /** Uncached input tokens, billed at the full input rate. */
+  inputTokens: number;
+  /** Cache-write tokens (first time a prefix is cached), billed at ~1.25× input. */
+  cacheWriteTokens: number;
+  /** Cache-read tokens (prefix served from cache), billed at ~0.1× input. */
+  cacheReadTokens: number;
+  /** Generated output tokens, billed at the output rate. */
+  outputTokens: number;
+}
+
 export interface ClaudeRunResult {
   structuredOutput: unknown;
   /** The assistant's reply — append this to the history before a follow-up turn. */
@@ -24,6 +36,8 @@ export interface ClaudeRunResult {
   /** Rough USD estimate from token usage, for logging only. */
   costUsd: number;
   durationMs: number;
+  /** Per-call token breakdown, for logging/aggregation. */
+  usage: ClaudeUsage;
 }
 
 // Approximate per-million-token prices (USD) for the cost figures in the logs.
@@ -34,6 +48,13 @@ const PRICES: Record<string, { input: number; output: number }> = {
   'claude-sonnet-5': { input: 3, output: 15 },
   'claude-haiku-4-5': { input: 1, output: 5 },
 };
+
+// Cache tokens are not billed at the plain input rate: a cache write costs ~1.25×
+// the input rate (5-minute ephemeral) and a cache read only ~0.1×. Both the system
+// prompt and the shared room/catalog block carry cache breakpoints, so ignoring
+// these multipliers would overstate the cost of every proposal and repair call.
+const CACHE_WRITE_MULTIPLIER = 1.25;
+const CACHE_READ_MULTIPLIER = 0.1;
 
 // Reads credentials from the environment (ANTHROPIC_API_KEY, or ANTHROPIC_AUTH_TOKEN).
 const client = new Anthropic();
@@ -91,9 +112,21 @@ export async function runClaude(opts: ClaudeRunOptions): Promise<ClaudeRunResult
     throw new Error('The model returned a response that was not valid JSON.');
   }
 
+  // `input_tokens` from the API is the uncached remainder; cache reads and writes
+  // are reported separately (and may be undefined when nothing was cached).
+  const usage: ClaudeUsage = {
+    inputTokens: message.usage.input_tokens,
+    cacheWriteTokens: message.usage.cache_creation_input_tokens ?? 0,
+    cacheReadTokens: message.usage.cache_read_input_tokens ?? 0,
+    outputTokens: message.usage.output_tokens,
+  };
+
   const price = PRICES[opts.model] ?? PRICES['claude-opus-4-8'];
   const costUsd =
-    (message.usage.input_tokens * price.input + message.usage.output_tokens * price.output) /
+    (usage.inputTokens * price.input +
+      usage.cacheWriteTokens * price.input * CACHE_WRITE_MULTIPLIER +
+      usage.cacheReadTokens * price.input * CACHE_READ_MULTIPLIER +
+      usage.outputTokens * price.output) /
     1_000_000;
 
   return {
@@ -101,5 +134,6 @@ export async function runClaude(opts: ClaudeRunOptions): Promise<ClaudeRunResult
     assistant: { role: 'assistant', content: message.content },
     costUsd,
     durationMs,
+    usage,
   };
 }
