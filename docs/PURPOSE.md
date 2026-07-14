@@ -33,8 +33,9 @@ Furnishing a room is harder than it should be:
 - **The tools are heavy.** Professional design software is powerful and
   intimidating. Most people don't need power — they need an answer.
 
-RoomCraft removes all three: sketch the room, see it in 3D, and get concrete,
-good suggestions for how to furnish it.
+RoomCraft removes all three: sketch the room, see it in 3D, and get the best
+automatic suggestions — powered by AI, among other techniques — for how to
+furnish it.
 
 ## How RoomCraft delivers on it
 
@@ -44,11 +45,14 @@ The whole experience is shaped so that getting a great result feels effortless:
    type real measurements. No CAD knowledge required.
 2. **See it, don't imagine it.** The 3D view turns the plan into a room you can
    walk your eye through, so decisions are obvious instead of abstract.
-3. **Get help, don't start from a blank page.** Describe what you need and
-   RoomCraft proposes a full furniture layout — each with its own floor and wall
-   palette — that you can accept, tweak, or use as a starting point. This is the
-   heart of the promise: **you should never have to stare at an empty room
-   wondering where to begin.**
+3. **Get the best automatic suggestions, don't start from a blank page.**
+   Describe what you need and RoomCraft automatically proposes a full furniture
+   layout — each with its own floor and wall palette — that you can accept, tweak,
+   or use as a starting point. These suggestions are powered by AI (among other
+   techniques), so they aren't just *any* layout: the aim is the **best** automatic
+   interior-design suggestions for your specific room. This is the heart of the
+   promise: **you should never have to stare at an empty room wondering where to
+   begin.**
 4. **Make it yours, safely.** Move, rotate, recolour and customise every piece,
    with undo/redo on everything, so experimenting is free of risk.
 
