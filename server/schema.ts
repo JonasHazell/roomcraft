@@ -65,7 +65,7 @@ export const proposalsSchema = z.strictObject({
         furniture: z.array(aiFurnitureSchema),
       }),
     )
-    .describe('2–3 deliberately different proposals.'),
+    .describe('Exactly 3 deliberately different proposals.'),
 });
 
 export type AiProposals = z.infer<typeof proposalsSchema>;

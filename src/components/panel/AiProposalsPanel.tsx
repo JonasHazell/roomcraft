@@ -72,7 +72,7 @@ export function AiProposalsPanel() {
   return (
     <div className="stack">
       <p className="hint">
-        Describe what the room will be used for and Claude will suggest 2–3 furnishing layouts
+        Describe what the room will be used for and Claude will suggest 3 furnishing layouts
         with reasoning (including feng shui). Each suggestion is saved as its own proposal.
       </p>
       <label className="field">
