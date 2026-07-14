@@ -429,6 +429,13 @@ function prepareOne(structuredOutput: unknown, design: Design): ResolvedProposal
  * turn) reuse it rather than re-reading it. `brief` is the direction-specific
  * instruction appended after it.
  */
+// Formats a USD cost for the logs. Proposal calls on Sonnet often land below a
+// cent, so two decimals would show "$0.00"; four keeps the figure meaningful
+// without pretending to billing accuracy.
+function formatUsd(usd: number): string {
+  return `$${usd.toFixed(4)}`;
+}
+
 async function generateOneProposal(
   shared: string,
   brief: string,
@@ -438,6 +445,8 @@ async function generateOneProposal(
   proposal: ResolvedProposals['proposals'][number];
   score: ProposalScore;
   warnings: Finding[];
+  costUsd: number;
+  calls: number;
 }> {
   // The full conversation is resent on every call (the API is stateless); each
   // repair turn appends to this same history. The shared context carries a cache
@@ -457,8 +466,15 @@ async function generateOneProposal(
     jsonSchema: proposalJsonSchema,
     model: MODEL,
   });
+  // Accumulate the API cost and call count across the first response plus any
+  // repair turns, so the caller can report a per-proposal and per-request total.
+  let costUsd = first.costUsd;
+  let calls = 1;
   console.log(
-    `[proposals] ${label}: first response done (${Math.round(first.durationMs / 1000)} s, ~$${first.costUsd.toFixed(2)})`,
+    `[proposals] ${label}: first response done (${(first.durationMs / 1000).toFixed(1)} s, ` +
+      `~${formatUsd(first.costUsd)}; tokens in ${first.usage.inputTokens}, ` +
+      `cache write ${first.usage.cacheWriteTokens}, cache read ${first.usage.cacheReadTokens}, ` +
+      `out ${first.usage.outputTokens})`,
   );
 
   let assistant = first.assistant;
@@ -494,8 +510,13 @@ async function generateOneProposal(
       jsonSchema: proposalJsonSchema,
       model: MODEL,
     });
+    costUsd += repaired.costUsd;
+    calls += 1;
     console.log(
-      `[proposals] ${label}: round done (${Math.round(repaired.durationMs / 1000)} s, ~$${repaired.costUsd.toFixed(2)})`,
+      `[proposals] ${label}: round done (${(repaired.durationMs / 1000).toFixed(1)} s, ` +
+        `~${formatUsd(repaired.costUsd)}; tokens in ${repaired.usage.inputTokens}, ` +
+        `cache write ${repaired.usage.cacheWriteTokens}, cache read ${repaired.usage.cacheReadTokens}, ` +
+        `out ${repaired.usage.outputTokens})`,
     );
     assistant = repaired.assistant;
     const data = prepareOne(repaired.structuredOutput, design);
@@ -517,18 +538,28 @@ async function generateOneProposal(
     proposal: best.data.proposals[0],
     score: bestScore,
     warnings: repairFindings(bestScore.findings),
+    costUsd,
+    calls,
   };
 }
 
 async function generateProposals(design: Design, needs: string) {
+  // Wall-clock timer for the whole request — planning plus the concurrent proposal
+  // calls, i.e. the time the user actually waits, not the sum of the per-call times.
+  const start = Date.now();
+
   // Phase 1 (two-phase mode only): choose the furniture once, shared across every
   // direction. If it fails, fall back to the single-phase flow rather than the whole
   // request — an empty brief leaves the placement prompt exactly as it was before.
   let planBrief = '';
+  let planCostUsd = 0;
+  let planCalls = 0;
   if (TWO_PHASE) {
     try {
-      const plan = await generatePlan(design, needs, MODEL);
+      const { plan, costUsd, calls } = await generatePlan(design, needs, MODEL);
       planBrief = `\n\n${buildPlanBrief(plan)}`;
+      planCostUsd = costUsd;
+      planCalls = calls;
       const need = plan.items.filter((i) => i.priority === 'need').length;
       const nice = plan.items.filter((i) => i.priority === 'nice').length;
       console.log(
@@ -584,6 +615,16 @@ async function generateProposals(design: Design, needs: string) {
     remaining === 0
       ? `[proposals] ${proposals.length} proposal(s) ready; all hard requirements satisfied.`
       : `[proposals] ${proposals.length} proposal(s) ready; ${remaining} hard finding(s) remain after repairs; returning best.`,
+  );
+
+  // Server-side total for this /api/proposals request: wall-clock time the user
+  // waited, plus the summed API cost and call count across the planning phase and
+  // every proposal and repair turn (only the fulfilled directions incurred cost).
+  const totalCostUsd = planCostUsd + ok.reduce((sum, r) => sum + r.value.costUsd, 0);
+  const totalCalls = planCalls + ok.reduce((sum, r) => sum + r.value.calls, 0);
+  console.log(
+    `[proposals] done in ${((Date.now() - start) / 1000).toFixed(1)} s wall-clock; ` +
+      `${totalCalls} Claude API call(s), ~${formatUsd(totalCostUsd)} total.`,
   );
 
   // Surface the findings worth acting on (importance ≥ 3, deduped across proposals);

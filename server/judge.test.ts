@@ -30,6 +30,7 @@ function judgeReturns(output: unknown) {
     assistant: { role: 'assistant', content: [] },
     costUsd: 0,
     durationMs: 0,
+    usage: { inputTokens: 0, cacheWriteTokens: 0, cacheReadTokens: 0, outputTokens: 0 },
   });
 }
 
