@@ -1,5 +1,5 @@
 import type { Design, FurnitureItem, Point, Wall, WallOpening } from '../../types';
-import { FURNITURE_CATALOG } from '../furnitureCatalog';
+import { FURNITURE_CATALOG } from '../furnitureCatalog.ts';
 import {
   closestPointOnSegment,
   convexOverlap as convexOverlapEps,
@@ -13,8 +13,8 @@ import {
   polygonBounds,
   segmentsIntersect,
   wallDir,
-} from '../polygon';
-import { furnitureCorners } from '../collision';
+} from '../polygon.ts';
+import { furnitureCorners } from '../collision.ts';
 
 export { distToQuad, frontDir, interiorWallQuad };
 

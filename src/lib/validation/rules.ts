@@ -1,5 +1,5 @@
 import type { FurnitureKind, Point } from '../../types';
-import { FURNITURE_CATALOG } from '../furnitureCatalog';
+import { FURNITURE_CATALOG } from '../furnitureCatalog.ts';
 import {
   formatCm,
   pointInPolygon,
@@ -7,7 +7,7 @@ import {
   polygonCenter,
   segmentsCross,
   signedArea,
-} from '../polygon';
+} from '../polygon.ts';
 import {
   add,
   clearanceZones,
@@ -27,7 +27,7 @@ import {
   sub,
   support,
   wallsHitQuad,
-} from './geo';
+} from './geo.ts';
 import {
   backAgainstWall,
   backEdgeMid,
@@ -43,7 +43,7 @@ import {
   seatingSeats,
   sideZone,
   topOf,
-} from './ruleHelpers';
+} from './ruleHelpers.ts';
 import type { RuleDef, Violation } from './ruleTypes';
 
 // The rule catalog's taxonomy and types live in ruleTypes.ts and the rule-local
@@ -59,8 +59,8 @@ export {
   type RuleDef,
   type RuleOutcome,
   type Violation,
-} from './ruleTypes';
-export { buildCtx, inferRoomTypes } from './ruleHelpers';
+} from './ruleTypes.ts';
+export { buildCtx, inferRoomTypes } from './ruleHelpers.ts';
 
 // ---------------------------------------------------------------------------
 // Rules

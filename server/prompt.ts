@@ -1,6 +1,7 @@
 import type { Design } from '../src/types.ts';
 import { FURNITURE_CATALOG } from '../src/lib/furnitureCatalog.ts';
-import { floorPolygon, signedArea, wallDir, wallLen } from '../src/lib/polygon.ts';
+import { floorPolygon, polygonBounds, signedArea, wallDir, wallLen } from '../src/lib/polygon.ts';
+import type { Point } from '../src/types.ts';
 
 export const SYSTEM_PROMPT = `You are an experienced interior designer. You are given a room (geometry as JSON) and
 the user's needs, and you produce concrete furnishing proposals.
@@ -42,6 +43,8 @@ Feng shui:
 - The bed's headboard against a solid wall, preferably not under a window. Nightstands on both sides if there is room.
 - Sofa with its back against a wall, not floating with its back toward the door.
 - Soft, unbroken movement flows from the door into the room; no furniture as the first obstacle inside the door.
+- Keep the straight line between a door and a window (see "nyckeltal.dorr_fonster_avstand_m") clear of the
+  bed and the main seat, so the chi/draft does not run straight across where people rest.
 - Balance: avoid putting all the visual weight on one side of the room.
 Ergonomics and function:
 - Desk/workspace near a window with daylight at an angle from the side.
@@ -64,10 +67,32 @@ const round = (v: number) => Math.round(v * 1000) / 1000;
 /** Compact, self-explanatory room description for the model. */
 function serializeRoom(design: Design) {
   const poly = floorPolygon(design.walls);
+  const openings = design.openings.map((o) => {
+    const wall = design.walls.find((w) => w.id === o.wallId);
+    if (!wall) return { typ: o.kind, vagg: o.wallId, fel: 'wall missing', mid: null as Point | null };
+    const d = wallDir(wall);
+    const fran = { x: round(wall.a.x + d.x * o.offset), z: round(wall.a.z + d.z * o.offset) };
+    const till = {
+      x: round(wall.a.x + d.x * (o.offset + o.width)),
+      z: round(wall.a.z + d.z * (o.offset + o.width)),
+    };
+    return {
+      typ: o.kind === 'door' ? ('door' as const) : ('window' as const),
+      vagg: o.wallId,
+      fran,
+      till,
+      bredd_m: o.width,
+      underkant_m: o.elevation,
+      hojd_m: o.height,
+      mid: { x: round((fran.x + till.x) / 2), z: round((fran.z + till.z) / 2) },
+    };
+  });
+
   return {
     takhojd_m: design.room.height,
     golvyta_m2: round(Math.abs(signedArea(poly))),
     golvpolygon: poly,
+    nyckeltal: roomMetrics(poly, openings),
     vaggar: design.walls.map((w) => ({
       id: w.id,
       typ: w.kind === 'exterior' ? 'exterior wall' : 'interior wall',
@@ -75,23 +100,34 @@ function serializeRoom(design: Design) {
       till: w.b,
       langd_m: round(wallLen(w)),
     })),
-    oppningar: design.openings.map((o) => {
-      const wall = design.walls.find((w) => w.id === o.wallId);
-      if (!wall) return { typ: o.kind, vagg: o.wallId, fel: 'wall missing' };
-      const d = wallDir(wall);
-      return {
-        typ: o.kind === 'door' ? 'door' : 'window',
-        vagg: o.wallId,
-        fran: { x: round(wall.a.x + d.x * o.offset), z: round(wall.a.z + d.z * o.offset) },
-        till: {
-          x: round(wall.a.x + d.x * (o.offset + o.width)),
-          z: round(wall.a.z + d.z * (o.offset + o.width)),
-        },
-        bredd_m: o.width,
-        underkant_m: o.elevation,
-        hojd_m: o.height,
-      };
-    }),
+    // Drop the internal `mid` helper from the emitted opening list.
+    oppningar: openings.map(({ mid: _mid, ...rest }) => rest),
+  };
+}
+
+/**
+ * Concrete numbers the model reasons better with than prose: overall footprint,
+ * the daylight budget (total window width), and the straight-line distances
+ * between each door and each window — the axes used for daylight, cross-flow and
+ * the feng-shui door↔window "drafting" line.
+ */
+function roomMetrics(poly: Point[], openings: Array<{ typ: string; mid: Point | null; bredd_m?: number }>) {
+  const b = polygonBounds(poly);
+  const doors = openings.filter((o) => o.typ === 'door' && o.mid);
+  const windows = openings.filter((o) => o.typ === 'window' && o.mid);
+  const dist = (a: Point, c: Point) => round(Math.hypot(a.x - c.x, a.z - c.z));
+  return {
+    rummets_matt_m: { bredd: round(b.maxX - b.minX), djup: round(b.maxZ - b.minZ) },
+    antal_dorrar: doors.length,
+    antal_fonster: windows.length,
+    total_fonsterbredd_m: round(windows.reduce((s, w) => s + (w.bredd_m ?? 0), 0)),
+    dorr_fonster_avstand_m: doors.flatMap((d, di) =>
+      windows.map((w, wi) => ({
+        dorr: di + 1,
+        fonster: wi + 1,
+        avstand_m: dist(d.mid as Point, w.mid as Point),
+      })),
+    ),
   };
 }
 
@@ -115,12 +151,28 @@ export function buildUserPrompt(design: Design, needs: string): string {
   ].join('\n');
 }
 
-export function buildRepairPrompt(errors: string[]): string {
-  return [
-    'The automated check found the following errors in your proposal:',
-    ...errors.map((e) => `- ${e}`),
+export function buildRepairPrompt(findings: { message: string; blocking: boolean }[]): string {
+  const must = findings.filter((f) => f.blocking).map((f) => f.message);
+  const should = findings.filter((f) => !f.blocking).map((f) => f.message);
+  const lines = ['An automated check found problems in your proposal.'];
+  if (must.length > 0) {
+    lines.push(
+      '',
+      'MUST fix — hard requirements (safety, accessibility, fit); never leave these:',
+      ...must.map((m) => `- ${m}`),
+    );
+  }
+  if (should.length > 0) {
+    lines.push(
+      '',
+      'SHOULD improve where possible (ergonomics and placement):',
+      ...should.map((m) => `- ${m}`),
+    );
+  }
+  lines.push(
     '',
-    'Fix the errors and respond with ALL proposals again, complete and following the same JSON schema.',
-    'Move or remove the furniture items that violate the requirements; keep everything that is already correct.',
-  ].join('\n');
+    'Respond with ALL proposals again, complete and following the same JSON schema.',
+    'Move, resize or replace the furniture that violates a requirement; keep everything that is already correct.',
+  );
+  return lines.join('\n');
 }

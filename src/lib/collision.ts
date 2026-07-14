@@ -8,7 +8,7 @@ import {
   rectCorners,
   segmentsIntersect,
   wallLen,
-} from './polygon';
+} from './polygon.ts';
 
 /**
  * Pure 2D footprint/collision geometry used by furniture dragging and the
