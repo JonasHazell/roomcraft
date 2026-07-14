@@ -1,4 +1,4 @@
-import type { FurnitureKind, Point } from '../../types';
+import type { FurnitureItem, FurnitureKind, Point } from '../../types';
 import { FURNITURE_CATALOG } from '../furnitureCatalog.ts';
 import {
   formatCm,
@@ -34,6 +34,7 @@ import {
   blockersInZone,
   DOUBLE_BED_MIN_WIDTH,
   fail,
+  frontClearFraction,
   frontZone,
   isCoffeeTable,
   isDiningTable,
@@ -431,6 +432,43 @@ export const RULES: RuleDef[] = [
           furnitureIds: [],
         },
       ]);
+    },
+  },
+  {
+    id: 'ACC-14',
+    title: 'Every function keeps its usable clearance',
+    category: 'Accessibility',
+    importance: 4,
+    source: 'SS 91 42 21',
+    check(ctx) {
+      // Pieces that are only usable if the space in front of them stays clear.
+      // Beds (side access → ACC-05) and wardrobes (front clearance → ACC-06) are
+      // covered by their own rules, so they are not re-checked here.
+      const subjects = ctx.design.furniture.filter(
+        (f) => f.kind === 'desk' || f.kind === 'sofa' || f.kind === 'box' || isDiningTable(f),
+      );
+      if (subjects.length === 0) return na;
+      const violations: Violation[] = [];
+      for (const f of subjects) {
+        const depth = FURNITURE_CATALOG[f.kind].accessDepth;
+        if (depth <= 0) continue;
+        // A coffee table belongs in front of a sofa — don't count it as blocking.
+        const ignore = (b: FurnitureItem) => f.kind === 'sofa' && isCoffeeTable(b);
+        // Needs a clear majority of the front zone to be genuinely usable; a lone
+        // reachable sliver (e.g. a bed pushed against the desk) is not enough.
+        if (frontClearFraction(ctx.design, ctx.poly, f, depth, ignore) >= 0.6) continue;
+        const zone = frontZone(f, depth);
+        const inWay = blockersInZone(ctx, zone, new Set([f.id])).filter((b) => !ignore(b));
+        violations.push({
+          message:
+            inWay.length > 0
+              ? `"${f.name}" can't be used as intended — ${names(inWay)} takes up the clear space needed in front of it (about ${formatCm(depth)}). Move it away from the front of "${f.name}".`
+              : `"${f.name}" has too little usable space in front — it is pushed against a wall or the edge of the room. Turn it toward open floor or move it out.`,
+          furnitureIds: [f.id, ...inWay.map((b) => b.id)],
+          zones: [zone],
+        });
+      }
+      return fail(violations);
     },
   },
 

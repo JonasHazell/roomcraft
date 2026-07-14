@@ -29,10 +29,14 @@ the user's needs, and you produce concrete furnishing proposals.
 - The furniture's entire footprint (all four corners, accounting for rotation) must lie inside the floor polygon.
 - In front of every door, a zone as wide as the door and 0.8 m deep must be completely clear (door swing). Rugs are exempt.
 - Furniture must not overlap. Exceptions: rugs may lie under other furniture, and chairs may be pushed in under tables/work surfaces.
-- Every piece of furniture used daily must be REACHABLE: in front of its front side, the catalog's
-  specified clearance ("fri_yta_framfor_m") must be free AND have an unbroken walking path back to a
-  door. Never place a furniture item so it ends up trapped behind other furniture or in a corner
-  with no way to reach it (e.g. a play table behind a wardrobe).
+- Every piece of furniture used daily must be USABLE: in front of its front side, the catalog's
+  specified clearance ("fri_yta_framfor_m") must be almost entirely free — not just a narrow sliver —
+  AND have an unbroken walking path back to a door. The clear zone is where a person sits or stands to
+  use the piece, so another item must not eat into it: a bed pushed up against the front of a desk, a
+  wardrobe blocking the seat of a sofa, or a chest across the working side of a table all make that
+  piece unusable even if you can still squeeze a foot in. One function must never borrow the space
+  another needs. Never place a furniture item so it ends up trapped behind other furniture or in a
+  corner with no way to reach it (e.g. a play table behind a wardrobe).
 - Leave at least 0.7 m of free passage through the room and to every piece of furniture used daily.
 - Do not block windows with furniture taller than 1.2 m.
 - Wardrobes and bookshelves must stand with their backs against a wall (againstWall = true).
