@@ -60,17 +60,28 @@ export function toFurnitureItem(f: AiFurniture): Omit<FurnitureItem, 'id'> {
 
 /**
  * Asks the AI server (npm run server) for furnishing proposals for the room.
- * Can take up to a minute — Claude Code runs in the terminal behind the scenes.
+ * Can take a couple of minutes — Claude works out the layout behind the scenes.
+ *
+ * Pass an {@link AbortSignal} to make the request cancellable (a user "Cancel",
+ * or a timeout guard). An abort surfaces as the native `AbortError`, which the
+ * caller distinguishes from a real failure by inspecting the signal — so it is
+ * rethrown untouched rather than dressed up as a connection error.
  */
-export async function fetchProposals(design: Design, needs: string): Promise<ProposalsResponse> {
+export async function fetchProposals(
+  design: Design,
+  needs: string,
+  signal?: AbortSignal,
+): Promise<ProposalsResponse> {
   let res: Response;
   try {
     res = await fetch('/api/proposals', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ design, needs }),
+      signal,
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') throw e;
     throw new Error('Could not reach the AI service. Check your connection and try again.');
   }
   const payload = (await res.json().catch(() => null)) as
