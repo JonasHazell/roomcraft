@@ -14,7 +14,7 @@ import type {
   WallOpening,
 } from '../types';
 import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, SCHEMA_VERSION } from '../types';
-import { clampFurniture, clampOpening } from '../lib/collision';
+import { clampFurniture, clampOpening, findClearSpot, furnitureObstacles } from '../lib/collision';
 import { normalizeOptions } from '../lib/furnitureOptions';
 import { DEFAULT_MATERIAL, normalizeMaterial } from '../lib/materials';
 import { normalizeColors, normalizeMaterials } from '../lib/furnitureParts';
@@ -266,19 +266,24 @@ export function syncedProject(project: Project, design: Design): Project {
 
 /**
  * Builds a furniture piece placed at the room centre with a small random nudge
- * (so several added pieces don't hide each other) and clamped inside the walls.
- * Shared by every "add a piece to the room" action.
+ * (so several added pieces don't hide each other), steered clear of furniture
+ * already in the room, and clamped inside the walls. Shared by every "add a piece
+ * to the room" action.
  */
 export function placeAtCenter(d: Design, spec: FurnitureSpec): FurnitureItem {
   const poly = floorPolygon(d.walls);
   const center = polygonCenter(poly);
   const nudge = () => (Math.random() - 0.5) * 0.6;
+  const candidate = { x: center.x + nudge(), z: center.z + nudge() };
+  const footprint = { position: candidate, rotationY: 0, size: spec.size };
+  const obstacles = furnitureObstacles(d.furniture, spec.kind);
+  const position = findClearSpot(footprint, candidate, poly, d.walls, obstacles);
   return clampFurniture(
     {
       id: nanoid(8),
       kind: spec.kind,
       name: spec.name,
-      position: { x: center.x + nudge(), z: center.z + nudge() },
+      position,
       rotationY: 0,
       size: { ...spec.size },
       elevation: spec.elevation,

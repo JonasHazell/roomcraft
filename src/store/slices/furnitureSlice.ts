@@ -1,9 +1,10 @@
 import { nanoid } from 'nanoid';
-import type { Design, FurnitureItem, Point } from '../../types';
+import type { FurnitureItem } from '../../types';
 import {
   clampFurniture,
-  furnitureCorners,
+  findClearSpot,
   furnitureFits,
+  furnitureObstacles,
   slideFurniture,
 } from '../../lib/collision';
 import { clampToPolygon, floorPolygon } from '../../lib/polygon';
@@ -17,20 +18,6 @@ import {
   type DesignSet,
   type FurnitureActions,
 } from '../designModel';
-
-/**
- * The footprints a dragged piece must slide around: every other piece except
- * rugs. Rugs lie flat on the floor and are meant to have furniture stand on them,
- * so they never take part in furniture-to-furniture collision — a dragged rug
- * gets an empty obstacle list, and rugs are skipped as obstacles for others.
- */
-function collisionObstacles(d: Design, movingId: string): Point[][] {
-  const moving = d.furniture.find((f) => f.id === movingId);
-  if (moving?.kind === 'rug') return [];
-  return d.furniture
-    .filter((f) => f.id !== movingId && f.kind !== 'rug')
-    .map((f) => furnitureCorners(f, 0));
-}
 
 /** Furniture actions on the active proposal: add, duplicate, move, edit and remove pieces. */
 export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureActions {
@@ -83,12 +70,19 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
       const newId = nanoid(8);
       // Small random nudge so the copy doesn't land exactly on top of the original.
       const nudge = () => (Math.random() - 0.5) * 0.6;
+      const candidate = { x: src.position.x + nudge(), z: src.position.z + nudge() };
+      // Steer the copy clear of every piece already in the room — including the
+      // original — instead of letting it spawn embedded in it; falls back to the
+      // jittered spot if the room is too full to find a clear one nearby. The
+      // copy (newId) isn't in d.furniture yet, so nothing needs excluding by id.
+      const obstacles = furnitureObstacles(d.furniture, src.kind);
+      const position = findClearSpot(src, candidate, poly, d.walls, obstacles);
       const copy: FurnitureItem = clampFurniture(
         {
           ...src,
           id: newId,
           size: { ...src.size },
-          position: { x: src.position.x + nudge(), z: src.position.z + nudge() },
+          position,
           colors: src.colors ? { ...src.colors } : undefined,
           materials: src.materials ? { ...src.materials } : undefined,
           options: src.options ? { ...src.options } : undefined,
@@ -135,7 +129,8 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
     moveFurniture: (id, x, z) => {
       const d = get().design;
       const poly = floorPolygon(d.walls);
-      const obstacles = collisionObstacles(d, id);
+      const moving = d.furniture.find((f) => f.id === id);
+      const obstacles = moving ? furnitureObstacles(d.furniture, moving.kind, id) : [];
       set({
         design: touch({
           ...d,

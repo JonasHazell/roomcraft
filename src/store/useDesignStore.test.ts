@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useDesignStore } from './useDesignStore';
-import { defaultOpening } from '../lib/polygon';
+import { furnitureCorners, furnitureFits } from '../lib/collision';
+import { defaultOpening, floorPolygon } from '../lib/polygon';
 import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR } from '../types';
 
 const store = () => useDesignStore.getState();
@@ -221,5 +222,30 @@ describe('adding doors and windows to a wall', () => {
 
     store().removeOpening(id);
     expect(store().design.openings).toHaveLength(0);
+  });
+});
+
+describe('placing furniture clear of what is already in the room', () => {
+  beforeEach(() => {
+    store().newProject();
+  });
+
+  it('does not spawn a second piece embedded in the first (#146)', () => {
+    // Two chairs (0.45 x 0.45 m) both land near the center of the default
+    // 4 x 5 m room with only the old jitter; there is plainly room for both
+    // side by side, so this exercises the fix rather than a too-full room.
+    store().addFurniture('chair');
+    store().addFurniture('chair');
+    const [a, b] = store().design.furniture;
+    const poly = floorPolygon(store().design.walls);
+    expect(furnitureFits(b, poly, store().design.walls, [furnitureCorners(a, 0)])).toBe(true);
+  });
+
+  it('duplicating a piece (Ctrl+D) does not overlap the original', () => {
+    const id = store().addFurniture('chair');
+    store().duplicateFurniture(id);
+    const [a, b] = store().design.furniture;
+    const poly = floorPolygon(store().design.walls);
+    expect(furnitureFits(b, poly, store().design.walls, [furnitureCorners(a, 0)])).toBe(true);
   });
 });
