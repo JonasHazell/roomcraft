@@ -15,6 +15,7 @@ import {
   getSessionUser,
   isValidPassword,
   normalizeEmail,
+  normalizePassword,
   parseCookies,
   serializeClearCookie,
   serializeSessionCookie,
@@ -193,10 +194,15 @@ interface Credentials {
   password: unknown;
 }
 
-/** Parses `{ email, password }` from a request body, normalising the email. */
+/**
+ * Parses `{ email, password }` from a request body, normalising both: the email
+ * is trimmed/lower-cased and the password has surrounding whitespace trimmed.
+ * Applying the same normalisation to register and login is what keeps them in
+ * sync, so a stray space from autofill can't lock a user out of their account.
+ */
 function parseCredentials(raw: string): Credentials {
   const body = JSON.parse(raw) as { email?: unknown; password?: unknown };
-  return { email: normalizeEmail(body.email), password: body.password };
+  return { email: normalizeEmail(body.email), password: normalizePassword(body.password) };
 }
 
 async function handleRegister(req: IncomingMessage, res: ServerResponse) {

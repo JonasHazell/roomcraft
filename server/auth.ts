@@ -65,6 +65,20 @@ export function isValidPassword(password: unknown): password is string {
   );
 }
 
+/**
+ * Trims leading/trailing whitespace from a password. Mobile keyboards and
+ * password managers routinely append a stray space on autofill/paste, and the
+ * email is already normalized — so without this an invisible space entered at
+ * sign-up (but not at sign-in, or vice-versa) creates an account the user can
+ * never sign in to: the classic "I made an account but can't log in". Trimming
+ * both sign-up and sign-in keeps them symmetric. Only the ends are trimmed;
+ * internal spaces are preserved. Non-string input is returned untouched so the
+ * downstream type checks still reject it.
+ */
+export function normalizePassword(password: unknown): unknown {
+  return typeof password === 'string' ? password.trim() : password;
+}
+
 // --- Cookies -----------------------------------------------------------------
 
 /** Parses a `Cookie:` header into a name→value map. */

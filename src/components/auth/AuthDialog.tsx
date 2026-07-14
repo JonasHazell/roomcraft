@@ -48,8 +48,10 @@ export function AuthDialog() {
     setSubmitting(true);
     setError(null);
     try {
-      if (isRegister) await register(email.trim(), password);
-      else await login(email.trim(), password);
+      // Trim both fields (the server does the same) so an invisible space from
+      // autofill or paste can't create an account the user then can't sign in to.
+      if (isRegister) await register(email.trim(), password.trim());
+      else await login(email.trim(), password.trim());
       close();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');

@@ -4,6 +4,7 @@ import {
   hashPassword,
   isValidPassword,
   normalizeEmail,
+  normalizePassword,
   parseCookies,
   serializeClearCookie,
   serializeSessionCookie,
@@ -42,6 +43,26 @@ describe('normalizeEmail', () => {
     expect(normalizeEmail('a@b')).toBeNull();
     expect(normalizeEmail('')).toBeNull();
     expect(normalizeEmail(42)).toBeNull();
+  });
+});
+
+describe('normalizePassword', () => {
+  it('trims surrounding whitespace so a stray space cannot lock a user out', () => {
+    // The exact "created an account but can't log in" trap: a trailing space at
+    // sign-up (e.g. from autofill) must not differ from the password re-typed
+    // without it at sign-in.
+    expect(normalizePassword('correcthorse ')).toBe('correcthorse');
+    expect(normalizePassword('  hunter2')).toBe('hunter2');
+    expect(normalizePassword('correcthorse')).toBe('correcthorse');
+  });
+
+  it('preserves internal spaces', () => {
+    expect(normalizePassword('correct horse battery')).toBe('correct horse battery');
+  });
+
+  it('leaves non-string input untouched so type checks still reject it', () => {
+    expect(normalizePassword(undefined)).toBeUndefined();
+    expect(normalizePassword(42)).toBe(42);
   });
 });
 
