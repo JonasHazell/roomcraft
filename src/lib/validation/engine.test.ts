@@ -312,6 +312,52 @@ describe('LGT-06 screen reflections', () => {
   });
 });
 
+describe('FEN-26 rugs zone an open-plan room', () => {
+  // An open-plan living/dining room: a sofa at one end, a dining set at the other.
+  function openPlan(extra: FurnitureItem[] = []): FurnitureItem[] {
+    return [
+      piece('sofa', 2, 1, { width: 2, depth: 0.9 }),
+      piece('table', 2, 4, { width: 1.2, depth: 0.8, height: 0.75 }),
+      piece('chair', 2, 3.3, { width: 0.45, depth: 0.45 }),
+      ...extra,
+    ];
+  }
+
+  it('is not applicable to a single-function room', () => {
+    // Only a seating group — no dining table, so there is nothing to zone apart.
+    const d = makeDesign([piece('sofa', 2, 2, { width: 2, depth: 0.9 })]);
+    expect(outcomeOf(d, 'FEN-26').status).toBe('not-applicable');
+  });
+
+  it('flags an open-plan room whose zones have no rug', () => {
+    const outcome = outcomeOf(makeDesign(openPlan()), 'FEN-26');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      // Both the seating and the dining anchor are unzoned.
+      expect(outcome.violations.length).toBe(2);
+    }
+  });
+
+  it('passes when each zone sits on its own rug', () => {
+    const design = makeDesign(
+      openPlan([
+        piece('rug', 2, 1.2, { width: 2.4, depth: 1.6, height: 0.02 }),
+        piece('rug', 2, 4, { width: 1.8, depth: 1.4, height: 0.02 }),
+      ]),
+    );
+    expect(outcomeOf(design, 'FEN-26').status).toBe('passed');
+  });
+
+  it('flags one rug that merges the seating and dining zones', () => {
+    const bigRug = piece('rug', 2, 2.5, { width: 3, depth: 4.5, height: 0.02 });
+    const outcome = outcomeOf(makeDesign(openPlan([bigRug])), 'FEN-26');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations.some((v) => v.furnitureIds.includes(bigRug.id))).toBe(true);
+    }
+  });
+});
+
 describe('feng shui rules', () => {
   it('always includes the FEN rules in the report', () => {
     const d = makeDesign([piece('bed', 2, 1.5, { width: 1.6, depth: 2 })]);

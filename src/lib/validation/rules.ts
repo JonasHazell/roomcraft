@@ -1182,6 +1182,51 @@ export const RULES: RuleDef[] = [
     },
   },
   {
+    id: 'FEN-26',
+    title: 'Rugs zone an open-plan room',
+    category: 'Feng shui',
+    importance: 2,
+    source: 'Feng shui (grounding chi); best practice (zoning)',
+    twin: { id: 'COL-08', category: 'Color & textiles' },
+    appliesTo: ['vardagsrum', 'matplats'],
+    check(ctx) {
+      const sofas = ctx.byKind('sofa');
+      const diningTables = ctx.design.furniture.filter(isDiningTable);
+      // Only an open-plan room — one that holds two different activity zones —
+      // needs rugs to divide it; a single-function room does not.
+      if (sofas.length === 0 || diningTables.length === 0) return na;
+      const rugs = ctx.byKind('rug');
+      const anchors = [
+        ...sofas.map((f) => ({ f, zone: 'seating' as const })),
+        ...diningTables.map((f) => ({ f, zone: 'dining' as const })),
+      ];
+      const violations: Violation[] = [];
+      // 1. Each activity zone should sit on its own rug, so the areas read as
+      //    separate "rooms" and each zone's energy (chi) stays grounded.
+      for (const { f, zone } of anchors) {
+        if (rugs.some((r) => convexOverlap(footprint(f), footprint(r)))) continue;
+        violations.push({
+          message: `The ${zone} area around "${f.name}" is not anchored by a rug — in an open-plan room a rug under each activity zone divides it into its own space and grounds the zone's energy.`,
+          furnitureIds: [f.id],
+        });
+      }
+      // 2. A single rug spanning both a seating and a dining anchor merges the
+      //    two zones back into one — the opposite of dividing the space.
+      for (const r of rugs) {
+        const spanned = new Set(
+          anchors.filter((a) => convexOverlap(footprint(a.f), footprint(r))).map((a) => a.zone),
+        );
+        if (spanned.size > 1) {
+          violations.push({
+            message: `"${r.name}" runs under both the seating and dining zones and merges them — give each zone its own rug so the areas stay distinct.`,
+            furnitureIds: [r.id],
+          });
+        }
+      }
+      return fail(violations);
+    },
+  },
+  {
     id: 'ACO-03',
     title: 'Plants for air and comfort',
     category: 'Acoustics & air',

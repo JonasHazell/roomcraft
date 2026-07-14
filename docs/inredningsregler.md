@@ -477,6 +477,12 @@ Varje regel har följande fält:
 - **Källa:** Best practice
 - **Åtgärd:** Mattan behöver vara minst {bordsmått + 130} cm.
 
+### COL-08 — Mattor delar in en öppen planlösning
+- **Kategori:** Färg & textil · **Rum:** Vardagsrum + matplats (öppen planlösning) · **Viktighet:** 2 · **Mätbarhet:** A
+- **Villkor:** I ett rum med öppen planlösning och fler än en aktivitetszon förankras varje zon (sittgrupp, matgrupp) av en egen matta så att områdena läses som skilda ytor; en och samma matta går inte under två olika zoner och suddar ut gränsen. (Sammanfaller med FEN-26.)
+- **Källa:** Best practice (zonindelning)
+- **Åtgärd:** Lägg en matta under {oförankrad zon}; om en matta spänner över två zoner, dela upp den så att varje aktivitetsyta får sin egen.
+
 ### COL-07 — Gardinuppsättning
 - **Kategori:** Färg & textil · **Rum:** Alla · **Viktighet:** 2 · **Mätbarhet:** A
 - **Villkor:** Gardinstång/-skena sitter 10–15 cm över fönsterkarmen eller taknära; stången går 15–25 cm utanför karmen per sida; gardinbredd 1,5–2 × fönstrets bredd; längd till golv (0–1 cm ovan) — inte svävande vid karmens underkant.
@@ -558,6 +564,12 @@ Varje regel har följande fält:
 - **Villkor:** Badrumsdörren hålls stängd och toalettlocket nedfällt (symboliskt: vatten dränerar chi); badrumsdörr rakt mot säng eller matplats skärmas av.
 - **Källa:** Feng shui
 - **Åtgärd:** Vana-regel: stäng dörr och lock; sätt en skärm/växt mellan badrumsdörren och {säng/bord}.
+
+### FEN-26 — Mattor zonindelar en öppen planlösning
+- **Kategori:** Feng shui · **Rum:** Vardagsrum + matplats (öppen planlösning) · **Viktighet:** 2 · **Mätbarhet:** A
+- **Villkor:** I ett rum med öppen planlösning som rymmer fler än en aktivitetszon (t.ex. sittgrupp och matgrupp) står varje zon på sin egen matta så att områdena läses som skilda "rum" och varje zons energi (chi) hålls förankrad; en och samma matta spänner inte över två olika zoner och slår ihop dem. (Sammanfaller med COL-08.)
+- **Källa:** Feng shui (förankrar chi); best practice (zonindelning)
+- **Åtgärd:** Ge {zon} en egen matta; dela upp {för stor matta} i en per aktivitetsyta så att zonerna hålls åtskilda.
 
 ---
 
@@ -652,7 +664,7 @@ Varje regel har följande fält:
 # Bilaga — implementationstips för regelmotorn
 
 - **Tillämplighet:** Varje regel prövas bara om dess `Rum` matchar och rummets objekt gör den relevant (ingen TV → ERG-02 utgår). Redovisa "ej tillämplig" separat från "godkänd".
-- **Dubbletter/förstärkningar:** Vissa regler överlappar avsiktligt över kategorier (ERG-08/FEN-03, SAF-10/FEN-06, ERG-05/FEN-13, ERG-09/FEN-20, ACC-10/FEN-11). Regelmotorn bör länka dem så att samma geometrifynd inte dubbelbestraffas i totalbetyget, men kan redovisas i respektive kategori.
+- **Dubbletter/förstärkningar:** Vissa regler överlappar avsiktligt över kategorier (ERG-08/FEN-03, SAF-10/FEN-06, ERG-05/FEN-13, ERG-09/FEN-20, ACC-10/FEN-11, FEN-26/COL-08). Regelmotorn bör länka dem så att samma geometrifynd inte dubbelbestraffas i totalbetyget, men kan redovisas i respektive kategori.
 - **Mätbarhet A** kräver från modellen: rumspolygon med dörrar/fönster (position, bredd, slagriktning), möbler med typ, mått, rotation samt utrymningsvägsmarkering. **D** kräver objektmetadata (material, ljuskälla, färg). **M** löses med en checklista användaren fyller i.
 - **Betygsvisning:** ett totalbetyg + delbetyg per kategori (Säkerhet, Tillgänglighet, Ergonomi, Feng shui, Ljus, Färg & textil, Akustik & luft, Estetik), lista över brutna regler sorterad på viktighet, med `Åtgärd`-mallen ifylld med faktiska objekt och mått.
 - **Trösklar:** där intervall anges (t.ex. 30–45 cm) kan motorn ge full poäng inom intervallet, halv poäng inom ±20 % och noll utanför — det ger mjukare betyg än binärt pass/fail.
