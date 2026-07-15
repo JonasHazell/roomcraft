@@ -263,6 +263,25 @@ export function StyleGuide() {
           </div>
         </Demo>
 
+        <Demo
+          title="Read-only field"
+          note="For a computed value that can't be edited, keep .field + .field-label but swap .field-input for .field-static — e.g. the plan room panel's floor area, next to editable ceiling height."
+        >
+          <div className="field-grid" style={{ maxWidth: 360 }}>
+            <label className="field">
+              <span className="field-label">Ceiling height</span>
+              <span className="field-input">
+                <input type="number" defaultValue={240} />
+                <span className="field-suffix">cm</span>
+              </span>
+            </label>
+            <div className="field">
+              <span className="field-label">Floor area</span>
+              <span className="field-static">≈ 20 m²</span>
+            </div>
+          </div>
+        </Demo>
+
         <Demo title="Select, checkbox, stepper & colour">
           <div className="stack" style={{ maxWidth: 360 }}>
             <select defaultValue="rug">

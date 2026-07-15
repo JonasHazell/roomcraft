@@ -286,6 +286,17 @@ body {
   font-size: 12px;
 }
 
+/* A read-only value in a .field, styled like .field-input but for static text
+   instead of an editable control — e.g. the plan room panel's floor area. */
+.field-static {
+  padding: 7px 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: inherit;
+  color: var(--ink);
+}
+
 /* Furniture colour picker — a round colour chip with the label beside it, styled
    to match the wall/floor colour swatches (.sel-color-input) in the selection bar. */
 .color-field {
