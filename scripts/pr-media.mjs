@@ -1,18 +1,25 @@
 #!/usr/bin/env node
 /**
- * pr-media — make media that actually renders in a pull request.
+ * pr-media — attach media to a pull request opened by automation.
  *
- * The problem this solves: GitHub only uploads an image/video to its CDN when
- * you drag or paste it into the web PR editor. A PR opened through the API or
- * the CLI (as the RoomCraft agent pipeline does) has no browser to do that, so
- * writing a bare filename in the body just leaves a dead link — "a filename you
- * can't click on". The fix is to commit the media into the branch and embed it
- * with an ABSOLUTE raw URL, which GitHub renders inline in the PR description.
+ * The problem this solves: a PR opened or edited through the API/CLI (as the
+ * RoomCraft agent pipeline does) can't attach media the way a human can.
+ *   1. There is no browser to drag-and-drop into, and GitHub has no API to
+ *      upload an attachment — so a bare filename in the body is just dead text.
+ *   2. Inline image embeds don't survive either: the automation posting layer
+ *      defangs `![alt](url)` as an anti-tracking/anti-exfiltration guardrail
+ *      (it wraps the URL in a code span or drops the leading `!`), so the image
+ *      never renders and you're left with an unclickable filename — exactly the
+ *      symptom this repo hit.
  *
- * This helper does exactly that: it copies the given files into
- * `.github/pr-media/<branch>/`, then prints ready-to-paste markdown pointing at
- * the committed files via
- * `https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<path>`.
+ * What DOES survive that filter is an ordinary markdown link, `[text](url)`. So
+ * this helper commits the media into the branch and prints ready-to-paste
+ * markdown that LINKS to each file's GitHub blob view
+ * (`https://github.com/<owner>/<repo>/blob/<branch>/<path>`). A reviewer clicks
+ * the link and sees the screenshot rendered in GitHub's UI. It isn't inline, but
+ * it's clickable and reliable from automation — and true inline rendering is only
+ * available to a human dragging the file into the web editor.
+ *
  * Commit the copied files on the same branch as the PR and paste the markdown.
  *
  * Usage:
@@ -31,14 +38,11 @@
  *   node scripts/pr-media.mjs /tmp/flow.gif
  *
  * Notes:
- *   • Images (png/jpg/gif/webp/svg) render inline from a raw URL. GitHub only
- *     renders an inline VIDEO player for its own user-attachments uploads, so a
- *     committed .mp4/.mov shows as a link, not a player — prefer a short .gif or
- *     screenshots for API/CLI-opened PRs.
- *   • The URL host is raw.githubusercontent.com — the host GitHub proxies for
- *     inline images. The github.com/.../raw/... form is rejected as an image
- *     source (GitHub strips the src and the image renders broken). This renders
- *     for public repos; a private repo needs a drag-drop user-attachments upload.
+ *   • Output is clickable LINKS, not inline images — automation strips inline
+ *     image embeds (see above). For true inline media a human must drag the file
+ *     into the web PR editor, which uploads it to GitHub's user-attachments.
+ *   • Links point at the blob view, which renders png/jpg/gif/svg (and plays
+ *     mp4/mov/webm) in GitHub's UI on click.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -127,11 +131,15 @@ for (const file of opts.files) {
   // Only copy when the file isn't already the destination (idempotent re-runs).
   if (resolve(dest) !== src) copyFileSync(src, dest);
 
-  // raw.githubusercontent.com is the host GitHub proxies (via camo) for inline
-  // images in issue/PR markdown. The github.com/.../raw/... form is NOT accepted
-  // as an image source — GitHub strips the src and the image renders broken.
+  // Emit a plain markdown LINK, not an image embed (`![]()`). When a PR is
+  // opened/edited through automation, the posting layer defangs image embeds as
+  // an anti-tracking / anti-exfiltration guardrail — it wraps the `![]()` URL in
+  // a code span or drops the leading `!`, so the image never renders and you're
+  // left with an unclickable filename. A normal `[text](url)` link survives that
+  // filter and stays clickable. The github.com/.../blob/... view shows the image
+  // in GitHub's UI when clicked.
   const path = `${destDir.split('\\').join('/')}/${name}`;
-  const url = `https://raw.githubusercontent.com/${repo}/${branch}/${path}`;
+  const url = `https://github.com/${repo}/blob/${branch}/${path}`;
   const alt = name.replace(e, '').replace(/[-_]+/g, ' ').trim() || 'media';
   embeds.push({ name, url, alt, isVideo: VIDEO_EXT.has(e) });
 }
@@ -140,11 +148,13 @@ const cell = (needleA, needleB) => {
   const hit = embeds.find(
     (m) => m.name.toLowerCase().includes(needleA) && m.name.toLowerCase().includes(needleB),
   );
-  return hit ? `![${hit.alt}](${hit.url})` : '';
+  return hit ? `[${hit.alt}](${hit.url})` : '';
 };
 
 console.log(`\nCopied ${embeds.length} file(s) into ${destDir}/`);
-console.log('Commit them on this branch, then paste the markdown below into the PR body:\n');
+console.log('Commit them on this branch, then paste the markdown below into the PR body.');
+console.log('(These are clickable LINKS — automation strips inline image embeds, so a');
+console.log(' reviewer clicks through to view each screenshot on GitHub.)\n');
 console.log('----- paste from here -----\n');
 
 if (opts.table) {
@@ -155,8 +165,7 @@ if (opts.table) {
   console.log('');
 } else {
   for (const m of embeds) {
-    // A committed video can't be an inline player, so link it instead of ![].
-    console.log(m.isVideo ? `[${m.alt}](${m.url})` : `![${m.alt}](${m.url})`);
+    console.log(`- [${m.alt}](${m.url})`);
   }
   console.log('');
 }

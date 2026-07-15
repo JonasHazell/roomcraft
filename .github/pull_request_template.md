@@ -30,20 +30,19 @@
 
   1. Opening the PR in your browser (GitHub web UI)?
      Drag a file into the box or paste an image/video — GitHub uploads it to its
-     CDN and inserts a working link for you. Done.
+     CDN and shows it INLINE. This is the nicest result; use it when you can.
 
   2. Opening the PR through the API or CLI (the agent pipeline, `gh`, a script)?
-     There is NO browser to drag into, and GitHub has no API to upload an
-     attachment — a bare filename becomes a DEAD link you can't click. Instead,
-     commit the media into this branch and embed it with an absolute raw URL,
-     which renders inline. The helper does both for you:
+     There is no browser to drag into, GitHub has no API to upload an attachment,
+     AND inline image embeds (`![](…)`) get stripped by the posting layer — so
+     you can't render an image this way, only link to one. Commit the media into
+     this branch and post clickable LINKS to it. The helper does both:
 
          node scripts/pr-media.mjs after-desktop.png after-mobile.png --table
 
      It copies the files into .github/pr-media/<branch>/ and prints ready-to-paste
-     markdown. Commit the copied files on this branch, then paste the markdown
-     into the table below. (Committed .mp4/.mov show as a link, not a player —
-     prefer a short .gif or screenshots for API/CLI-opened PRs.)
+     markdown LINKS. Commit the copied files on this branch and paste the markdown
+     into the table below; a reviewer clicks each link to view the screenshot.
 
   Delete this whole section if you ticked "No" above.
 -->

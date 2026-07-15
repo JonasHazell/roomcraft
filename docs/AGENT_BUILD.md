@@ -54,19 +54,22 @@ Repository: `JonasHazell/roomcraft`.
    4. **Open a pull request** with `Closes #<N>` in the body, targeting the default
       branch. Fill in what changed, why, and how you verified it, following the PR
       template. Label the PR `agent:built`. **Do not enable auto-merge.**
-      **For any GUI change, attach media that renders — don't leave a dead link.**
-      You open PRs through the API, so drag-and-drop upload isn't available and a
-      bare filename in the body becomes an unclickable dead link. Instead:
+      **For any GUI change, attach media the reviewer can actually open.**
+      You open PRs through the API, so you can't attach media the way a human can:
+      drag-and-drop upload isn't available, and inline image embeds (`![](…)`) are
+      stripped by the posting layer (an anti-tracking guardrail) — a bare filename
+      or a defanged embed both leave an unclickable dead link. What survives is an
+      ordinary markdown **link**, so:
       - During the `npm run test:e2e` run, capture a desktop **and** a mobile
         screenshot (or a short `.gif`) of the changed flow — e.g. add a
         `page.screenshot({ path: '…' })` to the spec that drives it. Show both
         viewports whenever the change is visible in both.
       - Run `node scripts/pr-media.mjs <files…> --table`. It copies the media into
-        `.github/pr-media/<branch>/` and prints markdown that embeds it via an
-        absolute raw URL (which renders inline in the PR description).
+        `.github/pr-media/<branch>/` and prints markdown that **links** to each
+        file's GitHub blob view (which renders it in GitHub's UI on click).
       - **Commit the copied files on the same branch** and paste the printed
-        markdown into the template's media table. Committed `.mp4/.mov` render as a
-        link, not a player — prefer a `.gif` or screenshots.
+        markdown into the template's media table. (True inline rendering is only
+        possible when a human drags the file into the web editor.)
 4. If a selected issue turns out to be too large, ambiguous, or antithetical to
    `STRATEGY.md`, **do not force it.** Leave a brief comment on the issue explaining
    why, remove `agent:building`, and move on. (Optionally note it for Stage C.)
