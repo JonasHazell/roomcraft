@@ -56,7 +56,11 @@ colour against the neutral chrome. The only blue is `--select`, reserved for
 canvas selection — never introduce a stray blue into chrome. Score/severity
 bands use their own fixed greens/ambers/reds, held in the `--score-good`/
 `--score-mid` tokens (bad reuses `--danger`) and referenced by `.score-*`,
-`.severity-*` and the `.validation-categories` row cues below.
+`.severity-*` and the `.validation-categories` row cues below. The 1-5
+`.severity-*` scale has its own five-step ramp, `--severity-1`…`--severity-5`
+(worst → mildest is `5`→`1`); `--severity-5` reuses `--danger` since the hex
+already matches exactly, and `--severity-1`…`--severity-4` are their own fixed
+tokens since none of those steps line up with an existing colour.
 
 Accent tints (hover washes, active rows, error backgrounds) are derived with
 `color-mix(in srgb, var(--accent|--danger|--select) …%, transparent)` so they

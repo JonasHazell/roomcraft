@@ -16,6 +16,16 @@
   --score-good: #15803d;
   --score-mid: #b45309;
 
+  /* Fixed 1-5 severity scale for validation items (5 = worst → 1 = mildest),
+     same "own fixed tokens" rationale as the score bands above. --severity-5
+     reuses --danger since the hex already matches exactly; the other four
+     steps don't line up with any existing token, so they get their own. */
+  --severity-1: #9ca3af;
+  --severity-2: #65a30d;
+  --severity-3: #d97706;
+  --severity-4: #ea580c;
+  --severity-5: var(--danger);
+
   /* Shared chrome for every floating surface (modal, side panel, dropdown menu)
      so they read as one family. */
   --popup-radius: 14px;
@@ -1857,11 +1867,11 @@ select {
   color: var(--paper);
 }
 
-.severity-5 { background: #dc2626; }
-.severity-4 { background: #ea580c; }
-.severity-3 { background: #d97706; }
-.severity-2 { background: #65a30d; }
-.severity-1 { background: #9ca3af; }
+.severity-5 { background: var(--severity-5); }
+.severity-4 { background: var(--severity-4); }
+.severity-3 { background: var(--severity-3); }
+.severity-2 { background: var(--severity-2); }
+.severity-1 { background: var(--severity-1); }
 
 .validation-rule {
   font-size: 11.5px;
