@@ -83,7 +83,7 @@ export function ValidationPanel() {
                         <li key={key}>
                           <button
                             type="button"
-                            className={`validation-item importance-${r.rule.importance} ${active ? 'active' : ''}`}
+                            className={`validation-item ${active ? 'active' : ''}`}
                             onClick={() => {
                               toggleHighlight({
                                 key,
