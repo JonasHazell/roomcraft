@@ -23,9 +23,10 @@ export type PlanStartTool = 'select' | 'exterior';
 export type Panel = 'ai' | 'validation' | null;
 
 /**
- * The furniture add/edit dialog. `create` starts on the type picker and commits
- * a new piece on "Add"; `edit` opens the same form pre-filled with an existing
- * piece's values (opened from the selection bar's "More").
+ * The furniture add/edit dialog. `create` shows the type picker; picking a kind
+ * places a default-configured piece right away and hands off to `edit`, which
+ * opens the same form pre-filled with the (possibly just-placed) piece's values
+ * (also reachable from the selection bar's "More").
  */
 export type FurnitureDialog = { mode: 'create' } | { mode: 'edit'; id: string } | null;
 

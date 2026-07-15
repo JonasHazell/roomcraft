@@ -71,6 +71,33 @@ describe('history (undo/redo)', () => {
     expect(furnitureCount()).toBe(0);
   });
 
+  it('folds a placement wrapped in a batch, plus any live tweaks, into one undo step', () => {
+    // Mirrors the "Add furniture" picker: placing the piece and any customization
+    // made right afterwards (before OK/Cancel) are wrapped in one batch, so they
+    // undo together as a single step — the newly placed piece disappears along
+    // with whatever was tweaked, in one Ctrl/Cmd+Z.
+    useHistoryStore.getState().beginBatch();
+    const id = useDesignStore.getState().addFurniture('chair');
+    useDesignStore.getState().updateFurniture(id, { color: '#ff0000' });
+    useDesignStore.getState().updateFurniture(id, { color: '#00ff00' });
+    useHistoryStore.getState().endBatch();
+
+    expect(furnitureCount()).toBe(1);
+    useHistoryStore.getState().undo();
+    expect(furnitureCount()).toBe(0);
+  });
+
+  it('cancelling a batched placement removes the piece and any tweaks together', () => {
+    useHistoryStore.getState().beginBatch();
+    const id = useDesignStore.getState().addFurniture('chair');
+    useDesignStore.getState().updateFurniture(id, { color: '#ff0000' });
+
+    useHistoryStore.getState().cancelBatch();
+    expect(furnitureCount()).toBe(0);
+    // The rollback isn't itself undoable/redoable — it just discards the batch.
+    expect(useHistoryStore.getState().canRedo).toBe(false);
+  });
+
   it('restores proposal-level edits such as colours', () => {
     const before = useDesignStore.getState().design.wallColor;
     useDesignStore.getState().setColors({ wallColor: '#123456' });
