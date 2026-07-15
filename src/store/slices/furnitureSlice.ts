@@ -9,7 +9,7 @@ import {
   furnitureObstacles,
   slideFurniture,
 } from '../../lib/collision';
-import { clampToPolygon, floorPolygon } from '../../lib/polygon';
+import { clampToPolygon, floorPolygon, polygonCenter } from '../../lib/polygon';
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { defaultOptions, normalizeOptions } from '../../lib/furnitureOptions';
 import { defaultMaterials, normalizeColors, normalizeMaterials } from '../../lib/furnitureParts';
@@ -98,6 +98,12 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
     updateFurniture: (id, patch) => {
       const d = get().design;
       const poly = floorPolygon(d.walls);
+      // A resize or rotation changes the footprint just like a drag-move changes
+      // the position — only those patches need the collision pass below. Leaving
+      // it gated on this keeps unrelated edits (colour, material, options) from
+      // ever nudging the piece.
+      const changesFootprint =
+        patch.size !== undefined || patch.rotationY !== undefined || patch.position !== undefined;
       set({
         design: touch({
           ...d,
@@ -122,7 +128,47 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
               // Per-part colour overrides merge onto the existing sparse map.
               colors: patch.colors ? { ...f.colors, ...patch.colors } : f.colors,
             };
-            return clampFurniture(next, poly);
+            const clamped = clampFurniture(next, poly);
+            if (!changesFootprint) return clamped;
+            // Give resize/rotate the same wall/obstacle collision guarantee as
+            // moveFurniture.
+            const obstacles = furnitureObstacles(d.furniture, clamped.kind, id);
+            if (furnitureFits(clamped, poly, d.walls, obstacles)) return clamped;
+            // Already stuck in a wall before this edit (older design, rotation
+            // near a wall)? Fall back to the free floor-polygon clamp already
+            // computed above, same as moveFurniture, so a broken legacy piece
+            // stays freely editable.
+            if (!furnitureFits(f, poly, d.walls)) return clamped;
+            // Unlike a drag, an in-place resize/rotation has no drag target to
+            // slide toward — slideFurniture needs a point it already fits at to
+            // walk *from* (it only detects crossing a boundary on the way to the
+            // target, it can't escape a start that's already invalid). Anchor
+            // the search at the room's centre — reliably clear for anything but
+            // an oversized piece — and slide the new footprint from there toward
+            // the position the edit actually wants, stopping as soon as it's
+            // clear; run the same binary search slideFurniture does for a drag,
+            // just in reverse.
+            const anchored = { ...clamped, position: polygonCenter(poly) };
+            // Already overlapping another piece before this edit (an older save,
+            // an AI layout)? Slide with walls only, same as moveFurniture's
+            // fallback, so the edit doesn't get frozen by a pre-existing overlap.
+            if (!furnitureFits(f, poly, d.walls, obstacles)) {
+              return {
+                ...clamped,
+                position: slideFurniture(anchored, clamped.position, poly, d.walls),
+              };
+            }
+            const slid = slideFurniture(anchored, clamped.position, poly, d.walls, obstacles);
+            if (furnitureFits({ ...clamped, position: slid }, poly, d.walls, obstacles)) {
+              return { ...clamped, position: slid };
+            }
+            // Rare fallback (e.g. the piece already sat exactly at the room's
+            // centre, so there was no path to search along) — the same
+            // nearby-clear-spot search placement already uses.
+            return {
+              ...clamped,
+              position: findClearSpot({ ...clamped, position: slid }, slid, poly, d.walls, obstacles),
+            };
           }),
         }),
       });
