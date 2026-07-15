@@ -150,7 +150,10 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
 ## Behaviour conventions
 
 - **Esc** closes the topmost overlay (dialog › panel › selection). One thing reacts
-  at a time — see the handlers in `App.tsx` and `SidePanel.tsx`.
+  at a time — see `lib/globalKeydown.ts` (wired up in `App.tsx`) and
+  `SidePanel.tsx`. Unlike the other selection shortcuts below, Esc still fires
+  even while a field inside the closing overlay has focus (e.g. the plan
+  editor's wall panel Length field) — it blurs the field first.
 - **Undo/redo** — `Ctrl/Cmd+Z`, `Shift` to redo (or `Ctrl/Cmd+Y`). Always available
   inside a room.
 - **Selection shortcuts** (furniture): `R` / `Shift+R` rotate in 90° steps,
