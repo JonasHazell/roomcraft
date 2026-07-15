@@ -193,6 +193,24 @@ export const FURNITURE_CATALOG: Record<FurnitureKind, CatalogEntry> = {
     accessDepth: 0.6,
     blocks: true,
   },
+  'floor-lamp': {
+    label: 'Floor lamp',
+    category: 'anywhere',
+    defaultSize: { width: 0.4, depth: 0.4, height: 1.55 },
+    defaultColor: '#a08b6f',
+    front: 'no direction (pole stands on the floor)',
+    accessDepth: 0,
+    blocks: true,
+  },
+  'table-lamp': {
+    label: 'Table lamp',
+    category: 'anywhere',
+    defaultSize: { width: 0.25, depth: 0.25, height: 0.45 },
+    defaultColor: '#a08b6f',
+    front: 'no direction (sits on another surface)',
+    accessDepth: 0,
+    blocks: false,
+  },
 };
 
 // Tuple type so the list can feed z.enum directly (persistence, AI schema).

@@ -77,6 +77,14 @@ export const FURNITURE_PARTS: Record<FurnitureKind, PartSpec[]> = {
   ],
   rug: [{ key: 'rug', label: 'Material', default: 'carpet' }],
   box: [{ key: 'body', label: 'Material', default: 'matte' }],
+  'floor-lamp': [
+    { key: 'base', label: 'Base & pole', default: 'metal' },
+    { key: 'shade', label: 'Shade', default: 'fabric' },
+  ],
+  'table-lamp': [
+    { key: 'base', label: 'Base & pole', default: 'metal' },
+    { key: 'shade', label: 'Shade', default: 'fabric' },
+  ],
 };
 
 /** True if the kind splits into more than one configurable part. */
