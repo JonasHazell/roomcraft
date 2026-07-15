@@ -2,6 +2,8 @@
 
 Detta dokument är en strukturerad katalog över regler för inredning av bostäder: byggnorm och svensk standard, internationella riktlinjer, branschens best practice samt feng shui. Reglerna är sorterade i fallande viktighetsordning (nivå 5 → 1) och skrivna så att varje regel kan översättas till en maskinell kontroll.
 
+> **Språk.** Detta är en svensk översättning. Källversionen är [`interior-design-rules.md`](interior-design-rules.md) — den engelska katalogen är den som regelmotorn och agentdokumenten refererar till. Håll de två i synk när en regel ändras.
+
 ## Fältschema
 
 Varje regel har följande fält:

@@ -2,6 +2,8 @@
 
 This document is a structured catalog of rules for furnishing residential homes: building codes and Swedish standards, international guidelines, industry best practice, and feng shui. The rules are sorted in descending order of importance (level 5 → 1) and written so that each rule can be translated into an automated check.
 
+> **Languages.** This English catalog is the **source of truth** — it's the version the rule engine and the agent docs reference. [`inredningsregler.md`](inredningsregler.md) is a Swedish translation of the same rules; when a rule changes here, update it there too so the two don't drift.
+
 ## Field schema
 
 Each rule has the following fields:
