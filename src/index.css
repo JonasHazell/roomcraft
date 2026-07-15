@@ -1916,6 +1916,16 @@ select {
     justify-content: center;
   }
 
+  /* The wall/floor colour swatch (.sel-color, a .sel-action variant) drops its
+     text label at the narrow-width breakpoints below, leaving only the 22px
+     round swatch to carry the tap target. .sel-action above already floors its
+     height at 44px but never its width — extend that same guarantee to width so
+     the pill doesn't shrink under the rule once its label is gone. */
+  .sel-color {
+    min-width: 44px;
+    justify-content: center;
+  }
+
   .section summary {
     padding: 16px 20px;
   }
