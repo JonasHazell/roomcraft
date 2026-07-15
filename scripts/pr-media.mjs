@@ -11,7 +11,8 @@
  *
  * This helper does exactly that: it copies the given files into
  * `.github/pr-media/<branch>/`, then prints ready-to-paste markdown pointing at
- * the committed files via `https://github.com/<owner>/<repo>/raw/<branch>/<path>`.
+ * the committed files via
+ * `https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<path>`.
  * Commit the copied files on the same branch as the PR and paste the markdown.
  *
  * Usage:
@@ -34,8 +35,10 @@
  *     renders an inline VIDEO player for its own user-attachments uploads, so a
  *     committed .mp4/.mov shows as a link, not a player — prefer a short .gif or
  *     screenshots for API/CLI-opened PRs.
- *   • The URL host is github.com/.../raw/... (not raw.githubusercontent.com) so
- *     it also renders for authorised viewers of a private repo.
+ *   • The URL host is raw.githubusercontent.com — the host GitHub proxies for
+ *     inline images. The github.com/.../raw/... form is rejected as an image
+ *     source (GitHub strips the src and the image renders broken). This renders
+ *     for public repos; a private repo needs a drag-drop user-attachments upload.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -124,8 +127,11 @@ for (const file of opts.files) {
   // Only copy when the file isn't already the destination (idempotent re-runs).
   if (resolve(dest) !== src) copyFileSync(src, dest);
 
-  // github.com/.../raw/<branch>/<path> renders inline and works for private repos.
-  const url = `https://github.com/${repo}/raw/${branch}/${destDir.split('\\').join('/')}/${name}`;
+  // raw.githubusercontent.com is the host GitHub proxies (via camo) for inline
+  // images in issue/PR markdown. The github.com/.../raw/... form is NOT accepted
+  // as an image source — GitHub strips the src and the image renders broken.
+  const path = `${destDir.split('\\').join('/')}/${name}`;
+  const url = `https://raw.githubusercontent.com/${repo}/${branch}/${path}`;
   const alt = name.replace(e, '').replace(/[-_]+/g, ' ').trim() || 'media';
   embeds.push({ name, url, alt, isVideo: VIDEO_EXT.has(e) });
 }
