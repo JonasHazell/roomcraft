@@ -14,6 +14,7 @@ import {
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
+import { ACCENT } from '../../lib/theme';
 import {
   MaterialContext,
   PartColorsContext,
@@ -125,10 +126,8 @@ const RIGHT_ANGLE = Math.PI / 2;
 // reachable just outside the magnet.
 const RIGHT_ANGLE_MAGNET = Math.PI / 24;
 
-// The rotation handle's accent colour. WebGL materials take a literal colour, so
-// this mirrors the --accent token (terracotta) the way SELECT_EMISSIVE mirrors
-// --select; keep them in sync if the token changes.
-const ROTATE_HANDLE_COLOR = '#b4532f';
+// The rotation handle's accent colour. Mirrors `--accent`; see `lib/theme`.
+const ROTATE_HANDLE_COLOR = ACCENT;
 
 export function FurnitureMesh({ id }: { id: string }) {
   const item = useDesignStore((s) => s.design.furniture.find((f) => f.id === id));

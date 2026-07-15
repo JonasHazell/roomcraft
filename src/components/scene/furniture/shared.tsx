@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react';
 import * as THREE from 'three';
 import type { FurnitureOptions, FurnitureSize } from '../../../types';
 import { materialSpec, type MaterialSpec } from '../../../lib/materials';
+import { SELECT } from '../../../lib/theme';
 import { materialBump, materialMap } from '../materialTextures';
 
 export interface FurnitureProps {
@@ -12,7 +13,8 @@ export interface FurnitureProps {
   options: FurnitureOptions;
 }
 
-export const SELECT_EMISSIVE = '#2f6fdd';
+/** The selected-piece emissive glow colour. Mirrors `--select`; see `lib/theme`. */
+export const SELECT_EMISSIVE = SELECT;
 
 /**
  * The finish for the piece currently being rendered — the fallback for meshes
