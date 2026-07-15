@@ -88,6 +88,15 @@ current mandate — nothing there should drive what we build today. When the cor
 experience is in place, we revisit that document and choose a direction
 deliberately.
 
+## The hardest problems to get right
+
+Building the core experience well means solving a few genuinely hard technical
+problems: a GUI that stays simple yet exposes every important feature, validation
+rules that are both general and relevant, and an AI recommendation engine that
+gives high-quality suggestions. These are called out in
+[`TECHNICAL-CHALLENGES.md`](TECHNICAL-CHALLENGES.md) — read it to understand where
+the real difficulty lives.
+
 ## In short
 
 > Build fewer things, build them well, get the core experience right — and only
