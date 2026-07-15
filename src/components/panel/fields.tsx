@@ -8,6 +8,7 @@ export function NumberField({
   max = 1000,
   step = 0.1,
   suffix = 'cm',
+  commitOnBlur = false,
 }: {
   label: string;
   value: number;
@@ -16,11 +17,25 @@ export function NumberField({
   max?: number;
   step?: number;
   suffix?: string;
+  /**
+   * Apply the typed value only on blur or Enter, instead of on every keystroke
+   * (the default). Use this for a field whose live value drives a *destructive*
+   * recalculation elsewhere — e.g. a wall length that reclamps its doors/windows
+   * to fit — so that a half-typed, transiently tiny number (typed while replacing
+   * the previous value) is never treated as a real, final edit. Matches the same
+   * pattern already used by `PlanLengthInput` for wall length while drawing.
+   */
+  commitOnBlur?: boolean;
 }) {
   // Local text while the field is focused, so that half-typed numbers ("1.")
   // don't bounce back from the store's clamped value.
   const [text, setText] = useState<string | null>(null);
   const shown = text ?? String(Number(value.toFixed(2)));
+
+  const commit = (raw: string) => {
+    const n = parseFloat(raw);
+    if (Number.isFinite(n)) onChange(n);
+  };
 
   return (
     <label className="field">
@@ -32,13 +47,31 @@ export function NumberField({
           min={min}
           max={max}
           step={step}
-          onFocus={() => setText(shown)}
+          onFocus={(e) => {
+            setText(shown);
+            if (commitOnBlur) e.currentTarget.select();
+          }}
           onChange={(e) => {
             setText(e.target.value);
-            const n = parseFloat(e.target.value);
-            if (Number.isFinite(n)) onChange(n);
+            if (!commitOnBlur) commit(e.target.value);
           }}
-          onBlur={() => setText(null)}
+          onKeyDown={
+            commitOnBlur
+              ? (e) => {
+                  if (e.key === 'Enter') {
+                    commit(e.currentTarget.value);
+                    e.currentTarget.blur();
+                  } else if (e.key === 'Escape') {
+                    setText(null);
+                    e.currentTarget.blur();
+                  }
+                }
+              : undefined
+          }
+          onBlur={(e) => {
+            if (commitOnBlur) commit(e.target.value);
+            setText(null);
+          }}
         />
         <span className="field-suffix">{suffix}</span>
       </span>
