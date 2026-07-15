@@ -10,6 +10,17 @@
   --select: #2f6fdd;
   --danger: #dc2626;
   --danger-dark: #b91c1c;
+  /* Secondary ink — a step lighter than --ink, used for the hover state of
+     ink-filled controls (.btn-done) and as the plan editor's default
+     (exterior) wall stroke. */
+  --ink-2: #3f3f46;
+  /* Plan-editor structural line colors: the de-emphasized interior wall
+     stroke and the window opening stroke (door openings reuse --accent). */
+  --wall-line: #a1a1aa;
+  --window-line: #8fb9c9;
+  /* Neutral stepper chrome (.count-step) — its resting and hover background. */
+  --step-bg: #f4f4f5;
+  --step-bg-hover: #e4e4e7;
   /* Fixed score bands (deliberately not the accent) — red/amber/green must read
      the same regardless of brand colour. Shared by .score-badge,
      .validation-score and the .validation-categories row cues. */
@@ -333,8 +344,8 @@ select {
 }
 
 .btn-done:hover {
-  background: #3f3f46;
-  border-color: #3f3f46;
+  background: var(--ink-2);
+  border-color: var(--ink-2);
   color: var(--paper);
 }
 
@@ -893,12 +904,12 @@ select {
 }
 
 .plan-wall .wall-band {
-  stroke: #3f3f46;
+  stroke: var(--ink-2);
   stroke-linecap: butt;
 }
 
 .plan-wall.interior .wall-band {
-  stroke: #a1a1aa;
+  stroke: var(--wall-line);
 }
 
 .plan-wall.selected .wall-band {
@@ -920,7 +931,7 @@ select {
 }
 
 .wall-opening.window {
-  stroke: #8fb9c9;
+  stroke: var(--window-line);
 }
 
 .wall-measure,
@@ -1509,7 +1520,7 @@ select {
 .count-step {
   width: 30px;
   border: 0;
-  background: #f4f4f5;
+  background: var(--step-bg);
   color: inherit;
   font-size: 16px;
   line-height: 1;
@@ -1517,7 +1528,7 @@ select {
 }
 
 .count-step:hover:not(:disabled) {
-  background: #e4e4e7;
+  background: var(--step-bg-hover);
 }
 
 .count-step:disabled {

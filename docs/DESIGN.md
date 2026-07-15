@@ -48,6 +48,11 @@ gallery shows them live.
 | `--select`        | Selection blue (3D/plan selection only)          |
 | `--danger`        | Destructive actions and errors                   |
 | `--danger-dark`   | Danger hover/pressed                             |
+| `--ink-2`         | Secondary ink — `.btn-done` hover, exterior wall stroke |
+| `--wall-line`     | Interior wall stroke (plan editor)               |
+| `--window-line`   | Window opening stroke (plan editor; doors reuse `--accent`) |
+| `--step-bg`       | `.count-step` resting background                 |
+| `--step-bg-hover` | `.count-step` hover background                   |
 
 Keep the palette **clean and neutral** — white surfaces (`--paper`/`--card`),
 a light grey app background (`--paper-2`), neutral grey text (`--muted`) and
