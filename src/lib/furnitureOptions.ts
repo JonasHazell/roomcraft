@@ -125,6 +125,8 @@ export const FURNITURE_OPTIONS: Record<FurnitureKind, FurnitureOptionSpec[]> = {
     },
   ],
   box: [],
+  'floor-lamp': [],
+  'table-lamp': [],
 };
 
 /** True if the kind has any customizable options. */

@@ -40,6 +40,8 @@ import { Fridge } from './furniture/Fridge';
 import { Toilet } from './furniture/Toilet';
 import { Bathtub } from './furniture/Bathtub';
 import { Sink } from './furniture/Sink';
+import { FloorLamp } from './furniture/FloorLamp';
+import { TableLamp } from './furniture/TableLamp';
 
 const COMPONENTS: Record<FurnitureKind, ComponentType<FurnitureProps>> = {
   bed: Bed,
@@ -61,6 +63,8 @@ const COMPONENTS: Record<FurnitureKind, ComponentType<FurnitureProps>> = {
   sink: Sink,
   rug: Rug,
   box: GenericBox,
+  'floor-lamp': FloorLamp,
+  'table-lamp': TableLamp,
 };
 
 /**

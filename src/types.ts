@@ -64,7 +64,9 @@ export type FurnitureKind =
   | 'bathtub'
   | 'sink'
   | 'rug'
-  | 'box';
+  | 'box'
+  | 'floor-lamp'
+  | 'table-lamp';
 
 /**
  * The room type a furniture kind belongs to, used to group the catalog in the
