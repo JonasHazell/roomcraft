@@ -93,7 +93,10 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
 - **Fields** — wrap inputs in `.field-input` (consistent focus ring + `.field-suffix`).
   Label with `.field` + `.field-label`; two-up with `.field-grid`; stack with
   `.stack`. Also `.check-field`, `.count-field` (stepper), `.color-field`,
-  `.source-toggle` (segmented), and bare `select`.
+  `.source-toggle` (segmented), and bare `select`. For a computed value that
+  can't be edited, keep `.field` + `.field-label` but swap `.field-input` for
+  `.field-static` — same box, plain text instead of a control (e.g. the plan
+  room panel's floor area next to its editable ceiling height).
 - **Surfaces** — `.card` + `.card-head` for repeated records; `.chip` (`.door` /
   `.window`) to tag kind (a static tag, not a button); `.section` (`<details>`)
   for collapsible groups; `.modal`
