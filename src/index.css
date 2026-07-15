@@ -2234,6 +2234,18 @@ select {
   animation: sheet-up 0.2s ease;
 }
 
+/* At desktop widths (the MOBILE_WIDTH breakpoint's complement, see
+   useMediaQuery.ts) there's ample room beside the 3D view for a genuine
+   right-hand sidebar instead of the near-edge-to-edge mobile sheet above: drop
+   the left anchor and cap the width so the room stays clearly visible next to
+   it, matching this panel's documented intent. */
+@media (min-width: 769px) {
+  .side-panel {
+    left: auto;
+    width: 400px;
+  }
+}
+
 /* ---------- Respect reduced-motion preferences ---------- */
 
 @media (prefers-reduced-motion: reduce) {
