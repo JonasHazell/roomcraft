@@ -41,7 +41,15 @@ note the promotion on the entry so the trail from evidence → rule stays tracea
   *placement* paths (`placeAtCenter`, `duplicateFurniture`) skip that same check
   — also merged with zero changes. Prefer proposals that point at the specific
   sibling code path already doing it right and ask to reuse its exact mechanism,
-  over ones that ask for a new mechanism to be built.
+  over ones that ask for a new mechanism to be built. This run reinforced the
+  pattern at scale: 9 of 10 decided agent PRs (#180–#189, every one except the
+  relocated-not-shrunk #186) merged with **zero edits**, and nearly every issue
+  named its sibling explicitly — #181/#178 and #178's own issue text cite the
+  #128 precedent by number, #182 points at the `--score-good`/`--score-mid`
+  tokens defined a few lines above the hardcoded colors it fixes, and #183
+  points at the one drifted literal among three near-identical WebGL color
+  constants. Naming the specific sibling by file/line, not just the abstract
+  rule, keeps being the single highest-yield proposal shape.
 
 - **"Avoid duplicates" must include the human's own recent work, not just open
   issues/PRs — same-day human activity in an area is a strong signal to steer
@@ -99,6 +107,21 @@ _No entries yet._
   see (distance to the nearest wall, gap to the next piece) over absolute
   coordinates in a coordinate system the UI never otherwise exposes.
 
+- **Stopping controls from overlapping isn't the same as keeping them usable —
+  if the fix works by shrinking a control until it's no longer legible, that's
+  not a fix, it's a smaller version of the same problem.** #186 (CSS `minmax(0,
+  1fr)` on the bottom dock's middle track, so a multi-button pill could no
+  longer overflow into its neighbours) was rejected: *"Good idea, this needs
+  fixing, but now only the copy button shows. A better solution would be to
+  move the ai and auto buttons to the proposal menu instead."* The overlap was
+  gone, but squeezing the pill into a now-bounded track just clipped it down to
+  one visible action — no more usable than the overlap it replaced. When a
+  group of dock/toolbar controls doesn't fit a narrow viewport, check whether
+  some of them belong in an existing menu/overflow surface (the app already has
+  this pattern — the proposal switcher, `More`) before reaching for a
+  shrink-to-fit CSS tweak that keeps every control in place but makes one
+  illegible.
+
 ## Testing & verification
 
 - **When adding or fixing a rule that flags a bad layout, pair it with a
@@ -123,6 +146,26 @@ _No entries yet._
   rather than a bespoke geometric routine. A rule proposal or fix should point at
   the catalog entry and the existing helper it will reuse, the same way a UI
   proposal should point at the sibling control it will match.
+
+- **[Promoted into `AGENT_BUILD.md` this run.] Any user-facing change must now
+  be validated end-to-end in a real browser, desktop and mobile — this is
+  enforced, not optional.** The human landed #192: a Playwright harness (two
+  projects running the same specs, desktop + mobile) plus a `Stop` hook that
+  blocks a session from finishing while `src/` has changes `npm run test:e2e`
+  hasn't validated, and `CLAUDE.md` now states the rule directly. A Stage B
+  subagent that only follows the old three-command verify checklist (build,
+  lint, test) without adding/extending an `e2e/` spec and running
+  `npm run test:e2e` will get stuck on that hook — so this is promoted into
+  `AGENT_BUILD.md`'s own verify step rather than left for a subagent to infer
+  from `CLAUDE.md` alone.
+- **When a change adds a new file-naming convention or directory that another
+  tool already globs over, verify that tool still passes too.** #193 was a
+  same-day fix for a regression #192 itself introduced: the new
+  `e2e/*.spec.ts` files matched Vitest's default `**/*.spec.ts` pattern and
+  broke `npm test` on `main`, since Playwright's `test.beforeEach` can't run
+  under Vitest. Scoping `e2e/**` out of `vite.config.ts`'s Vitest config fixed
+  it. Don't just verify the tool you're building for — check whether the new
+  files/paths intersect an existing tool's glob or config and would break it.
 
 ## Code style & conventions
 
@@ -152,3 +195,24 @@ _No entries yet._
   check recent commit history on the target path before proposing there, and
   prefer proposing in a different core flow (2D plan editing, room templates,
   saved library) that isn't seeing this volume of same-day hand-built work.
+
+- **A new hot area, same mechanism: room creation.** #168 replaced the
+  single-modal template picker with a full stepped wizard (name → walls →
+  openings, 858 lines, new `.wizard-*`/`.plan-chooser` primitives) in one
+  hand-built PR. Treat "start a new room" the same way as the AI-furnishing
+  flow above for now — re-check recent commit history on
+  `src/components/*Wizard*`/`useUiStore`'s wizard state before proposing there,
+  since a narrow slice is likely to land inside or be made redundant by
+  whatever the human builds next in that flow.
+
+- **Pipeline/documentation infrastructure the human builds by hand
+  (`docs/*.md`, `e2e/**`, `playwright.config.ts`, `scripts/*`,
+  `.claude/settings.json`) is not a "hot product area" signal — don't read it
+  the same way as hot product code.** #190/#191/#192/#193/#194 were all
+  same-day human PRs, but they harden the agent pipeline itself (a docs index,
+  an architecture map, e2e enforcement, a CI fix) rather than deepen a room-
+  planning flow. Keep applying the "check recent activity before proposing"
+  rule to *product* paths (`src/`, `server/`); don't let a burst of doc/infra
+  commits read as "this area is spoken for" the way a burst of `src/lib/validation/`
+  commits does — and don't propose *changes to the pipeline docs themselves*,
+  since that's explicitly Stage C's job, not Stage A's.
