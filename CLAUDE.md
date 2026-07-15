@@ -5,6 +5,9 @@ in 3D (react-three-fiber), with a 2D floor-plan editor and a warm, print-inspire
 visual style. State is Zustand; the whole UI is styled from a single stylesheet,
 `src/index.css`, using CSS custom-property design tokens.
 
+For a map of the project docs — purpose, strategy, design system, rule catalog and
+the agent pipeline — see [`docs/README.md`](docs/README.md).
+
 ## What the app is for
 
 RoomCraft's purpose is to make it **stupidly simple to get help finding the best

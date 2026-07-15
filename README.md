@@ -205,6 +205,13 @@ Notes:
   calls; to meter spend per user you'd track usage yourself and, if needed, issue
   a separate key per tenant.
 
+## Documentation
+
+Project docs live in [`docs/`](docs/) — start with its
+[index](docs/README.md), which maps out the purpose and strategy, the design
+system, the interior-design rule catalog, and the agent pipeline. Working
+conventions for Claude are in [`CLAUDE.md`](CLAUDE.md).
+
 ## Development
 
 - `npm test` — run the test suite (vitest)
