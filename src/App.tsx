@@ -17,9 +17,9 @@ import { PlanEditor } from './components/plan/PlanEditor';
 import { useDesignStore } from './store/useDesignStore';
 import { useUiStore } from './store/useUiStore';
 import { useDialogStore } from './store/useDialogStore';
-import { useHistoryStore } from './store/useHistoryStore';
 import { useAuthStore } from './store/useAuthStore';
 import { backToLobby } from './lib/nav';
+import { handleGlobalKeydown } from './lib/globalKeydown';
 
 // three.js and the whole 3D scene are the bulk of the bundle; load them only
 // when a room is actually opened so the lobby/first paint stays light.
@@ -116,79 +116,12 @@ function App() {
     void useAuthStore.getState().refresh();
   }, []);
 
+  // The app's single global keydown handler (undo/redo, Esc, selection
+  // shortcuts) lives in `lib/globalKeydown.ts` so it can be unit tested
+  // without rendering the component tree.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (
-        t &&
-        (t.tagName === 'INPUT' ||
-          t.tagName === 'TEXTAREA' ||
-          t.tagName === 'SELECT' ||
-          t.isContentEditable)
-      ) {
-        return;
-      }
-      // While the furniture dialog, a confirm/prompt dialog or the auth dialog is
-      // open it owns the keyboard (Esc closes it), so don't also deselect or
-      // rotate behind it.
-      if (
-        useUiStore.getState().furnitureDialog ||
-        useUiStore.getState().authDialogOpen ||
-        useDialogStore.getState().active
-      ) {
-        return;
-      }
-      // Editing shortcuts only apply inside a room, never in the lobby.
-      if (useUiStore.getState().appView === 'lobby') return;
-      // Undo/redo work regardless of the current selection.
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
-        e.preventDefault();
-        if (e.shiftKey) useHistoryStore.getState().redo();
-        else useHistoryStore.getState().undo();
-        return;
-      }
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) {
-        e.preventDefault();
-        useHistoryStore.getState().redo();
-        return;
-      }
-      const { selection, select } = useUiStore.getState();
-      if (e.key === 'Escape') {
-        // Esc closes one overlay at a time: dialog › panel › selection. Dialogs
-        // are already handled above; if a side panel is open let it close first
-        // (SidePanel's own Esc handler does that) and keep the selection.
-        if (useUiStore.getState().panel) return;
-        select(null);
-        return;
-      }
-      if (!selection) return;
-      if ((e.key === 'd' || e.key === 'D') && (e.ctrlKey || e.metaKey)) {
-        if (selection.kind === 'furniture') {
-          e.preventDefault();
-          const newId = useDesignStore.getState().duplicateFurniture(selection.id);
-          if (newId) select({ kind: 'furniture', id: newId });
-        }
-        return;
-      }
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selection.kind === 'furniture') {
-          useDesignStore.getState().removeFurniture(selection.id);
-          select(null);
-        } else if (selection.kind === 'wall') {
-          // Only interior walls can be removed; the store ignores exterior walls.
-          useDesignStore.getState().removeWall(selection.id);
-          select(null);
-        }
-      } else if ((e.key === 'r' || e.key === 'R') && selection.kind === 'furniture') {
-        const { design, updateFurniture } = useDesignStore.getState();
-        const item = design.furniture.find((f) => f.id === selection.id);
-        // R rotates right (clockwise from above), Shift+R left.
-        const step = e.shiftKey ? Math.PI / 2 : -Math.PI / 2;
-        if (item) updateFurniture(selection.id, { rotationY: item.rotationY + step });
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('keydown', handleGlobalKeydown);
+    return () => window.removeEventListener('keydown', handleGlobalKeydown);
   }, []);
 
   // A dev/reference surface, reachable at #styleguide, that renders every shared
