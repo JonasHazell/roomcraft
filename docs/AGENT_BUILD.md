@@ -18,7 +18,10 @@ Repository: `JonasHazell/roomcraft`.
    existing primitives and design tokens. Never hard-code a colour/font/radius/shadow.
 3. [`STRATEGY.md`](STRATEGY.md) / [`PURPOSE.md`](PURPOSE.md) — keep the change true
    to the issue's intent and the core experience.
-4. [`CLAUDE.md`](../CLAUDE.md) — project conventions and commands.
+4. [`ARCHITECTURE.md`](ARCHITECTURE.md) — the feature→code map. Use it to find
+   the files that own the feature you're changing, and to reuse the existing
+   store slice / lib module instead of building a parallel one.
+5. [`CLAUDE.md`](../CLAUDE.md) — project conventions and commands.
 
 ## Algorithm for each run
 

@@ -17,10 +17,13 @@ Repository: `JonasHazell/roomcraft`.
    reuse existing primitives and tokens.
 4. [`MOBILE-FIRST.md`](MOBILE-FIRST.md) — the app is **mobile-first**, one component
    set for every screen. Judge every GUI idea on a phone first, not a desktop.
-5. [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md) — **the most important input.** This
+5. [`ARCHITECTURE.md`](ARCHITECTURE.md) — the feature→code map. Skim it to see
+   what the app **already does** and where it lives, so you deepen an existing
+   feature (depth over breadth) instead of proposing a duplicate.
+6. [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md) — **the most important input.** This
    is what the human actually merged, edited, or rejected in past rounds. Steer
    toward the patterns that got merged and away from the ones that got rejected.
-6. [`AGENT_METRICS.md`](AGENT_METRICS.md) — **measurability & monitoring.** The
+7. [`AGENT_METRICS.md`](AGENT_METRICS.md) — **measurability & monitoring.** The
    current snapshot tells you where the loop is weak (a climbing issue-rejection rate
    means your recent selection has been off) and, via the product-observability rows,
    where the *app* is weak. A rising AI proposal latency or cost, or a non-trivial
