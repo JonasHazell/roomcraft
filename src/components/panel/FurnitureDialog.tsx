@@ -1,45 +1,41 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useLibraryStore } from '../../store/useLibraryStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
-import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
 import { useEscape } from '../../lib/useEscape';
+import type { FurnitureKind, FurnitureLibraryEntry } from '../../types';
 import { Icon } from '../ui/Icon';
-import { FurnitureFields } from './FurnitureFields';
 import { FurniturePicker, type Source } from './FurniturePicker';
-import { applyPatch, type FurnitureDraft } from './furnitureDraft';
 import { PropertiesPanel } from './PropertiesPanel';
 
 /**
- * Modal for adding and editing furniture. In `create` mode it walks through a
- * type picker and then a form, committing a new piece on "Add to room". In
- * `edit` mode it opens the very same form (via PropertiesPanel) pre-filled with
- * the selected piece's values, so "More" surfaces exactly the box used to add it.
+ * Modal for adding and editing furniture. In `create` mode it shows the type
+ * picker; picking a kind places a default-configured piece into the room right
+ * away and hands off to `edit` mode — the very same live-editing surface (via
+ * PropertiesPanel) used for "More" on an existing piece — so the room and the
+ * new piece are visible immediately instead of being configured behind a form
+ * first. The whole "pick → place → tweak" sequence is one undo step.
  */
 export function FurnitureDialog() {
   const dialog = useUiStore((s) => s.furnitureDialog);
   const close = useUiStore((s) => s.closeFurnitureDialog);
-  const select = useUiStore((s) => s.select);
-  const addFurnitureConfigured = useDesignStore((s) => s.addFurnitureConfigured);
+  const openEditFurniture = useUiStore((s) => s.openEditFurniture);
+  const addFurniture = useDesignStore((s) => s.addFurniture);
+  const addFurnitureFromLibrary = useDesignStore((s) => s.addFurnitureFromLibrary);
   const libraryEntries = useLibraryStore((s) => s.entries);
   const saveToLibrary = useLibraryStore((s) => s.save);
   const removeFromLibrary = useLibraryStore((s) => s.remove);
 
-  // In create mode we hold a local draft; `null` means the type picker is showing.
-  const [draft, setDraft] = useState<FurnitureDraft | null>(null);
   // While picking, toggle between a fresh generic piece and one from the library.
   const [source, setSource] = useState<Source>('generic');
   // Which piece we've just saved to the library — drives the footer's ✓ feedback.
   const [savedForId, setSavedForId] = useState<string | null>(null);
 
-  // Reset to the type picker each time the create dialog (re)opens; clear any
-  // "saved" feedback each time the dialog changes.
+  // Reset to "Generic" each time the create dialog (re)opens; clear any "saved"
+  // feedback each time the dialog changes.
   useEffect(() => {
-    if (dialog?.mode === 'create') {
-      setDraft(null);
-      setSource('generic');
-    }
+    if (dialog?.mode === 'create') setSource('generic');
     setSavedForId(null);
   }, [dialog]);
 
@@ -49,13 +45,20 @@ export function FurnitureDialog() {
     editId ? s.design.furniture.find((f) => f.id === editId) : undefined,
   );
 
+  // Set by a pick handler right before it places a piece, so the batch it opens
+  // covers the placement itself; the effect below then knows not to open a
+  // second, later-starting batch for the same session.
+  const batchAlreadyOpenRef = useRef(false);
+
   // Edits in edit mode go straight to the store (live 3D preview). Wrap the whole
   // open dialog in one history batch: OK commits it as a single undo step,
-  // Cancel/✕/Esc rolls it back. This replaces the old hand-maintained snapshot
-  // (which had to list every editable field by hand to restore it).
+  // Cancel/✕/Esc rolls it back — including the placement itself, when this
+  // session started from the type picker. This replaces the old hand-maintained
+  // snapshot (which had to list every editable field by hand to restore it).
   useEffect(() => {
     if (!editId) return;
-    useHistoryStore.getState().beginBatch();
+    if (!batchAlreadyOpenRef.current) useHistoryStore.getState().beginBatch();
+    batchAlreadyOpenRef.current = false;
     return () => useHistoryStore.getState().endBatch();
   }, [editId]);
 
@@ -64,7 +67,9 @@ export function FurnitureDialog() {
     close();
   }, [close]);
 
-  // In create mode the draft is local, so a plain close already discards it.
+  // Cancelling an edit session rolls back its batch — the live edits, and (when
+  // this session started from the type picker) the placement itself — so the
+  // newly added piece disappears along with any tweaks.
   const dismiss = useCallback(() => {
     if (dialog?.mode === 'edit') useHistoryStore.getState().cancelBatch();
     close();
@@ -74,15 +79,31 @@ export function FurnitureDialog() {
   // open, so closing here doesn't also clear the selection.
   useEscape(dismiss, !!dialog);
 
+  // Place a piece and hand off straight to the live-editing surface, batched as
+  // one undo step with any tweaks made there before OK/Cancel.
+  const placeAndEdit = useCallback(
+    (place: () => string) => {
+      useHistoryStore.getState().beginBatch();
+      batchAlreadyOpenRef.current = true;
+      const id = place();
+      openEditFurniture(id);
+    },
+    [openEditFurniture],
+  );
+
+  const pickKind = useCallback(
+    (kind: FurnitureKind) => placeAndEdit(() => addFurniture(kind)),
+    [addFurniture, placeAndEdit],
+  );
+
+  const pickLibraryEntry = useCallback(
+    (entry: FurnitureLibraryEntry) => placeAndEdit(() => addFurnitureFromLibrary(entry)),
+    [addFurnitureFromLibrary, placeAndEdit],
+  );
+
   if (!dialog) return null;
 
-  const picking = dialog.mode === 'create' && draft === null;
-  const title =
-    dialog.mode === 'edit'
-      ? 'Selected furniture'
-      : draft
-        ? `New ${FURNITURE_CATALOG[draft.kind].label.toLowerCase()}`
-        : 'Add furniture';
+  const title = dialog.mode === 'edit' ? 'Selected furniture' : 'Add furniture';
 
   return (
     <div className="modal-backdrop" role="presentation" onClick={dismiss}>
@@ -103,23 +124,15 @@ export function FurnitureDialog() {
         <div className="modal-body">
           {dialog.mode === 'edit' ? (
             <PropertiesPanel />
-          ) : picking ? (
+          ) : (
             <FurniturePicker
               source={source}
               onSourceChange={setSource}
-              onPick={setDraft}
+              onPickKind={pickKind}
+              onPickLibraryEntry={pickLibraryEntry}
               libraryEntries={libraryEntries}
               onRemoveFromLibrary={removeFromLibrary}
             />
-          ) : (
-            draft && (
-              <div className="stack">
-                <FurnitureFields
-                  value={draft}
-                  onChange={(patch) => setDraft((d) => (d ? applyPatch(d, patch) : d))}
-                />
-              </div>
-            )
           )}
         </div>
 
@@ -159,25 +172,6 @@ export function FurnitureDialog() {
             </button>
             <button type="button" className="btn btn-accent" onClick={commitEdit}>
               OK
-            </button>
-          </div>
-        )}
-
-        {dialog.mode === 'create' && draft !== null && (
-          <div className="modal-foot">
-            <button type="button" className="btn" onClick={() => setDraft(null)}>
-              <Icon name="arrow-left" /> Back
-            </button>
-            <button
-              type="button"
-              className="btn btn-accent"
-              onClick={() => {
-                const id = addFurnitureConfigured(draft);
-                select({ kind: 'furniture', id });
-                close();
-              }}
-            >
-              Add to room
             </button>
           </div>
         )}

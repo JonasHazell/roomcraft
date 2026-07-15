@@ -3,9 +3,8 @@ import {
   FURNITURE_CATEGORIES,
   kindsInCategory,
 } from '../../lib/furnitureCatalog';
-import type { FurnitureLibraryEntry } from '../../types';
+import type { FurnitureKind, FurnitureLibraryEntry } from '../../types';
 import { Icon } from '../ui/Icon';
-import { draftFor, draftFromLibrary, type FurnitureDraft } from './furnitureDraft';
 
 /** Which source the "Add furniture" picker is showing. */
 export type Source = 'generic' | 'library';
@@ -15,7 +14,10 @@ const cm = (m: number) => Math.round(m * 100);
 interface Props {
   source: Source;
   onSourceChange: (source: Source) => void;
-  onPick: (draft: FurnitureDraft) => void;
+  /** Place a fresh, default-configured piece of this catalog kind right away. */
+  onPickKind: (kind: FurnitureKind) => void;
+  /** Place a piece pre-filled from this saved library entry right away. */
+  onPickLibraryEntry: (entry: FurnitureLibraryEntry) => void;
   libraryEntries: FurnitureLibraryEntry[];
   onRemoveFromLibrary: (id: string) => void;
 }
@@ -24,7 +26,8 @@ interface Props {
 export function FurniturePicker({
   source,
   onSourceChange,
-  onPick,
+  onPickKind,
+  onPickLibraryEntry,
   libraryEntries,
   onRemoveFromLibrary,
 }: Props) {
@@ -67,7 +70,7 @@ export function FurniturePicker({
                       type="button"
                       key={kind}
                       className="palette-btn"
-                      onClick={() => onPick(draftFor(kind))}
+                      onClick={() => onPickKind(kind)}
                     >
                       <span
                         className="swatch"
@@ -104,7 +107,7 @@ export function FurniturePicker({
                         type="button"
                         className="save-name"
                         title={`Use “${entry.name}”`}
-                        onClick={() => onPick(draftFromLibrary(entry))}
+                        onClick={() => onPickLibraryEntry(entry)}
                       >
                         <span className="lib-name">
                           <span className="swatch" style={{ background: entry.color }} />
