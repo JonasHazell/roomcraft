@@ -83,6 +83,10 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
   const dragRef = useRef<{ id: string; horizontal: boolean } | null>(null);
   // A corner (shared point of two exterior walls) being dragged in select mode.
   const cornerDragRef = useRef<{ wallAId: string; wallBId: string } | null>(null);
+  // The wall set to auto-fit against while a wall/corner drag is in progress —
+  // a snapshot taken at the start of the drag, not the live (actively-changing)
+  // geometry. See `fitBounds` below for why.
+  const dragFitWallsRef = useRef<typeof walls | null>(null);
   // A press-drag-release (or tap) drawing gesture: the pointer that owns it.
   const drawGestureRef = useRef<{ pointerId: number } | null>(null);
   // Walls whose length is actively changing under a drag, highlighted so the
@@ -152,8 +156,19 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
   // moment the first corner was clicked (a single point + padding is a tiny
   // box), so the user lost track of where they were. Excluding the draft keeps
   // the view steady while drawing.
+  //
+  // The same principle applies to a wall/corner drag in select mode: while one
+  // is in progress, `dragFitWallsRef` holds the geometry as it was when the
+  // drag started, so the fit — and therefore the viewBox and every `toWorld`
+  // conversion drawn from it — stays fixed for the whole gesture instead of
+  // rescaling on every intermediate move. Without this, dragging a corner
+  // outward grows the fit bounds, which zooms the view out, which makes the
+  // very next pointermove (at the same screen position) resolve to an even
+  // larger world delta — a feedback loop that runs away over a single drag
+  // (issue #196).
   const fitBounds: Bounds = useMemo(() => {
-    const pts = walls.flatMap((w) => [w.a, w.b]);
+    const source = dragFitWallsRef.current ?? walls;
+    const pts = source.flatMap((w) => [w.a, w.b]);
     if (pts.length === 0) return { minX: -5, maxX: 5, minZ: -5, maxZ: 5 };
     const b = polygonBounds(pts);
     return { minX: b.minX - PAD, maxX: b.maxX + PAD, minZ: b.minZ - PAD, maxZ: b.maxZ + PAD };
@@ -253,6 +268,7 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
       if (dragRef.current || cornerDragRef.current) useHistoryStore.getState().endBatch();
       dragRef.current = null;
       cornerDragRef.current = null;
+      dragFitWallsRef.current = null;
       setActiveWallIds([]);
       drawGestureRef.current = null;
       viewport.resetPinch();
@@ -282,6 +298,8 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
     const wall = walls.find((w) => w.id === id);
     if (!wall) return;
     dragRef.current = { id, horizontal: wall.a.z === wall.b.z };
+    // Freeze the auto-fit to the geometry as it is now — see `fitBounds`.
+    dragFitWallsRef.current = walls;
     // Highlight the wall and any wall sharing a corner with it: sliding this wall
     // changes those neighbours' lengths, so their measurements are the relevant ones.
     const shares = (w: (typeof walls)[number]) =>
@@ -304,6 +322,8 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
     // lengths change as the corner moves.
     select(null);
     cornerDragRef.current = { wallAId, wallBId };
+    // Freeze the auto-fit to the geometry as it is now — see `fitBounds`.
+    dragFitWallsRef.current = walls;
     setActiveWallIds([wallAId, wallBId]);
     useHistoryStore.getState().beginBatch();
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
@@ -357,6 +377,8 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
       cornerDragRef.current = null;
       setActiveWallIds([]);
     }
+    // Release the frozen auto-fit — the view re-fits to the settled geometry.
+    dragFitWallsRef.current = null;
     // End of a drawing gesture: place the corner at the release point, or seal
     // the outline if released on the start corner. Every corner — including the
     // first — commits here on release, never on press, so a press-drag-release
@@ -389,6 +411,7 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
       cornerDragRef.current = null;
       setActiveWallIds([]);
     }
+    dragFitWallsRef.current = null;
     drawGestureRef.current = null;
     viewport.cancelPan();
   };
