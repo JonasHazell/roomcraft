@@ -59,49 +59,6 @@ body {
   display: flex;
 }
 
-/* ---------- Sidebar ---------- */
-
-.sidebar {
-  width: 342px;
-  flex: 0 0 342px;
-  height: 100%;
-  overflow-y: auto;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.35), transparent 140px),
-    var(--paper);
-  border-right: 1px solid var(--line);
-  display: flex;
-  flex-direction: column;
-}
-
-.brand {
-  padding: 22px 20px 18px;
-  border-bottom: 1px solid var(--line);
-}
-
-.brand h1 {
-  font-family: var(--display);
-  font-variation-settings: 'opsz' 60, 'wght' 560;
-  font-size: 30px;
-  letter-spacing: -0.02em;
-  margin: 0;
-}
-
-.brand h1::after {
-  content: '';
-  display: inline-block;
-  width: 9px;
-  height: 9px;
-  margin-left: 7px;
-  background: var(--accent);
-}
-
-.brand p {
-  margin: 3px 0 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-
 .section {
   border-bottom: 1px solid var(--line);
 }
@@ -138,85 +95,6 @@ body {
 
 .section-body {
   padding: 2px 20px 18px;
-}
-
-.sidebar-foot {
-  margin-top: auto;
-  padding: 14px 20px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-/* Menu toggle + drawer backdrop are desktop-hidden; the mobile media query
-   below turns the sidebar into an off-canvas drawer. */
-.menu-toggle {
-  display: none;
-}
-
-.sidebar-backdrop {
-  display: none;
-}
-
-/* ---------- Mobile: sidebar as off-canvas drawer ---------- */
-
-@media (max-width: 768px) {
-  .menu-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    top: calc(12px + env(safe-area-inset-top));
-    left: calc(12px + env(safe-area-inset-left));
-    /* Above the drawer (and its backdrop) so the ✕ close button stays clickable
-       while the menu is open. */
-    z-index: 64;
-    width: 42px;
-    height: 42px;
-    padding: 0;
-    font-size: 20px;
-    line-height: 1;
-    border: 1.5px solid var(--ink);
-    border-radius: 12px;
-    background: var(--card);
-    color: var(--ink);
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(24, 24, 27, 0.18);
-  }
-
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    /* Sit above the 3D-view overlays (bottom action bars z:55, side panel z:60),
-       which share a stacking context with the drawer, so the open menu covers
-       them instead of the buttons floating on top of it. */
-    z-index: 63;
-    width: min(342px, 86vw);
-    flex-basis: auto;
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    box-shadow: 2px 0 20px rgba(24, 24, 27, 0.25);
-  }
-
-  /* Keep the brand title clear of the fixed toggle button. */
-  .brand {
-    padding-left: 66px;
-  }
-
-  .app.sidebar-open .sidebar {
-    transform: translateX(0);
-  }
-
-  .app.sidebar-open .sidebar-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    /* Between the viewport overlays and the drawer: covers the 3D-view buttons
-       (z:55) and side panel (z:60) so they can't be tapped behind the menu. */
-    z-index: 62;
-    background: rgba(24, 24, 27, 0.4);
-  }
 }
 
 /* ---------- Fields ---------- */
@@ -1623,10 +1501,6 @@ select {
   text-align: center;
   font-variant-numeric: tabular-nums;
   font-size: 13px;
-}
-
-.validation-stale {
-  color: var(--danger);
 }
 
 /* Always-visible score chip, top-right of the 3D view, stacked under the
