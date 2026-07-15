@@ -112,9 +112,17 @@ export const useUiStore = create<UiState>()((set) => ({
   setPlanStartTool: (planStartTool) => set({ planStartTool }),
   setPendingRoomId: (pendingRoomId) => set({ pendingRoomId }),
   setWizardStep: (wizardStep) => set({ wizardStep }),
-  openAddFurniture: () => set({ furnitureDialog: { mode: 'create' } }),
+  // Opening the furniture dialog dismisses a competing side panel for the same
+  // reason `select()` does above: the dialog visually covers the panel rather
+  // than replacing it, so without this the panel would reappear over the room
+  // the instant the dialog closes.
+  openAddFurniture: () => set({ furnitureDialog: { mode: 'create' }, panel: null }),
   openEditFurniture: (id) =>
-    set({ selection: { kind: 'furniture', id }, furnitureDialog: { mode: 'edit', id } }),
+    set({
+      selection: { kind: 'furniture', id },
+      furnitureDialog: { mode: 'edit', id },
+      panel: null,
+    }),
   closeFurnitureDialog: () => set({ furnitureDialog: null }),
   openAuthDialog: () => set({ authDialogOpen: true }),
   closeAuthDialog: () => set({ authDialogOpen: false }),

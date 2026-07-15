@@ -31,6 +31,20 @@ describe('ui store — selection vs. open overlays', () => {
     expect(useUiStore.getState().panel).toBe('validation');
   });
 
+  it('closes a side panel when the add-furniture dialog opens', () => {
+    useUiStore.getState().openPanel('ai');
+    useUiStore.getState().openAddFurniture();
+    expect(useUiStore.getState().panel).toBeNull();
+    expect(useUiStore.getState().furnitureDialog).toEqual({ mode: 'create' });
+  });
+
+  it('closes a side panel when the edit-furniture dialog opens', () => {
+    useUiStore.getState().openPanel('validation');
+    useUiStore.getState().openEditFurniture('f1');
+    expect(useUiStore.getState().panel).toBeNull();
+    expect(useUiStore.getState().furnitureDialog).toEqual({ mode: 'edit', id: 'f1' });
+  });
+
   it('clears the proposal menu flag when leaving the view', () => {
     useUiStore.getState().setProposalMenuOpen(true);
     useUiStore.getState().setAppView('lobby');
