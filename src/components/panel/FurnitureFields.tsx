@@ -1,5 +1,5 @@
 import { FURNITURE_CATALOG } from '../../lib/furnitureCatalog';
-import { FURNITURE_OPTIONS, normalizeOptions } from '../../lib/furnitureOptions';
+import { FURNITURE_OPTIONS, hasOptions, normalizeOptions } from '../../lib/furnitureOptions';
 import {
   FURNITURE_PARTS,
   hasParts,
@@ -24,8 +24,8 @@ function FurnitureOptionFields({
   value: FurnitureDraft;
   onChange: (patch: FurnitureFieldPatch) => void;
 }) {
+  if (!hasOptions(value.kind)) return null;
   const specs = FURNITURE_OPTIONS[value.kind];
-  if (specs.length === 0) return null;
   const options = normalizeOptions(value.kind, value.options);
 
   return (
