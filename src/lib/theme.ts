@@ -17,6 +17,13 @@
 /** Mirrors `--accent` (terracotta). Used for the furniture rotation handle. */
 export const ACCENT = '#b4532f';
 
+/**
+ * Mirrors `--ink` (near-black). Used for the selected piece's dimension lines
+ * that measure to walls, so they read as neutral against the light floor while
+ * the accent stays reserved for the runs that measure to other furniture.
+ */
+export const INK = '#18181b';
+
 /** Mirrors `--select` (selection blue). Used for the selected-piece emissive glow. */
 export const SELECT = '#2f6fdd';
 

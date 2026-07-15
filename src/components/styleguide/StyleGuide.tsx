@@ -282,6 +282,16 @@ export function StyleGuide() {
           </div>
         </Demo>
 
+        <Demo
+          title="Dimension label"
+          note="The measurement badge drawn in the 3D view on a selected piece's dashed clearance run (SelectionDimensions). Neutral ink for runs to a wall, accent for runs to another piece — matching each run's line colour."
+        >
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <span className="dim-label">150 cm</span>
+            <span className="dim-label dim-label-furniture">42 cm</span>
+          </div>
+        </Demo>
+
         <Demo title="Select, checkbox, stepper & colour">
           <div className="stack" style={{ maxWidth: 360 }}>
             <select defaultValue="rug">

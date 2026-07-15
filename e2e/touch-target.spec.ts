@@ -96,9 +96,10 @@ async function expectPillsMeetTouchTarget(page: Page) {
 
 test('dock pills (ActionBar + HistoryBar) keep their pointer-aware touch target', async ({ page }) => {
   await openFurnishView(page);
-  // ActionBar's "Add furniture" / "Auto" / "AI" pills and HistoryBar's
-  // undo/redo pills are both on screen with no selection required.
-  await expect(page.locator('.sel-action')).toHaveCount(5);
+  // ActionBar's single "Add furniture" pill and HistoryBar's undo/redo pills are
+  // both on screen with no selection required (Auto-arrange and AI moved into the
+  // proposal switcher's menu, #170 — see ActionBar.tsx).
+  await expect(page.locator('.sel-action')).toHaveCount(3);
   await expectPillsMeetTouchTarget(page);
 });
 

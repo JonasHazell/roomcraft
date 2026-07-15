@@ -196,6 +196,31 @@ body {
   color: var(--ink);
 }
 
+/* Dimension label — the small measurement badge drawn in the 3D view at the
+   middle of a selected piece's dashed clearance run (see SelectionDimensions).
+   Numerals use the display face like scores/counts; a card pill with an ink
+   hairline keeps it legible over the floor. `.dim-label-furniture` recolours the
+   runs that measure to another piece to the accent, matching their line. */
+.dim-label {
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
+  box-shadow: 0 2px 6px rgba(24, 24, 27, 0.14);
+  user-select: none;
+}
+
+.dim-label-furniture {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 /* Furniture colour picker — a round colour chip with the label beside it, styled
    to match the wall/floor colour swatches (.sel-color-input) in the selection bar. */
 .color-field {

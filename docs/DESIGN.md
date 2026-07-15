@@ -129,6 +129,12 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   `.ai-progress-step` label and a live `.ai-elapsed` clock over an indeterminate
   `.ai-progress-track` bar (the server streams no percentage, so the bar is
   deliberately indeterminate and the elapsed time is the honest signal).
+- **Dimension label** — `.dim-label` is the measurement badge drawn in the 3D view
+  at the middle of a selected piece's dashed clearance run (see
+  `components/scene/SelectionDimensions.tsx`): a `--card` pill with an ink hairline
+  and display-face numerals. `.dim-label-furniture` recolours it to the accent for
+  runs that measure to another piece (matching that run's line), leaving neutral
+  ink for runs to a wall.
 - **Feedback** — one `.hint` for guidance, one `.error` for failures (reuse them —
   don't roll new ones). `.score-badge` with `.score-good/-mid/-bad`; `.severity`
   with `.severity-1`…`-5` (5 = worst). Each `.validation-categories li` also
@@ -169,7 +175,11 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   input is focused. A selected piece also shows a **rotation handle** in the 3D
   view (a floor ring + front knob) for free-angle rotation. It magnetises to the
   nearest right angle (0/90/180/270°) as you pass it, so pieces square up to the
-  walls with no key; hold `Shift` while dragging for a finer 15° snap.
+  walls with no key; hold `Shift` while dragging for a finer 15° snap. A selected
+  piece also draws **dimension runs** — dashed lines from each footprint side out
+  to the nearest wall or neighbouring piece, each labelled with the gap
+  (`.dim-label`) — so its clearances read in the room itself. They recompute live
+  as the piece is dragged, rotated or resized.
 - **Touch** — interactive controls keep a ≥44px hit area on coarse pointers.
 - **Disabled actions** — wrap in `.btn-tooltip-wrap` with a `title` so the reason
   shows on hover.

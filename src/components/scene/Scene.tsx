@@ -8,6 +8,7 @@ import { useUiStore } from '../../store/useUiStore';
 import { deselectOnStillClick, Floor } from './Floor';
 import { Walls } from './Walls';
 import { FurnitureLayer } from './FurnitureLayer';
+import { SelectionDimensions } from './SelectionDimensions';
 import { ValidationOverlay } from './ValidationOverlay';
 
 /**
@@ -106,6 +107,7 @@ export function Scene() {
       <Floor />
       <Walls />
       <FurnitureLayer />
+      <SelectionDimensions />
       <ValidationOverlay />
 
       <OrbitControls
