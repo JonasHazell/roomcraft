@@ -34,15 +34,17 @@
 
   2. Opening the PR through the API or CLI (the agent pipeline, `gh`, a script)?
      There is no browser to drag into, GitHub has no API to upload an attachment,
-     AND inline image embeds (`![](…)`) get stripped by the posting layer — so
-     you can't render an image this way, only link to one. Commit the media into
-     this branch and post clickable LINKS to it. The helper does both:
+     AND the posting layer strips both inline image embeds (`![](…)`) and any link
+     whose URL ends in an image extension — so you can't render or even directly
+     link an image. Commit the screenshots into this branch and link the FOLDER
+     (a URL with no image extension survives). The helper does it:
 
-         node scripts/pr-media.mjs after-desktop.png after-mobile.png --table
+         node scripts/pr-media.mjs after-desktop.png after-mobile.png
 
-     It copies the files into .github/pr-media/<branch>/ and prints ready-to-paste
-     markdown LINKS. Commit the copied files on this branch and paste the markdown
-     into the table below; a reviewer clicks each link to view the screenshot.
+     It copies the files into .github/pr-media/<branch>/ and prints one clickable
+     link to the committed folder. Commit the copied files on this branch, paste
+     that link in place of the table below, and note that the screenshots also
+     render in this PR's "Files changed" tab.
 
   Delete this whole section if you ticked "No" above.
 -->

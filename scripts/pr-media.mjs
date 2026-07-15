@@ -14,11 +14,17 @@
  *
  * What DOES survive that filter is an ordinary markdown link, `[text](url)`. So
  * this helper commits the media into the branch and prints ready-to-paste
- * markdown that LINKS to each file's GitHub blob view
- * (`https://github.com/<owner>/<repo>/blob/<branch>/<path>`). A reviewer clicks
- * the link and sees the screenshot rendered in GitHub's UI. It isn't inline, but
+ * markdown that LINKS to the media FOLDER's GitHub tree view
+ * (`https://github.com/<owner>/<repo>/tree/<branch>/<dir>`). A reviewer clicks
+ * the link, opens the folder, and views each screenshot. It isn't inline, but
  * it's clickable and reliable from automation — and true inline rendering is only
  * available to a human dragging the file into the web editor.
+ *
+ * Why link to the folder and not each image? The automation posting layer defangs
+ * any URL that contains an image extension (.png/.jpg/…) — an `![](…)` embed, a
+ * `[text](…png)` link, and even a bare `…png` URL all come back wrapped in a code
+ * span and render as unclickable text. A URL with no image extension (a tree view,
+ * the PR's Files-changed tab) survives, so the folder link stays clickable.
  *
  * Commit the copied files on the same branch as the PR and paste the markdown.
  *
@@ -28,21 +34,17 @@
  * Options:
  *   --branch <name>   Branch the PR is opened from (default: current branch).
  *   --repo <o/r>      owner/repo (default: derived from `origin`).
- *   --table           Also print a filled Before/After × Desktop/Mobile table.
- *                     Files are matched into cells by name: a name containing
- *                     "before"/"after" and "desktop"/"mobile" lands in that cell.
  *   -h, --help        Show this help.
  *
  * Examples:
- *   node scripts/pr-media.mjs after-desktop.png after-mobile.png --table
+ *   node scripts/pr-media.mjs after-desktop.png after-mobile.png
  *   node scripts/pr-media.mjs /tmp/flow.gif
  *
  * Notes:
- *   • Output is clickable LINKS, not inline images — automation strips inline
- *     image embeds (see above). For true inline media a human must drag the file
- *     into the web PR editor, which uploads it to GitHub's user-attachments.
- *   • Links point at the blob view, which renders png/jpg/gif/svg (and plays
- *     mp4/mov/webm) in GitHub's UI on click.
+ *   • Output is a clickable LINK to the committed media, not an inline image —
+ *     automation strips inline embeds. For true inline media a human must drag the
+ *     file into the web PR editor, which uploads it to GitHub's user-attachments.
+ *   • The committed files also render in the PR's "Files changed" tab.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -62,11 +64,10 @@ function git(...args) {
 }
 
 function parseArgs(argv) {
-  const opts = { files: [], table: false };
+  const opts = { files: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '-h' || a === '--help') opts.help = true;
-    else if (a === '--table') opts.table = true;
     else if (a === '--branch') opts.branch = argv[++i];
     else if (a === '--repo') opts.repo = argv[++i];
     else if (a.startsWith('--')) fail(`unknown option ${a}`);
@@ -99,11 +100,12 @@ const opts = parseArgs(process.argv.slice(2));
 if (opts.help || opts.files.length === 0) {
   console.log(
     [
-      'Usage: node scripts/pr-media.mjs [--branch <name>] [--repo <owner/repo>] [--table] <file...>',
+      'Usage: node scripts/pr-media.mjs [--branch <name>] [--repo <owner/repo>] <file...>',
       '',
-      'Copies media into .github/pr-media/<branch>/ and prints markdown that embeds',
-      'it via an absolute raw URL, so it renders inline in an API/CLI-opened PR.',
-      'Commit the copied files on the PR branch, then paste the printed markdown.',
+      'Copies media into .github/pr-media/<branch>/ and prints a clickable markdown',
+      'link to the committed folder — a form that survives the automation filter that',
+      'strips inline image embeds. Commit the copied files on the PR branch, then',
+      'paste the printed markdown into the PR body.',
     ].join('\n'),
   );
   process.exit(opts.help ? 0 : 1);
@@ -118,7 +120,7 @@ const repo = opts.repo || deriveRepo();
 const destDir = join('.github', 'pr-media', branch);
 mkdirSync(destDir, { recursive: true });
 
-const embeds = [];
+const names = [];
 for (const file of opts.files) {
   const src = resolve(file);
   if (!existsSync(src) || !statSync(src).isFile()) fail(`no such file: ${file}`);
@@ -130,44 +132,27 @@ for (const file of opts.files) {
   const dest = join(destDir, name);
   // Only copy when the file isn't already the destination (idempotent re-runs).
   if (resolve(dest) !== src) copyFileSync(src, dest);
-
-  // Emit a plain markdown LINK, not an image embed (`![]()`). When a PR is
-  // opened/edited through automation, the posting layer defangs image embeds as
-  // an anti-tracking / anti-exfiltration guardrail — it wraps the `![]()` URL in
-  // a code span or drops the leading `!`, so the image never renders and you're
-  // left with an unclickable filename. A normal `[text](url)` link survives that
-  // filter and stays clickable. The github.com/.../blob/... view shows the image
-  // in GitHub's UI when clicked.
-  const path = `${destDir.split('\\').join('/')}/${name}`;
-  const url = `https://github.com/${repo}/blob/${branch}/${path}`;
-  const alt = name.replace(e, '').replace(/[-_]+/g, ' ').trim() || 'media';
-  embeds.push({ name, url, alt, isVideo: VIDEO_EXT.has(e) });
+  names.push(name);
 }
 
-const cell = (needleA, needleB) => {
-  const hit = embeds.find(
-    (m) => m.name.toLowerCase().includes(needleA) && m.name.toLowerCase().includes(needleB),
-  );
-  return hit ? `[${hit.alt}](${hit.url})` : '';
-};
+// The link points at the media FOLDER (a tree view), deliberately NOT at each
+// image file. When a PR is opened/edited through automation, the posting layer
+// defangs any URL that contains an image extension — `![](…png)`, `[text](…png)`
+// and even a bare `…png` all come back wrapped in a code span, so they render as
+// unclickable text. A URL with no image extension (a directory tree view, the
+// PR's Files-changed tab) survives and stays clickable. So we link to the folder;
+// the reviewer opens it and clicks either screenshot, each of which GitHub then
+// renders. The committed images also render in this PR's "Files changed" tab.
+const dirPath = destDir.split('\\').join('/');
+const folderUrl = `https://github.com/${repo}/tree/${branch}/${dirPath}`;
 
-console.log(`\nCopied ${embeds.length} file(s) into ${destDir}/`);
-console.log('Commit them on this branch, then paste the markdown below into the PR body.');
-console.log('(These are clickable LINKS — automation strips inline image embeds, so a');
-console.log(' reviewer clicks through to view each screenshot on GitHub.)\n');
+console.log(`\nCopied ${names.length} file(s) into ${destDir}/:`);
+for (const n of names) console.log(`  • ${n}`);
+console.log('\nCommit them on this branch, then paste the markdown below into the PR body.');
+console.log('(Automation strips inline image embeds AND any link whose URL ends in an');
+console.log(' image extension, so this links to the FOLDER — a form that stays clickable.)\n');
 console.log('----- paste from here -----\n');
-
-if (opts.table) {
-  console.log('| | Desktop | Mobile |');
-  console.log('| --- | --- | --- |');
-  console.log(`| **Before** | ${cell('before', 'desktop')} | ${cell('before', 'mobile')} |`);
-  console.log(`| **After** | ${cell('after', 'desktop')} | ${cell('after', 'mobile')} |`);
-  console.log('');
-} else {
-  for (const m of embeds) {
-    console.log(`- [${m.alt}](${m.url})`);
-  }
-  console.log('');
-}
-
+console.log(`📸 **Screenshots for this PR:** [view the ${names.length} committed screenshot(s)](${folderUrl})`);
+console.log('_(They also render in the **Files changed** tab of this PR.)_');
+console.log('');
 console.log('----- to here -----');
