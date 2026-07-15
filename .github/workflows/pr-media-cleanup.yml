@@ -1,0 +1,65 @@
+name: Clean up PR media on merge
+
+# PR review screenshots live under .github/pr-media/<head-branch>/ so a reviewer
+# can open them (see docs/AGENT_BUILD.md and the PR template). They are review
+# aids, not source — once a PR is merged they've done their job, so this workflow
+# deletes the merged PR's media folder from the base branch. The images remain
+# viewable forever in the PR's own "Files changed" tab (that view is tied to the
+# PR's commits, not the branch), so nothing is truly lost.
+
+on:
+  pull_request:
+    types: [closed]
+
+# Needed to push the cleanup commit back to the base branch.
+permissions:
+  contents: write
+
+# Don't let two merges race on pushing to the same base branch.
+concurrency:
+  group: pr-media-cleanup-${{ github.event.pull_request.base.ref }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Remove merged PR's media
+    # Only when the PR actually merged (a plain close leaves nothing to clean).
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Delete the media folder and push
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          DIR=".github/pr-media/${HEAD_REF}"
+
+          # Nothing to do if this PR never committed media.
+          if [ -z "$(git ls-files -- "$DIR")" ]; then
+            echo "No tracked media under '$DIR' — nothing to clean up."
+            exit 0
+          fi
+
+          git rm -r --quiet -- "$DIR"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Clean up PR media for #${PR_NUMBER} (${HEAD_REF})"
+
+          # Retry the push in case another merge pushed to the base branch first.
+          for attempt in 1 2 3; do
+            if git push origin "HEAD:${BASE_REF}"; then
+              exit 0
+            fi
+            echo "push failed (attempt $attempt); rebasing on latest base and retrying"
+            git pull --rebase origin "${BASE_REF}"
+          done
+          echo "could not push cleanup commit after 3 attempts" >&2
+          exit 1

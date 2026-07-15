@@ -71,6 +71,10 @@ Repository: `JonasHazell/roomcraft`.
         into the PR body. The committed screenshots also render in the PR's "Files
         changed" tab. (True inline rendering is only possible when a human drags
         the file into the web editor.)
+      - Don't worry about the committed images cluttering `main`: when the PR
+        merges, `.github/workflows/pr-media-cleanup.yml` removes that PR's
+        `.github/pr-media/<branch>/` folder from the base branch. The screenshots
+        stay viewable in the merged PR's "Files changed" tab.
 4. If a selected issue turns out to be too large, ambiguous, or antithetical to
    `STRATEGY.md`, **do not force it.** Leave a brief comment on the issue explaining
    why, remove `agent:building`, and move on. (Optionally note it for Stage C.)

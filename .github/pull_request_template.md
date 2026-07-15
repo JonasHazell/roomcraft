@@ -53,6 +53,11 @@
     It copies the files into `.github/pr-media/<branch>/` and prints the line
     below. Commit the copied files on this branch, paste the link here, and delete
     Path A's table. The screenshots also render in this PR's "Files changed" tab.
+
+    These committed files are temporary: when the PR merges, a workflow removes the
+    folder from the base branch so media doesn't pile up in `main`. The "Files
+    changed" tab keeps them viewable forever, so the folder link is just a
+    review-time convenience.
 -->
 
 📸 **Screenshots for this PR:** _paste the folder link from `scripts/pr-media.mjs` here_ · they also render in the **Files changed** tab
