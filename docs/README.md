@@ -40,6 +40,14 @@ Read both before creating or changing any screen, panel, dialog, or control.
 | [`DESIGN.md`](DESIGN.md) | The design reference: tokens, component vocabulary, behaviour conventions. Pairs with the `#styleguide` gallery. |
 | [`MOBILE-FIRST.md`](MOBILE-FIRST.md) | How the one component set adapts across viewports — the mobile-first rules and breakpoints. |
 
+## Finding your way around the code
+
+An orientation map to jump from a feature to the files that implement it.
+
+| Doc | What it's for |
+| --- | --- |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | The feature→code map: surfaces, stores, and which files own each feature. Read it when you need to find *where* something lives. |
+
 ## Interior-design rule catalog
 
 The rules the app uses to judge and improve a layout.
