@@ -59,8 +59,31 @@ reference stays complete and never drifts from the app.
 - `npm run build` — type-check (`tsc -b`) and production build.
 - `npm run lint` — oxlint.
 - `npm test` — Vitest.
+- `npm run test:e2e` — Playwright end-to-end validation in desktop **and** mobile.
 
 Run the build/lint/test before committing UI changes.
+
+## Validate every UI/feature change with Playwright (desktop + mobile)
+
+Any change to a user-facing surface must be **validated by driving the real app**
+in both a desktop and a mobile viewport — not just unit-tested. This is a hard
+rule, enforced by a `Stop` hook: while there are unvalidated changes under `src/`,
+the session cannot finish.
+
+The workflow for any feature you build or change:
+
+1. Make the change.
+2. **Add or extend an e2e spec** in `e2e/` that clicks through the new/changed
+   flow. One spec runs in both viewports automatically — see
+   [`playwright.config.ts`](playwright.config.ts) (the `desktop` and `mobile`
+   projects) and the baseline [`e2e/smoke.spec.ts`](e2e/smoke.spec.ts).
+3. Run `npm run test:e2e`. It exercises the app in desktop and mobile; a passing
+   run stamps the current source state as validated. Fix any failures and re-run
+   until green.
+
+Prefer role/label/text selectors (`getByRole`, `getByLabel`, `getByText`) over
+brittle CSS so specs stay readable and resilient. The pre-installed Chromium is
+used automatically — never run `playwright install`.
 
 ## Monetization
 

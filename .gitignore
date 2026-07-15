@@ -25,3 +25,10 @@ dist-ssr
 
 # Claude Code agent worktrees
 .claude/worktrees/
+
+# Playwright e2e artifacts
+/test-results/
+/playwright-report/
+/playwright/.cache/
+# Local stamp of the last Playwright-validated source state (see scripts/)
+.claude/.e2e-stamp
