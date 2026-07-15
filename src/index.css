@@ -2128,6 +2128,31 @@ select {
   .selection-bar:not(.selection-bar-keep-labels) .sel-action {
     padding: 8px 10px;
   }
+
+  /* Below this width the middle pill's own content can be wider than the room
+     the two pinned side pills leave for it. On the wide/default grid above,
+     the middle track is sized to "auto" (its own max-content width) while the
+     side tracks are equal 1fr — that keeps the middle pill centred regardless
+     of the side pills' widths, but it also means the middle track ignores how
+     much space is actually left over, so the pill can overflow its track. And
+     because `.dock-slot > *` needs pointer-events to reach the pill at all,
+     that overflow doesn't just look wrong — it physically covers and
+     intercepts taps meant for the pill next to it (#170). Swap to a track
+     that's capped at the space actually left over: the side tracks size to
+     their own content instead of splitting the remainder evenly, and the
+     middle track becomes a flexible track clamped to that remainder instead
+     of its own content size. The middle pill can then shrink below its
+     natural width and, if it still doesn't fit, scroll horizontally within
+     its own slot rather than spill into a neighbour. */
+  .selection-bar-wrap {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .dock-mid .selection-bar {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* True phones (≲ iPhone SE): tighten the dock gap and the icon paddings a touch
