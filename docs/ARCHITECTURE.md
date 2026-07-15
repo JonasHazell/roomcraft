@@ -66,7 +66,7 @@ Shared types for all of the above: `src/types.ts` (`Project`, `Design`, `Room`,
 | **3D furniture models** — one component per kind | `scene/furniture/*.tsx` (Bed, Sofa, Desk, Bookshelf, …) | — | `lib/furnitureParts.ts`, `lib/materials.ts` |
 | **Colors** — floor, walls, per-piece; palette per proposal | `panel/PropertiesPanel.tsx`, `panel/FloorBar.tsx` | `slices/furnitureSlice.ts` / `proposalSlice.ts` | `lib/materials.ts` |
 | **AI furnishing suggestions** — Claude proposes layouts | `panel/AiProposalsPanel.tsx`, `panel/ProposalSwitcher.tsx` | `useAiStore`, `slices/proposalSlice.ts` | `lib/aiProposals.ts` (server-backed) |
-| **Auto-arrange** — local, no-AI reshuffle to raise score | `panel/ActionBar.tsx` (the "Auto" action) | `slices/furnitureSlice.ts` | `lib/autoArrange.ts` |
+| **Auto-arrange** — local, no-AI reshuffle to raise score | `panel/ProposalSwitcher.tsx` (the "Auto-arrange" menu action) | `slices/furnitureSlice.ts` | `lib/autoArrange.ts` |
 | **Proposals** — switch between furnishing options per room | `panel/ProposalSwitcher.tsx`, `panel/SwitcherList.tsx` | `slices/proposalSlice.ts` | — |
 | **Design validation / score** — rule findings + score | `panel/ValidationPanel.tsx`, `panel/ValidationScore.tsx`, `scene/ValidationOverlay.tsx` | `useValidationStore` | `lib/validation/*` (see below) |
 | **Undo / redo** — every editing step, one drag = one step | `panel/HistoryBar.tsx` | `useHistoryStore` | `lib/globalKeydown.ts` (shortcuts) |

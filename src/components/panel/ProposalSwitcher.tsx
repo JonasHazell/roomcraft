@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -12,7 +12,12 @@ import { Icon } from '../ui/Icon';
  * room's furnishing proposals — the same room shape, different furniture. The
  * flanking ‹ / › arrows step through proposals without opening the menu; open
  * the menu to switch, rename, reorder (by dragging), delete, or create a new
- * proposal (starting either from the current furnishing or an empty room).
+ * proposal (starting either from the current furnishing or an empty room). The
+ * menu is also where the two "get help furnishing" actions live: AI furnishing
+ * suggestions and the local, no-sign-in auto-arrange — both used to sit in the
+ * bottom dock's `ActionBar` pill, but moved here so that pill stays a single
+ * "Add furniture" button and never competes for width with the dock's middle
+ * contextual bar again (#170).
  */
 export function ProposalSwitcher() {
   const proposals = useDesignStore((s) => s.design.proposals);
@@ -22,6 +27,7 @@ export function ProposalSwitcher() {
   const renameProposal = useDesignStore((s) => s.renameProposal);
   const reorderProposals = useDesignStore((s) => s.reorderProposals);
   const removeProposal = useDesignStore((s) => s.removeProposal);
+  const autoArrange = useDesignStore((s) => s.autoArrange);
   const select = useUiStore((s) => s.select);
   const appView = useUiStore((s) => s.appView);
   const openPanel = useUiStore((s) => s.openPanel);
@@ -34,6 +40,10 @@ export function ProposalSwitcher() {
   // treat it as another open overlay and step aside for it.
   const open = useUiStore((s) => s.proposalMenuOpen);
   const setOpen = useUiStore((s) => s.setProposalMenuOpen);
+
+  // The auto-arrange search is a short synchronous burst; the busy flag both
+  // guards against a double-tap and shows the button as busy while it runs.
+  const [arranging, setArranging] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -86,6 +96,25 @@ export function ProposalSwitcher() {
       return;
     }
     openPanel('ai');
+  };
+
+  // Local, no-sign-in counterpart to the AI suggestions above: reshuffles the
+  // pieces already in the current proposal — moving and rotating them — to raise
+  // the design score, with no server round-trip.
+  const runAutoArrange = () => {
+    if (arranging) return;
+    select(null);
+    setArranging(true);
+    // Defer past this render so the busy state paints before the search blocks
+    // the main thread for its (brief) run, then close the menu once it's done.
+    setTimeout(() => {
+      try {
+        autoArrange();
+      } finally {
+        setArranging(false);
+        setOpen(false);
+      }
+    }, 16);
   };
 
   const rename = async (id: string, current: string) => {
@@ -186,6 +215,14 @@ export function ProposalSwitcher() {
             </button>
             <button type="button" className="btn" onClick={() => create(false)}>
               <Icon name="plus" /> New empty
+            </button>
+            <button
+              type="button"
+              className="btn"
+              disabled={arranging}
+              onClick={runAutoArrange}
+            >
+              <Icon name="scan" /> {arranging ? 'Arranging…' : 'Auto-arrange'}
             </button>
           </div>
         </div>
