@@ -269,6 +269,66 @@ describe('adding doors and windows to a wall', () => {
   });
 });
 
+describe('resizing a wall reclamps — never deletes — its openings', () => {
+  const RECT = [
+    { x: -2, z: -2.5 },
+    { x: 2, z: -2.5 },
+    { x: 2, z: 2.5 },
+    { x: -2, z: 2.5 },
+  ];
+
+  beforeEach(() => {
+    store().newProject();
+    store().commitExteriorPolygon(RECT);
+  });
+
+  it('leaves a door untouched when the final length still comfortably fits it', () => {
+    // A 4m wall (see RECT) with a default 0.9m door at offset 0.5m.
+    const wallId = store().design.walls[0].id;
+    const id = store().addOpening(defaultOpening('door', wallId))!;
+    const before = store().design.openings.find((o) => o.id === id)!;
+
+    // A single, final commit to 1.2m still fits the 0.9m door — clampOpening only
+    // needs to nudge the offset inward, not touch its width.
+    store().resizeWall(wallId, 1.2);
+
+    const after = store().design.openings.find((o) => o.id === id)!;
+    expect(after.width).toBe(before.width);
+    expect(after.offset).toBeLessThanOrEqual(1.2 - after.width);
+  });
+
+  it('shrinks (but never removes) a door on a wall made genuinely too short for it', () => {
+    const wallId = store().design.walls[0].id;
+    const id = store().addOpening(defaultOpening('door', wallId))!; // 0.9m wide
+
+    store().resizeWall(wallId, 0.4); // shorter than the door itself
+
+    const openings = store().design.openings;
+    expect(openings).toHaveLength(1); // still present — clampOpening reclamps, it never deletes
+    const after = openings.find((o) => o.id === id)!;
+    expect(after.width).toBeLessThanOrEqual(0.4);
+  });
+
+  it('a transient intermediate length (as fired by every keystroke) permanently shrinks the ' +
+    'door even once the final length would have fit it fine — this is why the Length field ' +
+    'must commit once (on blur/Enter), not on every keystroke', () => {
+    const wallId = store().design.walls[0].id;
+    const id = store().addOpening(defaultOpening('door', wallId))!; // 0.9m wide, 4m wall
+
+    // Simulates selecting the existing "400" text and typing "1", "12", "120" —
+    // each keystroke used to call resizeWall directly (see PlanWallPanel before
+    // this fix), so the transient 1cm and 12cm values already happened for real.
+    store().resizeWall(wallId, 0.01);
+    store().resizeWall(wallId, 0.12);
+    store().resizeWall(wallId, 1.2); // the actually-intended final length
+
+    // 1.2m comfortably fits a 0.9m door, but the door never recovers from the
+    // 1cm dip: clampOpening has no memory of the door's original width.
+    const after = store().design.openings.find((o) => o.id === id)!;
+    expect(after.width).toBeLessThan(0.9);
+  });
+});
+
 describe('placing furniture clear of what is already in the room', () => {
   beforeEach(() => {
     store().newProject();

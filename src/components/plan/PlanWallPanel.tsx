@@ -1,4 +1,4 @@
-import { useState, type Ref } from 'react';
+import { useEffect, useState, type Ref } from 'react';
 import {
   defaultOpening,
   floorPolygon,
@@ -35,6 +35,10 @@ export function PlanWallPanel({
   // Which opening is expanded for editing; local because openings aren't part of
   // the global selection (which drives walls and furniture).
   const [editingId, setEditingId] = useState<string | null>(null);
+  // A heads-up when the last Length commit shrank/repositioned a door or window on
+  // this wall to keep it fitting — cleared whenever the selected wall changes.
+  const [lengthNotice, setLengthNotice] = useState<string | null>(null);
+  useEffect(() => setLengthNotice(null), [wall?.id]);
   if (!wall) return null;
 
   const lenCm = Math.round(wallLen(wall) * 100);
@@ -47,6 +51,22 @@ export function PlanWallPanel({
     const id = addOpening(defaultOpening(kind, wall.id));
     // Open the new opening straight away so it can be positioned without a hunt.
     if (id) setEditingId(id);
+  };
+
+  // Length only ever *reclamps* a wall's doors/windows to fit (shrinks width
+  // and/or nudges offset) rather than deleting them — but a shrink is silent and
+  // permanent, so once committed, tell the user which openings it touched. Diffed
+  // against a snapshot taken right before the resize, so the message reflects
+  // exactly what this edit did, not a prediction.
+  const commitLength = (cm: number) => {
+    const before = wallOpenings;
+    resizeWall(wall.id, cm / 100);
+    const after = useDesignStore.getState().design.openings;
+    const affected = before.filter((o) => {
+      const match = after.find((a) => a.id === o.id);
+      return match && (match.width !== o.width || match.offset !== o.offset);
+    });
+    setLengthNotice(affected.length > 0 ? describeAffected(affected) : null);
   };
 
   return (
@@ -63,7 +83,8 @@ export function PlanWallPanel({
             max={3000}
             step={1}
             suffix="cm"
-            onChange={(cm) => resizeWall(wall.id, cm / 100)}
+            commitOnBlur
+            onChange={commitLength}
           />
           {wall.kind === 'interior' && (
             <NumberField
@@ -77,6 +98,7 @@ export function PlanWallPanel({
             />
           )}
         </div>
+        {lengthNotice && <p className="hint">{lengthNotice}</p>}
 
         {/* Doors & windows on this wall — add one, then tune its position and size. */}
         {showOpenings && (
@@ -108,6 +130,17 @@ export function PlanWallPanel({
       </div>
     </div>
   );
+}
+
+/** Builds the Length-field notice naming which openings a resize just touched. */
+function describeAffected(affected: WallOpening[]): string {
+  const doors = affected.filter((o) => o.kind === 'door').length;
+  const windows = affected.filter((o) => o.kind === 'window').length;
+  const parts: string[] = [];
+  if (doors) parts.push(`${doors} door${doors > 1 ? 's' : ''}`);
+  if (windows) parts.push(`${windows} window${windows > 1 ? 's' : ''}`);
+  const noun = affected.length > 1 ? 'them' : 'it';
+  return `This length resized ${parts.join(' and ')} on this wall to fit — check ${noun} before continuing.`;
 }
 
 /** One opening as a collapsible row: a summary line that expands to its fields. */
