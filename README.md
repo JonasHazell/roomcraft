@@ -34,10 +34,11 @@ with its own floor plan and its own furnishing options.
   propose a furniture layout for the room, each with its own floor/wall palette.
   When the server has a database configured, this feature is gated behind a
   simple email + password sign-in (see **Accounts** below)
-- Auto-arrange ("Auto" in the bottom dock): a local, no-sign-in counterpart to the
-  AI feature that reshuffles the pieces already in the room — moving and rotating
-  them — to raise the design score. It runs entirely in the browser (no server, no
-  AI), only ever produces a valid layout, and applies as a single undoable step
+- Auto-arrange ("Auto-arrange" in the proposal-switcher menu): a local, no-sign-in
+  counterpart to the AI feature that reshuffles the pieces already in the room —
+  moving and rotating them — to raise the design score. It runs entirely in the
+  browser (no server, no AI), only ever produces a valid layout, and applies as a
+  single undoable step
 - Undo/redo for every editing step — moving and editing furniture, walls, doors,
   windows, colours and more. Use the ↶/↷ buttons in the bottom-right corner (they
   work on mobile too) or the keyboard shortcuts below; a whole drag counts as a
