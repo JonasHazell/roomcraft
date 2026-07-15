@@ -1,40 +1,21 @@
-import { useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { confirmDialog, promptDialog } from '../../store/useDialogStore';
-import {
-  createRoomAndDraw,
-  createRoomFromTemplate,
-  openRoomToFurnish,
-  openRoomToPlan,
-} from '../../lib/nav';
-import type { RoomTemplate } from '../../lib/roomTemplates';
+import { openRoomToFurnish, openRoomToPlan, startNewRoomWizard } from '../../lib/nav';
 import { Icon } from '../ui/Icon';
-import { RoomTemplatePicker } from './RoomTemplatePicker';
 import { AccountControl } from '../auth/AccountControl';
 
 /**
  * The lobby: the app's home surface, kept separate from furnishing. Here you
- * pick a room to furnish, create a new room (which opens the floor-plan editor
- * to draw it), edit an existing room's floor plan, and duplicate/rename/delete
- * rooms. Furnishing a room happens on its own surface, reached by opening a
- * room card.
+ * pick a room to furnish, create a new room (which launches the guided wizard —
+ * name, walls, doors & windows — before landing in 3D), edit an existing room's
+ * floor plan, and duplicate/rename/delete rooms. Furnishing a room happens on
+ * its own surface, reached by opening a room card.
  */
 export function Lobby() {
   const rooms = useDesignStore((s) => s.project.rooms);
   const duplicateRoom = useDesignStore((s) => s.duplicateRoom);
   const renameRoom = useDesignStore((s) => s.renameRoom);
   const removeRoom = useDesignStore((s) => s.removeRoom);
-
-  const [picking, setPicking] = useState(false);
-
-  const pickTemplate = (template: RoomTemplate) => {
-    setPicking(false);
-    createRoomFromTemplate(template.points);
-  };
-  const drawYourself = () => {
-    setPicking(false);
-    createRoomAndDraw();
-  };
 
   const rename = async (id: string, current: string) => {
     const next = await promptDialog({ title: 'Rename room', label: 'Room name', initial: current });
@@ -65,7 +46,7 @@ export function Lobby() {
         <div className="lobby-empty">
           <h2>Create your first room</h2>
           <p>Start by drawing the floor plan; then you can furnish it in 3D.</p>
-          <button type="button" className="btn btn-accent btn-lg" onClick={() => setPicking(true)}>
+          <button type="button" className="btn btn-accent btn-lg" onClick={startNewRoomWizard}>
             <Icon name="plus" /> Create a room
           </button>
         </div>
@@ -120,22 +101,14 @@ export function Lobby() {
             );
           })}
 
-          <button type="button" className="room-card room-card-new" onClick={() => setPicking(true)}>
+          <button type="button" className="room-card room-card-new" onClick={startNewRoomWizard}>
             <span className="room-card-thumb" aria-hidden="true">
               <Icon name="plus" />
             </span>
             <span className="room-card-name">New room</span>
-            <span className="room-card-meta">Pick a template or draw it</span>
+            <span className="room-card-meta">Name it, draw it, furnish it</span>
           </button>
         </div>
-      )}
-
-      {picking && (
-        <RoomTemplatePicker
-          onPick={pickTemplate}
-          onDrawYourself={drawYourself}
-          onClose={() => setPicking(false)}
-        />
       )}
     </div>
   );

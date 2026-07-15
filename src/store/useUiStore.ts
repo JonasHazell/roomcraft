@@ -17,6 +17,15 @@ export type AppView = 'lobby' | 'plan' | 'furnish';
 export type PlanStartTool = 'select' | 'exterior';
 
 /**
+ * The step of the guided "New room" wizard, or null when it isn't running. The
+ * wizard walks a new room through naming it, drawing its walls and adding doors
+ * and windows, then drops the user straight into the 3D view — each step showing
+ * only the controls relevant to it. `walls` and `openings` are the two floor-plan
+ * steps (drawn by the plan editor); `name` is the opening form.
+ */
+export type WizardStep = 'name' | 'walls' | 'openings';
+
+/**
  * A global side panel opened from the bottom action bar (AI, validation).
  * Independent of the current selection.
  */
@@ -41,6 +50,13 @@ interface UiState {
    * it so an abandoned "New room" creates no room. Null once drawn or cleared.
    */
   pendingRoomId: string | null;
+  /**
+   * The active step of the guided "New room" wizard, or null when it isn't
+   * running. When set, the app shows the wizard instead of the lobby/plan/furnish
+   * surfaces (see App.tsx). The room being built is the provisional
+   * {@link pendingRoomId}, discarded if the wizard is cancelled.
+   */
+  wizardStep: WizardStep | null;
   furnitureDialog: FurnitureDialog;
   /** Whether the sign-in / create-account dialog is open. */
   authDialogOpen: boolean;
@@ -57,6 +73,7 @@ interface UiState {
   setProposalMenuOpen: (open: boolean) => void;
   setPlanStartTool: (tool: PlanStartTool) => void;
   setPendingRoomId: (id: string | null) => void;
+  setWizardStep: (step: WizardStep | null) => void;
   openAddFurniture: () => void;
   openEditFurniture: (id: string) => void;
   closeFurnitureDialog: () => void;
@@ -74,6 +91,7 @@ export const useUiStore = create<UiState>()((set) => ({
   appView: 'lobby',
   planStartTool: 'select',
   pendingRoomId: null,
+  wizardStep: null,
   furnitureDialog: null,
   authDialogOpen: false,
   panel: null,
@@ -92,6 +110,7 @@ export const useUiStore = create<UiState>()((set) => ({
   setProposalMenuOpen: (proposalMenuOpen) => set({ proposalMenuOpen }),
   setPlanStartTool: (planStartTool) => set({ planStartTool }),
   setPendingRoomId: (pendingRoomId) => set({ pendingRoomId }),
+  setWizardStep: (wizardStep) => set({ wizardStep }),
   openAddFurniture: () => set({ furnitureDialog: { mode: 'create' } }),
   openEditFurniture: (id) =>
     set({ selection: { kind: 'furniture', id }, furnitureDialog: { mode: 'edit', id } }),

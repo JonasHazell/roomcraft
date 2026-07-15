@@ -383,6 +383,66 @@ export function StyleGuide() {
           </div>
         </Demo>
 
+        <Demo
+          title="New-room wizard"
+          note="The guided create-a-room flow: a .wizard-steps stepper header (steps go is-done → is-active → is-upcoming), a .wizard-body that swaps per step (the .wizard-name form, or the real plan editor), and a .wizard-foot with Back/Next. The walls step floats the .plan-chooser (reusing .template-*) over the canvas until the room has walls."
+        >
+          <div
+            style={{
+              maxWidth: 560,
+              border: '1px solid var(--line)',
+              borderRadius: 'var(--popup-radius)',
+              overflow: 'hidden',
+            }}
+          >
+            <header className="wizard-head">
+              <ol className="wizard-steps">
+                {[
+                  { label: 'Name', state: 'is-done' },
+                  { label: 'Walls', state: 'is-active' },
+                  { label: 'Doors & windows', state: 'is-upcoming' },
+                ].map((s, i) => (
+                  <li key={s.label} className={`wizard-step ${s.state}`}>
+                    <button type="button" className="wizard-step-btn" disabled>
+                      <span className="wizard-step-num" aria-hidden="true">
+                        {s.state === 'is-done' ? <Icon name="check" /> : i + 1}
+                      </span>
+                      <span className="wizard-step-label">{s.label}</span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              <button type="button" className="btn-icon wizard-close" aria-label="Cancel">
+                <Icon name="x" />
+              </button>
+            </header>
+            <div className="wizard-name" style={{ padding: '20px 16px' }}>
+              <div className="wizard-name-card">
+                <span className="wizard-name-thumb" aria-hidden="true">
+                  <Icon name="pencil" />
+                </span>
+                <h2>Name your room</h2>
+                <p className="hint">Pre-filled so you can just continue — rename it anytime.</p>
+                <label className="field">
+                  <span className="field-label">Room name</span>
+                  <span className="field-input">
+                    <input type="text" defaultValue="Room 1" />
+                  </span>
+                </label>
+              </div>
+            </div>
+            <footer className="wizard-foot">
+              <button type="button" className="btn">
+                <Icon name="chevron-left" /> Back
+              </button>
+              <span className="wizard-foot-title">Draw the walls</span>
+              <button type="button" className="btn btn-accent">
+                Next <Icon name="chevron-right" />
+              </button>
+            </footer>
+          </div>
+        </Demo>
+
         <Demo title="Validation: score bands & severity" note="Score number is coloured by band; severity dots run 5 (worst) → 1.">
           <div className="sg-inline-row">
             <span className="score-badge score-good" style={{ position: 'static' }}>
