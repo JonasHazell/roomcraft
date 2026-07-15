@@ -76,24 +76,26 @@ only where a single item dominates a metric.
 <!-- STAGE C: overwrite everything between the markers below each run. -->
 <!-- METRICS-SNAPSHOT:START -->
 
-**First real snapshot** (this run). Computed from every agent issue/PR the pipeline
-has produced to date (#124–#153; the meta-PRs #131/#144 excluded, as always). No prior
-snapshot to diff against, so every Δ is "n/a — first snapshot."
+**Second snapshot** (this run, 2026-07-15 22:00 UTC). Cumulative counts computed from
+every agent issue/PR to date (#124–#189; meta-PRs #131/#144/#169 excluded, as always).
+This run's new decisions: agent PRs #180–#189 (10 decided, 9 merged clean, 1 rejected —
+#186), issues #171–#179 (9 decided via their PRs) plus #148 (its second, final decision
+— see note below). Δ is versus the first snapshot (from PR #169).
 
 | Metric | Value | Δ | Window / note |
 | ------ | ----- | - | ------------- |
-| Merge rate | 4 / 8 = 50% | n/a | all 8 decided agent PRs to date (#127,#128,#129,#135,#136,#151,#152,#153) |
-| Clean-merge rate | 4 / 4 = 100% | n/a | all 4 merges (#128,#136,#151,#152) landed with zero changes to the agent's commits |
-| Edit rate | 0 / 4 = 0% | n/a | no merged agent PR has needed a human edit yet |
-| PR-rejection rate | 4 / 8 = 50% | n/a | #127,#129,#135,#153 closed unmerged |
-| Issue-rejection rate | 3 / 7 = 43% | n/a | of 7 *decided* (closed) `agent:ready` issues, 3 closed without a merged PR (#124,#125,#133); issue #148 stays open despite its PR (#153) being rejected, so it's not counted as decided yet |
-| Median PR size | 46 lines | n/a | merged agent PRs: #128 20, #136 71, #151 151, #152 5 (additions+deletions) |
-| Time-to-decision | ~7 h | n/a | median hours from issue creation to merge/close across the 7 decided issues (range: 1h42m–29h19m; the two long tails, #124/#125, sat open ~29h after their PRs were rejected before the issue itself was closed) |
-| Ready backlog | 1 | n/a | open `agent:ready`: #148 (its first attempt, #153, was rejected; still open for a future Stage B attempt or human closure) |
-| Stuck-building count | 0 | n/a | no `agent:building` issue has gone without a PR attempt |
-| Duplicate-rejection count | 2 | n/a | #129, #135 (both "already did this myself" — see `AGENT_LEARNINGS.md`); no new ones this run |
-| AI proposal latency | not sampled this run | — | `[proposals]` logging landed in #156 (2026-07-14) but this session has no reachable server/runtime logs to sample from |
-| AI proposal cost | not sampled this run | — | same — instrumentation now exists (#156: per-call token/cost breakdown, cache-aware pricing), just not reachable from a GitHub-only Stage C session |
+| Merge rate | 13 / 18 = 72% | ↑ (was 50%) | all 18 decided agent PRs to date; this run added 9 merges (#180–#185,#187–#189) and 1 rejection (#186) |
+| Clean-merge rate | 13 / 13 = 100% | → (was 100%) | every merged agent PR to date, including this run's 9, landed with zero changes to the agent's commits |
+| Edit rate | 0 / 13 = 0% | → (was 0%) | still no merged agent PR has ever needed a human edit |
+| PR-rejection rate | 5 / 18 = 28% | ↓ (was 50%) | #127,#129,#135,#153,#186 closed unmerged |
+| Issue-rejection rate | 4 / 17 = 24% | ↓ (was 43%) | of 17 *decided* `agent:ready` issues, 4 closed without a merged PR (#124,#125,#133,#148). #148 is counted this run: its PR (#153) was rejected last run but the issue itself stayed open until the human closed it alongside merging the previous learnings PR (#169) — same pattern to watch for on #170 (see stuck-building below) |
+| Median PR size | 71 lines | ↑ (was 46) | all 13 merged agent PRs to date (additions+deletions): 5,10,20,26,49,50,**71**,106,138,140,151,245,275 — this run's batch ran larger (#187 275, #189 245, #188 138) than the mostly-CSS first batch |
+| Time-to-decision | ~3.4 h this run's window | ↓ (was ~7h) | this run's 10 newly-decided issues (#171–#179, #148) ran creation→decision in 3h19m–3h32m each, except #148 (created 2026-07-14, decided 15h38m after — its *second* decision, following the #153 rejection last run). First-snapshot figure (~7h) isn't directly comparable since raw per-item hours for that batch weren't retained; both windows are reported rather than an invalid combined median |
+| Ready backlog | 0 | ↓ (was 1) | no open `agent:ready` issue without `agent:building` — #148 closed this run, #170 is open but already `agent:building` (see next row) |
+| Stuck-building count | 1 | ↑ (was 0) | #170 — its PR (#186) was closed unmerged, but `agent:building`/`agent:ready` were never cleared from the issue. Not a crash, just an unfinished loop-back: the same limbo #148 sat in for a full run after #153's rejection, until the human closed it. Watch #170 next run — if it's still open and unlabelled-clean, that's a second instance and worth a label-state-machine fix (who clears `agent:building` when the linked PR is rejected is currently unspecified) |
+| Duplicate-rejection count | 2 | → (was 2) | #129, #135 — no new duplicate rejections this run |
+| AI proposal latency | not sampled this run | — | still no reachable server/runtime logs from this GitHub-only Stage C session |
+| AI proposal cost | not sampled this run | — | same as above |
 | AI calls per proposal | not sampled this run | — | same as above |
 | AI failure/timeout rate | not sampled this run | — | same as above |
 

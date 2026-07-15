@@ -43,6 +43,14 @@ Repository: `JonasHazell/roomcraft`.
       implement multiple issues in a single subagent.
    3. **Verify:** run `npm run build`, `npm run lint`, and `npm test`. Fix what your
       change broke. For UI, follow the `DESIGN.md` behaviour conventions.
+      **If the change touches any user-facing surface, also add or extend an
+      `e2e/` spec and run `npm run test:e2e`** (desktop + mobile) per
+      `CLAUDE.md`'s validation rule — a `Stop` hook blocks the session from
+      finishing while `src/` has changes that haven't been validated this way,
+      so a change that skips this step can leave the build stuck. Purely
+      internal changes (docs, dead-code removal with no reachable UI effect)
+      don't need a new spec, but still shouldn't trip the hook — verify it
+      passes before opening the PR either way.
    4. **Open a pull request** with `Closes #<N>` in the body, targeting the default
       branch. Fill in what changed, why, and how you verified it. Label the PR
       `agent:built`. **Do not enable auto-merge.**
