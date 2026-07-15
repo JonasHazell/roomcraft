@@ -21,13 +21,29 @@
 
 <!--
   So a reviewer can SEE the change without checking it out and clicking around,
-  attach media that shows it in action. Drag a file into this box or paste an
-  image/video — GitHub uploads it and inserts the link for you.
-
-  RoomCraft is mobile-first, so show BOTH viewports whenever the change is
-  visible in both:
+  attach media that shows it in action. RoomCraft is mobile-first, so show BOTH
+  viewports whenever the change is visible in both:
     • A short screen recording (.mp4 / .mov / .gif) of the flow, OR
     • Before / after screenshots.
+
+  TWO ways to get media into this PR — pick the one that matches how you opened it:
+
+  1. Opening the PR in your browser (GitHub web UI)?
+     Drag a file into the box or paste an image/video — GitHub uploads it to its
+     CDN and inserts a working link for you. Done.
+
+  2. Opening the PR through the API or CLI (the agent pipeline, `gh`, a script)?
+     There is NO browser to drag into, and GitHub has no API to upload an
+     attachment — a bare filename becomes a DEAD link you can't click. Instead,
+     commit the media into this branch and embed it with an absolute raw URL,
+     which renders inline. The helper does both for you:
+
+         node scripts/pr-media.mjs after-desktop.png after-mobile.png --table
+
+     It copies the files into .github/pr-media/<branch>/ and prints ready-to-paste
+     markdown. Commit the copied files on this branch, then paste the markdown
+     into the table below. (Committed .mp4/.mov show as a link, not a player —
+     prefer a short .gif or screenshots for API/CLI-opened PRs.)
 
   Delete this whole section if you ticked "No" above.
 -->

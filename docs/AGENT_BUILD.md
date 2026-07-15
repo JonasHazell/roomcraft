@@ -52,8 +52,21 @@ Repository: `JonasHazell/roomcraft`.
       don't need a new spec, but still shouldn't trip the hook — verify it
       passes before opening the PR either way.
    4. **Open a pull request** with `Closes #<N>` in the body, targeting the default
-      branch. Fill in what changed, why, and how you verified it. Label the PR
-      `agent:built`. **Do not enable auto-merge.**
+      branch. Fill in what changed, why, and how you verified it, following the PR
+      template. Label the PR `agent:built`. **Do not enable auto-merge.**
+      **For any GUI change, attach media that renders — don't leave a dead link.**
+      You open PRs through the API, so drag-and-drop upload isn't available and a
+      bare filename in the body becomes an unclickable dead link. Instead:
+      - During the `npm run test:e2e` run, capture a desktop **and** a mobile
+        screenshot (or a short `.gif`) of the changed flow — e.g. add a
+        `page.screenshot({ path: '…' })` to the spec that drives it. Show both
+        viewports whenever the change is visible in both.
+      - Run `node scripts/pr-media.mjs <files…> --table`. It copies the media into
+        `.github/pr-media/<branch>/` and prints markdown that embeds it via an
+        absolute raw URL (which renders inline in the PR description).
+      - **Commit the copied files on the same branch** and paste the printed
+        markdown into the template's media table. Committed `.mp4/.mov` render as a
+        link, not a player — prefer a `.gif` or screenshots.
 4. If a selected issue turns out to be too large, ambiguous, or antithetical to
    `STRATEGY.md`, **do not force it.** Leave a brief comment on the issue explaining
    why, remove `agent:building`, and move on. (Optionally note it for Stage C.)
