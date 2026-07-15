@@ -17,42 +17,45 @@
 - [ ] **Yes** — it changes a user-facing surface. **Attach media below (required).**
 - [ ] **No** — no visible change (logic, docs, tooling, tests only).
 
-### 🎥 GUI change — attach a film or a screenshot (required)
+### 🎥 GUI change — show it in action (required)
 
 <!--
   So a reviewer can SEE the change without checking it out and clicking around,
-  attach media that shows it in action. RoomCraft is mobile-first, so show BOTH
-  viewports whenever the change is visible in both:
-    • A short screen recording (.mp4 / .mov / .gif) of the flow, OR
-    • Before / after screenshots.
+  show it in action. RoomCraft is mobile-first, so cover BOTH viewports whenever
+  the change is visible in both — a short screen recording (.mp4 / .mov / .gif) or
+  before / after screenshots.
 
-  TWO ways to get media into this PR — pick the one that matches how you opened it:
+  HOW you attach media depends on how the PR was opened. Pick one and delete the
+  other, then delete this whole section if you ticked "No" above.
+-->
 
-  1. Opening the PR in your browser (GitHub web UI)?
-     Drag a file into the box or paste an image/video — GitHub uploads it to its
-     CDN and shows it INLINE. This is the nicest result; use it when you can.
-
-  2. Opening the PR through the API or CLI (the agent pipeline, `gh`, a script)?
-     There is no browser to drag into, GitHub has no API to upload an attachment,
-     AND the posting layer strips both inline image embeds (`![](…)`) and any link
-     whose URL ends in an image extension — so you can't render or even directly
-     link an image. Commit the screenshots into this branch and link the FOLDER
-     (a URL with no image extension survives). The helper does it:
-
-         node scripts/pr-media.mjs after-desktop.png after-mobile.png
-
-     It copies the files into .github/pr-media/<branch>/ and prints one clickable
-     link to the committed folder. Commit the copied files on this branch, paste
-     that link in place of the table below, and note that the screenshots also
-     render in this PR's "Files changed" tab.
-
-  Delete this whole section if you ticked "No" above.
+<!--
+  ► PATH A — opened in the browser (GitHub web UI). BEST result: inline media.
+    Drag a file into the table cells or paste an image/video — GitHub uploads it
+    to its CDN and shows it inline. Keep this table; delete Path B.
 -->
 
 | | Before | After |
 | --- | --- | --- |
 | **Desktop** | | |
 | **Mobile** | | |
+
+<!--
+  ► PATH B — opened through the API or CLI (the agent pipeline, `gh`, a script).
+    You can't attach inline media this way: there's no browser to drag into,
+    GitHub has no attachment API, and the posting layer strips both image embeds
+    (`![](…)`) and any link whose URL ends in an image extension — so an image
+    can't be rendered OR directly linked. What works is linking the committed
+    FOLDER (a URL with no image extension survives the filter). The helper does it:
+
+        node scripts/pr-media.mjs after-desktop.png after-mobile.png
+
+    It copies the files into `.github/pr-media/<branch>/` and prints the line
+    below. Commit the copied files on this branch, paste the link here, and delete
+    Path A's table. The screenshots also render in this PR's "Files changed" tab.
+-->
+
+📸 **Screenshots for this PR:** _paste the folder link from `scripts/pr-media.mjs` here_ · they also render in the **Files changed** tab
 
 
 
