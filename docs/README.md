@@ -42,13 +42,11 @@ Read both before creating or changing any screen, panel, dialog, or control.
 
 ## Interior-design rule catalog
 
-The rules the app uses to judge and improve a layout. The two files hold the *same*
-catalog in two languages.
+The rules the app uses to judge and improve a layout.
 
 | Doc | What it's for |
 | --- | --- |
-| [`interior-design-rules.md`](interior-design-rules.md) | **English — the source of truth.** The catalog the rule engine and the agent docs reference. |
-| [`inredningsregler.md`](inredningsregler.md) | Swedish translation of the same rules. Keep it in sync when a rule changes. |
+| [`interior-design-rules.md`](interior-design-rules.md) | The structured rule catalog — safety, accessibility, ergonomics, feng shui — that the rule engine and the agent docs reference. |
 
 ## The agent pipeline
 

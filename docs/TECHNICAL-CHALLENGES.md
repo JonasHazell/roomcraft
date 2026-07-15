@@ -42,8 +42,7 @@ so guidance reflects genuine interior-design quality rather than arbitrary
 numbers — is an ongoing, hard-to-tune problem.
 
 The rules themselves are documented in
-[`interior-design-rules.md`](interior-design-rules.md) (and
-[`inredningsregler.md`](inredningsregler.md)).
+[`interior-design-rules.md`](interior-design-rules.md).
 
 ## 3. An AI recommendation engine that gives high-quality suggestions
 
