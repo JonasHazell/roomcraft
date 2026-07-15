@@ -89,7 +89,7 @@ export async function fetchProposals(
     | (ProposalsResponse & { error?: string })
     | null;
   if (!res.ok || !payload) {
-    throw new Error(payload?.error ?? `The server responded with an error (${res.status}).`);
+    throw new Error(payload?.error ?? "Couldn't get suggestions right now — please try again in a moment.");
   }
   return { proposals: payload.proposals ?? [], warnings: payload.warnings ?? [] };
 }
