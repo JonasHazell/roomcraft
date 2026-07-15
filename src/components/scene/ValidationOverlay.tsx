@@ -3,8 +3,11 @@ import * as THREE from 'three';
 import type { Point } from '../../types';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useValidationStore } from '../../store/useValidationStore';
+import { DANGER } from '../../lib/theme';
 
-const VIOLATION_COLOR = '#d9482b';
+// Mirrors `--danger`; see `lib/theme` for why (this used to be a drifted
+// one-off shade).
+const VIOLATION_COLOR = DANGER;
 
 function ZoneMesh({ zone }: { zone: Point[] }) {
   // Shape in (x, y) maps to the floor's (x, z) via rotation-x below.
