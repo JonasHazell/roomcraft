@@ -95,16 +95,26 @@ click-through, and let these categories shape the *kind* of feature you add:
 2. **Avoid duplicates.** Search existing open **and** recently closed issues and
    open PRs. Do not propose something already proposed, in flight, or recently
    rejected (check `AGENT_LEARNINGS.md` too).
-3. **Generate candidates.** From what you read and saw, find the highest-value,
+3. **Check recent human activity on the target path before proposing there.**
+   `git log --since=24h -- <path>` (or equivalent) on the file/area a candidate
+   touches. If the human has multiple merged PRs there in the last day, either
+   skip proposing in that area this run or aim at the scale the human is clearly
+   already working at — a narrow slice is likely to be made redundant within
+   hours (`AGENT_LEARNINGS.md` has repeated examples). As of this writing,
+   `src/lib/validation/` (the rule engine) and `server/` (AI proposal
+   generation/repair) are hot in exactly this way — treat that as a live example
+   of the check, not a permanent rule; re-verify against actual recent history
+   each run rather than trusting this note indefinitely.
+4. **Generate candidates.** From what you read and saw, find the highest-value,
    in-scope improvements available right now, across all the categories above (new
    features, changes to existing features, removals, and GUI clarity/simplicity).
-4. **Select `N` = 10** of the best. Aim to fill the quota every run — each run
+5. **Select `N` = 10** of the best. Aim to fill the quota every run — each run
    should produce 10 concrete proposals for new features. Hold every one to the
    quality bar; if truly great candidates are scarce, keep digging (more code
    analysis, more click-through, more categories) until you have 10 that serve the
    core experience. Every proposal becomes a real PR the human reviews, so make
    each one count.
-5. **Create one issue per proposal** in the format below, labelled `agent:ready`.
+6. **Create one issue per proposal** in the format below, labelled `agent:ready`.
 
 ## Issue format
 

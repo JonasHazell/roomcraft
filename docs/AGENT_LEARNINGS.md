@@ -32,8 +32,16 @@ note the promotion on the entry so the trail from evidence → rule stays tracea
   zero changes. Prefer proposals that name the specific nearby element already
   doing it right, over ones that only gesture at a general doc rule. #132 (a
   validation-row severity cue, compared against the existing `.severity-1..5`
-  list styling nearby) is a second clean example of this same pattern — it also
-  merged with zero changes.
+  list styling nearby) and #147 (three furniture-customization controls added to
+  the app's one `@media (pointer: coarse)` block, naming the eight sibling
+  selectors already in it) are two more clean examples — both merged with zero
+  changes. The same framing works one level deeper, for *logic* gaps, not just
+  CSS: #146 pointed out that `slideFurniture` already collision-checks against
+  other furniture via `furnitureFits`/`obstacles` while dragging, but the two
+  *placement* paths (`placeAtCenter`, `duplicateFurniture`) skip that same check
+  — also merged with zero changes. Prefer proposals that point at the specific
+  sibling code path already doing it right and ask to reuse its exact mechanism,
+  over ones that ask for a new mechanism to be built.
 
 - **"Avoid duplicates" must include the human's own recent work, not just open
   issues/PRs — same-day human activity in an area is a strong signal to steer
@@ -79,9 +87,42 @@ _No entries yet._
   it as its own visible affordance; don't overload what an existing control does
   based on state the user can't observe.
 
+- **A precision-control feature should surface relative, contextual measurements,
+  not raw values against an unstated frame of reference.** #148 proposed exact
+  numeric X/Z position and rotation fields as a touch-friendly alternative to
+  drag-to-place; Stage B built it (#153) and it was rejected: "good idea but I
+  think it becomes a bit too 'data power user' with the numbers there — unclear
+  how they relate to the origin. I'd rather see a solution where distance to the
+  walls and other furniture is shown in the GUI when a piece is selected." The
+  general rule: when a flow needs a numeric/precise alternative to a spatial,
+  visual interaction, prefer values the user can already relate to something they
+  see (distance to the nearest wall, gap to the next piece) over absolute
+  coordinates in a coordinate system the UI never otherwise exposes.
+
 ## Testing & verification
 
-_No entries yet._
+- **When adding or fixing a rule that flags a bad layout, pair it with a
+  regression test for the closest *legitimate* layout that must keep passing —
+  not just a test that the bad case is caught.** This is the consistent shape of
+  every rule-engine change the human hand-built on 2026-07-14: ACC-01 (#161)
+  tests two beds walling off a strip *and* a single bed against the wall in an
+  open room; ACC-14 (#150) tests a desk blocked by a bed *and* a sofa with its own
+  coffee table (the legitimate near-neighbor case); SAF-03/LGT-05 (#164) each test
+  the flagged case and a passing one (a low window, a shallow shelf). The
+  agent-built #151 (furniture no longer spawns embedded in existing pieces)
+  followed the same shape: a test that a fitting candidate is left alone, not
+  just that an overlapping one gets moved. A rule that only tests its failure
+  case risks a false positive on first real use; test the boundary, not just the
+  violation.
+- **Ground a new or changed validation rule in the canonical rule catalog
+  (`docs/interior-design-rules.md`), and reuse the engine's existing geometry
+  helpers instead of writing new collision/measurement math.** #164 aligned two
+  rule thresholds (daylight, escape-window) to values it traced back to the
+  documented source rather than picking new numbers; #161 and #150 both built
+  their check on existing helpers (`freeComponents`, grid-sampled clearance)
+  rather than a bespoke geometric routine. A rule proposal or fix should point at
+  the catalog entry and the existing helper it will reuse, the same way a UI
+  proposal should point at the sibling control it will match.
 
 ## Code style & conventions
 
@@ -89,15 +130,25 @@ _No entries yet._
 
 ## Areas to avoid / handle carefully
 
-- **The AI-furnishing flow (entry points, wait/progress feedback, and its
-  backend) is being actively deepened by the human directly, fast, and in large
-  hand-built PRs** — #137 (mobile plan-editor overhaul), #139 (Postgres-backed
-  auth gating AI), #140 (AI entry point in the proposal switcher), #141 (backend
-  switched from the Claude CLI to the Anthropic API), and #142 (full mobile AI
-  progress/cancel/resilience overhaul) all merged within a few hours on
-  2026-07-14. Backend/infra work in this area (auth, model provider) is already
-  out of scope per `AGENT_PROPOSALS.md`'s "no speculative infrastructure" rule;
-  the new signal here is that the *frontend* surface of this flow is moving fast
-  by hand too (see the two duplicate rejections above), so re-verify a gap still
-  exists there immediately before proposing rather than relying on an
-  end-of-previous-run read of the code.
+- **[Recurring across two Stage C runs — promoted into `AGENT_PROPOSALS.md`.] The
+  AI-furnishing flow end to end — its entry points, wait/progress feedback, the
+  validation/rule engine (`src/lib/validation/`), and the proposal-generation
+  backend (`server/`) — is being actively and rapidly deepened by the human
+  directly, in large hand-built PRs, not narrow ones.** The first signal (previous
+  run) was the frontend surface: #137 (mobile plan-editor overhaul), #139
+  (Postgres auth gating AI), #140 (AI entry point in the proposal switcher), #141
+  (Claude CLI → Anthropic API), #142 (mobile AI progress/cancel/resilience) — all
+  merged within a few hours on 2026-07-14, and caused two duplicate-proposal
+  rejections (#129, #135, see above). This run confirms the pattern has spread
+  *and* deepened further, same day: eleven more hand-built PRs landed touching
+  the validation rule engine (#145, #150, #159, #160, #161, #163, #164, #167 — new
+  rules, threshold fixes, a new "Layout & zoning" category, new room types) and
+  the AI backend (#145, #154, #155, #156, #158 — richer repair loop, parallelized
+  generation, two-phase furniture planning, cost/latency logging, quality-score
+  iteration). None of these were small — several added new files, new server
+  modules, or a whole new rule category in one sitting, well past the pipeline's
+  "one issue = one small PR" scope. **Do not propose inside `src/lib/validation/`
+  or `server/` (AI proposal generation/repair) while this area stays this hot** —
+  check recent commit history on the target path before proposing there, and
+  prefer proposing in a different core flow (2D plan editing, room templates,
+  saved library) that isn't seeing this volume of same-day hand-built work.
