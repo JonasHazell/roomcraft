@@ -52,8 +52,29 @@ Repository: `JonasHazell/roomcraft`.
       don't need a new spec, but still shouldn't trip the hook — verify it
       passes before opening the PR either way.
    4. **Open a pull request** with `Closes #<N>` in the body, targeting the default
-      branch. Fill in what changed, why, and how you verified it. Label the PR
-      `agent:built`. **Do not enable auto-merge.**
+      branch. Fill in what changed, why, and how you verified it, following the PR
+      template. Label the PR `agent:built`. **Do not enable auto-merge.**
+      **For any GUI change, attach media the reviewer can actually open.**
+      You open PRs through the API, so you can't attach media the way a human can:
+      drag-and-drop upload isn't available, and the posting layer strips both
+      inline image embeds (`![](…)`) and any link whose URL ends in an image
+      extension — all of which leave an unclickable dead link. What survives is a
+      link with no image extension (a folder/tree view), so:
+      - During the `npm run test:e2e` run, capture a desktop **and** a mobile
+        screenshot (or a short `.gif`) of the changed flow — e.g. add a
+        `page.screenshot({ path: '…' })` to the spec that drives it. Show both
+        viewports whenever the change is visible in both.
+      - Run `node scripts/pr-media.mjs <files…>`. It copies the media into
+        `.github/pr-media/<branch>/` and prints one clickable **link to that
+        folder** (a form that survives the filter).
+      - **Commit the copied files on the same branch** and paste the printed link
+        into the PR body. The committed screenshots also render in the PR's "Files
+        changed" tab. (True inline rendering is only possible when a human drags
+        the file into the web editor.)
+      - Don't worry about the committed images cluttering `main`: when the PR
+        merges, `.github/workflows/pr-media-cleanup.yml` removes that PR's
+        `.github/pr-media/<branch>/` folder from the base branch. The screenshots
+        stay viewable in the merged PR's "Files changed" tab.
 4. If a selected issue turns out to be too large, ambiguous, or antithetical to
    `STRATEGY.md`, **do not force it.** Leave a brief comment on the issue explaining
    why, remove `agent:building`, and move on. (Optionally note it for Stage C.)

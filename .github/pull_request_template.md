@@ -17,25 +17,50 @@
 - [ ] **Yes** — it changes a user-facing surface. **Attach media below (required).**
 - [ ] **No** — no visible change (logic, docs, tooling, tests only).
 
-### 🎥 GUI change — attach a film or a screenshot (required)
+### 🎥 GUI change — show it in action (required)
 
 <!--
   So a reviewer can SEE the change without checking it out and clicking around,
-  attach media that shows it in action. Drag a file into this box or paste an
-  image/video — GitHub uploads it and inserts the link for you.
+  show it in action. RoomCraft is mobile-first, so cover BOTH viewports whenever
+  the change is visible in both — a short screen recording (.mp4 / .mov / .gif) or
+  before / after screenshots.
 
-  RoomCraft is mobile-first, so show BOTH viewports whenever the change is
-  visible in both:
-    • A short screen recording (.mp4 / .mov / .gif) of the flow, OR
-    • Before / after screenshots.
+  HOW you attach media depends on how the PR was opened. Pick one and delete the
+  other, then delete this whole section if you ticked "No" above.
+-->
 
-  Delete this whole section if you ticked "No" above.
+<!--
+  ► PATH A — opened in the browser (GitHub web UI). BEST result: inline media.
+    Drag a file into the table cells or paste an image/video — GitHub uploads it
+    to its CDN and shows it inline. Keep this table; delete Path B.
 -->
 
 | | Before | After |
 | --- | --- | --- |
 | **Desktop** | | |
 | **Mobile** | | |
+
+<!--
+  ► PATH B — opened through the API or CLI (the agent pipeline, `gh`, a script).
+    You can't attach inline media this way: there's no browser to drag into,
+    GitHub has no attachment API, and the posting layer strips both image embeds
+    (`![](…)`) and any link whose URL ends in an image extension — so an image
+    can't be rendered OR directly linked. What works is linking the committed
+    FOLDER (a URL with no image extension survives the filter). The helper does it:
+
+        node scripts/pr-media.mjs after-desktop.png after-mobile.png
+
+    It copies the files into `.github/pr-media/<branch>/` and prints the line
+    below. Commit the copied files on this branch, paste the link here, and delete
+    Path A's table. The screenshots also render in this PR's "Files changed" tab.
+
+    These committed files are temporary: when the PR merges, a workflow removes the
+    folder from the base branch so media doesn't pile up in `main`. The "Files
+    changed" tab keeps them viewable forever, so the folder link is just a
+    review-time convenience.
+-->
+
+📸 **Screenshots for this PR:** _paste the folder link from `scripts/pr-media.mjs` here_ · they also render in the **Files changed** tab
 
 
 
