@@ -1,4 +1,5 @@
 import { useHistoryStore } from '../../store/useHistoryStore';
+import { SelBar, SelBarButton, SelBarDivider } from '../panel/SelBar';
 import { Icon } from '../ui/Icon';
 import type { PlanTool } from './PlanEditor';
 
@@ -106,62 +107,46 @@ export function PlanToolbar({
             whole outline is a rare, start-over action, so it sits here off to the
             side as a small icon button rather than central among the mode switches. */}
         <div className="dock-slot dock-left">
-          <div className="selection-bar">
+          <SelBar label="View controls">
             {!coarse && (
               <>
-                <button
-                  type="button"
-                  className="sel-action sel-history"
-                  onClick={onZoomOut}
+                <SelBarButton
+                  icon={<Icon name="minus" />}
                   title="Zoom out"
-                  aria-label="Zoom out"
-                >
-                  <span className="sel-icon" aria-hidden="true">
-                    <Icon name="minus" />
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="sel-action sel-history"
-                  onClick={onZoomIn}
+                  ariaLabel="Zoom out"
+                  history
+                  onClick={onZoomOut}
+                />
+                <SelBarButton
+                  icon={<Icon name="plus" />}
                   title="Zoom in"
-                  aria-label="Zoom in"
-                >
-                  <span className="sel-icon" aria-hidden="true">
-                    <Icon name="plus" />
-                  </span>
-                </button>
+                  ariaLabel="Zoom in"
+                  history
+                  onClick={onZoomIn}
+                />
               </>
             )}
-            <button
-              type="button"
-              className="sel-action sel-history"
-              onClick={onResetView}
-              disabled={!canResetView}
+            <SelBarButton
+              icon={<Icon name="scan" />}
               title="Fit the whole drawing in view"
-              aria-label="Fit view"
-            >
-              <span className="sel-icon" aria-hidden="true">
-                <Icon name="scan" />
-              </span>
-            </button>
+              ariaLabel="Fit view"
+              history
+              disabled={!canResetView}
+              onClick={onResetView}
+            />
             {!drawing && hasExterior && wizardStep !== 'openings' && (
               <>
-                <span className="sel-divider" aria-hidden="true" />
-                <button
-                  type="button"
-                  className="sel-action sel-history"
-                  onClick={onExteriorTool}
+                <SelBarDivider />
+                <SelBarButton
+                  icon={<Icon name="pencil" />}
                   title="Redraw exterior walls (start the outline over)"
-                  aria-label="Redraw exterior walls"
-                >
-                  <span className="sel-icon" aria-hidden="true">
-                    <Icon name="pencil" />
-                  </span>
-                </button>
+                  ariaLabel="Redraw exterior walls"
+                  history
+                  onClick={onExteriorTool}
+                />
               </>
             )}
-          </div>
+          </SelBar>
         </div>
 
         {/* Centre: while drawing, the finish/cancel actions; otherwise the mode
@@ -171,141 +156,103 @@ export function PlanToolbar({
         <div className="dock-slot dock-mid">
           {wizardStep ? (
             drawing && (
-              <div className="selection-bar">
-                <button
-                  type="button"
-                  className="sel-action sel-danger"
-                  onClick={onCancelDraft}
+              <SelBar label="Drawing actions">
+                <SelBarButton
+                  icon={<Icon name="x" />}
+                  label="Cancel"
                   title="Cancel drawing"
-                  aria-label="Cancel drawing"
-                >
-                  <span className="sel-icon" aria-hidden="true">
-                    <Icon name="x" />
-                  </span>
-                  <span className="sel-label">Cancel</span>
-                </button>
-              </div>
+                  ariaLabel="Cancel drawing"
+                  danger
+                  onClick={onCancelDraft}
+                />
+              </SelBar>
             )
           ) : drawing ? (
-            <div className="selection-bar">
+            <SelBar label="Drawing actions">
               {tool === 'interior' && draftActive && (
-                <button
-                  type="button"
-                  className="sel-action sel-active"
-                  onClick={onFinishDraft}
+                <SelBarButton
+                  icon={<Icon name="check" />}
+                  label="Finish"
                   title="Finish wall"
-                  aria-label="Finish wall"
-                >
-                  <span className="sel-icon" aria-hidden="true">
-                    <Icon name="check" />
-                  </span>
-                  <span className="sel-label">Finish</span>
-                </button>
+                  ariaLabel="Finish wall"
+                  active
+                  onClick={onFinishDraft}
+                />
               )}
-              <button
-                type="button"
-                className="sel-action sel-danger"
-                onClick={onCancelDraft}
+              <SelBarButton
+                icon={<Icon name="x" />}
+                label="Cancel"
                 title="Cancel drawing"
-                aria-label="Cancel drawing"
-              >
-                <span className="sel-icon" aria-hidden="true">
-                  <Icon name="x" />
-                </span>
-                <span className="sel-label">Cancel</span>
-              </button>
-            </div>
+                ariaLabel="Cancel drawing"
+                danger
+                onClick={onCancelDraft}
+              />
+            </SelBar>
           ) : (
-            <div className="selection-bar">
-              <button
-                type="button"
-                className={`sel-action${tool === 'select' ? ' sel-active' : ''}`}
-                onClick={onSelectTool}
+            <SelBar label="Plan mode">
+              <SelBarButton
+                icon={<Icon name="mouse-pointer" />}
+                label="Select"
                 title="Select and move walls"
-                aria-label="Select"
-              >
-                <span className="sel-icon" aria-hidden="true">
-                  <Icon name="mouse-pointer" />
-                </span>
-                <span className="sel-label">Select</span>
-              </button>
+                ariaLabel="Select"
+                active={tool === 'select'}
+                onClick={onSelectTool}
+              />
               {/* Before an outline exists, drawing it is the primary task, so it
                   stays central. Once drawn, "Redraw" moves to the side dock. */}
               {!hasExterior && (
-                <button
-                  type="button"
-                  className="sel-action"
-                  onClick={onExteriorTool}
+                <SelBarButton
+                  icon={<Icon name="square" />}
+                  label="Exterior"
                   title="Draw exterior walls"
-                  aria-label="Draw exterior walls"
-                >
-                  <span className="sel-icon" aria-hidden="true">
-                    <Icon name="square" />
-                  </span>
-                  <span className="sel-label">Exterior</span>
-                </button>
+                  ariaLabel="Draw exterior walls"
+                  onClick={onExteriorTool}
+                />
               )}
-              <button
-                type="button"
-                className="sel-action"
-                onClick={onInteriorTool}
+              <SelBarButton
+                icon={<Icon name="columns-2" />}
+                label="Interior"
                 title="Draw interior wall"
-                aria-label="Draw interior wall"
-              >
-                <span className="sel-icon" aria-hidden="true">
-                  <Icon name="columns-2" />
-                </span>
-                <span className="sel-label">Interior</span>
-              </button>
+                ariaLabel="Draw interior wall"
+                onClick={onInteriorTool}
+              />
               {canDelete && (
                 <>
-                  <span className="sel-divider" aria-hidden="true" />
-                  <button
-                    type="button"
-                    className="sel-action sel-danger"
-                    onClick={onDelete}
+                  <SelBarDivider />
+                  <SelBarButton
+                    icon={<Icon name="trash-2" />}
+                    label="Delete"
                     title="Delete the selected interior wall"
-                    aria-label="Delete wall"
-                  >
-                    <span className="sel-icon" aria-hidden="true">
-                      <Icon name="trash-2" />
-                    </span>
-                    <span className="sel-label">Delete</span>
-                  </button>
+                    ariaLabel="Delete wall"
+                    danger
+                    onClick={onDelete}
+                  />
                 </>
               )}
-            </div>
+            </SelBar>
           )}
         </div>
 
         {/* Right: undo/redo, in the same spot as the 3D view's history pill. */}
         <div className="dock-slot dock-right">
-          <div className="selection-bar">
-            <button
-              type="button"
-              className="sel-action sel-history"
-              onClick={undo}
-              disabled={!canUndo}
+          <SelBar label="History">
+            <SelBarButton
+              icon={<Icon name="undo-2" />}
               title="Undo (Ctrl/Cmd+Z)"
-              aria-label="Undo"
-            >
-              <span className="sel-icon" aria-hidden="true">
-                <Icon name="undo-2" />
-              </span>
-            </button>
-            <button
-              type="button"
-              className="sel-action sel-history"
-              onClick={redo}
-              disabled={!canRedo}
+              ariaLabel="Undo"
+              history
+              disabled={!canUndo}
+              onClick={undo}
+            />
+            <SelBarButton
+              icon={<Icon name="redo-2" />}
               title="Redo (Ctrl/Cmd+Shift+Z)"
-              aria-label="Redo"
-            >
-              <span className="sel-icon" aria-hidden="true">
-                <Icon name="redo-2" />
-              </span>
-            </button>
-          </div>
+              ariaLabel="Redo"
+              history
+              disabled={!canRedo}
+              onClick={redo}
+            />
+          </SelBar>
         </div>
       </div>
     </>
