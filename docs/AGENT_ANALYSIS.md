@@ -3,7 +3,7 @@
 > You are running as **Routine C** of the RoomCraft agent pipeline (see
 > [`AGENT_PIPELINE.md`](AGENT_PIPELINE.md)). Your job is to close the loop: learn
 > from what the human did with each agent proposal and pull request — **and from the
-> PRs the human built and merged themselves** — then feed that back three ways so the
+> PRs the human built and merged themselves** — then feed that back four ways so the
 > pipeline keeps getting better:
 >
 > 1. **Lessons** → append durable principles to [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md).
@@ -12,8 +12,13 @@
 > 3. **Self-improvement** → when a lesson or a metric has proven itself, edit the
 >    **agent script** (the instruction docs) and the **loop** itself so the
 >    improvement is baked in, not just remembered.
+> 4. **Documentation upkeep** → the merged changes you're already reading are what
+>    make the *descriptive* docs go stale, so as you read them, keep those docs
+>    honest: correct drift you can fix, and **ask the human** when a doc is genuinely
+>    ambiguous or its intent is unclear (see *Keeping the reference docs honest*).
 >
-> Stages A and B read all three before proposing and building.
+> Stages A and B read the first three before proposing and building; the fourth keeps
+> the docs they rely on trustworthy.
 
 **Your primary job is to extract general principles, not to log one-off events.**
 Every specific thing the human did is only evidence. The lesson you record must be
@@ -31,8 +36,10 @@ Repository: `JonasHazell/roomcraft`.
 memory files, consult the direction and taste docs ([`PURPOSE.md`](PURPOSE.md),
 [`VISION.md`](VISION.md), [`STRATEGY.md`](STRATEGY.md), [`PRINCIPLES.md`](PRINCIPLES.md),
 [`DESIGN.md`](DESIGN.md)) when judging whether a decision fits, and
-[`interior-design-rules.md`](interior-design-rules.md) for rule-related outcomes — but edit
-only the pipeline docs (see the guardrails below).
+[`interior-design-rules.md`](interior-design-rules.md) for rule-related outcomes. You may
+edit the pipeline docs **and** correct factual drift in the descriptive reference docs
+(see *Keeping the reference docs honest* and the guardrails below); you must **never**
+rewrite the human-owned direction & taste docs' intent — ask instead.
 
 ## What to look at each run
 
@@ -132,14 +139,52 @@ in that case record **no** learning and simply mark it `agent:analyzed`. Only wr
 an entry when there's a genuine, reusable principle; don't manufacture one to fill
 the log.
 
+## Keeping the reference docs honest
+
+You are already reading every merged change this run, and merged changes are exactly
+what make the *descriptive* docs go stale — a feature described that a PR just removed,
+a file or path that moved, a design rule the styleguide no longer matches. You're the
+stage best placed to catch that drift, at its source, so keep those docs honest in two
+modes — mirroring how Stage B builds and the human merges: fix what you can, ask about
+what you can't.
+
+**Fix drift directly, in the same PR you already open.** When a change you're
+analysing has left a *descriptive, reference* doc inaccurate or self-contradictory,
+correct the doc in your `agent/learnings-update` PR (no separate issue, no Stage B
+round-trip). This covers **only** the docs that are meant to track the code and can go
+stale:
+
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) (the feature→code map),
+  [`MOBILE-FIRST.md`](MOBILE-FIRST.md),
+  [`interior-design-rules.md`](interior-design-rules.md), the two `README.md` files, and
+  the **factual/consistency** parts of [`DESIGN.md`](DESIGN.md) (a token, class, or
+  behaviour the styleguide no longer matches).
+- Keep each fix **small and factual** — correct what the merged change made untrue,
+  quote the drift in the PR description (e.g. "#231 removed the grid-snap toggle;
+  updated `ARCHITECTURE.md` to match"), and don't rewrite for taste. This is hygiene,
+  not the conservative *promotion* bar that governs instruction-doc edits.
+
+**Never rewrite the human's intent — ask instead.** The **human-owned direction & taste
+docs** — [`PURPOSE.md`](PURPOSE.md), [`VISION.md`](VISION.md), [`STRATEGY.md`](STRATEGY.md),
+[`PRINCIPLES.md`](PRINCIPLES.md), and the *intent* (not the factual details) of
+[`DESIGN.md`](DESIGN.md) — express what the human wants; correcting a stale fact is your
+job, rewording their intent is not. If one of these reads as genuinely ambiguous or
+seems to contradict another (or a merged decision) in a way that would **materially
+change what you record or what Stages A/B do**, open an `agent:question` for the human
+rather than editing it or guessing (see *Asking the human a question* — the same
+channel and the same high bar apply). This is also the right move when descriptive-doc
+drift could be resolved two ways and only the human knows which is intended.
+
 ## Asking the human a question
 
-Your job on each outcome is to infer *why* the human did what they did. Sometimes
-the why is genuinely ambiguous, **and the general rule you'd record differs
-materially depending on the answer** — and a wrong generalised rule is worse than
+You ask the human for **two** kinds of reason. The first: *why* the human did
+something, when that why is genuinely ambiguous **and the general rule you'd record
+differs materially depending on the answer** — a wrong generalised rule is worse than
 no rule, because it silently steers every future Stage A proposal and Stage B build.
-When you hit one of those, don't record a confident-sounding guess. **Ask the
-human.**
+The second: *what the human intends in a doc*, when a direction/taste doc is genuinely
+ambiguous or self-contradictory and you must not rewrite its intent (see *Keeping the
+reference docs honest*). Both use this one channel and the same high bar; when you hit
+either, don't record — or edit in — a confident-sounding guess. **Ask the human.**
 
 You run in a fresh, headless session with no human present, so the dialogue is
 **asynchronous, through GitHub** — the same shared state the rest of the pipeline
@@ -152,12 +197,12 @@ A question spends the human's attention — the scarcest thing in the loop — s
 is high. Ask **only** when all three hold:
 
 1. **The interpretations genuinely diverge.** Two or more readings of the same
-   outcome lead to *different* durable rules (not just different wording of the same
-   rule).
-2. **The rule would actually steer future work.** The answer changes what Stage A
-   proposes or how Stage B builds — it's not academic.
-3. **You can't resolve it yourself** from the closing comment, the diff, or the
-   direction docs (`PRINCIPLES.md`, `VISION.md`, …).
+   outcome — or of the ambiguous doc — lead to *different* durable rules or
+   *different* doc corrections (not just different wording of the same thing).
+2. **The answer would actually steer future work.** It changes what Stage A proposes,
+   how Stage B builds, or the corrected text of a doc they rely on — it's not academic.
+3. **You can't resolve it yourself** from the closing comment, the diff, the merged
+   change, or the other docs (`PRINCIPLES.md`, `VISION.md`, …).
 
 If any one fails, do what you do today: record your best-guess learning, or — when
 there's no genuine reusable principle — record nothing. Most outcomes are clear
@@ -225,10 +270,12 @@ Each entry should be a **general principle** a future Stage A or Stage B agent c
 
 Because this runs in a fresh session, land your changes as a **pull request**
 (branch `agent/learnings-update`, targeting the default branch) titled something
-like `chore(agent): update learnings, metrics & pipeline`. The metrics refresh and
-any agent-script/loop edits below go in this **same PR** — one reviewable pipeline
-update per run. The human merges it. You may label that PR `agent:built` so it shows
-up in the normal review queue.
+like `chore(agent): update learnings, metrics & pipeline`. The metrics refresh, any
+agent-script/loop edits below, **and any reference-doc drift fixes** (per *Keeping the
+reference docs honest*) go in this **same PR** — one reviewable pipeline-and-docs
+update per run. Call out each doc fix in the PR description so the human can review it
+deliberately. The human merges it. You may label that PR `agent:built` so it shows up
+in the normal review queue.
 
 **Important:** mark the source issues/PRs `agent:analyzed` during this run
 regardless of whether your PR is merged yet — that prevents re-analysis.
@@ -263,7 +310,9 @@ lesson has **proven itself** or a **metric has moved the wrong way across more t
 one run**, promote it: edit the agent script (the instruction docs) and, where
 warranted, the shape of the loop, so the improvement is enforced by default.
 
-**What you may edit in this stage** (agent pipeline docs only — never product code):
+**What *promotion* may edit** (the agent pipeline docs — never product code; factual
+fixes to the descriptive reference docs are a separate, lighter task covered by
+*Keeping the reference docs honest*):
 
 - **The stage instructions** — `AGENT_PROPOSALS.md`, `AGENT_BUILD.md`, this file
   (`AGENT_ANALYSIS.md`). Turn a recurring learning into a hard rule at the point where
@@ -303,13 +352,18 @@ instructions — an unchanged script is a fine outcome.
   eyeballing pixel values (the human tightened spacing to the 8px token in #42)"
   beats both the vague "improve quality" and the too-narrow "change the spacing in
   #42." Never invent a principle the evidence doesn't support.
-- **Stay inside the agent pipeline docs.** You may edit `AGENT_LEARNINGS.md`,
+- **Stay inside the docs; never touch product code.** You may edit `AGENT_LEARNINGS.md`,
   `AGENT_METRICS.md`, and — under the promotion criteria above — the instruction docs
-  (`AGENT_PROPOSALS.md`, `AGENT_BUILD.md`, `AGENT_ANALYSIS.md`, `AGENT_PIPELINE.md`).
-  **Never change product code (`src/`, `server/`) in this stage** — behaviour changes
-  to the app are Stage A/B's job, proposed and built through the normal queue.
-  `PURPOSE.md`, `VISION.md`, `STRATEGY.md`, `PRINCIPLES.md`, and `DESIGN.md` are
-  human-owned direction and taste docs — **never edit them here** either.
+  (`AGENT_PROPOSALS.md`, `AGENT_BUILD.md`, `AGENT_ANALYSIS.md`, `AGENT_PIPELINE.md`). You
+  may **also correct factual drift** in the descriptive reference docs — `ARCHITECTURE.md`,
+  `MOBILE-FIRST.md`, `interior-design-rules.md`, the two `README.md` files, and the
+  factual/consistency parts of `DESIGN.md` — per *Keeping the reference docs honest*
+  (small, factual, tied to a merged change; not a promotion). **Never change product code
+  (`src/`, `server/`) in this stage** — behaviour changes to the app are Stage A/B's job,
+  proposed and built through the normal queue. `PURPOSE.md`, `VISION.md`, `STRATEGY.md`,
+  `PRINCIPLES.md`, and `DESIGN.md`'s **intent** are human-owned direction and taste —
+  **never rewrite their intent here**; correct a stale fact if you must, otherwise ask
+  via `agent:question`.
 - **Never fabricate a metric.** If you can't derive a number from GitHub state or a
   server log, mark it "not sampled this run." A blank is honest; a made-up figure
   silently steers the whole loop wrong.

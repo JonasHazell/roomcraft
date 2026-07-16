@@ -11,7 +11,10 @@ The analyse stage closes the loop on **three** channels, not one: durable *lesso
 PR sizes, and the app's own AI latency/cost/reliability telemetry), and
 *self-improvement* — editing the agent instruction docs and the loop itself when a
 lesson or metric has proven itself. So the pipeline doesn't just get better at *what*
-it proposes; it gets better at *how it runs*.
+it proposes; it gets better at *how it runs*. The same stage also **keeps the
+descriptive reference docs honest** — the merged changes it reads are what make those
+docs go stale, so it corrects drift it can fix and asks the human when a doc is
+genuinely ambiguous.
 
 The whole thing is driven by three [Routines](https://code.claude.com/docs/en/claude-code-on-the-web)
 (scheduled triggers). Each Routine fires into a **fresh session** on a schedule and
@@ -108,9 +111,13 @@ when a pattern is strong enough, into the agent instructions themselves.
 - **Nothing auto-merges.** Every change waits for you.
 - **One issue = one small PR.** Keep scope tight and reviewable.
 - **Self-improvement stays reviewable too.** Stage C may edit the agent instruction
-  docs and the loop's levers (caps, cadence, steps), but only inside a normal PR you
-  merge — never product code, and never a wholesale rewrite. It changes the script
-  conservatively, when a lesson recurs or a metric trends (see
+  docs and the loop's levers (caps, cadence, steps), and may correct **factual drift**
+  in the descriptive reference docs (`ARCHITECTURE.md`, `MOBILE-FIRST.md`,
+  `interior-design-rules.md`, the READMEs, and `DESIGN.md`'s factual parts) — but only
+  inside a normal PR you merge, never product code, and never a wholesale rewrite. It
+  never rewrites the intent of the human-owned direction & taste docs; where those are
+  unclear it asks via `agent:question`. It changes the script conservatively, when a
+  lesson recurs or a metric trends (see
   [`AGENT_METRICS.md`](AGENT_METRICS.md) → *Acting on the metrics*).
 
 ## Activation note
