@@ -126,6 +126,26 @@ export function partColorOverride(
 }
 
 /**
+ * Merges a colour-override patch onto a piece's existing sparse `colors` map: a
+ * defined value sets/overwrites that part's override, and `undefined` clears it
+ * — letting the part resume following the primary colour instead of staying
+ * detached forever. Returns `undefined` when nothing survives, so a piece with
+ * every override cleared stays as lean as one that was never customised (same
+ * shape {@link normalizeColors} produces).
+ */
+export function mergeColorOverrides(
+  colors: Record<string, string> | undefined,
+  patch: Record<string, string | undefined>,
+): Record<string, string> | undefined {
+  const out: Record<string, string> = { ...colors };
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === undefined) delete out[key];
+    else out[key] = value;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/**
  * Coerces stored/incoming per-part colours into a sparse map of valid overrides:
  * only known parts with a valid #rrggbb colour are kept, everything else dropped.
  * Returns `undefined` when nothing survives, so an un-customised piece stays lean.

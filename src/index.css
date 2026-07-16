@@ -238,6 +238,13 @@ body {
   border-radius: 999px;
 }
 
+/* The "clear override" control on a secondary part's colour row (see
+   ColorField's `onReset`) — pushed to the row's end, same
+   push-to-the-end pattern as .room-card-actions .btn-icon. */
+.color-field-reset {
+  margin-left: auto;
+}
+
 select {
   font: inherit;
   font-size: 13px;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Icon, ICON_NAMES } from '../ui/Icon';
-import { NumberField } from '../panel/fields';
+import { ColorField, NumberField } from '../panel/fields';
 import { ROOM_TEMPLATES, templatePath } from '../../lib/roomTemplates';
 
 /**
@@ -146,6 +146,8 @@ function CountStepper() {
 
 export function StyleGuide() {
   const [color, setColor] = useState('#b4532f');
+  const [partColor, setPartColor] = useState('#b4532f');
+  const [partOverridden, setPartOverridden] = useState(true);
   const [checked, setChecked] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [ceiling, setCeiling] = useState(240);
@@ -298,15 +300,32 @@ export function StyleGuide() {
               Show measurements
             </label>
             <CountStepper />
-            <label className="color-field">
-              <input
-                type="color"
-                className="color-field-chip"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-              />
-              <span className="color-field-label">Colour</span>
-            </label>
+            <ColorField label="Frame" value={color} onChange={setColor} />
+          </div>
+        </Demo>
+
+        <Demo
+          title="Colour with a clear-override control"
+          note="A secondary furniture part (a bed's bedding vs its frame) gets a reset control once it has its own colour override, so the detachment can be undone instead of staying permanent."
+        >
+          <div className="stack" style={{ maxWidth: 360 }}>
+            <ColorField
+              label="Bedding"
+              value={partColor}
+              onChange={(c) => {
+                setPartColor(c);
+                setPartOverridden(true);
+              }}
+              onReset={
+                partOverridden
+                  ? () => {
+                      setPartOverridden(false);
+                      setPartColor(color);
+                    }
+                  : undefined
+              }
+              resetLabel="Match frame colour"
+            />
           </div>
         </Demo>
 

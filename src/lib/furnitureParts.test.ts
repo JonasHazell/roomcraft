@@ -3,6 +3,7 @@ import {
   FURNITURE_PARTS,
   defaultMaterials,
   hasParts,
+  mergeColorOverrides,
   normalizeColors,
   normalizeMaterials,
   partColorOverride,
@@ -77,5 +78,23 @@ describe('furniture parts', () => {
     expect(partColorOverride({ frame: '#abcdef' }, 'frame')).toBe('#abcdef');
     expect(partColorOverride({ frame: 'nope' }, 'frame')).toBeUndefined();
     expect(partColorOverride(undefined, 'frame')).toBeUndefined();
+  });
+
+  it('merges a defined colour patch onto the existing overrides', () => {
+    expect(mergeColorOverrides({ frame: '#111111' }, { bedding: '#222222' })).toEqual({
+      frame: '#111111',
+      bedding: '#222222',
+    });
+    expect(mergeColorOverrides(undefined, { frame: '#111111' })).toEqual({ frame: '#111111' });
+  });
+
+  it('clears a part override when its patch value is undefined', () => {
+    expect(
+      mergeColorOverrides({ frame: '#111111', bedding: '#222222' }, { bedding: undefined }),
+    ).toEqual({ frame: '#111111' });
+  });
+
+  it('drops to undefined once every override is cleared, staying as lean as an un-customised piece', () => {
+    expect(mergeColorOverrides({ frame: '#111111' }, { frame: undefined })).toBeUndefined();
   });
 });

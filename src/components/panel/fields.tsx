@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { Icon } from '../ui/Icon';
 
 export function NumberField({
   label,
@@ -186,10 +187,21 @@ export function ColorField({
   label,
   value,
   onChange,
+  onReset,
+  resetLabel,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  /**
+   * When set, renders a small "clear override" control next to the chip — used
+   * by a secondary furniture part that currently has its own colour override,
+   * so the user can undo it and let the part resume following the primary
+   * colour instead of staying detached for the life of the piece.
+   */
+  onReset?: () => void;
+  /** Accessible name/tooltip for the reset control; required when `onReset` is set. */
+  resetLabel?: string;
 }) {
   // Matches the wall/floor colour swatches in the selection bar: a round colour
   // chip with the label beside it, rather than a boxed field with a hex readout.
@@ -203,6 +215,24 @@ export function ColorField({
         onChange={(e) => onChange(e.target.value)}
       />
       <span className="color-field-label">{label}</span>
+      {onReset && (
+        <button
+          type="button"
+          className="btn-icon color-field-reset"
+          title={resetLabel}
+          aria-label={resetLabel}
+          // The button sits inside the <label> so it stays next to the chip it
+          // affects, but it must not also trigger the label's default click
+          // forwarding (which would pop open the native colour picker).
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onReset();
+          }}
+        >
+          <Icon name="undo-2" />
+        </button>
+      )}
     </label>
   );
 }
