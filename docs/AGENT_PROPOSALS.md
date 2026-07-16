@@ -13,17 +13,23 @@ Repository: `JonasHazell/roomcraft`.
    mobile-first** experience. Monetization is parked.
 2. [`PURPOSE.md`](PURPOSE.md) — the promise: make it *stupidly simple* to find the
    best interior design for a room. Every proposal must serve this.
-3. [`DESIGN.md`](DESIGN.md) — the design system and quality bar. UI proposals must
+3. [`VISION.md`](VISION.md) — where RoomCraft is heading beyond the current phase.
+   Prefer proposals that move toward it, not just local polish.
+4. [`PRINCIPLES.md`](PRINCIPLES.md) — the operating principles and **non-goals** every
+   proposal is judged against. A proposal that violates a non-goal (feature sprawl,
+   monetization-driven, speculative infrastructure) is out of scope no matter how good
+   the idea, and the principles are the tie-breaker between two good candidates.
+5. [`DESIGN.md`](DESIGN.md) — the design system and quality bar. UI proposals must
    reuse existing primitives and tokens.
-4. [`MOBILE-FIRST.md`](MOBILE-FIRST.md) — the app is **mobile-first**, one component
+6. [`MOBILE-FIRST.md`](MOBILE-FIRST.md) — the app is **mobile-first**, one component
    set for every screen. Judge every GUI idea on a phone first, not a desktop.
-5. [`ARCHITECTURE.md`](ARCHITECTURE.md) — the feature→code map. Skim it to see
+7. [`ARCHITECTURE.md`](ARCHITECTURE.md) — the feature→code map. Skim it to see
    what the app **already does** and where it lives, so you deepen an existing
    feature (depth over breadth) instead of proposing a duplicate.
-6. [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md) — **the most important input.** This
+8. [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md) — **the most important input.** This
    is what the human actually merged, edited, or rejected in past rounds. Steer
    toward the patterns that got merged and away from the ones that got rejected.
-7. [`AGENT_METRICS.md`](AGENT_METRICS.md) — **measurability & monitoring.** The
+9. [`AGENT_METRICS.md`](AGENT_METRICS.md) — **measurability & monitoring.** The
    current snapshot tells you where the loop is weak (a climbing issue-rejection rate
    means your recent selection has been off) and, via the product-observability rows,
    where the *app* is weak. A rising AI proposal latency or cost, or a non-trivial

@@ -25,6 +25,17 @@ over adding new surface area, and hold everything to the quality bar (design
 consistency, reliability, no rough edges). Monetization is intentionally parked
 during this phase — see below.
 
+## Principles & direction
+
+Two docs sit beside the strategy and are worth reading before you shape work:
+
+- [`docs/PRINCIPLES.md`](docs/PRINCIPLES.md) — the operating principles and
+  **non-goals** every change is judged against (depth over breadth, simplicity is a
+  feature, mobile-first, reliability, and the things we deliberately don't build). When
+  two good options conflict, this is the tie-breaker.
+- [`docs/VISION.md`](docs/VISION.md) — where RoomCraft is heading beyond the current
+  phase, so work points in one direction instead of optimising locally.
+
 ## UI work: always consult the design reference first
 
 Before creating or updating **any** user-facing surface (a screen, panel, dialog,

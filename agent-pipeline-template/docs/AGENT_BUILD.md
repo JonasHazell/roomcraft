@@ -16,8 +16,10 @@ Repository: `<OWNER/REPO>`.
    faithful change and reuse existing primitives so the human merges it as-is.
 2. [`DESIGN.md`](DESIGN.md) — for any UI change, reuse existing primitives and design
    tokens. Never hard-code a colour/font/radius/shadow.
-3. [`STRATEGY.md`](STRATEGY.md) / [`PURPOSE.md`](PURPOSE.md) — keep the change true to
-   the issue's intent and the core experience.
+3. [`STRATEGY.md`](STRATEGY.md) / [`PURPOSE.md`](PURPOSE.md) /
+   [`PRINCIPLES.md`](PRINCIPLES.md) — keep the change true to the issue's intent, the
+   core experience, and the project's non-goals (don't let a faithful build smuggle in
+   scope the principles rule out).
 4. [`ARCHITECTURE.md`](ARCHITECTURE.md) — the feature→code map. Use it to find the files
    that own the feature you're changing, and to reuse the existing store slice / module
    instead of building a parallel one.

@@ -22,7 +22,9 @@ carry your project's judgement; without them the agents have no idea what to bui
 | ---- | ------------------------------ |
 | `CLAUDE.md` | Working conventions + the exact build/lint/test commands. |
 | `docs/PURPOSE.md` | The single promise your product is built around. |
+| `docs/VISION.md` | Where the product is heading beyond the current phase — the direction proposals move toward. |
 | `docs/STRATEGY.md` | What you build **right now** — depth over breadth, what's in scope, what's parked. |
+| `docs/PRINCIPLES.md` | The operating principles and **non-goals** every change is judged against; the tie-breaker for conflicts. |
 | `docs/DESIGN.md` | Your design system + quality bar (or, for a non-UI project, your code-quality bar). |
 | `docs/ARCHITECTURE.md` | The feature→code map: where each feature lives. |
 

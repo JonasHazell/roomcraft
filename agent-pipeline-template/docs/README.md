@@ -9,12 +9,15 @@ builds changes. Start here, then follow the links.
 
 ## Start here
 
-If you're new to the project, read these three, in order:
+If you're new to the project, read these, in order — they run from *why* to *how*:
 
 1. [`PURPOSE.md`](PURPOSE.md) — **why** this product exists and the one promise it's
    built around.
-2. [`STRATEGY.md`](STRATEGY.md) — **what** we build right now.
-3. [`DESIGN.md`](DESIGN.md) — the design system and quality bar. Read it before
+2. [`VISION.md`](VISION.md) — **where** it's heading beyond the current phase.
+3. [`STRATEGY.md`](STRATEGY.md) — **what** we build right now.
+4. [`PRINCIPLES.md`](PRINCIPLES.md) — the operating principles and **non-goals** every
+   change is judged against; the tie-breaker when two good options conflict.
+5. [`DESIGN.md`](DESIGN.md) — the design system and quality bar. Read it before
    touching any user-facing surface.
 
 ## Product & direction
@@ -22,7 +25,9 @@ If you're new to the project, read these three, in order:
 | Doc | What it's for |
 | --- | --- |
 | [`PURPOSE.md`](PURPOSE.md) | The single promise the product is built around. |
+| [`VISION.md`](VISION.md) | Where the product is heading beyond the current phase — the direction proposals move toward. |
 | [`STRATEGY.md`](STRATEGY.md) | How we decide what to build right now — depth over breadth. |
+| [`PRINCIPLES.md`](PRINCIPLES.md) | The operating principles and non-goals every change is judged against; the tie-breaker for conflicts. |
 
 ## Design & UI
 

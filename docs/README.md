@@ -11,13 +11,16 @@ Claude).
 
 ## Start here
 
-If you're new to the project, read these three, in order:
+If you're new to the project, read these, in order — they run from *why* to *how*:
 
 1. [`PURPOSE.md`](PURPOSE.md) — **why** RoomCraft exists and the one promise it's
    built around.
-2. [`STRATEGY.md`](STRATEGY.md) — **what** we build right now: a small number of
+2. [`VISION.md`](VISION.md) — **where** it's heading beyond the current phase.
+3. [`STRATEGY.md`](STRATEGY.md) — **what** we build right now: a small number of
    well-built features, mobile-first.
-3. [`DESIGN.md`](DESIGN.md) — the UI design system and quality bar. Read it before
+4. [`PRINCIPLES.md`](PRINCIPLES.md) — the operating principles and **non-goals** every
+   change is judged against; the tie-breaker when two good options conflict.
+5. [`DESIGN.md`](DESIGN.md) — the UI design system and quality bar. Read it before
    touching any user-facing surface.
 
 ## Product & direction
@@ -27,7 +30,9 @@ The *why* and *what* — read these before proposing or shaping new work.
 | Doc | What it's for |
 | --- | --- |
 | [`PURPOSE.md`](PURPOSE.md) | The single promise: make it *stupidly simple* to find the best interior design for a room. |
+| [`VISION.md`](VISION.md) | Where RoomCraft is heading beyond the current phase — the direction proposals should move toward. |
 | [`STRATEGY.md`](STRATEGY.md) | How we decide what to build right now — depth over breadth, mobile-first, monetization parked. |
+| [`PRINCIPLES.md`](PRINCIPLES.md) | The operating principles and non-goals every change is judged against; the tie-breaker for conflicts. |
 | [`TECHNICAL-CHALLENGES.md`](TECHNICAL-CHALLENGES.md) | The three hardest problems the core experience lives or dies by. |
 | [`MONETIZATION.md`](MONETIZATION.md) | A future idea bank for revenue models — parked for now, not a current mandate. |
 

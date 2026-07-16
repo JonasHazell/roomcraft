@@ -11,15 +11,21 @@ Repository: `<OWNER/REPO>`.
 1. [`STRATEGY.md`](STRATEGY.md) — what we build **right now**. Every proposal must fit
    the current phase; anything the strategy parks is out of bounds.
 2. [`PURPOSE.md`](PURPOSE.md) — the one promise. Every proposal must serve it.
-3. [`DESIGN.md`](DESIGN.md) — the design system and quality bar. UI proposals must
+3. [`VISION.md`](VISION.md) — where the product is heading beyond the current phase.
+   Prefer proposals that move toward it, not just local polish.
+4. [`PRINCIPLES.md`](PRINCIPLES.md) — the operating principles and **non-goals** every
+   proposal is judged against. A proposal that violates a non-goal is out of scope no
+   matter how good the idea, and the principles are the tie-breaker between two good
+   candidates.
+5. [`DESIGN.md`](DESIGN.md) — the design system and quality bar. UI proposals must
    reuse existing primitives and tokens.
-4. [`ARCHITECTURE.md`](ARCHITECTURE.md) — the feature→code map. Skim it to see what the
+6. [`ARCHITECTURE.md`](ARCHITECTURE.md) — the feature→code map. Skim it to see what the
    app **already does** and where it lives, so you deepen an existing feature (depth
    over breadth) instead of proposing a duplicate.
-5. [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md) — **the most important input.** This is
+7. [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md) — **the most important input.** This is
    what the human actually merged, edited, or rejected in past rounds. Steer toward the
    patterns that got merged and away from the ones that got rejected.
-6. [`AGENT_METRICS.md`](AGENT_METRICS.md) — **measurability & monitoring.** The current
+8. [`AGENT_METRICS.md`](AGENT_METRICS.md) — **measurability & monitoring.** The current
    snapshot tells you where the loop is weak (a climbing issue-rejection rate means
    your recent selection has been off) and, via the product-observability rows, where
    the *app* is weak. A rising latency or cost, or a non-trivial failure rate, is a
