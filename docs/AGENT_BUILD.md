@@ -27,6 +27,16 @@ Repository: `JonasHazell/roomcraft`.
 
 1. **Find the queue.** List open issues labelled `agent:ready` that are **not**
    labelled `agent:building` and have **no** open PR linked to them.
+   **Reclaim stuck issues first:** for any open issue still labelled
+   `agent:building`, check its linked PR. If there is none (a crashed run) or the
+   PR was **closed without merging**, clear `agent:building` — otherwise the issue
+   is invisible to this step forever and the pipeline silently drops it. If the
+   PR's closing comment stated the feature/approach itself isn't wanted (a plain
+   rejection, not a request for a different approach), close the issue too
+   (mirroring the PR's stated reason) instead of leaving it to loop. If the PR
+   closed with no comment or an ambiguous one, just clear the label and leave
+   `agent:ready` in place so a future run can retry it with fresh judgement. This
+   closes a gap seen twice in one run (#205, #224 — see `AGENT_LEARNINGS.md`).
 2. **Respect the cap.** Take up to **10 issues per run** (oldest first). Leave any
    beyond that for the next run.
 3. For **each** selected issue:
@@ -94,5 +104,7 @@ Repository: `JonasHazell/roomcraft`.
 
 - Set `agent:building` when you claim an issue.
 - Set `agent:built` on the PR you open.
+- Clear `agent:building` when reclaiming a stuck issue (step 1 above) — including
+  closing the issue if the linked PR's rejection was a plain "don't want this."
 - Never touch `agent:analyzed` (that's Stage C) and never remove `agent:ready` from
   issues you didn't build.
