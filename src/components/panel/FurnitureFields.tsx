@@ -144,7 +144,9 @@ export function FurnitureFields({
 /**
  * A colour picker per configurable part (a bed's frame vs its bedding). The
  * primary part edits the base colour (which cascades to any un-overridden part);
- * the rest set a per-part override. Single-part kinds show one "Color" control.
+ * the rest set a per-part override, which comes with its own reset control once
+ * set — so the detachment isn't permanent — to clear it back to following the
+ * primary colour. Single-part kinds show one "Color" control.
  */
 function FurnitureColorFields({
   value,
@@ -162,14 +164,14 @@ function FurnitureColorFields({
   }
 
   const primary = primaryPart(value.kind);
+  const primaryLabel = parts.find((p) => p.key === primary)?.label ?? 'primary';
   return (
     <div className="stack" style={{ gap: 10 }}>
       <p className="field-label">Colours</p>
       {parts.map((part) => {
         const isPrimary = part.key === primary;
-        const current = isPrimary
-          ? value.color
-          : (partColorOverride(value.colors, part.key) ?? value.color);
+        const override = isPrimary ? undefined : partColorOverride(value.colors, part.key);
+        const current = isPrimary ? value.color : (override ?? value.color);
         return (
           <ColorField
             key={part.key}
@@ -178,6 +180,15 @@ function FurnitureColorFields({
             onChange={(c) =>
               onChange(isPrimary ? { color: c } : { colors: { [part.key]: c } })
             }
+            // Only a secondary part with an active override gets a reset
+            // control — the primary part sets the base colour directly, and an
+            // un-overridden part is already following it.
+            onReset={
+              override !== undefined
+                ? () => onChange({ colors: { [part.key]: undefined } })
+                : undefined
+            }
+            resetLabel={`Match ${primaryLabel.toLowerCase()} colour`}
           />
         );
       })}

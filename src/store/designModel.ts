@@ -52,9 +52,15 @@ export function cloneFurniture(items: FurnitureItem[]): FurnitureItem[] {
   }));
 }
 
-export type FurniturePatch = Partial<Omit<FurnitureItem, 'id' | 'size' | 'position'>> & {
+export type FurniturePatch = Partial<Omit<FurnitureItem, 'id' | 'size' | 'position' | 'colors'>> & {
   size?: Partial<FurnitureItem['size']>;
   position?: Partial<FurnitureItem['position']>;
+  /**
+   * Per-part colour changes, merged onto the piece's existing sparse `colors`
+   * map (see {@link mergeColorOverrides}). A key set to `undefined` clears that
+   * part's override so it resumes following the primary colour.
+   */
+  colors?: Record<string, string | undefined>;
 };
 
 /** The caller-supplied spec for a piece placed into the room (before it gets an id/position). */

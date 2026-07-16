@@ -121,3 +121,32 @@ describe('updateFurniture collision guarantee (resize/rotate)', () => {
     expect(furniture(id).color).toBe('#123456');
   });
 });
+
+describe('updateFurniture colour override', () => {
+  beforeEach(() => {
+    store().newProject();
+  });
+
+  it('sets a per-part override, then clears it back to undefined via an undefined patch value', () => {
+    const id = store().addFurnitureConfigured({
+      kind: 'bed',
+      name: 'Bed',
+      size: { width: 1.4, depth: 2.0, height: 0.6 },
+      elevation: 0,
+      color: '#8899aa',
+    });
+
+    // No override yet.
+    expect(furniture(id).colors).toBeUndefined();
+
+    // Override the bedding away from the frame's colour.
+    store().updateFurniture(id, { colors: { bedding: '#ff0000' } });
+    expect(furniture(id).colors).toEqual({ bedding: '#ff0000' });
+    expect(furniture(id).color).toBe('#8899aa');
+
+    // Clearing it removes the key entirely rather than leaving a falsy value —
+    // the piece resumes following the frame's colour.
+    store().updateFurniture(id, { colors: { bedding: undefined } });
+    expect(furniture(id).colors).toBeUndefined();
+  });
+});

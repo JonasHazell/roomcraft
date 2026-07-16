@@ -23,8 +23,12 @@ export type FurnitureFieldPatch = {
   size?: Partial<FurnitureSize>;
   elevation?: number;
   color?: string;
-  /** Per-part colour changes, merged onto the current colours. */
-  colors?: Record<string, string>;
+  /**
+   * Per-part colour changes, merged onto the current colours. A part set to
+   * `undefined` clears that part's override, so it resumes following the
+   * primary colour.
+   */
+  colors?: Record<string, string | undefined>;
   material?: string;
   /** Per-part material changes, merged onto the current materials. */
   materials?: FurnitureMaterials;

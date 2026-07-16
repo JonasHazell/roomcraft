@@ -105,7 +105,12 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   `NumberField` in `src/components/panel/fields.tsx`). For a computed value that
   can't be edited, keep `.field` + `.field-label` but swap `.field-input` for
   `.field-static` — same box, plain text instead of a control (e.g. the plan
-  room panel's floor area next to its editable ceiling height).
+  room panel's floor area next to its editable ceiling height). A `.color-field`
+  for a secondary part that cascades from a primary colour (furniture parts —
+  see `FurnitureFields.tsx`) takes an optional `onReset` — a `.btn-icon` with
+  the `undo-2` glyph, pushed to the row's end via `.color-field-reset` — shown
+  only once that part has its own override, so the override can be cleared back
+  to following the primary colour instead of staying detached permanently.
 - **Surfaces** — `.card` + `.card-head` for repeated records; `.chip` (`.door` /
   `.window`) to tag kind (a static tag, not a button); `.section` (`<details>`)
   for collapsible groups; `.modal`
