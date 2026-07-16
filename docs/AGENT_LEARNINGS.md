@@ -95,9 +95,43 @@ note the promotion on the entry so the trail from evidence → rule stays tracea
   run, or propose at the scale the human is clearly already working at instead of
   a narrower slice that a bigger hand-built fix is likely to make redundant.
 
+- **Pointing at an existing sibling control predicts a clean, low-risk *build* —
+  it doesn't by itself prove the *feature* is wanted.** #224 proposed a 3D "Reset
+  view" button using exactly the high-yield shape this file has praised all along:
+  it named the 2D plan editor's own "Fit view" button as the sibling to mirror,
+  reused its icon and primitive family, and was built faithfully as #240. The
+  human closed it unmerged: *"Tycker inte denna funktionalitet behövs. Varken i
+  denna eller i floor plan vyn"* ("I don't think this functionality is needed.
+  Neither in this nor in the floor plan view.") — rejecting not just the copy but
+  casting doubt on the sibling control itself. The evidence behind #224 was a
+  single accidental repro during a click-through ("an imprecise attempt to grab
+  the rotation handle instead orbited the scene"), not a recurring pain point.
+  The general rule: the sibling-comparison framing (see the entry above) is still
+  the right way to *scope and de-risk* a proposal once you've decided a feature is
+  worth building, but it is not itself evidence of *need* — don't treat "an
+  analogous control exists elsewhere" as sufficient justification on its own,
+  especially when the supporting evidence is a single one-off repro rather than a
+  repeated friction point.
+
 ## Scoping (Stage B)
 
-_No entries yet._
+- **Two issues proposed in the same batch that touch the same file are a real
+  merge-conflict risk, even when each PR is individually scoped and careful.**
+  #225 (furniture-picker search) and #226 (library-entry rename) both targeted
+  `FurniturePicker.tsx` from the same day's proposal batch. #226's own PR (#236)
+  explicitly tried to avoid collision — "did not touch `FurniturePicker`'s
+  top-level layout or add filtering, to avoid colliding with the parallel search-
+  field work in #225" — but the conflict happened anyway: #236 merged first, which
+  left #225's PR (#232) conflicted against `main` by the time it was reviewed, and
+  the human had to hand-build a merge-conflict-resolution branch (#238) to land it
+  instead of a straight agent-PR merge. Being careful about *what lines* to touch
+  in a shared file isn't enough to prevent a conflict — any two edits to the same
+  file can collide depending on merge order, regardless of scope discipline. One
+  instance so far, so not yet a rule to enforce automatically (see promotion
+  criteria in `AGENT_ANALYSIS.md`), but worth watching: if Stage A's dedup step
+  (`AGENT_PROPOSALS.md` step 2) notices two same-run candidates would touch the
+  same file, it should be a signal to flag the risk in both issue bodies, or
+  stagger them across runs, rather than proposing both blind to the collision.
 
 ## Design & UI
 
@@ -272,3 +306,20 @@ _No entries yet._
   a product signal — and the human already wired the new convention directly
   into `AGENT_BUILD.md`'s own PR-opening step in #218, so there's nothing
   left for Stage C to promote here.
+
+- **[Promoted into `AGENT_BUILD.md` this run.] An issue whose PR is closed
+  without merging must be reclaimed — `agent:building` doesn't clear itself, and
+  the issue silently drops out of the pipeline otherwise.** The watch flagged
+  after #170/#186 ("watch for a second rejection leaving an issue stuck with no
+  re-proposal before promoting a label-clearing rule") landed twice at once this
+  run: #205 (PR #239, "Rebuild HistoryBar on shared SelBar primitives") and #224
+  (PR #240, "Reset view", rejected — see the sibling-control entry above) were
+  both closed unmerged, and both issues are still open and still labelled
+  `agent:building` with no open PR — invisible to Stage B's queue-finding step
+  (which only looks at issues *without* `agent:building`) and invisible to Stage
+  A's dedup (which wouldn't re-propose something that still looks "in flight").
+  Three total instances across two runs is a clear recurring gap, not a one-off.
+  `AGENT_BUILD.md`'s queue-finding step now reclaims these explicitly: clear
+  `agent:building`, and close the issue too when the PR's own closing comment was
+  a plain rejection (as #240's was), otherwise leave it `agent:ready` for a
+  future retry.
