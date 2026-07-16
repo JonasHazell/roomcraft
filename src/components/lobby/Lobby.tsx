@@ -1,6 +1,8 @@
 import { useDesignStore } from '../../store/useDesignStore';
 import { confirmDialog, promptDialog } from '../../store/useDialogStore';
 import { openRoomToFurnish, openRoomToPlan, startNewRoomWizard } from '../../lib/nav';
+import { floorPolygon } from '../../lib/polygon';
+import { templatePath } from '../../lib/roomTemplates';
 import { Icon } from '../ui/Icon';
 import { AccountControl } from '../auth/AccountControl';
 
@@ -63,7 +65,13 @@ export function Lobby() {
                   onClick={() => (drawn ? openRoomToFurnish(r.id) : openRoomToPlan(r.id))}
                 >
                   <span className="room-card-thumb" aria-hidden="true">
-                    <Icon name={drawn ? 'square' : 'pencil'} />
+                    {drawn ? (
+                      <svg className="room-card-thumb-svg" viewBox="0 0 40 40" width="30" height="30">
+                        <path d={templatePath(floorPolygon(r.walls))} />
+                      </svg>
+                    ) : (
+                      <Icon name="pencil" />
+                    )}
                   </span>
                   <span className="room-card-name">{r.name}</span>
                   <span className="room-card-meta">
