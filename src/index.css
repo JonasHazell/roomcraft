@@ -2849,6 +2849,16 @@ select {
   top: calc(52px + env(safe-area-inset-top));
 }
 
+/* #248: the openings-step hint copy ("...set the ceiling height, top-right")
+   wraps onto two lines below ~630px, growing past the 52px clearance above and
+   clipping the chip's label. Give it the extra headroom a wrapped pill needs;
+   reuses the dock's existing 656px breakpoint rather than a new one-off width. */
+@media (max-width: 656px) {
+  .plan-wizard-openings .plan-room-panel {
+    top: calc(96px + env(safe-area-inset-top));
+  }
+}
+
 /* ---------- In-room top bar (back to lobby + room name) ---------- */
 
 .room-topbar {
