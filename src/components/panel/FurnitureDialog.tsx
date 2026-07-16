@@ -25,6 +25,7 @@ export function FurnitureDialog() {
   const addFurnitureFromLibrary = useDesignStore((s) => s.addFurnitureFromLibrary);
   const libraryEntries = useLibraryStore((s) => s.entries);
   const saveToLibrary = useLibraryStore((s) => s.save);
+  const renameLibraryEntry = useLibraryStore((s) => s.rename);
   const removeFromLibrary = useLibraryStore((s) => s.remove);
 
   // While picking, toggle between a fresh generic piece and one from the library.
@@ -131,6 +132,7 @@ export function FurnitureDialog() {
               onPickKind={pickKind}
               onPickLibraryEntry={pickLibraryEntry}
               libraryEntries={libraryEntries}
+              onRenameLibraryEntry={renameLibraryEntry}
               onRemoveFromLibrary={removeFromLibrary}
             />
           )}

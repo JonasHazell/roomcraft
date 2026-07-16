@@ -3,6 +3,7 @@ import {
   FURNITURE_CATEGORIES,
   kindsInCategory,
 } from '../../lib/furnitureCatalog';
+import { promptDialog } from '../../store/useDialogStore';
 import type { FurnitureKind, FurnitureLibraryEntry } from '../../types';
 import { Icon } from '../ui/Icon';
 
@@ -19,6 +20,7 @@ interface Props {
   /** Place a piece pre-filled from this saved library entry right away. */
   onPickLibraryEntry: (entry: FurnitureLibraryEntry) => void;
   libraryEntries: FurnitureLibraryEntry[];
+  onRenameLibraryEntry: (id: string, name: string) => void;
   onRemoveFromLibrary: (id: string) => void;
 }
 
@@ -29,8 +31,19 @@ export function FurniturePicker({
   onPickKind,
   onPickLibraryEntry,
   libraryEntries,
+  onRenameLibraryEntry,
   onRemoveFromLibrary,
 }: Props) {
+  // Same rename pattern as the lobby's room rename (Lobby.tsx): a styled prompt
+  // seeded with the current name, then the store update.
+  const rename = async (entry: FurnitureLibraryEntry) => {
+    const next = await promptDialog({
+      title: 'Rename saved piece',
+      label: 'Name',
+      initial: entry.name,
+    });
+    if (next !== null) onRenameLibraryEntry(entry.id, next);
+  };
   return (
     <div className="stack">
       <div className="source-toggle" role="tablist" aria-label="Furniture source">
@@ -116,6 +129,15 @@ export function FurniturePicker({
                         <span className="save-date">
                           {cm(entry.size.width)}×{cm(entry.size.depth)}×{cm(entry.size.height)} cm
                         </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        title="Rename"
+                        aria-label={`Rename ${entry.name}`}
+                        onClick={() => rename(entry)}
+                      >
+                        <Icon name="pencil" />
                       </button>
                       <button
                         type="button"
