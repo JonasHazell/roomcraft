@@ -209,8 +209,9 @@ Notes:
 ## Documentation
 
 Project docs live in [`docs/`](docs/) — start with its
-[index](docs/README.md), which maps out the purpose and strategy, the design
-system, the interior-design rule catalog, and the agent pipeline. Working
+[index](docs/README.md), which maps out the purpose, vision and strategy, the
+principles, the design system, the interior-design rule catalog, and the agent
+pipeline. Working
 conventions for Claude are in [`CLAUDE.md`](CLAUDE.md).
 
 ## Development

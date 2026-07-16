@@ -2,14 +2,20 @@
 
 This document is a structured catalog of rules for furnishing residential homes: building codes and Swedish standards, international guidelines, industry best practice, and feng shui. The rules are sorted in descending order of importance (level 5 → 1) and written so that each rule can be translated into an automated check.
 
+> **Catalog vs. engine.** This is the full, *aspirational* catalog (~100 rules). The
+> validation engine currently implements a **subset** (~42 rules, in
+> `src/lib/validation/rules.ts`); the rest are documented targets not yet automated.
+> Treat a rule's presence here as a spec, **not** a guarantee it fires today — check
+> `rules.ts` before assuming an ID (e.g. `SAF-06`) is live in the engine.
+
 ## Field schema
 
 Each rule has the following fields:
 
 | Field | Meaning |
 |---|---|
-| **ID** | Unique identifier with category prefix (SAF, ACC, ERG, FEN, LGT, COL, ACO, AES) |
-| **Category** | Safety, Accessibility, Ergonomics & dimensions, Feng shui, Light, Color & textiles, Acoustics & air, Aesthetics |
+| **ID** | Unique identifier with category prefix (SAF, ACC, ERG, FEN, LGT, COL, ACO, AES, ZON) |
+| **Category** | Safety, Accessibility, Ergonomics & dimensions, Feng shui, Light, Color & textiles, Acoustics & air, Aesthetics, Layout & zoning |
 | **Room** | Room type(s) the rule applies to — `All` if room-independent |
 | **Importance** | 5 = critical … 1 = fine-tuning (see scale below) |
 | **Measurability** | `A` = automatically measurable from floor plan/model (geometry, dimensions, placement) · `D` = partial — requires object metadata (e.g. material type, light source) · `M` = manual — requires asking the user or a photo |

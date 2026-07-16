@@ -16,12 +16,21 @@ Repository: `JonasHazell/roomcraft`.
    smallest faithful change and reuse existing primitives so the human merges it as-is.
 2. [`DESIGN.md`](DESIGN.md) + the `#styleguide` gallery — for any UI change, reuse
    existing primitives and design tokens. Never hard-code a colour/font/radius/shadow.
-3. [`STRATEGY.md`](STRATEGY.md) / [`PURPOSE.md`](PURPOSE.md) — keep the change true
-   to the issue's intent and the core experience.
+3. [`STRATEGY.md`](STRATEGY.md) / [`PURPOSE.md`](PURPOSE.md) /
+   [`PRINCIPLES.md`](PRINCIPLES.md) — keep the change true to the issue's intent, the
+   core experience, and the project's non-goals (don't let a faithful build smuggle in
+   scope the principles rule out).
 4. [`ARCHITECTURE.md`](ARCHITECTURE.md) — the feature→code map. Use it to find
    the files that own the feature you're changing, and to reuse the existing
    store slice / lib module instead of building a parallel one.
 5. [`CLAUDE.md`](../CLAUDE.md) — project conventions and commands.
+
+**You have access to the whole repository.** The list above is what to read *first*; the
+complete doc map is in [`docs/README.md`](README.md), and you may open any file in the
+repo. For any change, also consult the docs that bear on it —
+[`interior-design-rules.md`](interior-design-rules.md) for validation/AI work,
+[`MOBILE-FIRST.md`](MOBILE-FIRST.md) for anything touching layout on a phone, and
+[`VISION.md`](VISION.md) when the issue's intent depends on where the product is heading.
 
 ## Algorithm for each run
 

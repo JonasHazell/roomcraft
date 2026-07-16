@@ -75,8 +75,9 @@ Two layers, on purpose:
 | C — Analyse | [`AGENT_ANALYSIS.md`](AGENT_ANALYSIS.md)     | daily 22:00 UTC  |
 
 The taste — *what* is worth building — comes from the docs the agents read:
-[`STRATEGY.md`](STRATEGY.md), [`PURPOSE.md`](PURPOSE.md), [`DESIGN.md`](DESIGN.md),
-and the two files Stage C keeps current: [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md)
+[`PURPOSE.md`](PURPOSE.md), [`VISION.md`](VISION.md), [`STRATEGY.md`](STRATEGY.md),
+[`PRINCIPLES.md`](PRINCIPLES.md), [`DESIGN.md`](DESIGN.md), and the two files Stage C
+keeps current: [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md)
 (qualitative lessons) and [`AGENT_METRICS.md`](AGENT_METRICS.md) (quantitative health
 + product monitoring). Those two files are what close the loop: your merge decisions,
 turned into lessons and numbers, feed back into the next round of proposals — and,

@@ -5,8 +5,8 @@ in 3D (react-three-fiber), with a 2D floor-plan editor and a warm, print-inspire
 visual style. State is Zustand; the whole UI is styled from a single stylesheet,
 `src/index.css`, using CSS custom-property design tokens.
 
-For a map of the project docs — purpose, strategy, design system, rule catalog and
-the agent pipeline — see [`docs/README.md`](docs/README.md).
+For a map of the project docs — purpose, vision, strategy, principles, design system,
+rule catalog and the agent pipeline — see [`docs/README.md`](docs/README.md).
 
 ## What the app is for
 
@@ -24,6 +24,17 @@ long list of shallow ones. Prefer deepening and polishing existing core flows
 over adding new surface area, and hold everything to the quality bar (design
 consistency, reliability, no rough edges). Monetization is intentionally parked
 during this phase — see below.
+
+## Principles & direction
+
+Two docs sit beside the strategy and are worth reading before you shape work:
+
+- [`docs/PRINCIPLES.md`](docs/PRINCIPLES.md) — the operating principles and
+  **non-goals** every change is judged against (depth over breadth, simplicity is a
+  feature, mobile-first, reliability, and the things we deliberately don't build). When
+  two good options conflict, this is the tie-breaker.
+- [`docs/VISION.md`](docs/VISION.md) — where RoomCraft is heading beyond the current
+  phase, so work points in one direction instead of optimising locally.
 
 ## UI work: always consult the design reference first
 
@@ -90,5 +101,6 @@ used automatically — never run `playwright install`.
 Monetization is **parked for now** — we focus on the core experience first (see
 [`docs/STRATEGY.md`](docs/STRATEGY.md)) and choose a model later. For the future
 idea bank (freemium/subscription, furniture catalog affiliate links, credits,
-B2B licensing, etc.), see [`docs/MONETIZATION.md`](docs/MONETIZATION.md) — treat
-it as a reference, not a current mandate for what to build.
+B2B licensing, etc.), see the *How it makes money (later)* section of
+[`docs/VISION.md`](docs/VISION.md) — treat it as a reference, not a current mandate
+for what to build.

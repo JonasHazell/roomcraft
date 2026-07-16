@@ -29,8 +29,8 @@ layout _progressively enhance_ as space allows. In practice:
   collapsing to one column) and collapsible `.section` groups over wide, dense
   rows.
 - **Respect the notch.** Anything docked to a screen edge uses the
-  `env(safe-area-inset-*)` values (see `.menu-toggle`) so it clears rounded
-  corners and camera cutouts.
+  `env(safe-area-inset-*)` values (e.g. `.room-topbar`, `.plan-topbar`,
+  `.selection-bar-wrap`) so it clears rounded corners and camera cutouts.
 
 ### 2. One component set for mobile and web
 
@@ -82,11 +82,13 @@ Decide with the axis that matches the reason: if it's "this is hard to tap", use
 
 ## How components adapt
 
-### Layout — the sidebar becomes a drawer
+### Layout — the side panel is a mobile sheet first, a sidebar on wide screens
 
-At `≤768px` the right-hand `.side-panel` and the app chrome give way to a
-drawer opened by the fixed `.menu-toggle` button. Same panel, same contents —
-only its presentation changes, entirely in CSS.
+The `.side-panel` is mobile-first: the base rule renders it as a near-edge-to-edge
+floating **sheet**, and the `@media (min-width: 769px)` enhancement drops the left
+anchor and caps it to a fixed **400px right-hand sidebar**. Same panel, same contents —
+only its presentation changes, entirely in CSS; it is simply shown or hidden, with no
+separate drawer widget.
 
 ### Input — touch targets grow to ≥44px
 

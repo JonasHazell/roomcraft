@@ -66,6 +66,10 @@ enjoyably.
   working: build a **small number of well-built features** that make room
   planning genuinely easy, and deepen them rather than sprawl. This document is
   the *why*; the strategy is the *how we choose*.
+- **Vision.** [`VISION.md`](VISION.md) is where this promise is headed beyond the
+  current phase; this document is the *why*, the vision is the *where to*.
+- **Principles.** [`PRINCIPLES.md`](PRINCIPLES.md) turns this purpose into the standing
+  rules — and non-goals — every change is judged against.
 - **Design.** Because "simple" is a feeling, not just a feature list, the UI has
   to stay calm and coherent. That's what [`DESIGN.md`](DESIGN.md) and the
   `#styleguide` gallery protect — one consistent product, never a pile of

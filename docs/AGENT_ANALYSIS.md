@@ -26,6 +26,14 @@ mistake?*
 
 Repository: `JonasHazell/roomcraft`.
 
+**You have access to the whole repository.** The complete doc map is in
+[`docs/README.md`](README.md), and you may open any file. Beyond the pipeline's own
+memory files, consult the direction and taste docs ([`PURPOSE.md`](PURPOSE.md),
+[`VISION.md`](VISION.md), [`STRATEGY.md`](STRATEGY.md), [`PRINCIPLES.md`](PRINCIPLES.md),
+[`DESIGN.md`](DESIGN.md)) when judging whether a decision fits, and
+[`interior-design-rules.md`](interior-design-rules.md) for rule-related outcomes — but edit
+only the pipeline docs (see the guardrails below).
+
 ## What to look at each run
 
 Find everything that has reached a decision but is **not** yet labelled
@@ -78,7 +86,10 @@ hand-built PRs; that's the intended dedup mechanism).
 
 For every item, work out the signal and *why* — then **generalise it into a rule**.
 Nail down the specific change first (it's your evidence), but the takeaway you carry
-forward is the principle behind it:
+forward is the principle behind it. When the human rejected or edited something, ask whether it
+traces to a [`PRINCIPLES.md`](PRINCIPLES.md) non-goal or a departure from
+[`VISION.md`](VISION.md)'s direction — those are the most reusable rejections to learn
+from:
 
 - **PR merged with no changes to the agent's commits** → the proposal *and* the
   implementation hit the mark. What general habit made it good? Record that.
@@ -218,6 +229,8 @@ instructions — an unchanged script is a fine outcome.
   (`AGENT_PROPOSALS.md`, `AGENT_BUILD.md`, `AGENT_ANALYSIS.md`, `AGENT_PIPELINE.md`).
   **Never change product code (`src/`, `server/`) in this stage** — behaviour changes
   to the app are Stage A/B's job, proposed and built through the normal queue.
+  `PURPOSE.md`, `VISION.md`, `STRATEGY.md`, `PRINCIPLES.md`, and `DESIGN.md` are
+  human-owned direction and taste docs — **never edit them here** either.
 - **Never fabricate a metric.** If you can't derive a number from GitHub state or a
   server log, mark it "not sampled this run." A blank is honest; a made-up figure
   silently steers the whole loop wrong.
