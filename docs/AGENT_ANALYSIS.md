@@ -26,6 +26,14 @@ mistake?*
 
 Repository: `JonasHazell/roomcraft`.
 
+**You have access to the whole repository.** The complete doc map is in
+[`docs/README.md`](README.md), and you may open any file. Beyond the pipeline's own
+memory files, consult the direction and taste docs ([`PURPOSE.md`](PURPOSE.md),
+[`VISION.md`](VISION.md), [`STRATEGY.md`](STRATEGY.md), [`PRINCIPLES.md`](PRINCIPLES.md),
+[`DESIGN.md`](DESIGN.md)) when judging whether a decision fits, and
+[`interior-design-rules.md`](interior-design-rules.md) for rule-related outcomes — but edit
+only the pipeline docs (see the guardrails below).
+
 ## What to look at each run
 
 Find everything that has reached a decision but is **not** yet labelled

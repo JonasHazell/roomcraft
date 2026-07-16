@@ -15,16 +15,10 @@ this picture, not just local polish.
 ## The near-term horizon (this phase)
 
 The current phase is unambiguous: **get the core room-planning experience genuinely good
-before anything else.** In practice, "we've arrived" for this phase means the three hard
-problems in [`STRATEGY.md`](STRATEGY.md#the-hardest-problems-to-get-right) are solved *well*, not
-just adequately:
-
-1. A GUI that stays **stupidly simple** on a phone while still exposing every important
-   feature.
-2. Validation rules that are both **general and relevant** — they fire on real problems
-   and never nag about fine layouts.
-3. An AI recommendation engine that gives **genuinely best** suggestions for a specific
-   room, reliably and fast enough to feel effortless.
+before anything else** — which means solving the three hardest problems *well*, not just
+adequately (a stupidly-simple-yet-complete GUI, validation rules that are general *and*
+relevant, and an AI engine that gives genuinely best suggestions). They're described in
+full in [`STRATEGY.md` → The hardest problems to get right](STRATEGY.md#the-hardest-problems-to-get-right).
 
 ## The destination (1–3 years)
 

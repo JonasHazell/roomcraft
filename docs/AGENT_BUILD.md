@@ -25,6 +25,13 @@ Repository: `JonasHazell/roomcraft`.
    store slice / lib module instead of building a parallel one.
 5. [`CLAUDE.md`](../CLAUDE.md) — project conventions and commands.
 
+**You have access to the whole repository.** The list above is what to read *first*; the
+complete doc map is in [`docs/README.md`](README.md), and you may open any file in the
+repo. For any change, also consult the docs that bear on it —
+[`interior-design-rules.md`](interior-design-rules.md) for validation/AI work,
+[`MOBILE-FIRST.md`](MOBILE-FIRST.md) for anything touching layout on a phone, and
+[`VISION.md`](VISION.md) when the issue's intent depends on where the product is heading.
+
 ## Algorithm for each run
 
 1. **Find the queue.** List open issues labelled `agent:ready` that are **not**

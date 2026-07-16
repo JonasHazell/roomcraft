@@ -37,6 +37,14 @@ Repository: `JonasHazell/roomcraft`.
    proposal — the kind of problem the Playwright click-through can't see. Let the
    numbers, not just intuition, point you at the highest-value gaps.
 
+**You have access to the whole repository.** The list above is what to read *first*; the
+complete doc map is in [`docs/README.md`](README.md), and you may open any file in the
+repo. Consult whatever else bears on a candidate — most importantly
+[`interior-design-rules.md`](interior-design-rules.md) (the canonical rule catalog behind
+validation and AI suggestions) for any rule/AI proposal, plus
+[`MONETIZATION.md`](MONETIZATION.md) (what's parked and why) and
+[`CLAUDE.md`](../CLAUDE.md) (conventions and commands).
+
 ## Start every run by looking at the actual app
 
 Do **not** propose from memory or from the docs alone. Ground every proposal in two
