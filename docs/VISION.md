@@ -16,7 +16,7 @@ this picture, not just local polish.
 
 The current phase is unambiguous: **get the core room-planning experience genuinely good
 before anything else.** In practice, "we've arrived" for this phase means the three hard
-problems in [`TECHNICAL-CHALLENGES.md`](TECHNICAL-CHALLENGES.md) are solved *well*, not
+problems in [`STRATEGY.md`](STRATEGY.md#the-hardest-problems-to-get-right) are solved *well*, not
 just adequately:
 
 1. A GUI that stays **stupidly simple** on a phone while still exposing every important

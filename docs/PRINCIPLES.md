@@ -12,8 +12,7 @@ and — in a more autonomous setup — an automated reviewer would score work ag
 exact list. Goals tell an agent what to aim for; principles tell it where the edges are.
 
 Nothing here is new: it consolidates rules already stated across `PURPOSE.md`,
-`STRATEGY.md`, `DESIGN.md`, and `TECHNICAL-CHALLENGES.md` into one place so they can be
-applied consistently.
+`STRATEGY.md`, and `DESIGN.md` into one place so they can be applied consistently.
 
 ## The litmus test
 
@@ -32,8 +31,7 @@ matter how clever it is.
    new feature that's merely present. Prefer finishing and polishing what exists over
    starting something new. (`STRATEGY.md`)
 2. **Simplicity is a feature.** Removing friction and clutter counts as much as adding
-   capability. When in doubt, **remove a choice rather than add one**. (`STRATEGY.md`,
-   `TECHNICAL-CHALLENGES.md`)
+   capability. When in doubt, **remove a choice rather than add one**. (`STRATEGY.md`)
 3. **Mobile-first, always.** Judge every idea on a small, touch-first screen first;
    wider screens are an enhancement, never the starting point. (`STRATEGY.md`,
    `MOBILE-FIRST.md`)
