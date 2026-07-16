@@ -530,3 +530,7 @@ export function saveFurnitureToLibrary(
 export function deleteFurnitureFromLibrary(id: string) {
   writeLibrary(listFurnitureLibrary().filter((e) => e.id !== id));
 }
+
+export function renameFurnitureInLibrary(id: string, name: string) {
+  writeLibrary(listFurnitureLibrary().map((e) => (e.id === id ? { ...e, name } : e)));
+}
