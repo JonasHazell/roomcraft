@@ -97,7 +97,16 @@ click-through, and let these categories shape the *kind* of feature you add:
    your candidates — don't skip it.
 2. **Avoid duplicates.** Search existing open **and** recently closed issues and
    open PRs. Do not propose something already proposed, in flight, or recently
-   rejected (check `AGENT_LEARNINGS.md` too).
+   rejected (check `AGENT_LEARNINGS.md` too). If the underlying problem behind
+   a rejected issue is still worth solving and the human's rejection named a
+   specific alternative, a re-proposal must build *that exact alternative*,
+   not a variant of the rejected approach — treat their rejection comment as
+   the spec for the retry. Two independent instances confirm this: #153→#199
+   (raw X/Z fields rejected → the human's named alternative, a relative
+   wall/piece-distance readout, merged clean) and #186→#170 (a CSS clip fix
+   rejected → the human's named alternative, moving the buttons into the
+   proposal menu, merged clean). See `AGENT_LEARNINGS.md`'s "rejection
+   comment as retry spec" entry.
 3. **Check recent human activity on the target path before proposing there.**
    `git log --since=24h -- <path>` (or equivalent) on the file/area a candidate
    touches. If the human has multiple merged PRs there in the last day, either
