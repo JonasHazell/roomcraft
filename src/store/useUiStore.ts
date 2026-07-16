@@ -61,6 +61,8 @@ interface UiState {
   furnitureDialog: FurnitureDialog;
   /** Whether the sign-in / create-account dialog is open. */
   authDialogOpen: boolean;
+  /** Whether the keyboard-shortcuts reference is open (see ShortcutsReference). */
+  shortcutsOpen: boolean;
   panel: Panel;
   /**
    * Whether the proposal switcher's dropdown menu is open. Lifted out of the
@@ -80,6 +82,8 @@ interface UiState {
   closeFurnitureDialog: () => void;
   openAuthDialog: () => void;
   closeAuthDialog: () => void;
+  openShortcuts: () => void;
+  closeShortcuts: () => void;
   openPanel: (panel: Exclude<Panel, null>) => void;
   closePanel: () => void;
 }
@@ -95,6 +99,7 @@ export const useUiStore = create<UiState>()((set) => ({
   wizardStep: null,
   furnitureDialog: null,
   authDialogOpen: false,
+  shortcutsOpen: false,
   panel: null,
   proposalMenuOpen: false,
   select: (selection) =>
@@ -126,6 +131,8 @@ export const useUiStore = create<UiState>()((set) => ({
   closeFurnitureDialog: () => set({ furnitureDialog: null }),
   openAuthDialog: () => set({ authDialogOpen: true }),
   closeAuthDialog: () => set({ authDialogOpen: false }),
+  openShortcuts: () => set({ shortcutsOpen: true }),
+  closeShortcuts: () => set({ shortcutsOpen: false }),
   openPanel: (panel) => set({ panel }),
   closePanel: () => set({ panel: null }),
 }));

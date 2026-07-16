@@ -532,6 +532,42 @@ export function StyleGuide() {
           )}
         </Demo>
 
+        <Demo
+          title="Shortcut list"
+          note="Action › key rows inside a .modal-sm (ShortcutsReference, #227). .key styles a single keycap; combos join with +, alternatives with 'or'."
+        >
+          <ul className="shortcut-list" style={{ maxWidth: 320 }}>
+            <li className="shortcut-row">
+              <span className="shortcut-action">Undo</span>
+              <span className="shortcut-keys">
+                <span className="shortcut-combo">
+                  <kbd className="key">Ctrl/⌘</kbd>
+                  <span className="shortcut-plus">+</span>
+                  <kbd className="key">Z</kbd>
+                </span>
+              </span>
+            </li>
+            <li className="shortcut-row">
+              <span className="shortcut-action">Redo</span>
+              <span className="shortcut-keys">
+                <span className="shortcut-combo">
+                  <kbd className="key">Ctrl/⌘</kbd>
+                  <span className="shortcut-plus">+</span>
+                  <kbd className="key">Shift</kbd>
+                  <span className="shortcut-plus">+</span>
+                  <kbd className="key">Z</kbd>
+                </span>
+                <span className="shortcut-combo">
+                  <span className="shortcut-or">or</span>
+                  <kbd className="key">Ctrl/⌘</kbd>
+                  <span className="shortcut-plus">+</span>
+                  <kbd className="key">Y</kbd>
+                </span>
+              </span>
+            </li>
+          </ul>
+        </Demo>
+
         <Demo title="Collapsible section" note="Sidebar grouping (<details class='section'>) with the +/− marker.">
           <details className="section" open style={{ maxWidth: 360, border: '1px solid var(--line)', borderRadius: 6 }}>
             <summary>Room</summary>
