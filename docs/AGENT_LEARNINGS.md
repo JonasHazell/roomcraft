@@ -49,7 +49,33 @@ note the promotion on the entry so the trail from evidence → rule stays tracea
   tokens defined a few lines above the hardcoded colors it fixes, and #183
   points at the one drifted literal among three near-identical WebGL color
   constants. Naming the specific sibling by file/line, not just the abstract
-  rule, keeps being the single highest-yield proposal shape.
+  rule, keeps being the single highest-yield proposal shape. This run
+  extended it further: **10 of 10** decided agent PRs (#206–#215) merged
+  with zero edits and zero rejections — #203/#206 (`hasOptions()` reuse,
+  same shape as #146), #200/#207 (`openAddFurniture` reusing `select()`'s
+  own panel-clearing rule), #198/#215 (giving `updateFurniture` the same
+  `furnitureFits`/`slideFurniture` guarantee `moveFurniture` already had —
+  a second instance of the #146 placement-path pattern), and #204/#209 (two
+  more sibling rules a few lines away already tokenized) all named their
+  sibling by file/line. Nineteen straight clean merges across two runs is
+  strong enough that this is no longer a hypothesis to test — it's the
+  default proposal shape to keep using.
+
+- **When re-proposing a previously-rejected issue, treat the human's
+  rejection comment as the spec for the retry — build exactly the
+  alternative they named, not a variant of the rejected approach.** Two
+  independent instances this run confirm this, both clean merges: #199/#213
+  built the relative wall/piece-distance readout the human explicitly asked
+  for when rejecting #148/#153's raw-coordinate fields ("I'd rather see...
+  distance to the walls and other furniture... shown in the GUI"); #170/#214
+  moved Auto-arrange/AI into the proposal-switcher menu, exactly the fix the
+  human named when rejecting #186's CSS-only clipping fix ("A better
+  solution would be to move the ai and auto buttons to the proposal menu
+  instead"). Both waited through at least one full run in this state before
+  being rebuilt correctly — a rejection with a stated alternative is a
+  concrete, low-risk proposal waiting to be picked up, not a dead end.
+  **[Promoted into `AGENT_PROPOSALS.md`'s "Avoid duplicates" step this
+  run.]**
 
 - **"Avoid duplicates" must include the human's own recent work, not just open
   issues/PRs — same-day human activity in an area is a strong signal to steer
@@ -106,6 +132,9 @@ _No entries yet._
   visual interaction, prefer values the user can already relate to something they
   see (distance to the nearest wall, gap to the next piece) over absolute
   coordinates in a coordinate system the UI never otherwise exposes.
+  **Resolved this run:** #199/#213 built exactly the distance-readout
+  alternative the human asked for and merged clean — see the "rejection
+  comment as retry spec" entry above.
 
 - **Stopping controls from overlapping isn't the same as keeping them usable —
   if the fix works by shrinking a control until it's no longer legible, that's
@@ -120,7 +149,9 @@ _No entries yet._
   some of them belong in an existing menu/overflow surface (the app already has
   this pattern — the proposal switcher, `More`) before reaching for a
   shrink-to-fit CSS tweak that keeps every control in place but makes one
-  illegible.
+  illegible. **Resolved this run:** #170/#214 rebuilt it by moving
+  Auto-arrange/AI into the proposal-switcher menu, exactly as asked, and
+  merged clean — see the "rejection comment as retry spec" entry above.
 
 ## Testing & verification
 
@@ -166,6 +197,23 @@ _No entries yet._
   under Vitest. Scoping `e2e/**` out of `vite.config.ts`'s Vitest config fixed
   it. Don't just verify the tool you're building for — check whether the new
   files/paths intersect an existing tool's glob or config and would break it.
+
+- **A regression test for a computed-style invariant (a touch-target minimum,
+  a color, a layout dimension) must assert the actual computed value, not
+  just look right in a manual/visual check — because a later, unrelated CSS
+  addition with equal specificity can silently re-break an earlier fix, and
+  visual review won't reliably catch it.** #197/#212 found that the ≥44px
+  coarse-pointer rule #128 established for `.sel-action` had been silently
+  defeated: a later, unconditional `.sel-action { min-height: 38px; }` rule
+  (added for an unrelated "same height for every dock pill" reason) sat
+  further down the file and won the cascade on every viewport, since both
+  rules share identical specificity and source order decides the tie. The
+  fix's own regression test (`e2e/touch-target.spec.ts`) reads
+  `getComputedStyle(...).minHeight` directly and was verified to fail against
+  the pre-fix CSS — that's what would have caught this the moment the 38px
+  rule was added. When a fix's whole point is a specific computed value,
+  test that value directly rather than trusting that it'll keep looking
+  right.
 
 ## Code style & conventions
 
@@ -215,4 +263,12 @@ _No entries yet._
   rule to *product* paths (`src/`, `server/`); don't let a burst of doc/infra
   commits read as "this area is spoken for" the way a burst of `src/lib/validation/`
   commits does — and don't propose *changes to the pipeline docs themselves*,
-  since that's explicitly Stage C's job, not Stage A's.
+  since that's explicitly Stage C's job, not Stage A's. #216/#218 confirm the
+  pattern again: a PR template requiring GUI-change media, then a same-day
+  follow-up fixing it (the API/CLI posting layer defangs any URL containing
+  an image extension — even a bare `…png` link — so an automated PR must
+  commit screenshots under `.github/pr-media/<branch>/` and link the folder,
+  not the image, per `scripts/pr-media.mjs`). Both are pipeline tooling, not
+  a product signal — and the human already wired the new convention directly
+  into `AGENT_BUILD.md`'s own PR-opening step in #218, so there's nothing
+  left for Stage C to promote here.
