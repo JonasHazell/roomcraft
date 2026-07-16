@@ -12,6 +12,37 @@ Two halves, kept in sync:
    drift from the app. Design tokens on the page are read live from `:root`.
 2. **This document** — the tokens and the rules for using the primitives.
 
+## First principle: minimal and self-evident
+
+Above every rule below sits one goal: **the UI is as minimal and as clear as it
+can possibly be, and it explains itself without words.** A user should always
+understand what a surface is and what to do next just by looking at it — never by
+reading a paragraph that teaches them how to use it.
+
+Hold every screen, panel, dialog, and control to this bar:
+
+- **Show, don't tell.** The layout, the icons, and the shapes carry the meaning.
+  If a control needs a sentence of prose to be understood, redesign the control —
+  don't add the sentence. Copy earns its place only when it _is_ the content
+  (a name, a value, a result), never as a manual for the interface.
+- **Less on the screen.** Prefer the fewest elements that do the job. Cut anything
+  that isn't essential to the current task; hide advanced or rare options until
+  they're needed rather than crowding the default view. Every element on screen
+  should be pulling its weight.
+- **Make the next step obvious.** The primary action should read as primary at a
+  glance (see `.btn-accent`), and the path through a flow should be clear without
+  instructions. Affordances look interactive; static things don't.
+- **Rely on the shared vocabulary.** Familiar primitives, consistent icons, and
+  predictable placement mean a user recognises a control instead of re-learning
+  it. Consistency _is_ clarity — reuse before you invent.
+- **Text is the last resort, not the first.** A `.hint` or a tooltip is a fallback
+  for a genuine edge case, not the way a surface communicates its purpose. If you
+  reach for explanatory copy, first ask whether the design itself could make the
+  copy unnecessary.
+
+When a choice is between adding an explanation and making the interface
+self-evident, always choose the second.
+
 ## How to use this (for humans and for Claude)
 
 **Before building or changing any UI surface:**
