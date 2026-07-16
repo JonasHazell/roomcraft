@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, type ComponentRef, type RefObject } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -60,19 +60,75 @@ function SceneEnvironment() {
   return null;
 }
 
+/**
+ * Registers the "reset to initial framing" handler that the furnish view's
+ * action bar (`ActionBar.tsx`, a DOM sibling outside this `<Canvas>`) calls
+ * when the user taps "Reset view" — the r3f/three equivalent of the 2D plan
+ * editor's `viewport.reset`. Deliberately doesn't use `OrbitControls`' own
+ * built-in `reset()`: that restores to the state captured when the controls
+ * instance was constructed (`target0`/`position0`), which is the origin, not
+ * this room's centred framing, because drei applies the `target`/`camera`
+ * props *after* construction rather than re-saving that captured state.
+ * Instead this sets the camera and controls target straight back to the same
+ * `initialPosition`/`initialTarget` the scene was first framed with.
+ */
+function CameraController({
+  controlsRef,
+  initialPosition,
+  initialTarget,
+}: {
+  controlsRef: RefObject<ComponentRef<typeof OrbitControls> | null>;
+  initialPosition: readonly [number, number, number];
+  initialTarget: readonly [number, number, number];
+}) {
+  const camera = useThree((s) => s.camera);
+  const setCameraReset = useUiStore((s) => s.setCameraReset);
+
+  useEffect(() => {
+    const reset = () => {
+      camera.position.set(...initialPosition);
+      const controls = controlsRef.current;
+      if (controls) {
+        controls.target.set(...initialTarget);
+        controls.update();
+      }
+    };
+    setCameraReset(reset);
+    return () => setCameraReset(null);
+  }, [camera, initialPosition, initialTarget, controlsRef, setCameraReset]);
+
+  return null;
+}
+
 export function Scene() {
   const roomHeight = useDesignStore((s) => s.design.room.height);
   const walls = useDesignStore((s) => s.design.walls);
   const dragging = useUiStore((s) => s.draggingId !== null);
 
   const center = useMemo(() => polygonCenter(floorPolygon(walls)), [walls]);
+  // The camera's starting framing — also "Reset view"'s destination, via
+  // CameraController below.
+  const initialPosition = useMemo(
+    (): [number, number, number] => [center.x + 7, 5.5, center.z + 8.5],
+    [center],
+  );
+  const initialTarget = useMemo(
+    (): [number, number, number] => [center.x, roomHeight / 3, center.z],
+    [center, roomHeight],
+  );
+  const controlsRef = useRef<ComponentRef<typeof OrbitControls>>(null);
 
   return (
-    <Canvas shadows camera={{ position: [center.x + 7, 5.5, center.z + 8.5], fov: 45 }}>
+    <Canvas shadows camera={{ position: initialPosition, fov: 45 }}>
       <color attach="background" args={['#eceef1']} />
       <fog attach="fog" args={['#eceef1', 28, 60]} />
 
       <SceneEnvironment />
+      <CameraController
+        controlsRef={controlsRef}
+        initialPosition={initialPosition}
+        initialTarget={initialTarget}
+      />
 
       {/* The gradient environment adds a soft fill, so the ambient and hemisphere
           lights are trimmed a little to keep the original exposure and contrast. */}
@@ -109,12 +165,13 @@ export function Scene() {
       <ValidationOverlay />
 
       <OrbitControls
+        ref={controlsRef}
         makeDefault
         enabled={!dragging}
         maxPolarAngle={Math.PI / 2 - 0.05}
         minDistance={1.5}
         maxDistance={40}
-        target={[center.x, roomHeight / 3, center.z]}
+        target={initialTarget}
       />
     </Canvas>
   );

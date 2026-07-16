@@ -45,8 +45,11 @@ test.describe('narrow viewport (390x844, the issue repro size)', () => {
   }, testInfo) => {
     // The 3D WebGL scene plus a canvas click can run close to the default 30s
     // budget on an emulated touch browser in a headless/CI-like environment;
-    // give this one some headroom rather than risk a flaky timeout.
-    test.setTimeout(60_000);
+    // give this one some headroom rather than risk a flaky timeout. Bumped from
+    // 60s to 90s: even 60s occasionally wasn't enough for the lazy-loaded Scene
+    // chunk to mount under a heavily loaded host (observed as sporadic
+    // `locator.boundingBox` timeouts unrelated to the actual dock geometry).
+    test.setTimeout(90_000);
     await createSmallRoom(page);
 
     // Select something by clicking the centre of the 3D canvas — the default
@@ -102,6 +105,9 @@ test.describe('narrow viewport (390x844, the issue repro size)', () => {
   test('AI suggestions and Auto-arrange are reachable from the proposal-switcher menu', async ({
     page,
   }) => {
+    // Same lazy-loaded-Scene headroom as the sibling test above — the default
+    // 30s budget can be tight for this room-creation flow under load.
+    test.setTimeout(90_000);
     await createSmallRoom(page);
 
     await page.locator('.proposal-pill').click();

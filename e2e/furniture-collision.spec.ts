@@ -13,7 +13,11 @@ import { test, expect } from '@playwright/test';
  */
 
 test('resizing and rotating furniture stays inside the app without crashing', async ({ page }) => {
-  test.setTimeout(60000);
+  // Bumped from 60s to 90s: this drives the lazy-loaded 3D Scene through several
+  // pointer/keyboard interactions, which occasionally didn't fit 60s under a
+  // heavily loaded host (observed as sporadic action timeouts unrelated to the
+  // collision-correction logic itself).
+  test.setTimeout(90_000);
   const pageErrors: string[] = [];
   page.on('pageerror', (e) => pageErrors.push(String(e)));
 

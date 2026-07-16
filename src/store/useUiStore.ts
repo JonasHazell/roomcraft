@@ -68,6 +68,17 @@ interface UiState {
    * just another open overlay and step aside for it.
    */
   proposalMenuOpen: boolean;
+  /**
+   * Imperative "reset the 3D camera to its initial framing" handler, or null
+   * before the furnish view's `<Scene>` has mounted it. The camera lives
+   * inside the `<Canvas>`'s r3f context while the "Reset view" button
+   * (`ActionBar.tsx`) lives outside it as a DOM sibling, so this store is the
+   * bridge between them — `Scene.tsx`'s `CameraController` registers/clears
+   * it, the action bar calls it. Mirrors the 2D plan editor's
+   * `viewport.reset`, which can stay a plain local callback since its
+   * toolbar and canvas share one component tree.
+   */
+  cameraReset: (() => void) | null;
   select: (selection: Selection) => void;
   setDragging: (id: string | null) => void;
   setAppView: (view: AppView) => void;
@@ -75,6 +86,7 @@ interface UiState {
   setPlanStartTool: (tool: PlanStartTool) => void;
   setPendingRoomId: (id: string | null) => void;
   setWizardStep: (step: WizardStep | null) => void;
+  setCameraReset: (fn: (() => void) | null) => void;
   openAddFurniture: () => void;
   openEditFurniture: (id: string) => void;
   closeFurnitureDialog: () => void;
@@ -97,6 +109,7 @@ export const useUiStore = create<UiState>()((set) => ({
   authDialogOpen: false,
   panel: null,
   proposalMenuOpen: false,
+  cameraReset: null,
   select: (selection) =>
     set((state) => {
       // Making a new object selection dismisses a competing side panel so the
@@ -128,4 +141,5 @@ export const useUiStore = create<UiState>()((set) => ({
   closeAuthDialog: () => set({ authDialogOpen: false }),
   openPanel: (panel) => set({ panel }),
   closePanel: () => set({ panel: null }),
+  setCameraReset: (cameraReset) => set({ cameraReset }),
 }));

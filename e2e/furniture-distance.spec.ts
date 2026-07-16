@@ -20,8 +20,9 @@ test.beforeEach(async ({ page }) => {
 test('shows distance to wall and nearest piece when furniture is selected', async ({ page }) => {
   // The full flow mounts the 3D scene twice (once per furniture dialog round
   // trip); the mobile Chrome emulation renders WebGL noticeably slower than
-  // desktop, so this needs more headroom than the 30s default.
-  test.setTimeout(60_000);
+  // desktop, so this needs more headroom than the 30s default. Bumped from 60s
+  // to 90s: even 60s occasionally wasn't enough under a heavily loaded host.
+  test.setTimeout(90_000);
 
   // Build a room from a template — fast, no manual wall-drawing needed.
   await page.getByRole('button', { name: /create a room/i }).click();
