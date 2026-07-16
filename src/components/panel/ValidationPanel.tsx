@@ -90,8 +90,16 @@ export function ValidationPanel() {
                                 furnitureIds: v.furnitureIds,
                                 zones: v.zones ?? [],
                               });
-                              // Highlight in the 3D view, not in the properties panel.
-                              select(null);
+                              // A finding tied to exactly one piece also selects it, so the
+                              // same click that highlights it in 3D opens it for editing too —
+                              // no second click needed to find and select the flagged piece.
+                              // Multi-piece and zone-only findings have no single piece to
+                              // select, so they stay highlight-only, as before.
+                              select(
+                                v.furnitureIds.length === 1
+                                  ? { kind: 'furniture', id: v.furnitureIds[0] }
+                                  : null,
+                              );
                             }}
                           >
                             <span className="validation-item-head">
