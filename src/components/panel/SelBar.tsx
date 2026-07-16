@@ -44,6 +44,8 @@ export function SelBarButton({
   active,
   danger,
   expandable,
+  disabled,
+  history,
 }: {
   icon: ReactNode;
   label?: string;
@@ -54,15 +56,19 @@ export function SelBarButton({
   danger?: boolean;
   /** When set, the button also exposes aria-expanded reflecting `active`. */
   expandable?: boolean;
+  disabled?: boolean;
+  /** Icon-only history-pill styling (`.sel-history`), used by the undo/redo pill. */
+  history?: boolean;
 }) {
   return (
     <button
       type="button"
-      className={`sel-action${active ? ' sel-active' : ''}${danger ? ' sel-danger' : ''}`}
+      className={`sel-action${active ? ' sel-active' : ''}${danger ? ' sel-danger' : ''}${history ? ' sel-history' : ''}`}
       title={title}
       aria-label={ariaLabel}
       aria-expanded={expandable ? Boolean(active) : undefined}
       onClick={onClick}
+      disabled={disabled}
     >
       <span className="sel-icon" aria-hidden="true">
         {icon}

@@ -1,6 +1,7 @@
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useUiStore } from '../../store/useUiStore';
 import { Icon } from '../ui/Icon';
+import { SelBar, SelBarButton } from './SelBar';
 
 /**
  * Standalone undo/redo pill for the 3D furnish view. It sits as its own pill on
@@ -19,31 +20,23 @@ export function HistoryBar() {
   if (appView !== 'furnish') return null;
 
   return (
-    <div className="selection-bar" role="toolbar" aria-label="History">
-      <button
-        type="button"
-        className="sel-action sel-history"
+    <SelBar label="History">
+      <SelBarButton
+        icon={<Icon name="undo-2" />}
+        title="Undo (Ctrl/Cmd+Z)"
+        ariaLabel="Undo"
         onClick={undo}
         disabled={!canUndo}
-        title="Undo (Ctrl/Cmd+Z)"
-        aria-label="Undo"
-      >
-        <span className="sel-icon" aria-hidden="true">
-          <Icon name="undo-2" />
-        </span>
-      </button>
-      <button
-        type="button"
-        className="sel-action sel-history"
+        history
+      />
+      <SelBarButton
+        icon={<Icon name="redo-2" />}
+        title="Redo (Ctrl/Cmd+Shift+Z)"
+        ariaLabel="Redo"
         onClick={redo}
         disabled={!canRedo}
-        title="Redo (Ctrl/Cmd+Shift+Z)"
-        aria-label="Redo"
-      >
-        <span className="sel-icon" aria-hidden="true">
-          <Icon name="redo-2" />
-        </span>
-      </button>
-    </div>
+        history
+      />
+    </SelBar>
   );
 }
