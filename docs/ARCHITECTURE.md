@@ -45,7 +45,7 @@ are separate stores so they don't get saved.
 | UI / surface | `src/store/useUiStore.ts` | `surface` (lobby/plan/furnish), which panel/dialog is open, selection. |
 | History | `src/store/useHistoryStore.ts` | Undo/redo snapshots of project+design. |
 | Dialogs | `src/store/useDialogStore.ts` | The generic confirm/prompt dialog queue. |
-| Validation | `src/store/useValidationStore.ts` | The current rule findings + expanded rows. |
+| Validation | `src/store/useValidationStore.ts` | The current validation report + the highlighted finding (a row's furniture/zone highlight). |
 | Library | `src/store/useLibraryStore.ts` | The saved-furniture library. |
 | Auth | `src/store/useAuthStore.ts` | Whether sign-in is enabled + the current session. |
 | AI | `src/store/useAiStore.ts` | An in-flight AI generation (status, timeout). |
@@ -53,25 +53,30 @@ are separate stores so they don't get saved.
 Shared types for all of the above: `src/types.ts` (`Project`, `Design`, `Room`,
 `Wall`, `WallOpening`, `FurnitureItem`, `Proposal`, …).
 
+The composed store's **state shape, action interfaces, and room/project factory
+helpers** (`DesignData`, `RoomActions`, `FurnitureSpec`, `createDefaultRoom`,
+`cloneRoom`, …) live in `src/store/designModel.ts`; cross-store selectors such as
+`useSelectedFurniture` live in `src/store/selectors.ts`.
+
 ## Feature → code map
 
 | Feature (see README for behaviour) | UI | State | Logic / lib |
 | --- | --- | --- | --- |
 | **Rooms** — multiple per project, switch/create/rename/delete | `lobby/Lobby.tsx`, `wizard/NewRoomWizard.tsx`, `panel/SwitcherList.tsx` | `slices/roomSlice.ts` | `lib/roomTemplates.ts`, `lib/nav.ts` |
-| **2D floor plan** — free room outline + interior walls, snapping | `plan/PlanEditor.tsx` and siblings (`PlanWalls`, `PlanCorners`, `PlanDraft`, `PlanGrid`, `PlanToolbar`, `PlanRoomPanel`, `usePlanDraft.ts`, `useViewport.ts`) | `slices/planSlice.ts` | `lib/polygon.ts`, `lib/geometry.ts` |
+| **2D floor plan** — free room outline + interior walls, snapping | `plan/PlanEditor.tsx` and siblings (`PlanWalls`, `PlanCorners`, `PlanDraft`, `PlanGrid`, `PlanToolbar`, `PlanRoomPanel`, `PlanStartChooser`, `usePlanDraft.ts`, `useViewport.ts`) | `slices/planSlice.ts` | `lib/polygon.ts`, `lib/geometry.ts` |
 | **Doors & windows** — per wall, position/size/height | `plan/PlanWallPanel.tsx`, `plan/PlanLengthInput.tsx`, `panel/WallBar.tsx` | `slices/planSlice.ts` (openings on `Wall`) | `lib/geometry.ts` |
 | **3D view** — orbit camera, near walls auto-hidden | `scene/Scene.tsx`, `scene/Walls.tsx`, `scene/Floor.tsx` | `useUiStore` (`furnish` surface) | `lib/materials.ts`, `scene/materialTextures.ts` |
 | **Furniture** — place, drag, rotate, keep inside walls | `scene/FurnitureLayer.tsx`, `scene/FurnitureMesh.tsx`, `panel/FurniturePicker.tsx`, `panel/FurnitureDialog.tsx` | `slices/furnitureSlice.ts` | `lib/collision.ts`, `lib/furnitureCatalog.ts` |
 | **Per-type customization** — mattresses, shelves, doors, etc. | `panel/FurnitureFields.tsx`, `panel/fields.tsx`, `panel/furnitureDraft.ts` | `slices/furnitureSlice.ts` (`FurnitureOptions`) | `lib/furnitureOptions.ts`, `lib/furnitureParts.ts` |
 | **3D furniture models** — one component per kind | `scene/furniture/*.tsx` (Bed, Sofa, Desk, Bookshelf, …) | — | `lib/furnitureParts.ts`, `lib/materials.ts` |
 | **Colors** — floor, walls, per-piece; palette per proposal | `panel/PropertiesPanel.tsx`, `panel/FloorBar.tsx` | `slices/furnitureSlice.ts` / `proposalSlice.ts` | `lib/materials.ts` |
-| **AI furnishing suggestions** — Claude proposes layouts | `panel/AiProposalsPanel.tsx`, `panel/ProposalSwitcher.tsx` | `useAiStore`, `slices/proposalSlice.ts` | `lib/aiProposals.ts` (server-backed) |
+| **AI furnishing suggestions** — Claude proposes layouts | `panel/AiProposalsPanel.tsx`, `panel/ProposalSwitcher.tsx` | `useAiStore`, `slices/proposalSlice.ts` | `lib/aiProposals.ts` (client) → `server/` (see below) |
 | **Auto-arrange** — local, no-AI reshuffle to raise score | `panel/ProposalSwitcher.tsx` (the "Auto-arrange" menu action) | `slices/furnitureSlice.ts` | `lib/autoArrange.ts` |
 | **Proposals** — switch between furnishing options per room | `panel/ProposalSwitcher.tsx`, `panel/SwitcherList.tsx` | `slices/proposalSlice.ts` | — |
 | **Design validation / score** — rule findings + score | `panel/ValidationPanel.tsx`, `panel/ValidationScore.tsx`, `scene/ValidationOverlay.tsx` | `useValidationStore` | `lib/validation/*` (see below) |
 | **Undo / redo** — every editing step, one drag = one step | `panel/HistoryBar.tsx` | `useHistoryStore` | `lib/globalKeydown.ts` (shortcuts) |
 | **Autosave & named saves** — localStorage, schema migration | `panel/DialogHost.tsx` (save/load prompts) | `useDesignStore` persist middleware | `lib/persistence.ts` (v1→current migrations) |
-| **Accounts / sign-in** — gates server AI when DB configured | `auth/AuthDialog.tsx`, `auth/AccountControl.tsx` | `useAuthStore` | `lib/authApi.ts` |
+| **Accounts / sign-in** — gates server AI when DB configured | `auth/AuthDialog.tsx`, `auth/AccountControl.tsx` | `useAuthStore` | `lib/authApi.ts` → `server/auth.ts`, `server/db.ts` |
 | **Keyboard shortcuts** — R, Delete, Esc, Enter, undo/redo | (global) | various | `lib/globalKeydown.ts`, `lib/useEscape.ts` |
 
 ## Shared building blocks
@@ -82,9 +87,18 @@ Shared types for all of the above: `src/types.ts` (`Project`, `Design`, `Room`,
   `src/components/styleguide/StyleGuide.tsx` (`#styleguide`), documented in
   [`DESIGN.md`](DESIGN.md). Icons: `src/components/ui/Icon.tsx`.
 - **Validation engine** — `src/lib/validation/`: `engine.ts` runs the catalog,
-  `rules.ts` holds the ~47 rules, with `ruleTypes.ts`, `ruleHelpers.ts`,
+  `rules.ts` holds the ~42 implemented rules, with `ruleTypes.ts`, `ruleHelpers.ts`,
   `zones.ts`, `geo.ts` supporting them. The human-readable rule catalog is
   [`interior-design-rules.md`](interior-design-rules.md).
+- **Server (AI backend)** — `server/`: `index.ts` (entry), `planning.ts` +
+  `claude.ts` + `prompt.ts` (AI proposal generation), `judge.ts` / `validate.ts` /
+  `ruleValidation.ts` / `autofix.ts` (server-side scoring & repair), `auth.ts` +
+  `db.ts` (accounts). The client reaches it via `lib/aiProposals.ts` and
+  `lib/authApi.ts`.
+- **Furnish-view chrome / docks** — the 3D view's bars mount via
+  `panel/SidePanel.tsx`, with `panel/ActionBar.tsx`, `panel/SelectionBar.tsx`, and the
+  shared `panel/SelBar.tsx` primitive (used by WallBar / ActionBar / FloorBar);
+  `panel/ShortcutsReference.tsx` is the shortcuts overlay.
 - **Geometry & collision** — `lib/geometry.ts` (wall transforms), `lib/polygon.ts`
   (room outline math), `lib/collision.ts` (footprints, keep-inside-walls).
 - **Responsive behaviour** — one component set for every viewport; the rules live

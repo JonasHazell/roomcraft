@@ -4,6 +4,12 @@ Different ways to make money from RoomCraft, tailored to what the app already
 does: a 3D/2D room planner with a furniture catalog, AI-generated layout
 proposals, and a rule-based interior-design validation ("design score").
 
+> **Parked idea bank, not a mandate.** Monetization is deferred while the core
+> experience is built (see [`STRATEGY.md`](STRATEGY.md#monetization-is-parked--for-now)).
+> Several ideas below — affiliate links, a "Buy this room" flow, B2B licensing — are
+> where [`VISION.md`](VISION.md)'s long-term marketplace destination eventually points;
+> keep them here until that phase is deliberately opened.
+
 ## 1. Freemium / subscription (likely the core)
 
 The most natural model for a tool people return to.
