@@ -1032,12 +1032,32 @@ select {
    back button sits top-left, the property editors as small cards to the sides, and
    the tools live in the bottom pill dock (see .plan-dock). */
 
-/* Circular back button, top-left — the exact control the 3D view uses. */
+/* Top-left button row: the circular back button (the exact control the 3D view
+   uses) plus the explicit "Furnish this room" action, laid out side by side so
+   the two read as separate, always-visible controls rather than one control
+   with a hidden second meaning. */
 .plan-topbar {
   position: absolute;
   top: calc(12px + env(safe-area-inset-top));
   left: calc(14px + env(safe-area-inset-left));
   z-index: 56;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* "Furnish this room": a filled, labelled pill next to the plain circular
+   "Done" button so the two actions are visually distinct, not variations on
+   one control. */
+.plan-furnish-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 0 16px;
+  height: 52px;
+  box-shadow: 0 6px 20px rgba(24, 24, 27, 0.18);
+  white-space: nowrap;
 }
 
 /* Guidance + error pills, centred at the top and shown only when they matter
