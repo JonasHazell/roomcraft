@@ -256,8 +256,10 @@ export function StyleGuide() {
             <label className="field">
               <span className="field-label">Width</span>
               <span className="field-input">
-                <input type="number" defaultValue={340} />
-                <span className="field-suffix">cm</span>
+                <input type="number" defaultValue={340} aria-label="Width" />
+                <span className="field-suffix" aria-hidden="true">
+                  cm
+                </span>
               </span>
             </label>
           </div>
@@ -271,8 +273,10 @@ export function StyleGuide() {
             <label className="field">
               <span className="field-label">Ceiling height</span>
               <span className="field-input">
-                <input type="number" defaultValue={240} />
-                <span className="field-suffix">cm</span>
+                <input type="number" defaultValue={240} aria-label="Ceiling height" />
+                <span className="field-suffix" aria-hidden="true">
+                  cm
+                </span>
               </span>
             </label>
             <div className="field">
