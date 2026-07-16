@@ -101,5 +101,6 @@ used automatically — never run `playwright install`.
 Monetization is **parked for now** — we focus on the core experience first (see
 [`docs/STRATEGY.md`](docs/STRATEGY.md)) and choose a model later. For the future
 idea bank (freemium/subscription, furniture catalog affiliate links, credits,
-B2B licensing, etc.), see [`docs/MONETIZATION.md`](docs/MONETIZATION.md) — treat
-it as a reference, not a current mandate for what to build.
+B2B licensing, etc.), see the *How it makes money (later)* section of
+[`docs/VISION.md`](docs/VISION.md) — treat it as a reference, not a current mandate
+for what to build.

@@ -42,7 +42,8 @@ complete doc map is in [`docs/README.md`](README.md), and you may open any file 
 repo. Consult whatever else bears on a candidate — most importantly
 [`interior-design-rules.md`](interior-design-rules.md) (the canonical rule catalog behind
 validation and AI suggestions) for any rule/AI proposal, plus
-[`MONETIZATION.md`](MONETIZATION.md) (what's parked and why) and
+[`STRATEGY.md`](STRATEGY.md#monetization-is-parked--for-now) and
+[`VISION.md`](VISION.md#how-it-makes-money-later) (what's parked and why) and
 [`CLAUDE.md`](../CLAUDE.md) (conventions and commands).
 
 ## Start every run by looking at the actual app

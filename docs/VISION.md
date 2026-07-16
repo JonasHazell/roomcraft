@@ -54,6 +54,31 @@ RoomCraft.
 - **The promise is unchanged, just broader.** Still stupidly simple, still mobile-first,
   still *never a blank page* — now for more rooms, more people, and real furniture.
 
+## How it makes money (later)
+
+Monetization is parked until the core experience is strong (see
+[`STRATEGY.md`](STRATEGY.md#monetization-is-parked--for-now)); these are the candidate
+models the destination would choose from — a future idea bank, **not** a mandate for
+anything built today:
+
+- **Freemium / subscription.** A free tier (a couple of saved rooms, basic furniture)
+  and a Pro tier for unlimited rooms, unlimited AI layout proposals, full validation /
+  "design score" feedback, and high-resolution export. The AI and validation paths cost
+  real money to run, so they map naturally onto paid features.
+- **Furniture catalogue as revenue.** Affiliate / partner links to real products,
+  sponsored brand placement in the catalogue, and a "Buy this room" flow that turns a
+  plan into a shopping cart — the most direct expression of the marketplace destination.
+- **Credits / one-off purchases.** Pay-per-batch AI proposals or per-export, for users
+  who don't want a subscription.
+- **B2B / professional.** Licences for designers, realtors and landlords; white-label
+  for furniture stores; a planner widget / API embedded on e-commerce sites.
+- **Content packs.** Premium furniture packs, style themes, textures.
+
+The likely combination: **freemium** around the AI/validation/export features that
+already cost money to run, **affiliate** on the catalogue as low-friction passive
+revenue, and **B2B licences** once the product is mature — all converging on the
+two-sided marketplace above.
+
 ## What RoomCraft is deliberately not trying to become
 
 Even as scope widens, these are off the table — they'd betray the promise or the focus:

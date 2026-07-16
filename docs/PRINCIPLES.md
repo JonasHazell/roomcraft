@@ -56,8 +56,9 @@ phase is about. (`STRATEGY.md`)
 - **Feature sprawl.** The default answer to a new feature is "not yet." A feature earns
   its place by making the core experience clearly better, not by expanding surface area.
 - **Monetization-driven features.** Paywalls, tiers, upsell hooks, affiliate wiring —
-  none of it is built during this phase, even where it would be easy. (See
-  [`MONETIZATION.md`](MONETIZATION.md), a parked idea bank.)
+  none of it is built during this phase, even where it would be easy. (The candidate
+  models are sketched in [`VISION.md`](VISION.md#how-it-makes-money-later) as a parked
+  idea bank.)
 - **Speculative infrastructure.** No building for scale, teams, or platforms we don't
   yet need. Build for the experience in front of us.
 

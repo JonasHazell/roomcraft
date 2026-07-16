@@ -33,7 +33,6 @@ The *why* and *what* — read these before proposing or shaping new work.
 | [`VISION.md`](VISION.md) | Where RoomCraft is heading beyond the current phase — the direction proposals should move toward. |
 | [`STRATEGY.md`](STRATEGY.md) | How we decide what to build right now — depth over breadth, mobile-first, monetization parked — and the hardest problems the core experience lives or dies by. |
 | [`PRINCIPLES.md`](PRINCIPLES.md) | The operating principles and non-goals every change is judged against; the tie-breaker for conflicts. |
-| [`MONETIZATION.md`](MONETIZATION.md) | A future idea bank for revenue models — parked for now, not a current mandate. |
 
 ## Design & UI
 

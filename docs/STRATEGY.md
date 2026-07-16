@@ -85,11 +85,11 @@ The plan is sequential:
    model to pursue — the long-term destination this points toward is described in
    [`VISION.md`](VISION.md).
 
-We already keep a running list of monetization ideas in
-[`MONETIZATION.md`](MONETIZATION.md). Treat it as a **future idea bank**, not a
-current mandate — nothing there should drive what we build today. When the core
-experience is in place, we revisit that document and choose a direction
-deliberately.
+The candidate revenue models are sketched in
+[`VISION.md`](VISION.md#how-it-makes-money-later) as part of the long-term picture.
+Treat them as a **future idea bank**, not a current mandate — nothing there should
+drive what we build today. When the core experience is in place, we revisit them and
+choose a direction deliberately.
 
 ## The hardest problems to get right
 
