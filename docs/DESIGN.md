@@ -106,7 +106,10 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   `.window`) to tag kind (a static tag, not a button); `.section` (`<details>`)
   for collapsible groups; `.modal`
   (+ `.modal-sm`, `.modal-head`, `.modal-body`, `.modal-foot`, `.modal-message`)
-  for dialogs; `.side-panel` for the right-hand panel.
+  for dialogs; `.side-panel` for the right-hand panel. `.shortcut-list` (a
+  `.shortcut-row` per binding, action left / `.key` keycap chips right, `+`/`or`
+  joiners) lists a static reference inside a `.modal-sm` — currently the keyboard-
+  shortcuts reference (`ShortcutsReference.tsx`, opened from the room top bar).
 - **Docked controls** — the floating rounded pill bar is `.selection-bar` filled
   with `.sel-action` pills (each an optional `.sel-icon` + `.sel-label`); variants
   `.sel-active` (ink-filled current mode), `.sel-danger`, `.sel-history` (icon-only
@@ -173,6 +176,14 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
 - **Touch** — interactive controls keep a ≥44px hit area on coarse pointers.
 - **Disabled actions** — wrap in `.btn-tooltip-wrap` with a `title` so the reason
   shows on hover.
+- **Keyboard-shortcuts reference** — the keyboard icon in the furnish view's
+  room top bar (`App.tsx`, next to the back button) opens
+  `ShortcutsReference.tsx`, a `.modal-sm` listing every binding above (including
+  undo/redo). It's reachable regardless of pointer type or selection state,
+  unlike the old single hint line that only showed once a piece was selected and
+  was hidden on touch (#227). It lives in the top bar rather than the bottom
+  dock's `ActionBar` because that dock has no spare width at narrow viewports
+  (see `ActionBar.tsx`).
 
 ## Keeping the reference honest
 

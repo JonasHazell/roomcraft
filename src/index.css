@@ -2198,6 +2198,71 @@ select {
   margin-bottom: 0;
 }
 
+/* Keyboard-shortcuts reference (ShortcutsReference): a plain list of action ›
+   key(s) rows inside a `.modal-sm`. Each row is a two-ended flex line — the
+   action on the left, the key chips on the right — so a scan down the left edge
+   reads as a table of contents without an actual `<table>`. */
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shortcut-action {
+  font-size: 13.5px;
+  color: var(--ink);
+}
+
+.shortcut-keys {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+.shortcut-combo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shortcut-or {
+  font-size: 11px;
+  color: var(--muted);
+  margin-right: 2px;
+}
+
+.shortcut-plus {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* A single key chip, styled like a physical keycap — reused wherever a shortcut
+   is spelled out (currently only the shortcuts reference). */
+.key {
+  font: inherit;
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 11.5px;
+  line-height: 1;
+  padding: 5px 7px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
 @keyframes dialog-fade {
   from {
     opacity: 0;
@@ -2777,8 +2842,13 @@ select {
 }
 
 /* Same rounded, card-filled, shadowed surface as the switcher and bottom dock so
-   the back control belongs to the same family. */
-.room-back {
+   the back control belongs to the same family. `.room-topbar-icon` is the same
+   chrome for any other icon-only control that sits in this row (currently the
+   keyboard-shortcuts trigger, #227) — the row has real width to spare on both
+   sides of the centred proposal switcher, unlike the bottom dock's ActionBar
+   (see ActionBar.tsx). */
+.room-back,
+.room-topbar-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2792,12 +2862,14 @@ select {
   color: var(--ink);
 }
 
-.room-back:hover {
+.room-back:hover,
+.room-topbar-icon:hover {
   background: var(--paper-2);
   color: var(--ink);
 }
 
-.room-back > [aria-hidden] {
+.room-back > [aria-hidden],
+.room-topbar-icon > [aria-hidden] {
   display: inline-flex;
   font-size: var(--icon);
   line-height: 1;

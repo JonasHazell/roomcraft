@@ -11,6 +11,7 @@ import { ValidationScore } from './components/panel/ValidationScore';
 import { ProposalSwitcher } from './components/panel/ProposalSwitcher';
 import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { DialogHost } from './components/panel/DialogHost';
+import { ShortcutsReference } from './components/panel/ShortcutsReference';
 import { AuthDialog } from './components/auth/AuthDialog';
 import { Icon } from './components/ui/Icon';
 import { PlanEditor } from './components/plan/PlanEditor';
@@ -36,6 +37,7 @@ function FurnishView() {
   const panel = useUiStore((s) => s.panel);
   const furnitureDialog = useUiStore((s) => s.furnitureDialog);
   const proposalMenuOpen = useUiStore((s) => s.proposalMenuOpen);
+  const openShortcuts = useUiStore((s) => s.openShortcuts);
   const dialogActive = useDialogStore((s) => s.active);
   const overlayOpen = !!panel || !!furnitureDialog || !!dialogActive || proposalMenuOpen;
   return (
@@ -55,6 +57,21 @@ function FurnishView() {
             <Icon name="arrow-left" />
           </span>
           <span className="room-back-label">Rooms</span>
+        </button>
+        {/* Keyboard shortcuts (#227) lives here rather than the bottom dock's
+            ActionBar: that dock has no width to spare at narrow viewports (see
+            ActionBar.tsx), while this row has real slack on both sides of the
+            centred proposal switcher at every supported width. */}
+        <button
+          type="button"
+          className="btn room-topbar-icon"
+          onClick={openShortcuts}
+          title="Keyboard shortcuts"
+          aria-label="Keyboard shortcuts"
+        >
+          <span aria-hidden="true">
+            <Icon name="keyboard" />
+          </span>
         </button>
         <span className="room-topbar-name">{roomName}</span>
       </div>
@@ -145,6 +162,7 @@ function App() {
       )}
       <FurnitureDialog />
       <DialogHost />
+      <ShortcutsReference />
       <AuthDialog />
     </div>
   );
