@@ -22,6 +22,7 @@ import {
 import { runClaude, type ChatMessages } from './claude.ts';
 import { autoFixProposals } from './autofix.ts';
 import { placeDeskChairs } from './deskChair.ts';
+import { isSameOrigin } from './origin.ts';
 import { resolveProposals } from './orient.ts';
 import { PROPOSAL_BRIEFS, SYSTEM_PROMPT, buildRepairPrompt, buildUserPrompt } from './prompt.ts';
 import { buildPlanBrief, generatePlan } from './planning.ts';
@@ -209,21 +210,6 @@ function isSecureRequest(req: IncomingMessage): boolean {
   const first = Array.isArray(proto) ? proto[0] : proto;
   if (first) return first.split(',')[0].trim() === 'https';
   return Boolean((req.socket as { encrypted?: boolean }).encrypted);
-}
-
-/**
- * Rejects cross-site POSTs as a second CSRF guard on top of the session cookie's
- * `SameSite=Lax`. When a browser sends an `Origin`, it must match our host; a
- * missing `Origin` (non-browser clients, some same-origin requests) is allowed.
- */
-function isSameOrigin(req: IncomingMessage): boolean {
-  const origin = req.headers.origin;
-  if (!origin) return true;
-  try {
-    return new URL(origin).host === req.headers.host;
-  } catch {
-    return false;
-  }
 }
 
 /** The session token from the request's cookies, if any. */
