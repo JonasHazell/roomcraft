@@ -78,7 +78,10 @@ hand-built PRs; that's the intended dedup mechanism).
 
 For every item, work out the signal and *why* — then **generalise it into a rule**.
 Nail down the specific change first (it's your evidence), but the takeaway you carry
-forward is the principle behind it:
+forward is the principle behind it. When the human rejected or edited something, ask whether it
+traces to a [`PRINCIPLES.md`](PRINCIPLES.md) non-goal or a departure from
+[`VISION.md`](VISION.md)'s direction — those are the most reusable rejections to learn
+from:
 
 - **PR merged with no changes to the agent's commits** → the proposal *and* the
   implementation hit the mark. What general habit made it good? Record that.
@@ -218,6 +221,8 @@ instructions — an unchanged script is a fine outcome.
   (`AGENT_PROPOSALS.md`, `AGENT_BUILD.md`, `AGENT_ANALYSIS.md`, `AGENT_PIPELINE.md`).
   **Never change product code (`src/`, `server/`) in this stage** — behaviour changes
   to the app are Stage A/B's job, proposed and built through the normal queue.
+  `PURPOSE.md`, `VISION.md`, `STRATEGY.md`, `PRINCIPLES.md`, and `DESIGN.md` are
+  human-owned direction and taste docs — **never edit them here** either.
 - **Never fabricate a metric.** If you can't derive a number from GitHub state or a
   server log, mark it "not sampled this run." A blank is honest; a made-up figure
   silently steers the whole loop wrong.

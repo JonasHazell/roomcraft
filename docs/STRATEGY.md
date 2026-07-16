@@ -22,7 +22,7 @@ use on a phone, it is the wrong change — even if it adds capability.
 
 We are deliberately **not** optimizing for a monetization model yet. No feature
 should be shaped by "how will this make money" at this stage. That question is
-parked on purpose (see [Monetization](#monetization-is-parked-for-now) below).
+parked on purpose (see [Monetization](#monetization-is-parked--for-now) below).
 
 ## What we optimize for
 
@@ -53,7 +53,9 @@ experience better?** Concretely, we prioritise:
 - **Speculative infrastructure.** We don't build for scale, teams, or platforms
   we don't yet need. Build for the experience in front of us.
 
-None of these are permanent bans — they're just not what this phase is about.
+None of these are permanent bans — they're just not what this phase is about. These
+non-goals are consolidated, alongside our operating principles, in
+[`PRINCIPLES.md`](PRINCIPLES.md).
 
 ## How to decide if something is "in scope"
 
@@ -80,7 +82,8 @@ The plan is sequential:
 
 1. **Now:** build the best core room-planning experience (this document).
 2. **Later:** once the foundation is genuinely good, evaluate which monetization
-   model to pursue.
+   model to pursue — the long-term destination this points toward is described in
+   [`VISION.md`](VISION.md).
 
 We already keep a running list of monetization ideas in
 [`MONETIZATION.md`](MONETIZATION.md). Treat it as a **future idea bank**, not a
