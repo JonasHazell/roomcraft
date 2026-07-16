@@ -6,6 +6,7 @@ import { materialSpec } from '../../lib/materials';
 import { materialBump, materialMap } from './materialTextures';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
+import { SELECT_EMISSIVE } from './furniture/shared';
 
 /** Only deselect on a still click — not when a drag/camera orbit is released. */
 export function deselectOnStillClick(e: ThreeEvent<MouseEvent>) {
@@ -31,6 +32,7 @@ export function Floor() {
   // The floor is large and often seen at a grazing angle, where reflections peak.
   // Cap its reflectivity so even a shiny finish can't flare out to white.
   const envIntensity = Math.min(finish.envMapIntensity, 0.4);
+  const selected = useUiStore((s) => s.selection?.kind === 'floor');
 
   const geometry = useMemo(() => {
     const poly = floorPolygon(walls);
@@ -58,6 +60,8 @@ export function Floor() {
         envMapIntensity={envIntensity}
         bumpMap={bump}
         bumpScale={bump ? finish.bumpScale : 0}
+        emissive={selected ? SELECT_EMISSIVE : '#000000'}
+        emissiveIntensity={selected ? 0.25 : 0}
       />
     </mesh>
   );
