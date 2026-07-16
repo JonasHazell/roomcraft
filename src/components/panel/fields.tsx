@@ -47,6 +47,12 @@ export function NumberField({
           min={min}
           max={max}
           step={step}
+          // The visible suffix (e.g. "cm") sits right after the input but must
+          // not become part of its accessible name — without this, screen
+          // readers and `getByLabel('Length')`-style lookups see "Lengthcm"
+          // instead of "Length". `aria-label` here wins over the wrapping
+          // `<label>`'s text, so the suffix span can stay purely visual.
+          aria-label={label}
           onFocus={(e) => {
             setText(shown);
             if (commitOnBlur) e.currentTarget.select();
@@ -73,7 +79,9 @@ export function NumberField({
             setText(null);
           }}
         />
-        <span className="field-suffix">{suffix}</span>
+        <span className="field-suffix" aria-hidden="true">
+          {suffix}
+        </span>
       </span>
     </label>
   );
