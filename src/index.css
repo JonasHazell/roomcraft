@@ -2470,10 +2470,21 @@ select {
 }
 
 .room-card-thumb {
+  display: flex;
   font-size: 30px;
   line-height: 1;
   color: var(--accent);
   margin-bottom: 10px;
+}
+
+/* A drawn room's thumbnail is a small outline of its own floor plan — same
+   normalised path + styling as .template-preview svg path (PlanStartChooser),
+   so the two shape previews read as the same primitive. */
+.room-card-thumb-svg path {
+  fill: color-mix(in srgb, var(--accent) 14%, transparent);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
 }
 
 .room-card-name {
