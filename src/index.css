@@ -2498,6 +2498,26 @@ select {
   color: var(--muted);
 }
 
+/* Only the tappable room-card-main's meta row gets the chevron treatment —
+   the dashed "new room" tile's meta stays plain text (single string, no
+   trailing icon), so this is scoped rather than applied to .room-card-meta
+   generally. */
+.room-card-main .room-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+/* Trailing chevron on the card's own primary action (open/furnish) — a
+   lightweight, always-visible hint that the whole card is tappable, not just
+   the .btn-styled actions below it. Pushed to the row's far edge so it reads
+   as "this leads somewhere" without competing with the meta text. */
+.room-card-chevron {
+  margin-left: auto;
+  color: var(--muted);
+}
+
 .room-card-actions {
   display: flex;
   flex-wrap: wrap;
