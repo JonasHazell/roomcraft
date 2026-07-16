@@ -1,9 +1,9 @@
 # RoomCraft documentation
 
-This folder holds the project's reference docs: the *why* behind the app, how we
-decide what to build, the design system, the interior-design rule catalog, and the
-agent pipeline that proposes and builds changes. This page is the map — start here,
-then follow the links.
+This folder holds the project's reference docs: the *why* and the *vision* behind the
+app, how we decide what to build and the principles that guide it, the design system,
+the interior-design rule catalog, and the agent pipeline that proposes and builds
+changes. This page is the map — start here, then follow the links.
 
 For the codebase itself, see the top-level [`../README.md`](../README.md) (setup,
 features, deployment) and [`../CLAUDE.md`](../CLAUDE.md) (working conventions for
@@ -25,7 +25,8 @@ If you're new to the project, read these, in order — they run from *why* to *h
 
 ## Product & direction
 
-The *why* and *what* — read these before proposing or shaping new work.
+The *why*, the *where*, the *what*, and the rules every change is judged against —
+read these before proposing or shaping new work.
 
 | Doc | What it's for |
 | --- | --- |
