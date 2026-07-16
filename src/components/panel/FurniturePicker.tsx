@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   FURNITURE_CATALOG,
   FURNITURE_CATEGORIES,
@@ -11,6 +12,10 @@ import { Icon } from '../ui/Icon';
 export type Source = 'generic' | 'library';
 
 const cm = (m: number) => Math.round(m * 100);
+
+/** Case-insensitive substring match used by the name search field below. */
+const matchesQuery = (name: string, query: string) =>
+  name.toLowerCase().includes(query.trim().toLowerCase());
 
 interface Props {
   source: Source;
@@ -44,6 +49,19 @@ export function FurniturePicker({
     });
     if (next !== null) onRenameLibraryEntry(entry.id, next);
   };
+
+  // Filters whichever tab (catalog or library) is currently shown, by name —
+  // live as the user types. Category grouping below still applies to the
+  // filtered results.
+  const [query, setQuery] = useState('');
+
+  const filteredLibraryEntries = query
+    ? libraryEntries.filter((e) => matchesQuery(e.name, query))
+    : libraryEntries;
+  const hasCatalogMatch = FURNITURE_CATEGORIES.some((group) =>
+    kindsInCategory(group.id).some((kind) => matchesQuery(FURNITURE_CATALOG[kind].label, query)),
+  );
+
   return (
     <div className="stack">
       <div className="source-toggle" role="tablist" aria-label="Furniture source">
@@ -67,46 +85,66 @@ export function FurniturePicker({
         </button>
       </div>
 
+      <label className="field">
+        <span className="field-label">Search furniture</span>
+        <span className="field-input">
+          <input
+            type="text"
+            value={query}
+            placeholder="Search by name…"
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </span>
+      </label>
+
       {source === 'generic' ? (
-        // The catalog, grouped by room type so kitchen and bathroom pieces sit
-        // together and each room's furniture is easy to find.
-        <div className="palette-groups">
-          {FURNITURE_CATEGORIES.map((group) => {
-            const kinds = kindsInCategory(group.id);
-            if (kinds.length === 0) return null;
-            return (
-              <div key={group.id} className="palette-group">
-                <h3 className="palette-heading">{group.label}</h3>
-                <div className="palette">
-                  {kinds.map((kind) => (
-                    <button
-                      type="button"
-                      key={kind}
-                      className="palette-btn"
-                      onClick={() => onPickKind(kind)}
-                    >
-                      <span
-                        className="swatch"
-                        style={{ background: FURNITURE_CATALOG[kind].defaultColor }}
-                      />
-                      {FURNITURE_CATALOG[kind].label}
-                    </button>
-                  ))}
+        query && !hasCatalogMatch ? (
+          <p className="hint">No matches for “{query}.”</p>
+        ) : (
+          // The catalog, grouped by room type so kitchen and bathroom pieces sit
+          // together and each room's furniture is easy to find.
+          <div className="palette-groups">
+            {FURNITURE_CATEGORIES.map((group) => {
+              const kinds = kindsInCategory(group.id).filter(
+                (kind) => !query || matchesQuery(FURNITURE_CATALOG[kind].label, query),
+              );
+              if (kinds.length === 0) return null;
+              return (
+                <div key={group.id} className="palette-group">
+                  <h3 className="palette-heading">{group.label}</h3>
+                  <div className="palette">
+                    {kinds.map((kind) => (
+                      <button
+                        type="button"
+                        key={kind}
+                        className="palette-btn"
+                        onClick={() => onPickKind(kind)}
+                      >
+                        <span
+                          className="swatch"
+                          style={{ background: FURNITURE_CATALOG[kind].defaultColor }}
+                        />
+                        {FURNITURE_CATALOG[kind].label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )
       ) : libraryEntries.length === 0 ? (
         <p className="hint">
           No saved furniture yet. Select a piece in the room and choose “Save to library” to reuse
           it here.
         </p>
+      ) : query && filteredLibraryEntries.length === 0 ? (
+        <p className="hint">No matches for “{query}.”</p>
       ) : (
         // Saved pieces, grouped by the room type of their furniture kind.
         <div className="palette-groups">
           {FURNITURE_CATEGORIES.map((group) => {
-            const entries = libraryEntries.filter(
+            const entries = filteredLibraryEntries.filter(
               (e) => FURNITURE_CATALOG[e.kind].category === group.id,
             );
             if (entries.length === 0) return null;
