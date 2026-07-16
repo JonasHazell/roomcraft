@@ -13,7 +13,7 @@ import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { confirmDialog } from '../../store/useDialogStore';
-import { backToLobby } from '../../lib/nav';
+import { backToLobby, openRoomToFurnish } from '../../lib/nav';
 import { COARSE_POINTER, useMediaQuery } from '../../lib/useMediaQuery';
 import { PlanGrid } from './PlanGrid';
 import { PlanWalls } from './PlanWalls';
@@ -480,6 +480,18 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
     backToLobby();
   };
 
+  // A second, explicit way out of the plan editor: jump straight into
+  // furnishing this same room instead of round-tripping through the lobby.
+  // Reuses the exact transition the lobby's own room card and the wizard's
+  // finish step use (`openRoomToFurnish`) rather than a parallel path — see
+  // `lib/nav.ts`. Kept as its own visible button (not a second meaning on
+  // "Done") per the #127 lesson: a control must not branch on state the user
+  // can't see.
+  const onFurnish = () => {
+    draw.setTool('select');
+    openRoomToFurnish(useDesignStore.getState().design.id);
+  };
+
   return (
     <div className={`plan-editor${wizardStep === 'openings' ? ' plan-wizard-openings' : ''}`}>
       <svg
@@ -515,8 +527,11 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
         )}
       </svg>
 
-      {/* Top-left circular back button — the same compact control as the 3D view.
-          Inside the wizard, navigation lives in the wizard footer, so it's dropped. */}
+      {/* Top-left controls: the circular back button — the same compact control as
+          the 3D view — plus a second, explicit "Furnish this room" action so a quick
+          wall tweak doesn't require a detour through the lobby. Two distinct, always-
+          visible buttons rather than one control that branches on hidden state (#127).
+          Inside the wizard, navigation lives in the wizard footer, so both are dropped. */}
       {!wizardStep && (
         <div className="plan-topbar">
           <button
@@ -529,6 +544,16 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
             <span aria-hidden="true">
               <Icon name="arrow-left" />
             </span>
+          </button>
+          <button
+            type="button"
+            className="btn btn-accent plan-furnish-btn"
+            onClick={onFurnish}
+            title="Furnish this room in 3D"
+            aria-label="Furnish this room"
+          >
+            <Icon name="square" />
+            <span>Furnish this room</span>
           </button>
         </div>
       )}
