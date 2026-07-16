@@ -243,6 +243,12 @@ useDesignStore.subscribe((state, prev) => {
   if (state.project === prev.project && state.design === prev.design) return;
   if (controller.isApplying()) return; // undo/redo restoring a snapshot — not a new step
 
+  // A project-only mutation (e.g. renaming, duplicating or removing a room from
+  // the lobby) never touches the active room's design at all. It must not be
+  // recorded as a step on whichever room's stack happens to be active — that
+  // room was never edited, so there is nothing of its own to undo.
+  if (state.design === prev.design) return;
+
   // Switching room or proposal moves between variations rather than editing one.
   // That isn't an undoable step; it just makes another variation's stack active,
   // so refresh the flags for it and record nothing.

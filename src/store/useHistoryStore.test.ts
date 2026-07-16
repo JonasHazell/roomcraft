@@ -193,4 +193,39 @@ describe('history (undo/redo)', () => {
     store().setActiveProposal(p2);
     expect(furnitureCount()).toBe(0);
   });
+
+  it('does not record a lobby action on another room against the active room\'s history', () => {
+    // Regression test for #221: renaming/duplicating/removing a room from the
+    // lobby only ever touches `project`, never the active `design` — it must
+    // never be recorded as a step on whichever room happens to be active.
+    const store = useDesignStore.getState;
+
+    // Room A starts (and stays) active throughout.
+    const roomAId = store().design.id;
+    const roomBId = store().addRoom({ name: 'Room B', copyCurrent: false });
+    store().setActiveRoom(roomAId);
+    expect(store().design.id).toBe(roomAId);
+
+    // A lobby action on the *other* room: only `project` changes, Room A's
+    // `design` is untouched.
+    store().renameRoom(roomBId, 'Renamed B');
+    expect(store().project.rooms.find((r) => r.id === roomBId)?.name).toBe('Renamed B');
+
+    // A genuine edit to the active room (Room A) — this is its only real step.
+    store().addFurniture('chair');
+    expect(furnitureCount()).toBe(1);
+
+    // One undo reverts that edit...
+    useHistoryStore.getState().undo();
+    expect(furnitureCount()).toBe(0);
+    expect(store().project.rooms.find((r) => r.id === roomBId)?.name).toBe('Renamed B');
+
+    // ...and leaves Room A with nothing further to undo: the lobby rename must
+    // not have been recorded as a phantom second step on its stack.
+    expect(useHistoryStore.getState().canUndo).toBe(false);
+
+    // A further undo is a no-op, not a silent revert of the unrelated rename.
+    useHistoryStore.getState().undo();
+    expect(store().project.rooms.find((r) => r.id === roomBId)?.name).toBe('Renamed B');
+  });
 });
