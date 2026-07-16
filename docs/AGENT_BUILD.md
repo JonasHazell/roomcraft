@@ -115,5 +115,7 @@ repo. For any change, also consult the docs that bear on it —
 - Set `agent:built` on the PR you open.
 - Clear `agent:building` when reclaiming a stuck issue (step 1 above) — including
   closing the issue if the linked PR's rejection was a plain "don't want this."
-- Never touch `agent:analyzed` (that's Stage C) and never remove `agent:ready` from
-  issues you didn't build.
+- Never touch `agent:analyzed` or `agent:question` (both are Stage C's) and never
+  remove `agent:ready` from issues you didn't build. An `agent:question` issue is a
+  question for the human, not a build request — it never carries `agent:ready`, so
+  your queue step already skips it; never add `agent:ready` to one.

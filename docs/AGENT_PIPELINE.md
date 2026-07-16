@@ -38,6 +38,12 @@ Stage C's outputs — the lessons, the metrics snapshot, and any tuning of the
 instruction docs — feed straight back into Stages A and B on their next run. That
 feedback edge is what makes this a *loop* rather than a one-way conveyor.
 
+Stage C mostly **observes** your decisions, but it has one path to **ask**: when it
+can't confidently tell *why* you did something and the guess would meaningfully steer
+future work, it opens an `agent:question` issue for you, and a later run folds your
+answer back into the learnings (see the label table below and
+[`AGENT_ANALYSIS.md`](AGENT_ANALYSIS.md)).
+
 There is **no human gate between propose and build** — everything proposed gets
 built so you can look at real, working changes before deciding. Your only decision
 point is the **merge** on each pull request.
@@ -52,12 +58,21 @@ Labels are the backbone. They are the contract between stages.
 | `agent:building` | Routine B has claimed the issue and is implementing it (avoids doubles) | B           |
 | `agent:built`    | A pull request is open and waiting for your merge decision              | B           |
 | `agent:analyzed` | Routine C has already learned from this issue/PR (won't re-process)     | C           |
+| `agent:question` | Routine C opened this issue to ask **you** something; answer in a comment | C         |
 
 **`agent:ready` is your one lever:**
 
 - To stop an issue from being built, remove `agent:ready` or close the issue.
 - To build anything by hand — even an issue **you** wrote — add `agent:ready` to it
   and Routine B will pick it up on its next run.
+
+**`agent:question` runs the other way — Routine C asks, you answer.** When Stage C
+can't confidently tell *why* you did something and the guess would meaningfully steer
+future work, it opens an `agent:question` issue instead of recording a shaky rule
+(see [`AGENT_ANALYSIS.md`](AGENT_ANALYSIS.md) → *Asking the human a question*). Just
+reply in a comment — no label to manage — and a later Routine C run folds your answer
+into `AGENT_LEARNINGS.md` and closes the issue. It's the loop's one path where the
+human is asked rather than only observed.
 
 ## Where the instructions live
 
@@ -104,3 +119,8 @@ The Routines run in fresh sessions that clone the repository's **default branch*
 These instruction docs must be **merged to the default branch** before the Routines
 can read them. Until this setup PR is merged, the Routines are configured but will
 not find their instructions.
+
+**One-time label setup:** the `agent:question` label is new. Create it in the repo
+(any colour) before Stage C next runs — GitHub rejects an issue created with a label
+that doesn't exist, so the first question would otherwise fail to post. The other four
+pipeline labels already exist.

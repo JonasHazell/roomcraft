@@ -47,6 +47,10 @@ Find everything that has reached a decision but is **not** yet labelled
   themselves (see [How to read the human's own PRs](#how-to-read-the-humans-own-prs)
   for why these are worth learning from). These are the *richest positive examples
   of what "good" looks like in this repo*, so learn from them too.
+- **Answered `agent:question` issues** — open issues **you** opened as questions that
+  now have a human reply. Fold each answer into the learnings and close it, *before*
+  analysing new outcomes, since an answer may correct an earlier best-guess entry (see
+  [Asking the human a question](#asking-the-human-a-question)).
 
 **Skip** — do not analyse or label:
 
@@ -127,6 +131,81 @@ Not every merged PR carries a durable lesson. A purely mechanical change (a
 in that case record **no** learning and simply mark it `agent:analyzed`. Only write
 an entry when there's a genuine, reusable principle; don't manufacture one to fill
 the log.
+
+## Asking the human a question
+
+Your job on each outcome is to infer *why* the human did what they did. Sometimes
+the why is genuinely ambiguous, **and the general rule you'd record differs
+materially depending on the answer** — and a wrong generalised rule is worse than
+no rule, because it silently steers every future Stage A proposal and Stage B build.
+When you hit one of those, don't record a confident-sounding guess. **Ask the
+human.**
+
+You run in a fresh, headless session with no human present, so the dialogue is
+**asynchronous, through GitHub** — the same shared state the rest of the pipeline
+uses. A question is a **GitHub issue labelled `agent:question`**, answered on the
+human's own schedule, and picked up by a later run of this stage.
+
+### When to ask (be sparing)
+
+A question spends the human's attention — the scarcest thing in the loop — so the bar
+is high. Ask **only** when all three hold:
+
+1. **The interpretations genuinely diverge.** Two or more readings of the same
+   outcome lead to *different* durable rules (not just different wording of the same
+   rule).
+2. **The rule would actually steer future work.** The answer changes what Stage A
+   proposes or how Stage B builds — it's not academic.
+3. **You can't resolve it yourself** from the closing comment, the diff, or the
+   direction docs (`PRINCIPLES.md`, `VISION.md`, …).
+
+If any one fails, do what you do today: record your best-guess learning, or — when
+there's no genuine reusable principle — record nothing. Most outcomes are clear
+enough to generalise directly; asking should be the exception.
+
+### The dialogue lifecycle
+
+1. **Ask** — open an issue labelled `agent:question`. Keep it answerable in a single
+   comment:
+   - **Title** — the question in one line.
+   - **Context** — the item (`#N`) and exactly what the human did (merged after
+     editing X, closed with comment Y, hand-built Z).
+   - **Why I'm asking** — the two or three interpretations, presented as labelled
+     options (**A / B / C**), and the *different rule each one would produce*.
+   - **My best guess** — the option you'd record if this goes unanswered, so silence
+     still has a sane default.
+2. **Answer** — the human replies in a comment (e.g. just "B", or a sentence). There
+   is deliberately **no label for the human to manage** — their one lever stays
+   "merge PRs / comment," and this adds nothing new to learn.
+3. **Fold the answer back** — at the **start of every run**, before analysing new
+   outcomes, list open `agent:question` issues and check each for a human reply since
+   the ask. For each answered one: turn the answer into a durable entry in
+   [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md) (citing the question issue `#N` for
+   traceability), **correct or broaden any earlier best-guess learning it
+   contradicts**, then **close the issue** — a closed question is resolved and is
+   never reprocessed.
+4. **Age out unanswered questions** — a question must not live forever. If one has
+   gone unanswered for **7 runs (≈ a week)**, record its "my best guess" as an
+   explicitly **low-confidence** learning ("_provisional — question #N went
+   unanswered_") and close the question with a comment saying it timed out. Track the
+   age by the issue's `created_at`; don't re-ask the same question.
+
+### Guardrails on asking
+
+- **Cap the queue: at most 2 open `agent:question` issues at once, and at most 1 new
+  question per run.** If two are already open, record your best guess instead of
+  opening a third. Questions are a trickle, not a stream.
+- **Never block on an answer.** Still mark the source item `agent:analyzed` this run
+  (with a best-guess learning if warranted) so deduplication isn't held hostage to a
+  pending question. The question issue is a separate, parallel artifact from the item
+  it's about.
+- **A question is not a proposal.** Never label it `agent:ready` (Stage B must never
+  try to "build" it) and never `agent:analyzed` (it's a Stage-C artifact, not a
+  reviewed outcome). It carries `agent:question` only, until you close it.
+- **Surface open questions where the human already looks.** List any open
+  `agent:question` issues in your learnings-update PR description ("Open questions
+  awaiting your answer: #N") so they're visible in the review flow the human already
+  does. The issue is the durable channel; the PR line is just discoverability.
 
 ## Writing the learnings
 
@@ -245,3 +324,8 @@ own merged PRs, which is how they're deduped across runs. Never set `agent:ready
 `agent:building`, or (except on your own learnings/metrics/pipeline PR) `agent:built`.
 Never label the human's own *closed* (un-merged) PRs or the pipeline's own meta-PRs —
 those are out of scope and left untouched.
+
+You are the **only** stage that uses `agent:question` — set it when you open a
+question for the human, and close (never `agent:analyzed`) the issue once you've
+folded the answer back in. Never put `agent:question` on anything you didn't open as
+a question.

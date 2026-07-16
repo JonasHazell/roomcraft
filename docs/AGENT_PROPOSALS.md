@@ -173,5 +173,6 @@ click-through, and let these categories shape the *kind* of feature you add:
 
 ## Labels
 
-The pipeline uses four labels: `agent:ready`, `agent:building`, `agent:built`,
-`agent:analyzed`. They already exist in the repo. You only ever set `agent:ready`.
+The pipeline uses five labels: `agent:ready`, `agent:building`, `agent:built`,
+`agent:analyzed`, and `agent:question` (Stage C's channel for asking the human — not
+yours to touch). They already exist in the repo. You only ever set `agent:ready`.

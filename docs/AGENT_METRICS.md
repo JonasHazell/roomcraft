@@ -44,6 +44,8 @@ Computed from label state and run history:
 | **Stuck-building count** | issues `agent:building` with no PR for a long time | Crashed Stage B runs to reclaim |
 | **Duplicate-rejection count** | rejections whose reason was "already did this myself" | Is Stage A's dedup check failing? |
 | **Empty-run rate** | runs that produced nothing ÷ runs | Are the stages starved or over-cautious? |
+| **Open questions** | open `agent:question` issues awaiting an answer | Is the question channel backing up or unused? |
+| **Question-answer rate** | answered ÷ asked `agent:question` issues | Are the questions worth asking — does the human engage? |
 
 ### 3. Product observability — what the running app tells us
 
@@ -99,6 +101,8 @@ is versus the third snapshot (from PR #219).
 | Ready backlog | 1 | → (was 1) | #229 (name a duplicated room after its source) — open, not yet `agent:building`, no open PR; a fresh Stage A proposal Stage B hasn't picked up yet, not a stuck item |
 | Stuck-building count | 2 | ↑ (was 0) | #205 and #224 — both still open, still labelled `agent:building`, both PRs (#239, #240) closed without merging. This is the *second* occurrence of the gap flagged last run ("watch for a second rejection leaving an issue stuck... before promoting a label-clearing rule") — landing twice in the same run clears that bar. **Promoted this run:** `AGENT_BUILD.md`'s queue-finding step now reclaims stuck `agent:building` issues whose PR closed unmerged (clearing the label, and closing the issue too when the PR's rejection was a plain "don't want this"). #205 and #224 themselves are left as-is here — Stage C cannot touch `agent:building` — for Stage B's next run to reclaim under the new rule |
 | Duplicate-rejection count | 2 | → (was 2) | #129, #135 — #239/#240's rejections weren't "already did this myself" duplicates, so this count is unaffected |
+| Open questions | 0 | new | `agent:question` channel introduced this change; none asked yet |
+| Question-answer rate | n/a | new | no questions asked yet — first data point once Stage C opens one |
 | AI proposal latency | not sampled this run | — | still no reachable server/runtime logs from this GitHub-only Stage C session |
 | AI proposal cost | not sampled this run | — | same as above |
 | AI calls per proposal | not sampled this run | — | same as above |

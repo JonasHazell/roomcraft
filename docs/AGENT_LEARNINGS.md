@@ -11,6 +11,13 @@ future agent can apply across many situations (e.g. "controls must not hide othe
 controls"), not a one-off note about a single PR. Cite the issue/PR number as the
 example the principle came from. Group related lessons under a heading.
 
+Some entries come from a **direct answer** the human gave to an `agent:question`
+issue rather than from a merge/reject signal (see
+[`AGENT_ANALYSIS.md`](AGENT_ANALYSIS.md) → *Asking the human a question*). Record
+those the same way, citing the question issue `#N`; if the answer came from an
+un-answered, timed-out question, mark the entry **provisional (low-confidence)** so a
+later run knows it rests on Stage C's guess, not the human's word.
+
 This file is the *qualitative* half of the loop's memory; its quantitative half lives
 in [`AGENT_METRICS.md`](AGENT_METRICS.md). The two work together: a lesson here that
 **keeps recurring**, or one that a metric confirms is costing merges, is Stage C's cue
