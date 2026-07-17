@@ -855,6 +855,12 @@ select {
   flex-basis: 100%;
 }
 
+/* The auto-arrange result line: the shared .hint, given its own full-width row
+   under the action buttons (transient — cleared when the menu closes). */
+.proposal-menu-actions .proposal-menu-status {
+  flex-basis: 100%;
+}
+
 /* ---------- Floor plan (2D) ---------- */
 
 .plan-editor {
