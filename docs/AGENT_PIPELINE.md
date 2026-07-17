@@ -27,7 +27,7 @@ labels) is the shared state** that carries work from one stage to the next.
 Routine A — Propose        Routine B — Build           Routine C — Analyse
   twice daily                twice daily                 twice daily
       │                          │                            │
-  reads the docs +           picks up to 5 per run,        reads merged/closed agent
+  reads the docs +           picks up to 10 per run,       reads merged/closed agent
   AGENT_LEARNINGS.md +       labelled `agent:ready`,       PRs, rejected issues, and
   AGENT_METRICS.md,          opens a PR (`Closes #N`),     the human's own merged PRs;
   creates issues             labels the PR `agent:built`   updates LEARNINGS + METRICS,
@@ -108,10 +108,11 @@ when a pattern is strong enough, into the agent instructions themselves.
   hardest problems, removals, and genuinely-core new features, not a quota of new
   surface area) sets how many PRs you get. The brake is quality, not count — every
   proposal must clear the bar.
-- **Stage B builds up to 5 PRs per run**, claiming and building each issue **one at a
+- **Stage B builds up to 10 PRs per run**, claiming and building each issue **one at a
   time** so a crashed run strands at most the single in-flight issue instead of a
   whole batch; a larger backlog drains in order across successive runs rather than all
-  at once. The per-run cap is a throughput knob, not a safety one — since one-at-a-time
+  at once. The cap matches Stage A's 10-proposal target so a full batch can drain in a
+  single run. The per-run cap is a throughput knob, not a safety one — since one-at-a-time
   claiming means a bigger batch can never strand work, raise the cap (or the run
   cadence) if the ready backlog grows.
 - **Nothing auto-merges.** Every change waits for you.

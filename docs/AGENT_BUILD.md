@@ -49,12 +49,15 @@ repo. For any change, also consult the docs that bear on it —
    A single crashed run can strand a whole **batch** at once — several issues left
    `agent:building` with no PR — so reclaim *every* such issue you find here, not
    just the first one.
-2. **Respect the cap.** Take up to **5 issues per run** (oldest first); leave any
-   beyond that for the next run. The cap is deliberately small so a whole run — each
-   issue built, validated with `npm run test:e2e` in desktop *and* mobile, and turned
-   into a PR — fits comfortably inside one session's time budget. Because issues are
-   now claimed one at a time (below), this cap is a **throughput** knob, not a safety
-   one: raising it can grow the backlog but can never *strand* work.
+2. **Respect the cap.** Take up to **10 issues per run** (oldest first); leave any
+   beyond that for the next run. The cap is sized to drain a full Stage A batch (10
+   proposals per run) in a single run, while keeping each run — every issue built,
+   validated with `npm run test:e2e` in desktop *and* mobile, and turned into a PR —
+   within one session's time budget. Because issues are now claimed one at a time
+   (below), this cap is a **throughput** knob, not a safety one: raising it can grow
+   the backlog but can never *strand* work. If a run can't finish all 10 in its time
+   budget, ship the PRs you completed and leave the rest `agent:ready` for the next
+   run (see "Ship what you finish" below).
 3. **Process the selected issues one at a time, and claim each just before you build
    it.** Run the full claim → implement → verify → open-PR cycle for one issue, *then*
    move to the next. **Never label the whole batch `agent:building` up front:** a run
