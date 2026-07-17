@@ -187,6 +187,23 @@ describe('FEN-02 the coffin position', () => {
   });
 });
 
+describe('ERG-02 TV viewing distance', () => {
+  // diagonal = width * 0.92 / 0.87; the far bound is 2.5× the diagonal.
+  const tvWidth = 0.87 / 0.92; // → diagonal of exactly 1.0 m
+  const diagonal = (tvWidth * 0.92) / 0.87;
+  const tvAt = () => piece('tv', 2, 1, { width: tvWidth, depth: 0.1, height: 0.6 });
+  const sofaAt = (dist: number) => piece('sofa', 2, 1 + dist, { width: 2, depth: 0.9, height: 0.8 });
+
+  it('flags a seat 2.55× the diagonal away (past the 2.5× bound, inside the old 2.6×)', () => {
+    const outcome = outcomeOf(makeDesign([tvAt(), sofaAt(2.55 * diagonal)]), 'ERG-02');
+    expect(outcome.status).toBe('violated');
+  });
+
+  it('passes a seat 2.45× the diagonal away (inside the 2.5× bound)', () => {
+    expect(outcomeOf(makeDesign([tvAt(), sofaAt(2.45 * diagonal)]), 'ERG-02').status).toBe('passed');
+  });
+});
+
 describe('ACC-13 over-furnishing', () => {
   it('flags a room where furniture covers more than 60% of the floor', () => {
     const boxes = [

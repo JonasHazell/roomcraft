@@ -645,7 +645,7 @@ export const RULES: RuleDef[] = [
       for (const tv of tvs) {
         const diagonal = (tv.size.width * 0.92) / 0.87; // screen width → diagonal (16:9)
         const min = 1.2 * diagonal;
-        const max = 2.6 * diagonal; // 1.6× for 4K, up to ~2.5× for HD
+        const max = 2.5 * diagonal; // 1.6× for 4K, up to ~2.5× for HD
         const nearest = seats
           .map((s) => ({ s, d: Math.hypot(s.position.x - tv.position.x, s.position.z - tv.position.z) }))
           .sort((a, b) => a.d - b.d)[0];
