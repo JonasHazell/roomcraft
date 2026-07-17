@@ -220,6 +220,23 @@ describe('ACC-13 over-furnishing', () => {
       'passed',
     );
   });
+
+  // In a 20 m² room, these footprints leave ~47% free — inside the flat 40%
+  // bound but under the stricter 50% the catalog wants for bedrooms/living rooms.
+  const crowdingBoxes = [
+    piece('box', 1, 1.4, { width: 1.9, depth: 2.3 }),
+    piece('box', 3, 3.6, { width: 1.9, depth: 2.3 }),
+  ];
+
+  it('flags a living room at ~47% free (below the stricter 50% bedroom/living-room bar)', () => {
+    const sofa = piece('sofa', 2, 1, { width: 2, depth: 0.9 }); // infers vardagsrum
+    expect(outcomeOf(makeDesign([sofa, ...crowdingBoxes]), 'ACC-13').status).toBe('violated');
+  });
+
+  it('passes a non-bedroom/living room at the same ~47% free (flat 40% bar)', () => {
+    const filler = piece('box', 2, 1, { width: 2, depth: 0.9 }); // same footprint, no room type
+    expect(outcomeOf(makeDesign([filler, ...crowdingBoxes]), 'ACC-13').status).toBe('passed');
+  });
 });
 
 describe('ACC-14 usable clearance in front of a function', () => {
