@@ -77,13 +77,23 @@ export function FurnitureDialog() {
     close();
   }, [close]);
 
-  // Cancelling an edit session rolls back its batch — the live edits, and (when
-  // this session started from the type picker) the placement itself — so the
-  // newly added piece disappears along with any tweaks.
+  // Dismissing an edit session (backdrop / ✕ / Esc) branches on how it started:
+  //  - A piece just placed from the type picker was never committed, so an
+  //    incidental dismiss discards it — the batch rolls back and the new piece
+  //    (plus any tweaks) disappears. This is the correct place-mode behaviour.
+  //  - Editing an EXISTING piece via "More" applies its size/colour/material live
+  //    to the store, so those are real, visible changes. Treat dismiss as
+  //    close-and-keep: commit the batch (exactly what OK does) so the changes you
+  //    see are the changes that stick. It stays risk-free because a committed edit
+  //    is a single global-undo step (PRINCIPLES.md #7).
   const dismiss = useCallback(() => {
-    if (dialog?.mode === 'edit') useHistoryStore.getState().cancelBatch();
+    if (dialog?.mode === 'edit') {
+      const history = useHistoryStore.getState();
+      if (dialog.id === justPlacedId) history.cancelBatch();
+      else history.endBatch();
+    }
     close();
-  }, [dialog, close]);
+  }, [dialog, justPlacedId, close]);
 
   // Esc dismisses the dialog. App's global handler bails out while a dialog is
   // open, so closing here doesn't also clear the selection.
