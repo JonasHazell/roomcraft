@@ -62,6 +62,13 @@ test('the catalog tab filters by name and shows "No matches" for a query with no
 test('the search has a clear button and resets when switching tabs (#277)', async ({
   page,
 }, testInfo) => {
+  // Walks the full wizard into the 3D furnish view and then clicks through the
+  // picker (type, clear, type again, switch tabs). Each click's actionability
+  // check competes with the react-three-fiber render loop, which keeps the main
+  // thread busy under parallel CI worker load — the default 30s budget can lapse
+  // mid-click. Give the same headroom the library-tab test below already relies
+  // on so this stays green in CI rather than flaking on a stalled click.
+  test.setTimeout(120000);
   await createRoomAndEnterFurnish(page);
 
   await page.getByRole('button', { name: 'Add furniture' }).click();
