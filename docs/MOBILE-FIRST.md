@@ -1,9 +1,16 @@
 # RoomCraft — mobile-first, one component set
 
-RoomCraft is built **mobile-first**, and there is **one set of components** that
-serves every screen size. A phone, a tablet and a desktop browser all render the
+> **Mobile-first is now a strong default, not an absolute gate.** As we build toward
+> the vision (see [`STRATEGY.md`](STRATEGY.md) / [`VISION.md`](VISION.md)), a
+> phone-friendly experience remains a value we aim for — but it no longer vetoes work
+> that adds capability. The one-component-set approach and the CSS conventions below
+> are still the recommended way to build UI; follow them where they fit, and depart
+> from them deliberately when a feature genuinely needs it.
+
+RoomCraft is built **mobile-first by default**, with **one set of components** that
+serves every screen size. A phone, a tablet and a desktop browser render the
 _same_ React components and the _same_ `src/index.css` classes — they adapt, they
-are never duplicated.
+are not duplicated.
 
 This document sits alongside [`DESIGN.md`](DESIGN.md): DESIGN.md is _what the
 primitives are_, this is _how they behave across viewports_. Read both before

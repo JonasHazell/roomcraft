@@ -98,7 +98,7 @@ hand-built PRs; that's the intended dedup mechanism).
 For every item, work out the signal and *why* — then **generalise it into a rule**.
 Nail down the specific change first (it's your evidence), but the takeaway you carry
 forward is the principle behind it. When the human rejected or edited something, ask whether it
-traces to a [`PRINCIPLES.md`](PRINCIPLES.md) non-goal or a departure from
+traces to a [`PRINCIPLES.md`](PRINCIPLES.md) value or a departure from
 [`VISION.md`](VISION.md)'s direction — those are the most reusable rejections to learn
 from:
 

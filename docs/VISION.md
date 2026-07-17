@@ -5,20 +5,22 @@ Where [`STRATEGY.md`](STRATEGY.md) says *what we build right now*, this document
 Its job in the pipeline is to give proposals a direction: prefer work that moves toward
 this picture, not just local polish.
 
-> **Sequencing.** The destination below is the *long term*. It does **not** override the
-> current phase: `STRATEGY.md` still says core-experience-first and `PRINCIPLES.md`'s
-> non-goals (no monetization-driven features, no affiliate wiring *yet*) still hold
-> today. This vision is what those parked questions eventually point at — the "later" in
-> STRATEGY's deliberate *now → later* sequence — not a licence to start building commerce
-> now.
+> **Sequencing.** We are **building toward this destination now** — it is no longer
+> gated behind a "core first, commerce later" sequence. `STRATEGY.md` and
+> `PRINCIPLES.md` have been updated to match: monetization is unparked, new surface area
+> is welcome, and the destination's features (multi-room, collaboration, real furniture,
+> the marketplace) are in scope today. We still care about doing it well — we just no
+> longer wait.
 
-## The near-term horizon (this phase)
+## Where the work points now
 
-The current phase is unambiguous: **get the core room-planning experience genuinely good
-before anything else** — which means solving the three hardest problems *well*, not just
-adequately (a stupidly-simple-yet-complete GUI, validation rules that are general *and*
-relevant, and an AI engine that gives genuinely best suggestions). They're described in
-full in [`STRATEGY.md` → The hardest problems to get right](STRATEGY.md#the-hardest-problems-to-get-right).
+Two things advance together: **keep making the core genuinely good** — the three hardest
+problems (a simple-yet-complete GUI, validation rules that are general *and* relevant, an
+AI engine that gives genuinely best suggestions, described in
+[`STRATEGY.md` → The hardest problems to get right](STRATEGY.md#the-hardest-problems-to-get-right))
+— **and build out the destination**: more rooms and whole homes, people planning
+together, suggestions made of real buyable furniture, and the revenue models that turn it
+into a business. Both are current work.
 
 ## The destination (1–3 years)
 
@@ -54,12 +56,11 @@ RoomCraft.
 - **The promise is unchanged, just broader.** Still stupidly simple, still mobile-first,
   still *never a blank page* — now for more rooms, more people, and real furniture.
 
-## How it makes money (later)
+## How it makes money
 
-Monetization is parked until the core experience is strong (see
-[`STRATEGY.md`](STRATEGY.md#monetization-is-parked--for-now)); these are the candidate
-models the destination would choose from — a future idea bank, **not** a mandate for
-anything built today:
+Monetization is **in play now** (see
+[`STRATEGY.md`](STRATEGY.md#monetization-is-in-play)); these are the models to design
+and build toward, chosen deliberately as the product grows:
 
 - **Freemium / subscription.** A free tier (a couple of saved rooms, basic furniture)
   and a Pro tier for unlimited rooms, unlimited AI layout proposals, full validation /
@@ -83,8 +84,9 @@ two-sided marketplace above.
 
 Even as scope widens, these are off the table — they'd betray the promise or the focus:
 
-- **Not a professional CAD/drafting tool.** Simplicity and mobile-first are
-  non-negotiable; power-user complexity is never the goal, however much capability grows.
+- **Not a professional CAD/drafting tool.** Simplicity and a phone-friendly feel stay
+  core values; raw power-user complexity for its own sake isn't the goal, however much
+  capability grows.
 - **Not an everything-marketplace.** The commerce is furniture and interiors tied to
   *actual rooms* — never general retail of anything-and-everything.
 - **Not an attention or data business.** Revenue stays tied to helping people furnish

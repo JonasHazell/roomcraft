@@ -8,24 +8,24 @@ Repository: `JonasHazell/roomcraft`.
 
 ## Before you propose — read these
 
-1. [`STRATEGY.md`](STRATEGY.md) — what we build **right now**: depth over breadth,
-   craft and consistency, reliability, and above all a **simple, clear,
-   mobile-first** experience. Monetization is parked.
-2. [`PURPOSE.md`](PURPOSE.md) — the promise: make it *stupidly simple* to find the
-   best interior design for a room. Every proposal must serve this.
-3. [`VISION.md`](VISION.md) — where RoomCraft is heading beyond the current phase.
-   Prefer proposals that move toward it, not just local polish.
-4. [`PRINCIPLES.md`](PRINCIPLES.md) — the operating principles and **non-goals** every
-   proposal is judged against. A proposal that violates a non-goal (feature sprawl,
-   monetization-driven, speculative infrastructure) is out of scope no matter how good
-   the idea, and the principles are the tie-breaker between two good candidates.
-5. [`DESIGN.md`](DESIGN.md) — the design system and quality bar. UI proposals must
-   reuse existing primitives and tokens.
-6. [`MOBILE-FIRST.md`](MOBILE-FIRST.md) — the app is **mobile-first**, one component
-   set for every screen. Judge every GUI idea on a phone first, not a desktop.
+1. [`STRATEGY.md`](STRATEGY.md) — what we build **now**: build toward the vision —
+   deepen the core *and* expand the surface, including monetization — with craft,
+   consistency, and reliability as values, not gates.
+2. [`PURPOSE.md`](PURPOSE.md) — the promise: help someone find, plan, and get the
+   interior design they love. Every proposal should serve this.
+3. [`VISION.md`](VISION.md) — where RoomCraft is heading, and what we're building
+   toward now. Proposals that move toward the destination (more rooms, whole homes,
+   collaboration, real/buyable furniture, revenue) are first-class, not "later."
+4. [`PRINCIPLES.md`](PRINCIPLES.md) — the operating values every proposal is weighed
+   against. They guide taste and quality; they are **not** a rejection checklist, and
+   nothing is out of scope merely for being new, larger, or monetization-related.
+5. [`DESIGN.md`](DESIGN.md) — the design system and quality bar. Prefer reusing
+   existing primitives and tokens for UI work.
+6. [`MOBILE-FIRST.md`](MOBILE-FIRST.md) — phone-friendly is the default; judge GUI ideas
+   on a phone as well as a desktop.
 7. [`ARCHITECTURE.md`](ARCHITECTURE.md) — the feature→code map. Skim it to see
-   what the app **already does** and where it lives, so you deepen an existing
-   feature (depth over breadth) instead of proposing a duplicate.
+   what the app **already does** and where it lives, so you build on an existing
+   feature instead of proposing a duplicate.
 8. [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md) — **the most important input.** This
    is what the human actually merged, edited, or rejected in past rounds. Steer
    toward the patterns that got merged and away from the ones that got rejected.
@@ -42,8 +42,8 @@ complete doc map is in [`docs/README.md`](README.md), and you may open any file 
 repo. Consult whatever else bears on a candidate — most importantly
 [`interior-design-rules.md`](interior-design-rules.md) (the canonical rule catalog behind
 validation and AI suggestions) for any rule/AI proposal, plus
-[`STRATEGY.md`](STRATEGY.md#monetization-is-parked--for-now) and
-[`VISION.md`](VISION.md#how-it-makes-money-later) (what's parked and why) and
+[`STRATEGY.md`](STRATEGY.md#monetization-is-in-play) and
+[`VISION.md`](VISION.md#how-it-makes-money) (the revenue models now in play) and
 [`CLAUDE.md`](../CLAUDE.md) (conventions and commands).
 
 ## Start every run by looking at the actual app
@@ -78,14 +78,14 @@ and the click-through:
   proposals. Advance one of `STRATEGY.md`'s **three hardest problems** — a
   simpler-yet-complete GUI, validation rules that are general *and* relevant, an AI
   engine that gives genuinely best suggestions — or move toward
-  [`VISION.md`](VISION.md)'s destination. These are *bigger in ambition than local
-  polish*, and often mean deepening or finishing a core flow so it's noticeably more
-  complete (*depth over breadth* in practice). They must still be **small and
-  self-contained enough to review in one sitting**: if a direction is genuinely large,
-  propose the **first concrete slice** of it, not a sprawling refactor (see the
-  small-PR guardrail below). Don't shy away from the core just because it's hard —
-  but respect the hot-area timing check in step 3 so you don't collide with the
-  human's own work.
+  [`VISION.md`](VISION.md)'s destination — including **new surface area, whole new
+  flows, and monetization work**, not only deepening what exists. These are *bigger in
+  ambition than local polish*. They can be **larger than a one-sitting diff** when the
+  value warrants it: prefer a coherent, reviewable PR, and only slice a direction into
+  stages when that genuinely helps — a larger, ambitious build toward the vision is now
+  welcome, not something to shrink on principle. Don't shy away from the core or from
+  new territory just because it's hard — but respect the hot-area timing check in step 3
+  so you don't collide with the human's own work.
 - **3 bugs** — things that are actually **broken or wrong**, not merely improvable.
   A regression, a control that doesn't work, a layout that overflows or clips, state
   that gets corrupted, a mobile gesture that misfires, or a reliability failure the
@@ -102,9 +102,9 @@ and the click-through:
   - *GUI clarity & simplicity* — simpler layouts, more obvious controls, fewer
     choices, better mobile ergonomics. When in doubt, remove a choice rather than add
     one.
-  - *A genuinely-core new feature* — a small, self-contained addition to planning and
-    furnishing a room, held to `PRINCIPLES.md`'s feature-sprawl non-goal — never the
-    quota's reason for existing.
+  - *A new feature* — an addition to planning and furnishing a room (or a step toward
+    the vision) that's a good fit for this bucket; larger, more ambitious features
+    belong in the "larger steps" bucket above.
   - *Removing an unnecessary feature* — cutting clutter that confuses the core journey
     or isn't pulling its weight is a valid, valuable proposal.
 
@@ -115,25 +115,23 @@ bucket — the brake is quality, not hitting an exact per-bucket count.
 
 ## What makes a good proposal
 
-- **Serves the core experience.** It makes an existing, core flow better — faster,
-  clearer, simpler, more reliable, more delightful — per `STRATEGY.md` and
-  `PURPOSE.md`.
-- **Points toward the long-term goal, not just local polish.** Prefer proposals that
-  advance one of `STRATEGY.md`'s three hardest problems or move toward
-  [`VISION.md`](VISION.md)'s destination over cosmetic tweaks with no bearing on where
-  the product is heading. A clean, safe, tiny diff is necessary but not sufficient —
-  it should also *matter*.
-- **Makes the app simpler and clearer, mobile-first.** The bar is a first-time user
-  on a phone getting from an empty room to one they love with as little friction as
-  possible. Prefer changes that remove steps, choices, or confusion.
-- **Small and self-contained.** One coherent change that a person can review in a
-  single sitting. If it needs a large refactor, it's too big — split it or skip it.
+- **Serves the vision or the core experience.** It either moves RoomCraft toward
+  [`VISION.md`](VISION.md)'s destination (more rooms, whole homes, collaboration,
+  real/buyable furniture, revenue) or makes an existing flow better — faster, clearer,
+  more reliable, more delightful.
+- **Matters.** Prefer proposals that advance one of `STRATEGY.md`'s three hardest
+  problems or open a real step toward the destination over cosmetic tweaks. A clean,
+  safe diff is necessary but not sufficient — it should also *matter*.
+- **Phone-friendly where it's UI.** Design UI so it works well on a phone as well as a
+  desktop. A value to aim for, not a veto on capability.
+- **Coherent and reviewable.** One coherent change per issue. It no longer has to be
+  *small* — a larger, ambitious build toward the vision is fine; just keep it coherent
+  enough to review and, where a direction is big, say how it could land in stages.
 - **Concrete.** Names the files/areas involved and describes the change precisely
   enough that Stage B can implement it without guessing the intent.
-- **A real addition.** Each feature adds something new that serves the core
-  experience — but keep it small enough to land cleanly and fit the existing design
-  system rather than sprawling into a new surface of its own.
-- **Buildable to the quality bar** (design consistency, tests, no rough edges).
+- **A real addition.** New features and new surface area are welcome when they serve
+  the vision; fit the existing design system where you can.
+- **Buildable with care** (design consistency where practical, tests, no rough edges).
 
 ## Algorithm for each run
 
@@ -193,7 +191,7 @@ bucket — the brake is quality, not hitting an exact per-bucket count.
     behaviour, and the **actual** behaviour (a screenshot or console error helps).
   - **Proposed change** — what to do, concretely.
   - **Files / areas** — the likely files or components involved.
-  - **Scope & non-goals** — what this deliberately does *not* touch, to keep it small.
+  - **Scope & non-goals** — what this deliberately does *not* touch, to keep it focused.
   - **Quality notes** — anything Stage B must respect (design tokens, tests, Esc
     handling, ≥44px touch targets, undo/redo — see `DESIGN.md`).
 - **Label:** `agent:ready` (required — this is what Stage B watches).
@@ -202,17 +200,18 @@ bucket — the brake is quality, not hitting an exact per-bucket count.
 
 - **Target of 9 issues per run in a fixed mix** — **~3 larger steps toward the
   long-term goal, 3 bugs, and 3 feature/GUI improvements** (see *What to look for*).
-  That is the intended volume and spread, not a ceiling to stay under, and it is
-  **not** a quota of *new features*: per *depth over breadth*, prefer deepening what
-  exists over adding surface area, and a bug fix or a removal counts fully. The split
+  That is the intended volume and spread, not a ceiling to stay under. New features
+  and new surface area toward the vision now count fully in the "larger steps" bucket,
+  alongside deepening what exists; a bug fix or a removal counts fully too. The split
   is a target, not a rigid contract — rebalance across buckets when one is genuinely
   thin. The human reviews every resulting PR, so the brake is *quality*, not count:
-  never pad the list with weak, sprawl-y, or duplicate ideas to hit the number.
-- **No monetization-driven proposals** — that phase is parked (`STRATEGY.md`).
-- **No speculative infrastructure** — build for the experience in front of us.
-- If, after a thorough look at the app, you genuinely cannot find 9 in-scope,
-  quality proposals, create as many strong ones as you can rather than filling the
-  quota with filler.
+  never pad the list with weak or duplicate ideas to hit the number.
+- **Monetization and new surface area are in scope** — proposals for revenue models,
+  new flows, and infrastructure toward the vision are welcome (`STRATEGY.md`,
+  `VISION.md`). Build with care and taste.
+- If, after a thorough look at the app, you genuinely cannot find 9 quality
+  proposals, create as many strong ones as you can rather than filling the quota with
+  filler.
 
 ## Labels
 
