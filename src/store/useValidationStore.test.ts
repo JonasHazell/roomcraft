@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDesignStore } from './useDesignStore';
+import { useUiStore } from './useUiStore';
 // Importing the store installs the design-store subscription that auto-validates.
 import { useValidationStore } from './useValidationStore';
 
@@ -46,6 +47,28 @@ describe('automatic validation', () => {
 
     expect(second).toBe(design().design.updatedAt);
     expect(second).not.toBe(first);
+  });
+
+  it('defers validation while a drag is in progress and runs once when it ends', () => {
+    // A first edit (no drag) refreshes the report as usual.
+    vi.advanceTimersByTime(1);
+    design().addFurniture('bed');
+    const beforeDrag = validation().report?.designUpdatedAt;
+    expect(beforeDrag).toBe(design().design.updatedAt);
+
+    // Start a drag gesture: further design changes are NOT revalidated per frame.
+    useUiStore.getState().setDragging('dragging-piece');
+    vi.advanceTimersByTime(1);
+    design().addFurniture('wardrobe');
+    vi.advanceTimersByTime(1);
+    design().addFurniture('desk');
+    // The report is still the pre-drag one — the two mid-drag edits were skipped.
+    expect(validation().report?.designUpdatedAt).toBe(beforeDrag);
+
+    // Ending the gesture runs validation exactly once, now fully current.
+    useUiStore.getState().setDragging(null);
+    expect(validation().report?.designUpdatedAt).toBe(design().design.updatedAt);
+    expect(validation().report?.designUpdatedAt).not.toBe(beforeDrag);
   });
 
   it('clears any active highlight when the design changes', () => {
