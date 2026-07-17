@@ -8,6 +8,7 @@ import type { FurnitureKind, FurnitureLibraryEntry } from '../../types';
 import { Icon } from '../ui/Icon';
 import { FurniturePicker, type Source } from './FurniturePicker';
 import { PropertiesPanel } from './PropertiesPanel';
+import { FurnitureFindings } from './FurnitureFindings';
 
 /**
  * Modal for adding and editing furniture. In `create` mode it shows the type
@@ -124,7 +125,10 @@ export function FurnitureDialog() {
 
         <div className="modal-body">
           {dialog.mode === 'edit' ? (
-            <PropertiesPanel />
+            <div className="stack">
+              <FurnitureFindings furnitureId={dialog.id} />
+              <PropertiesPanel />
+            </div>
           ) : (
             <FurniturePicker
               source={source}
