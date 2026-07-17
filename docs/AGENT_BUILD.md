@@ -46,12 +46,26 @@ repo. For any change, also consult the docs that bear on it —
    closed with no comment or an ambiguous one, just clear the label and leave
    `agent:ready` in place so a future run can retry it with fresh judgement. This
    closes a gap seen twice in one run (#205, #224 — see `AGENT_LEARNINGS.md`).
-2. **Respect the cap.** Take up to **10 issues per run** (oldest first). Leave any
-   beyond that for the next run.
-3. For **each** selected issue:
-   1. **Claim it** — add the `agent:building` label so a later run won't double-build
-      it. If an issue has had `agent:building` for a long time with no PR (a crashed
-      earlier run), you may reclaim it.
+   A single crashed run can strand a whole **batch** at once — several issues left
+   `agent:building` with no PR — so reclaim *every* such issue you find here, not
+   just the first one.
+2. **Respect the cap.** Take up to **5 issues per run** (oldest first); leave any
+   beyond that for the next run. The cap is deliberately small so a whole run — each
+   issue built, validated with `npm run test:e2e` in desktop *and* mobile, and turned
+   into a PR — fits comfortably inside one session's time budget. Because issues are
+   now claimed one at a time (below), this cap is a **throughput** knob, not a safety
+   one: raising it can grow the backlog but can never *strand* work.
+3. **Process the selected issues one at a time, and claim each just before you build
+   it.** Run the full claim → implement → verify → open-PR cycle for one issue, *then*
+   move to the next. **Never label the whole batch `agent:building` up front:** a run
+   that claims all its issues and then crashes mid-build strands *every* one of them
+   with no PR to show for it (exactly the failure that left 10 issues stuck at once).
+   Claiming just-in-time bounds a crash to the single in-flight issue and keeps every
+   finished build as a real PR. For the current issue:
+   1. **Claim it — just this one.** Add the `agent:building` label to the issue you
+      are about to build, not to the rest of the batch, so a later run won't
+      double-build it. If an issue has had `agent:building` for a long time with no PR
+      (a crashed earlier run), you may reclaim it.
    2. **Implement** the change on a new branch named `agent/issue-<N>-<slug>`, off
       the default branch. Keep the change small and faithful to the issue.
       **Delegate the implementation to a fresh subagent** — spawn a new subagent
@@ -104,6 +118,13 @@ repo. For any change, also consult the docs that bear on it —
 - **Small, reviewable diffs.** If the honest implementation would be a large
   refactor, stop and comment on the issue instead of opening a sprawling PR.
 - **Never merge.** Every PR waits for the human. Nothing auto-merges.
+- **Ship what you finish; stop cleanly when time is short.** Because issues are
+  claimed and built one at a time, a run can end at any point with every completed PR
+  already open and only the untouched queue behind it. If a run is dragging or a
+  single build is taking too long, finish and push the PR you're on, then stop —
+  three solid PRs with the rest left `agent:ready` for the next run beats running out
+  of time mid-build and leaving issues stranded. Don't claim an issue you can't
+  plausibly finish this run.
 - **Quality bar:** the PR must build, lint, and pass tests, and match the design
   system. A red PR wastes the human's review time.
 - **Faithful to intent.** Implement what the issue asked for. If you discover the
