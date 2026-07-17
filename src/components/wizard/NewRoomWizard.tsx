@@ -1,7 +1,9 @@
+import { useEffect, useRef } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore, type WizardStep } from '../../store/useUiStore';
 import { confirmDialog } from '../../store/useDialogStore';
 import { cancelNewRoomWizard, finishNewRoomWizard } from '../../lib/nav';
+import { useMediaQuery, COARSE_POINTER } from '../../lib/useMediaQuery';
 import { PlanEditor } from '../plan/PlanEditor';
 import { Icon } from '../ui/Icon';
 
@@ -154,6 +156,16 @@ export function NewRoomWizard() {
 function NameStep({ onEnter }: { onEnter: () => void }) {
   const name = useDesignStore((s) => s.design.name);
   const setName = useDesignStore((s) => s.setName);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const coarse = useMediaQuery(COARSE_POINTER);
+
+  // Focus the pre-filled name on mount so it's immediately ready to edit
+  // (its onFocus selects the whole value) or to continue past with Enter.
+  // Skipped on coarse pointers, where auto-focusing would pop the soft
+  // keyboard over the first onboarding screen on load.
+  useEffect(() => {
+    if (!coarse) inputRef.current?.focus();
+  }, [coarse]);
 
   return (
     <div className="wizard-name">
@@ -170,6 +182,7 @@ function NameStep({ onEnter }: { onEnter: () => void }) {
           <span className="field-label">Room name</span>
           <span className="field-input">
             <input
+              ref={inputRef}
               type="text"
               value={name}
               maxLength={60}
