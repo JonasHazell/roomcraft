@@ -79,37 +79,53 @@ export function ValidationPanel() {
                   ? r.outcome.violations.map((v, i) => {
                       const key = `${r.rule.id}:${i}`;
                       const active = highlight?.key === key;
+                      // Only rows the 3D overlay can actually show something for
+                      // are clickable. A violation with neither furnitureIds nor
+                      // zones has nothing to highlight, so we render it as a
+                      // plain, non-interactive item rather than promising a
+                      // highlight it can't deliver (#271).
+                      const canHighlight =
+                        v.furnitureIds.length > 0 || (v.zones?.length ?? 0) > 0;
+                      const body = (
+                        <>
+                          <span className="validation-item-head">
+                            <span className={`severity severity-${r.rule.importance}`}>
+                              {r.rule.importance}
+                            </span>
+                            <span className="validation-rule">{ruleLabel(r)}</span>
+                          </span>
+                          <span className="validation-message">{v.message}</span>
+                        </>
+                      );
                       return (
                         <li key={key}>
-                          <button
-                            type="button"
-                            className={`validation-item ${active ? 'active' : ''}`}
-                            onClick={() => {
-                              toggleHighlight({
-                                key,
-                                furnitureIds: v.furnitureIds,
-                                zones: v.zones ?? [],
-                              });
-                              // A finding tied to exactly one piece also selects it, so the
-                              // same click that highlights it in 3D opens it for editing too —
-                              // no second click needed to find and select the flagged piece.
-                              // Multi-piece and zone-only findings have no single piece to
-                              // select, so they stay highlight-only, as before.
-                              select(
-                                v.furnitureIds.length === 1
-                                  ? { kind: 'furniture', id: v.furnitureIds[0] }
-                                  : null,
-                              );
-                            }}
-                          >
-                            <span className="validation-item-head">
-                              <span className={`severity severity-${r.rule.importance}`}>
-                                {r.rule.importance}
-                              </span>
-                              <span className="validation-rule">{ruleLabel(r)}</span>
-                            </span>
-                            <span className="validation-message">{v.message}</span>
-                          </button>
+                          {canHighlight ? (
+                            <button
+                              type="button"
+                              className={`validation-item ${active ? 'active' : ''}`}
+                              onClick={() => {
+                                toggleHighlight({
+                                  key,
+                                  furnitureIds: v.furnitureIds,
+                                  zones: v.zones ?? [],
+                                });
+                                // A finding tied to exactly one piece also selects it, so the
+                                // same click that highlights it in 3D opens it for editing too —
+                                // no second click needed to find and select the flagged piece.
+                                // Multi-piece and zone-only findings have no single piece to
+                                // select, so they stay highlight-only, as before.
+                                select(
+                                  v.furnitureIds.length === 1
+                                    ? { kind: 'furniture', id: v.furnitureIds[0] }
+                                    : null,
+                                );
+                              }}
+                            >
+                              {body}
+                            </button>
+                          ) : (
+                            <div className="validation-item validation-item-static">{body}</div>
+                          )}
                         </li>
                       );
                     })

@@ -1766,6 +1766,17 @@ select {
   border-color: var(--accent);
 }
 
+/* A violation with nothing to highlight in 3D (no furnitureIds, no zones) is
+   rendered as a plain, non-interactive row — same card, without the pointer
+   or hover affordance that would promise a highlight it can't deliver. */
+.validation-item-static {
+  cursor: default;
+}
+
+.validation-item-static:hover {
+  border-color: var(--line);
+}
+
 .validation-item.active {
   border-color: var(--danger);
   background: color-mix(in srgb, var(--danger) 8%, transparent);
