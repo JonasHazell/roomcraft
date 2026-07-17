@@ -14,6 +14,8 @@ import {
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
+import { useMediaQuery, COARSE_POINTER } from '../../lib/useMediaQuery';
+import { rotateHandleRadius } from '../../lib/rotateHandle';
 import { ACCENT } from '../../lib/theme';
 import {
   MaterialContext,
@@ -145,6 +147,9 @@ export function FurnitureMesh({ id }: { id: string }) {
   const [hovered, setHovered] = useState(false);
   const [rotHovered, setRotHovered] = useState(false);
   useCursor(hovered || rotHovered, 'grab');
+  // Coarse (touch) pointers get a wider rotation-handle grab radius, mirroring
+  // PlanCorners' corner hit target (0.34 vs 0.22 for a fine pointer).
+  const coarse = useMediaQuery(COARSE_POINTER);
 
   if (!item) return null;
   const Piece = COMPONENTS[item.kind];
@@ -152,7 +157,7 @@ export function FurnitureMesh({ id }: { id: string }) {
   // The rotation handle: a ring on the floor around the piece with a knob at its
   // front (local +z), so the knob doubles as an orientation marker. Sized off the
   // footprint and given a generous grab radius so it stays an easy target.
-  const handleRadius = Math.max(item.size.width, item.size.depth) / 2 + 0.22;
+  const handleRadius = rotateHandleRadius(item.size.width, item.size.depth, coarse);
   // Sit just above the floor whatever the piece's elevation (the group is raised
   // by `elevation`, so subtract it to land back near y = 0).
   const handleY = 0.03 - item.elevation;
