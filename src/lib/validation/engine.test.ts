@@ -391,6 +391,35 @@ describe('FEN-14 poison arrows', () => {
     const box = piece('box', 0.6, 0.6, { width: 0.8, depth: 0.8, height: 1 });
     expect(outcomeOf(makeDesign([bed, box]), 'FEN-14').status).toBe('passed');
   });
+
+  // A squared-up SHARP piece standing parallel, alongside a sofa — the very
+  // room-divider placement ZON-02 recommends — presents a face, not a corner, at
+  // the sofa. Its nearest corner sits ~45° off the line to the sofa's centre, so it
+  // must NOT read as a poison arrow. (Before the bisector fix this flagged: the
+  // sofa's centre merely landing in the corner's outward 90° quadrant was enough.)
+  it('passes a table standing squared-up alongside a sofa (a ZON-02 divider)', () => {
+    const sofa = piece('sofa', 2, 3.5, { width: 2, depth: 0.9, height: 0.8 });
+    const table = piece('table', 1.35, 2.5, { width: 1.2, depth: 0.5, height: 0.75 });
+    expect(outcomeOf(makeDesign([sofa, table]), 'FEN-14').status).toBe('passed');
+  });
+
+  // A genuine corner-on confrontation: a table rotated 45° so one corner points
+  // straight at the bed from close range. This must still flag (it does under both
+  // the old and new geometry test — the corner's diagonal aims dead at the bed).
+  it('still flags a rotated table whose corner points at the bed', () => {
+    const bed = piece('bed', 2, 4, { width: 1.4, depth: 1.4, height: 0.5 });
+    const table = piece('table', 2, 2.4, {
+      width: 0.9,
+      depth: 0.9,
+      height: 0.75,
+      rotationY: Math.PI / 4,
+    });
+    const outcome = outcomeOf(makeDesign([bed, table]), 'FEN-14');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].furnitureIds).toContain(table.id);
+    }
+  });
 });
 
 describe('SAF-03 escape window reachable', () => {

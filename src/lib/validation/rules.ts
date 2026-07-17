@@ -1140,6 +1140,14 @@ export const RULES: RuleDef[] = [
       const SHARP = new Set<FurnitureKind>(['table', 'desk', 'wardrobe', 'bookshelf', 'box']);
       const sharp = ctx.design.furniture.filter((f) => SHARP.has(f.kind) && topOf(f) >= 0.6);
       if (sharp.length === 0) return ok;
+      // How closely a corner's outward diagonal must point at the resting place to
+      // count as a poison arrow. e1+e2 is the corner's inward diagonal bisector, so
+      // dot(toRest, e1+e2) < -AIM_MARGIN means toRest lines up with the *outward*
+      // bisector to within acos(0.8) ≈ 37° of dead-on. A piece standing squarely
+      // alongside presents a face, not a point: its nearest corner sits ~45° off the
+      // line to the resting centre (dot ≈ -0.707), just outside this cone, so it no
+      // longer trips — which is exactly the room-divider placement ZON-02 recommends.
+      const AIM_MARGIN = 0.8;
       const violations: Violation[] = [];
       for (const rest of resting) {
         const target = footprint(rest);
@@ -1154,8 +1162,10 @@ export const RULES: RuleDef[] = [
             const e1 = norm(sub(quad[(i + 3) % quad.length], c));
             const e2 = norm(sub(quad[(i + 1) % quad.length], c));
             const toRest = norm(sub(rest.position, c));
-            // The resting place sits in the corner's outward wedge (both edges point away).
-            if (dot(toRest, e1) < 0 && dot(toRest, e2) < 0) aimed = true;
+            // A real poison arrow points the corner's diagonal at the resting place —
+            // not merely lands it somewhere in the outward 90° quadrant (the old test,
+            // which any squared-up neighbour beside a bed/sofa satisfied).
+            if (dot(toRest, norm(add(e1, e2, 1))) < -AIM_MARGIN) aimed = true;
           }
           if (aimed) {
             violations.push({
