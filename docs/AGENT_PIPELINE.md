@@ -25,9 +25,9 @@ labels) is the shared state** that carries work from one stage to the next.
 
 ```
 Routine A — Propose        Routine B — Build           Routine C — Analyse
-  daily 06:00                every 2 hours               daily 22:00
+  twice daily                twice daily                 twice daily
       │                          │                            │
-  reads the docs +           picks EVERY open issue        reads merged/closed agent
+  reads the docs +           picks up to 5 per run,        reads merged/closed agent
   AGENT_LEARNINGS.md +       labelled `agent:ready`,       PRs, rejected issues, and
   AGENT_METRICS.md,          opens a PR (`Closes #N`),     the human's own merged PRs;
   creates issues             labels the PR `agent:built`   updates LEARNINGS + METRICS,
@@ -86,11 +86,11 @@ Two layers, on purpose:
 2. **The instruction docs** (this folder) hold the actual behaviour and are
    version-controlled, so you edit how the agents think in a normal pull request.
 
-| Stage       | Instruction doc                              | Routine schedule |
-| ----------- | -------------------------------------------- | ---------------- |
-| A — Propose | [`AGENT_PROPOSALS.md`](AGENT_PROPOSALS.md)   | daily 06:00 UTC  |
-| B — Build   | [`AGENT_BUILD.md`](AGENT_BUILD.md)           | every 2 hours    |
-| C — Analyse | [`AGENT_ANALYSIS.md`](AGENT_ANALYSIS.md)     | daily 22:00 UTC  |
+| Stage       | Instruction doc                              | Routine schedule       |
+| ----------- | -------------------------------------------- | ---------------------- |
+| A — Propose | [`AGENT_PROPOSALS.md`](AGENT_PROPOSALS.md)   | twice daily, 02 & 14 UTC |
+| B — Build   | [`AGENT_BUILD.md`](AGENT_BUILD.md)           | twice daily, 03 & 15 UTC |
+| C — Analyse | [`AGENT_ANALYSIS.md`](AGENT_ANALYSIS.md)     | twice daily, 01 & 13 UTC |
 
 The taste — *what* is worth building — comes from the docs the agents read:
 [`PURPOSE.md`](PURPOSE.md), [`VISION.md`](VISION.md), [`STRATEGY.md`](STRATEGY.md),
@@ -106,8 +106,12 @@ when a pattern is strong enough, into the agent instructions themselves.
 - **Volume is set at Stage A.** With no approval gate, the proposal target
   (`N` per day, currently 10 new features) sets how many PRs you get. The brake is
   quality, not count — every proposal must clear the bar.
-- **Stage B builds up to 10 PRs per run** so the day's proposals all get
-  implemented, while a larger backlog still drains in order rather than all at once.
+- **Stage B builds up to 5 PRs per run**, claiming and building each issue **one at a
+  time** so a crashed run strands at most the single in-flight issue instead of a
+  whole batch; a larger backlog drains in order across successive runs rather than all
+  at once. The per-run cap is a throughput knob, not a safety one — since one-at-a-time
+  claiming means a bigger batch can never strand work, raise the cap (or the run
+  cadence) if the ready backlog grows.
 - **Nothing auto-merges.** Every change waits for you.
 - **One issue = one small PR.** Keep scope tight and reviewable.
 - **Self-improvement stays reviewable too.** Stage C may edit the agent instruction
