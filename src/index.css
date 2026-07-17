@@ -2351,6 +2351,16 @@ select {
     left: auto;
     width: 400px;
   }
+
+  /* On wide viewports the name card was truly vertically centred in a tall
+     wizard body, leaving ~250px of dead space above and below it (#274). Anchor
+     it nearer the top instead so the first screen doesn't read as mostly empty.
+     Scoped to the name step's own container, so the Walls/Openings steps are
+     unaffected; the mobile layout keeps its centred position. */
+  .wizard-name {
+    align-self: flex-start;
+    padding-top: 12vh;
+  }
 }
 
 /* ---------- Respect reduced-motion preferences ---------- */
