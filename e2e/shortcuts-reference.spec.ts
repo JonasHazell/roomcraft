@@ -92,7 +92,7 @@ test('the shortcuts reference is reachable with nothing selected and lists every
   await expect(trigger).toBeVisible();
   await trigger.click();
 
-  const dialog = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+  const dialog = page.getByRole('dialog', { name: 'Shortcuts and gestures' });
   await expect(dialog).toBeVisible();
 
   // Every binding wired up in globalKeydown.ts, including undo/redo — which the
@@ -110,11 +110,31 @@ test('the shortcuts reference is reachable with nothing selected and lists every
   await expect(dialog.locator('kbd.key', { hasText: 'Esc' })).toBeVisible();
 });
 
+test('the reference also lists the touch/pointer gestures (#292)', async ({ page }, testInfo) => {
+  await openFurnishView(page);
+
+  await page.getByRole('button', { name: 'Keyboard shortcuts' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Shortcuts and gestures' });
+  await expect(dialog).toBeVisible();
+
+  // The gesture rows a touch user can actually act on — the only way to do most
+  // of these on a phone.
+  await expect(dialog.getByText('Orbit the view', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('Zoom', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('Move a piece', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('Rotate a piece', { exact: true })).toBeVisible();
+  // Their descriptions render as plain text (no kbd chips).
+  await expect(dialog.getByText('Scroll or pinch')).toBeVisible();
+  await expect(dialog.getByText('Drag its rotation ring')).toBeVisible();
+
+  await page.screenshot({ path: `/tmp/pr-292-${testInfo.project.name}.png` });
+});
+
 test('Esc closes the shortcuts reference', async ({ page }) => {
   await openFurnishView(page);
 
   await page.getByRole('button', { name: 'Keyboard shortcuts' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+  const dialog = page.getByRole('dialog', { name: 'Shortcuts and gestures' });
   await expect(dialog).toBeVisible();
 
   await page.keyboard.press('Escape');

@@ -187,6 +187,43 @@ describe('FEN-02 the coffin position', () => {
   });
 });
 
+describe('ERG-02 TV viewing distance', () => {
+  // diagonal = width * 0.92 / 0.87; the far bound is 2.5× the diagonal.
+  const tvWidth = 0.87 / 0.92; // → diagonal of exactly 1.0 m
+  const diagonal = (tvWidth * 0.92) / 0.87;
+  const tvAt = () => piece('tv', 2, 1, { width: tvWidth, depth: 0.1, height: 0.6 });
+  const sofaAt = (dist: number) => piece('sofa', 2, 1 + dist, { width: 2, depth: 0.9, height: 0.8 });
+
+  it('flags a seat 2.55× the diagonal away (past the 2.5× bound, inside the old 2.6×)', () => {
+    const outcome = outcomeOf(makeDesign([tvAt(), sofaAt(2.55 * diagonal)]), 'ERG-02');
+    expect(outcome.status).toBe('violated');
+  });
+
+  it('passes a seat 2.45× the diagonal away (inside the 2.5× bound)', () => {
+    expect(outcomeOf(makeDesign([tvAt(), sofaAt(2.45 * diagonal)]), 'ERG-02').status).toBe('passed');
+  });
+});
+
+describe('ERG-09 nightstands at bed height', () => {
+  // A single bed with a nightstand tucked against its right side at the head end,
+  // so the presence check passes and the rule reaches the ±5 cm height comparison.
+  const bed = () => piece('bed', 2, 2, { width: 1, depth: 2, height: 0.5 }); // top at 0.5 m
+  const nightstand = (topHeight: number) =>
+    piece('nightstand', 2.6, 1.4, { width: 0.4, depth: 0.4, height: topHeight });
+
+  it('flags a nightstand 8 cm off the bed top (within the old 10 cm bound, past ±5 cm)', () => {
+    const outcome = outcomeOf(makeDesign([bed(), nightstand(0.58)]), 'ERG-09');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].message).toContain('within ±5 cm');
+    }
+  });
+
+  it('passes a nightstand 3 cm off the bed top (inside ±5 cm)', () => {
+    expect(outcomeOf(makeDesign([bed(), nightstand(0.53)]), 'ERG-09').status).toBe('passed');
+  });
+});
+
 describe('ACC-13 over-furnishing', () => {
   it('flags a room where furniture covers more than 60% of the floor', () => {
     const boxes = [
@@ -202,6 +239,23 @@ describe('ACC-13 over-furnishing', () => {
     expect(outcomeOf(makeDesign([piece('sofa', 2, 2, { width: 2, depth: 0.9 })]), 'ACC-13').status).toBe(
       'passed',
     );
+  });
+
+  // In a 20 m² room, these footprints leave ~47% free — inside the flat 40%
+  // bound but under the stricter 50% the catalog wants for bedrooms/living rooms.
+  const crowdingBoxes = [
+    piece('box', 1, 1.4, { width: 1.9, depth: 2.3 }),
+    piece('box', 3, 3.6, { width: 1.9, depth: 2.3 }),
+  ];
+
+  it('flags a living room at ~47% free (below the stricter 50% bedroom/living-room bar)', () => {
+    const sofa = piece('sofa', 2, 1, { width: 2, depth: 0.9 }); // infers vardagsrum
+    expect(outcomeOf(makeDesign([sofa, ...crowdingBoxes]), 'ACC-13').status).toBe('violated');
+  });
+
+  it('passes a non-bedroom/living room at the same ~47% free (flat 40% bar)', () => {
+    const filler = piece('box', 2, 1, { width: 2, depth: 0.9 }); // same footprint, no room type
+    expect(outcomeOf(makeDesign([filler, ...crowdingBoxes]), 'ACC-13').status).toBe('passed');
   });
 });
 

@@ -230,7 +230,7 @@ export function ColorField({
             onReset();
           }}
         >
-          <Icon name="undo-2" />
+          <Icon name="rotate-ccw" />
         </button>
       )}
     </label>

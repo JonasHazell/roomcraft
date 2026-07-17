@@ -723,23 +723,6 @@ select {
   background: var(--paper-2);
 }
 
-/* The orbit/zoom hint is mouse-centric ("scroll to zoom"); touch users pinch
-   instead. It's hidden at every width so the 3D view reads the same on desktop
-   and mobile — the interactions are discoverable by direct manipulation. */
-.viewport-hint {
-  display: none;
-  position: absolute;
-  left: 14px;
-  bottom: 12px;
-  font-size: 12px;
-  color: var(--muted);
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 5px 12px;
-  pointer-events: none;
-}
-
 /* ---------- Proposal switcher (furnishing variants) ---------- */
 
 /* Centred on the top row of the 3D view, between the back button and the score
@@ -930,7 +913,11 @@ select {
 .plan-wall .wall-hit {
   stroke: transparent;
   fill: none;
-  cursor: pointer;
+  cursor: grab;
+}
+
+.plan-wall .wall-hit:active {
+  cursor: grabbing;
 }
 
 .wall-opening.door {
@@ -1025,6 +1012,10 @@ select {
   stroke: none;
   cursor: grab;
   touch-action: none;
+}
+
+.plan-corners .corner-hit:active {
+  cursor: grabbing;
 }
 
 .plan-corners .corner-dot {
@@ -1775,6 +1766,17 @@ select {
   border-color: var(--accent);
 }
 
+/* A violation with nothing to highlight in 3D (no furnitureIds, no zones) is
+   rendered as a plain, non-interactive row — same card, without the pointer
+   or hover affordance that would promise a highlight it can't deliver. */
+.validation-item-static {
+  cursor: default;
+}
+
+.validation-item-static:hover {
+  border-color: var(--line);
+}
+
 .validation-item.active {
   border-color: var(--danger);
   background: color-mix(in srgb, var(--danger) 8%, transparent);
@@ -2350,6 +2352,16 @@ select {
   .side-panel {
     left: auto;
     width: 400px;
+  }
+
+  /* On wide viewports the name card was truly vertically centred in a tall
+     wizard body, leaving ~250px of dead space above and below it (#274). Anchor
+     it nearer the top instead so the first screen doesn't read as mostly empty.
+     Scoped to the name step's own container, so the Walls/Openings steps are
+     unaffected; the mobile layout keeps its centred position. */
+  .wizard-name {
+    align-self: flex-start;
+    padding-top: 12vh;
   }
 }
 

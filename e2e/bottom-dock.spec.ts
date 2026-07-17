@@ -121,9 +121,10 @@ test.describe('narrow viewport (390x844, the issue repro size)', () => {
     await expect(menu).toBeHidden();
 
     // AI suggestions: still one tap away, now via the switcher menu instead of
-    // the dock's ActionBar pill.
+    // the dock's ActionBar pill. The entry point reads "Suggest 3 layouts"
+    // (reworded in ProposalSwitcher — see e2e/proposal-ai-label.spec.ts).
     await page.locator('.proposal-pill').click();
-    await page.getByRole('button', { name: /3 ai suggestions/i }).click();
+    await page.getByRole('button', { name: /suggest 3 layouts/i }).click();
     await expect(page.getByLabel('AI furnishing')).toBeVisible();
   });
 });

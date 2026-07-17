@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useHistoryStore } from '../../store/useHistoryStore';
 
 /**
  * Shared building blocks for the bottom action pills (Action/Selection/Wall/Floor
@@ -100,7 +101,15 @@ export function SelBarColor({
         className="sel-color-input"
         value={value}
         aria-label={ariaLabel}
+        // One continuous pick through the native colour picker fires many change
+        // events; wrap the whole gesture (focus→…→blur) in a single history
+        // batch so it collapses to one undo step, the same way FurnitureDialog
+        // batches its own colour-field edits. Without this, one Undo after a
+        // pick only nudges the colour back one event and deselects the
+        // wall/floor, hiding the swatch (#269).
+        onFocus={() => useHistoryStore.getState().beginBatch()}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={() => useHistoryStore.getState().endBatch()}
       />
       <span className="sel-label">{label}</span>
     </label>

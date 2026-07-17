@@ -14,6 +14,8 @@ import {
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
+import { useMediaQuery, COARSE_POINTER } from '../../lib/useMediaQuery';
+import { rotateHandleRadius } from '../../lib/rotateHandle';
 import { ACCENT } from '../../lib/theme';
 import {
   MaterialContext,
@@ -145,6 +147,9 @@ export function FurnitureMesh({ id }: { id: string }) {
   const [hovered, setHovered] = useState(false);
   const [rotHovered, setRotHovered] = useState(false);
   useCursor(hovered || rotHovered, 'grab');
+  // Coarse (touch) pointers get a wider rotation-handle grab radius, mirroring
+  // PlanCorners' corner hit target (0.34 vs 0.22 for a fine pointer).
+  const coarse = useMediaQuery(COARSE_POINTER);
 
   if (!item) return null;
   const Piece = COMPONENTS[item.kind];
@@ -152,7 +157,7 @@ export function FurnitureMesh({ id }: { id: string }) {
   // The rotation handle: a ring on the floor around the piece with a knob at its
   // front (local +z), so the knob doubles as an orientation marker. Sized off the
   // footprint and given a generous grab radius so it stays an easy target.
-  const handleRadius = Math.max(item.size.width, item.size.depth) / 2 + 0.22;
+  const handleRadius = rotateHandleRadius(item.size.width, item.size.depth, coarse);
   // Sit just above the floor whatever the piece's elevation (the group is raised
   // by `elevation`, so subtract it to land back near y = 0).
   const handleY = 0.03 - item.elevation;
@@ -198,13 +203,12 @@ export function FurnitureMesh({ id }: { id: string }) {
 
   const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
     if (e.button !== 0) return; // right button is left to camera panning
+    // A piece is selected on a still click (see onClick) — the same way walls
+    // and floors are — so pressing down never selects on its own. That means an
+    // orbit/pan that happens to start on a piece leaves it untouched. Only an
+    // already-selected piece begins a drag-to-move from here.
+    if (!selected) return;
     e.stopPropagation();
-    // A piece must be selected before it can be dragged: the first click only
-    // selects it, and a subsequent drag (while already selected) moves it.
-    if (!selected) {
-      select({ kind: 'furniture', id });
-      return;
-    }
     (e.target as Element).setPointerCapture(e.pointerId);
     if (e.ray.intersectPlane(FLOOR_PLANE, hit)) {
       dragOffset.current = { x: item.position.x - hit.x, z: item.position.z - hit.z };
@@ -237,6 +241,10 @@ export function FurnitureMesh({ id }: { id: string }) {
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
       onClick={(e) => {
+        // Select only on a still click — the same guard walls and floors use —
+        // so releasing a camera orbit over a piece doesn't select it. A drag
+        // (e.delta > 3) falls through without stopping propagation.
+        if (e.delta > 3) return;
         // Stop the click so the floor behind the furniture doesn't deselect it.
         e.stopPropagation();
         select({ kind: 'furniture', id });

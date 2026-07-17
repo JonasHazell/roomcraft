@@ -59,40 +59,70 @@ things you do fresh at the start of each run:
    first** (e.g. ~390×844), then check wider screens. Actually walk the core
    journeys — create a room, edit it in 2D, furnish it in 3D, save — and watch for
    confusing steps, awkward controls, cramped or overflowing mobile layouts, and
-   anything that isn't obvious to a first-time user. Capture screenshots where they
-   make a proposal concrete.
+   anything that isn't obvious to a first-time user. **Actively try to break
+   things**, too — a control that doesn't work, layout that overflows or clips,
+   state that gets corrupted, a mobile gesture that misfires, errors in the console —
+   because **bugs are one of the three proposal buckets** (see *What to look for*).
+   Capture screenshots where they make a proposal concrete.
 
 Let what you see in the running app — not just what the docs describe — drive what
 you propose.
 
 ## What to look for
 
-The focus of each run is **new features**: 10 concrete additions that make the app
-better at planning and furnishing a room. Ground them in the code analysis and the
-click-through, and let these categories shape the *kind* of feature you add:
+Each run produces **9 proposals in a deliberate mix** — a fixed spread so the easy
+finds never crowd out the hard, strategic work. Ground every one in the code analysis
+and the click-through:
 
-- **New features** — the core of every run. Each should be genuinely useful for
-  planning and furnishing a room, and buildable to the quality bar as a small,
-  self-contained addition.
-- **Changes to existing features** — deepen, finish, or fix a flow that's already
-  there so it works better.
-- **Removing unnecessary features** — cut things that add clutter, confuse the core
-  journey, or aren't pulling their weight. A subtraction is a valid, valuable
-  proposal.
-- **GUI clarity & simplicity** — make the app **clearer and easier to use**:
-  simpler layouts, more obvious controls, fewer choices, better mobile ergonomics.
-  When in doubt, remove a choice rather than add one.
-- **Reliability & performance the metrics reveal** — problems the click-through
-  can't surface but the monitoring in [`AGENT_METRICS.md`](AGENT_METRICS.md) can: a
-  slow or expensive AI proposal path, a rising failure/timeout rate, a repair loop
-  that fans out into extra model calls. These are real, measurable degradations of
-  the core flow; a proposal that cites the trend and targets the cause is well-founded.
+- **~3 larger steps toward the long-term goal** — the strategically weighty
+  proposals. Advance one of `STRATEGY.md`'s **three hardest problems** — a
+  simpler-yet-complete GUI, validation rules that are general *and* relevant, an AI
+  engine that gives genuinely best suggestions — or move toward
+  [`VISION.md`](VISION.md)'s destination. These are *bigger in ambition than local
+  polish*, and often mean deepening or finishing a core flow so it's noticeably more
+  complete (*depth over breadth* in practice). They must still be **small and
+  self-contained enough to review in one sitting**: if a direction is genuinely large,
+  propose the **first concrete slice** of it, not a sprawling refactor (see the
+  small-PR guardrail below). Don't shy away from the core just because it's hard —
+  but respect the hot-area timing check in step 3 so you don't collide with the
+  human's own work.
+- **3 bugs** — things that are actually **broken or wrong**, not merely improvable.
+  A regression, a control that doesn't work, a layout that overflows or clips, state
+  that gets corrupted, a mobile gesture that misfires, or a reliability failure the
+  monitoring in [`AGENT_METRICS.md`](AGENT_METRICS.md) reveals (a slow or expensive AI
+  path, a rising failure/timeout rate, a repair loop that fans out into extra model
+  calls). Drive the app hard in **both** viewports to surface these — the
+  click-through is where most appear; the metrics catch the ones it can't. A good bug
+  proposal names concrete **repro steps**, the **expected** behaviour, and the
+  **actual** behaviour.
+- **3 feature / GUI improvements** — make the core experience clearer, simpler, and
+  more delightful without needing to be strategic-scale. This bucket covers:
+  - *Deepen or finish an existing flow* — take a flow that's already there and make it
+    more complete, more reliable, less friction.
+  - *GUI clarity & simplicity* — simpler layouts, more obvious controls, fewer
+    choices, better mobile ergonomics. When in doubt, remove a choice rather than add
+    one.
+  - *A genuinely-core new feature* — a small, self-contained addition to planning and
+    furnishing a room, held to `PRINCIPLES.md`'s feature-sprawl non-goal — never the
+    quota's reason for existing.
+  - *Removing an unnecessary feature* — cutting clutter that confuses the core journey
+    or isn't pulling its weight is a valid, valuable proposal.
+
+The split is a **guide, not a rigid contract**: if a run genuinely surfaces four
+strong bugs and only two strategic candidates, propose 4 + 2 rather than padding a
+bucket or dropping a real find. Hold every proposal to the quality bar regardless of
+bucket — the brake is quality, not hitting an exact per-bucket count.
 
 ## What makes a good proposal
 
 - **Serves the core experience.** It makes an existing, core flow better — faster,
   clearer, simpler, more reliable, more delightful — per `STRATEGY.md` and
   `PURPOSE.md`.
+- **Points toward the long-term goal, not just local polish.** Prefer proposals that
+  advance one of `STRATEGY.md`'s three hardest problems or move toward
+  [`VISION.md`](VISION.md)'s destination over cosmetic tweaks with no bearing on where
+  the product is heading. A clean, safe, tiny diff is necessary but not sufficient —
+  it should also *matter*.
 - **Makes the app simpler and clearer, mobile-first.** The bar is a first-time user
   on a phone getting from an empty room to one they love with as little friction as
   possible. Prefer changes that remove steps, choices, or confusion.
@@ -132,15 +162,22 @@ click-through, and let these categories shape the *kind* of feature you add:
    generation/repair) are hot in exactly this way — treat that as a live example
    of the check, not a permanent rule; re-verify against actual recent history
    each run rather than trusting this note indefinitely.
+   This is *collision avoidance, not a no-go zone.* `src/lib/validation/` and
+   `server/` are two of the three hardest problems the whole experience lives or
+   dies by, so when they are **not** currently hot — or when you can propose at the
+   scale the human is clearly already working at — they are exactly where the
+   highest-value proposals live. Propose there deliberately; don't avoid the core
+   out of habit.
 4. **Generate candidates.** From what you read and saw, find the highest-value,
-   in-scope improvements available right now, across all the categories above (new
-   features, changes to existing features, removals, and GUI clarity/simplicity).
-5. **Select `N` = 10** of the best. Aim to fill the quota every run — each run
-   should produce 10 concrete proposals for new features. Hold every one to the
-   quality bar; if truly great candidates are scarce, keep digging (more code
-   analysis, more click-through, more categories) until you have 10 that serve the
-   core experience. Every proposal becomes a real PR the human reviews, so make
-   each one count.
+   in-scope work available right now across all three buckets — larger steps toward
+   the long-term goal, bugs, and feature/GUI improvements (see *What to look for*).
+5. **Select 9 in the mix** — aim for **~3 larger strategic steps, 3 bugs, and 3
+   feature/GUI improvements**. Treat it as a target spread, not a rigid quota: if one
+   bucket is genuinely thin this run, rebalance toward where the strong candidates
+   actually are rather than padding with filler. Hold every one to the quality bar;
+   if strong candidates are scarce, keep digging (more code analysis, more
+   click-through) before settling for less. Every proposal becomes a real PR the
+   human reviews, so make each one count.
 6. **Create one issue per proposal** in the format below, labelled `agent:ready`.
 
 ## Issue format
@@ -151,7 +188,9 @@ click-through, and let these categories shape the *kind* of feature you add:
     experience (link to `STRATEGY.md`/`PURPOSE.md` reasoning).
   - **Evidence** — what you saw in the code analysis or the Playwright
     click-through that prompted this (a confusing step, a cramped mobile layout, an
-    unused feature, …). A screenshot or file reference makes it concrete.
+    unused feature, …). A screenshot or file reference makes it concrete. **For a
+    bug**, make the evidence a concrete repro: numbered **steps**, the **expected**
+    behaviour, and the **actual** behaviour (a screenshot or console error helps).
   - **Proposed change** — what to do, concretely.
   - **Files / areas** — the likely files or components involved.
   - **Scope & non-goals** — what this deliberately does *not* touch, to keep it small.
@@ -161,13 +200,17 @@ click-through, and let these categories shape the *kind* of feature you add:
 
 ## Guardrails
 
-- **Target of `N` = 10 new-feature issues per run.** Each run should create 10
-  concrete proposals for new features — that is the intended volume, not a ceiling
-  to stay under. The human reviews every resulting PR, so the brake is *quality*,
-  not count: never pad the list with weak or duplicate ideas to hit the number.
+- **Target of 9 issues per run in a fixed mix** — **~3 larger steps toward the
+  long-term goal, 3 bugs, and 3 feature/GUI improvements** (see *What to look for*).
+  That is the intended volume and spread, not a ceiling to stay under, and it is
+  **not** a quota of *new features*: per *depth over breadth*, prefer deepening what
+  exists over adding surface area, and a bug fix or a removal counts fully. The split
+  is a target, not a rigid contract — rebalance across buckets when one is genuinely
+  thin. The human reviews every resulting PR, so the brake is *quality*, not count:
+  never pad the list with weak, sprawl-y, or duplicate ideas to hit the number.
 - **No monetization-driven proposals** — that phase is parked (`STRATEGY.md`).
 - **No speculative infrastructure** — build for the experience in front of us.
-- If, after a thorough look at the app, you genuinely cannot find 10 in-scope,
+- If, after a thorough look at the app, you genuinely cannot find 9 in-scope,
   quality proposals, create as many strong ones as you can rather than filling the
   quota with filler.
 

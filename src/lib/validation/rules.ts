@@ -460,10 +460,14 @@ export const RULES: RuleDef[] = [
         .filter((f) => f.kind !== 'rug' && f.elevation < 0.5)
         .reduce((sum, f) => sum + f.size.width * f.size.depth, 0);
       const freePct = Math.max(0, Math.round((1 - used / roomArea) * 100));
-      if (freePct >= 40) return ok;
+      // The catalog asks for ≥ 40% clear floor, but preferably ≥ 50% in bedrooms
+      // and living rooms, where circulation and calm matter more.
+      const roomy = ctx.roomTypes.has('sovrum') || ctx.roomTypes.has('vardagsrum');
+      const minFree = roomy ? 50 : 40;
+      if (freePct >= minFree) return ok;
       return fail([
         {
-          message: `The room has only about ${freePct}% free floor area (guideline ≥ 40%) — remove or downsize furniture.`,
+          message: `The room has only about ${freePct}% free floor area (guideline ≥ ${minFree}%) — remove or downsize furniture.`,
           furnitureIds: [],
         },
       ]);
@@ -645,7 +649,7 @@ export const RULES: RuleDef[] = [
       for (const tv of tvs) {
         const diagonal = (tv.size.width * 0.92) / 0.87; // screen width → diagonal (16:9)
         const min = 1.2 * diagonal;
-        const max = 2.6 * diagonal; // 1.6× for 4K, up to ~2.5× for HD
+        const max = 2.5 * diagonal; // 1.6× for 4K, up to ~2.5× for HD
         const nearest = seats
           .map((s) => ({ s, d: Math.hypot(s.position.x - tv.position.x, s.position.z - tv.position.z) }))
           .sort((a, b) => a.d - b.d)[0];
@@ -845,7 +849,7 @@ export const RULES: RuleDef[] = [
           continue;
         }
         for (const ns of found) {
-          if (ns && Math.abs(topOf(ns) - topOf(bed)) > 0.1) {
+          if (ns && Math.abs(topOf(ns) - topOf(bed)) > 0.05) {
             violations.push({
               message: `"${ns.name}" (${formatCm(topOf(ns))}) should be within ±5 cm of the top of the bed (${formatCm(topOf(bed))}).`,
               furnitureIds: [ns.id, bed.id],

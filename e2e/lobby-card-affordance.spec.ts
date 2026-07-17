@@ -120,6 +120,18 @@ test('the undrawn room card still opens into the plan editor on click', async ({
   await expect(page.getByRole('button', { name: 'Done · back to your rooms' })).toBeVisible();
 });
 
+test('an undrawn room card omits the redundant Edit plan action', async ({ page }) => {
+  // The card's own main tap target already opens the plan editor for an undrawn
+  // room, so the extra "Edit plan" action button is dropped there (#275) — but
+  // Rename/Duplicate/Delete stay.
+  const card = page.locator('.room-card', { hasText: 'Undrawn Room' });
+  await expect(card.getByRole('button', { name: 'Edit plan' })).toHaveCount(0);
+  await expect(card.getByRole('button', { name: 'Rename' })).toBeVisible();
+  await expect(card.getByRole('button', { name: 'Duplicate' })).toBeVisible();
+  await expect(card.getByRole('button', { name: 'Delete Undrawn Room' })).toBeVisible();
+  await page.screenshot({ path: `/tmp/pr-275-${test.info().project.name}.png` });
+});
+
 test('the secondary action buttons are unchanged and still work independently', async ({ page }) => {
   const card = page.locator('.room-card', { hasText: 'Furnished Room' });
   await expect(card.getByRole('button', { name: 'Edit plan' })).toBeVisible();

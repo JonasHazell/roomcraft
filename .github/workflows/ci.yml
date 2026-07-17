@@ -35,3 +35,38 @@ jobs:
       # `tsc -b` (part of build) type-checks the app and the server projects.
       - name: Build
         run: npm run build
+
+  e2e:
+    name: E2E (desktop + mobile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # CI runners have no pre-installed Chromium, so fetch Playwright's browser
+      # here. (The sandbox uses PLAYWRIGHT_BROWSERS_PATH instead — never run this
+      # locally; playwright.config.ts resolves the pre-installed Chromium there.)
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Runs the same specs in the `desktop` and `mobile` projects — the required
+      # gate that must be green before an auto-merge PR can land. The webServer in
+      # playwright.config.ts starts Vite; the smoke flows need no backend.
+      - name: E2E (desktop + mobile)
+        run: npx playwright test
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

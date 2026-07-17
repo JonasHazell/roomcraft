@@ -2,17 +2,19 @@ import { useUiStore } from '../../store/useUiStore';
 import { useEscape } from '../../lib/useEscape';
 import { Icon } from '../ui/Icon';
 
-/** One row: what the shortcut does, and the key(s) that trigger it. `keys` is an
- *  array of alternatives (rendered joined by "or"); each alternative is itself an
- *  array of keys held together (rendered joined by "+"). */
+/** One row: what it does, and how you trigger it. Either `keys` (keyboard
+ *  bindings: an array of alternatives joined by "or", each a set of keys held
+ *  together joined by "+") or `gesture` (a plain-text pointer/touch description,
+ *  for actions that have no discrete key). */
 interface ShortcutRow {
   action: string;
-  keys: string[][];
+  keys?: string[][];
+  gesture?: string;
 }
 
-// The single source of truth for these bindings is `lib/globalKeydown.ts` — keep
+// Keyboard bindings — the single source of truth is `lib/globalKeydown.ts`; keep
 // this list in sync with it rather than guessing at what's wired up.
-const ROWS: ShortcutRow[] = [
+const KEYBOARD_ROWS: ShortcutRow[] = [
   { action: 'Undo', keys: [['Ctrl/⌘', 'Z']] },
   { action: 'Redo', keys: [['Ctrl/⌘', 'Shift', 'Z'], ['Ctrl/⌘', 'Y']] },
   { action: 'Rotate selected piece right', keys: [['R']] },
@@ -21,6 +23,17 @@ const ROWS: ShortcutRow[] = [
   { action: 'Delete selected piece or wall', keys: [['Delete'], ['Backspace']] },
   { action: 'Deselect / close', keys: [['Esc']] },
 ];
+
+// Pointer & touch gestures — the only way to orbit/zoom/move/rotate on the phone
+// MOBILE-FIRST.md treats as primary, so the reference serves that device too.
+const GESTURE_ROWS: ShortcutRow[] = [
+  { action: 'Orbit the view', gesture: 'Drag' },
+  { action: 'Zoom', gesture: 'Scroll or pinch' },
+  { action: 'Move a piece', gesture: 'Drag the piece' },
+  { action: 'Rotate a piece', gesture: 'Drag its rotation ring' },
+];
+
+const ROWS: ShortcutRow[] = [...KEYBOARD_ROWS, ...GESTURE_ROWS];
 
 /**
  * The keyboard-shortcuts reference: a compact `.modal-sm` listing every binding
@@ -46,11 +59,11 @@ export function ShortcutsReference() {
         className="modal modal-sm"
         role="dialog"
         aria-modal="true"
-        aria-label="Keyboard shortcuts"
+        aria-label="Shortcuts and gestures"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-head">
-          <span className="modal-title">Keyboard shortcuts</span>
+          <span className="modal-title">Shortcuts &amp; gestures</span>
           <button type="button" className="btn-icon" aria-label="Close" onClick={close}>
             <Icon name="x" />
           </button>
@@ -62,17 +75,19 @@ export function ShortcutsReference() {
               <li className="shortcut-row" key={row.action}>
                 <span className="shortcut-action">{row.action}</span>
                 <span className="shortcut-keys">
-                  {row.keys.map((combo, i) => (
-                    <span className="shortcut-combo" key={i}>
-                      {i > 0 && <span className="shortcut-or">or</span>}
-                      {combo.map((k, j) => (
-                        <span key={j}>
-                          {j > 0 && <span className="shortcut-plus">+</span>}
-                          <kbd className="key">{k}</kbd>
+                  {row.gesture
+                    ? row.gesture
+                    : row.keys!.map((combo, i) => (
+                        <span className="shortcut-combo" key={i}>
+                          {i > 0 && <span className="shortcut-or">or</span>}
+                          {combo.map((k, j) => (
+                            <span key={j}>
+                              {j > 0 && <span className="shortcut-plus">+</span>}
+                              <kbd className="key">{k}</kbd>
+                            </span>
+                          ))}
                         </span>
                       ))}
-                    </span>
-                  ))}
                 </span>
               </li>
             ))}

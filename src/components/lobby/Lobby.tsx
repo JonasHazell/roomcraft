@@ -114,9 +114,15 @@ export function Lobby() {
                   </span>
                 </button>
                 <div className="room-card-actions">
-                  <button type="button" className="btn" onClick={() => openRoomToPlan(r.id)}>
-                    Edit plan
-                  </button>
+                  {/* For an undrawn room the card's own main tap target already
+                      opens the plan editor, so a second "Edit plan" button would
+                      be redundant. It stays for a drawn room, where it's a
+                      distinct action from the main "Furnish" tap. */}
+                  {drawn && (
+                    <button type="button" className="btn" onClick={() => openRoomToPlan(r.id)}>
+                      Edit plan
+                    </button>
+                  )}
                   <button type="button" className="btn" onClick={() => rename(r.id, r.name)}>
                     Rename
                   </button>

@@ -35,7 +35,7 @@ export function ValidationPanel() {
     <div className="stack">
       <p className="hint">
         The furnishing is checked automatically against the rule catalog (safety, accessibility,
-        ergonomics, feng shui, etc.). Click an issue to highlight it in the 3D view.
+        ergonomics, feng shui, etc.). Select an issue to highlight it in the 3D view.
       </p>
 
       {report && (
@@ -71,7 +71,13 @@ export function ValidationPanel() {
           </ul>
 
           {violated.length === 0 ? (
-            <p className="hint">No rule violations found — nicely furnished!</p>
+            // Only praise when there was actually something to check. When
+            // report.total is null (no applicable rules — e.g. an empty room),
+            // the "Room type unknown — add furniture…" line above already covers
+            // it, so a "nicely furnished!" compliment would be false.
+            report.total !== null && (
+              <p className="hint">No rule violations found — nicely furnished!</p>
+            )
           ) : (
             <ul className="validation-list">
               {violated.map((r) =>
@@ -79,37 +85,53 @@ export function ValidationPanel() {
                   ? r.outcome.violations.map((v, i) => {
                       const key = `${r.rule.id}:${i}`;
                       const active = highlight?.key === key;
+                      // Only rows the 3D overlay can actually show something for
+                      // are clickable. A violation with neither furnitureIds nor
+                      // zones has nothing to highlight, so we render it as a
+                      // plain, non-interactive item rather than promising a
+                      // highlight it can't deliver (#271).
+                      const canHighlight =
+                        v.furnitureIds.length > 0 || (v.zones?.length ?? 0) > 0;
+                      const body = (
+                        <>
+                          <span className="validation-item-head">
+                            <span className={`severity severity-${r.rule.importance}`}>
+                              {r.rule.importance}
+                            </span>
+                            <span className="validation-rule">{ruleLabel(r)}</span>
+                          </span>
+                          <span className="validation-message">{v.message}</span>
+                        </>
+                      );
                       return (
                         <li key={key}>
-                          <button
-                            type="button"
-                            className={`validation-item ${active ? 'active' : ''}`}
-                            onClick={() => {
-                              toggleHighlight({
-                                key,
-                                furnitureIds: v.furnitureIds,
-                                zones: v.zones ?? [],
-                              });
-                              // A finding tied to exactly one piece also selects it, so the
-                              // same click that highlights it in 3D opens it for editing too —
-                              // no second click needed to find and select the flagged piece.
-                              // Multi-piece and zone-only findings have no single piece to
-                              // select, so they stay highlight-only, as before.
-                              select(
-                                v.furnitureIds.length === 1
-                                  ? { kind: 'furniture', id: v.furnitureIds[0] }
-                                  : null,
-                              );
-                            }}
-                          >
-                            <span className="validation-item-head">
-                              <span className={`severity severity-${r.rule.importance}`}>
-                                {r.rule.importance}
-                              </span>
-                              <span className="validation-rule">{ruleLabel(r)}</span>
-                            </span>
-                            <span className="validation-message">{v.message}</span>
-                          </button>
+                          {canHighlight ? (
+                            <button
+                              type="button"
+                              className={`validation-item ${active ? 'active' : ''}`}
+                              onClick={() => {
+                                toggleHighlight({
+                                  key,
+                                  furnitureIds: v.furnitureIds,
+                                  zones: v.zones ?? [],
+                                });
+                                // A finding tied to exactly one piece also selects it, so the
+                                // same click that highlights it in 3D opens it for editing too —
+                                // no second click needed to find and select the flagged piece.
+                                // Multi-piece and zone-only findings have no single piece to
+                                // select, so they stay highlight-only, as before.
+                                select(
+                                  v.furnitureIds.length === 1
+                                    ? { kind: 'furniture', id: v.furnitureIds[0] }
+                                    : null,
+                                );
+                              }}
+                            >
+                              {body}
+                            </button>
+                          ) : (
+                            <div className="validation-item validation-item-static">{body}</div>
+                          )}
                         </li>
                       );
                     })
