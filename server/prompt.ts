@@ -38,7 +38,7 @@ the user's needs, and you produce concrete furnishing proposals.
   another needs. Never place a furniture item so it ends up trapped behind other furniture or in a
   corner with no way to reach it (e.g. a play table behind a wardrobe).
 - Leave at least 0.7 m of free passage through the room and to every piece of furniture used daily.
-- Do not block windows with furniture taller than 1.2 m.
+- Keep about 0.6 m of floor clear in front of any window whose sill ("underkant_m") is at most 1.2 m, so it stays usable as an escape route; and never stand furniture deeper than 0.6 m flush against a window, so it can still be opened for ventilation. (Height does not matter for either check.)
 - Wardrobes and bookshelves must stand with their backs against a wall (againstWall = true).
 
 ## Soft principles (apply and justify)
@@ -176,6 +176,7 @@ export function buildUserPrompt(design: Design, needs: string): string {
     standardmatt_m: e.defaultSize,
     framsida: e.front,
     fri_yta_framfor_m: e.accessDepth,
+    blockerar_passage: e.blocks,
   }));
   return [
     '## The room',
