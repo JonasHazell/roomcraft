@@ -930,7 +930,11 @@ select {
 .plan-wall .wall-hit {
   stroke: transparent;
   fill: none;
-  cursor: pointer;
+  cursor: grab;
+}
+
+.plan-wall .wall-hit:active {
+  cursor: grabbing;
 }
 
 .wall-opening.door {
@@ -1025,6 +1029,10 @@ select {
   stroke: none;
   cursor: grab;
   touch-action: none;
+}
+
+.plan-corners .corner-hit:active {
+  cursor: grabbing;
 }
 
 .plan-corners .corner-dot {
