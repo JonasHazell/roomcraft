@@ -849,7 +849,7 @@ export const RULES: RuleDef[] = [
           continue;
         }
         for (const ns of found) {
-          if (ns && Math.abs(topOf(ns) - topOf(bed)) > 0.1) {
+          if (ns && Math.abs(topOf(ns) - topOf(bed)) > 0.05) {
             violations.push({
               message: `"${ns.name}" (${formatCm(topOf(ns))}) should be within ±5 cm of the top of the bed (${formatCm(topOf(bed))}).`,
               furnitureIds: [ns.id, bed.id],
