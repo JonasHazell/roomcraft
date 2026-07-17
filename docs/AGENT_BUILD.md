@@ -50,7 +50,7 @@ repo. For any change, also consult the docs that bear on it —
    `agent:building` with no PR — so reclaim *every* such issue you find here, not
    just the first one.
 2. **Respect the cap.** Take up to **10 issues per run** (oldest first); leave any
-   beyond that for the next run. The cap is sized to drain a full Stage A batch (10
+   beyond that for the next run. The cap comfortably drains a full Stage A batch (9
    proposals per run) in a single run, while keeping each run — every issue built,
    validated with `npm run test:e2e` in desktop *and* mobile, and turned into a PR —
    within one session's time budget. Because issues are now claimed one at a time
