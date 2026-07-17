@@ -89,7 +89,10 @@ repo. For any change, also consult the docs that bear on it —
       passes before opening the PR either way.
    4. **Open a pull request** with `Closes #<N>` in the body, targeting the default
       branch. Fill in what changed, why, and how you verified it, following the PR
-      template. Label the PR `agent:built`. **Do not enable auto-merge.**
+      template. Label the PR `agent:built`. Then decide auto-merge per
+      [When to auto-merge](#when-to-auto-merge) below — most PRs still wait for the
+      human; only clearly small, low-risk bug fixes and minor GUI improvements
+      auto-merge, and only once every required check is green.
       **For any GUI change, attach media the reviewer can actually open.**
       You open PRs through the API, so you can't attach media the way a human can:
       drag-and-drop upload isn't available, and the posting layer strips both
@@ -115,12 +118,55 @@ repo. For any change, also consult the docs that bear on it —
    `STRATEGY.md`, **do not force it.** Leave a brief comment on the issue explaining
    why, remove `agent:building`, and move on. (Optionally note it for Stage C.)
 
+## When to auto-merge
+
+Most agent PRs still wait for the human — that's the default and the safe choice.
+But a narrow class of change is so consistently merged unchanged (see the
+clean-merge rate in [`AGENT_METRICS.md`](AGENT_METRICS.md)) that queuing it for a
+manual click only adds latency: **small, low-risk bug fixes and minor GUI
+improvements.** For those, enable GitHub auto-merge so the PR lands by itself once
+**every required check is green** — never before.
+
+**The checks are the gate, not your judgement of "it looks fine."** Auto-merge only
+completes when CI is green, and CI now includes the **e2e run in desktop *and*
+mobile** (the same Playwright validation the `Stop` hook enforces locally, promoted
+into a required check for exactly this reason). A red or pending check holds the
+merge. So still run `npm run build`, `npm run lint`, `npm test`, and
+`npm run test:e2e` yourself before opening the PR — auto-merge is a convenience on
+top of a green PR, not a way to skip validation.
+
+**Enable auto-merge only when ALL of these hold:**
+
+- The issue is a **bug fix** or a **small, self-contained GUI/visual improvement**
+  (a label, spacing, an icon, a copy tweak, a wired-up existing control) — *not* a
+  new feature, a new surface, or a larger step toward the long-term goal.
+- The diff is **small and low-risk**: it reuses existing primitives and design
+  tokens, adds no dependency, and changes no data model, API/server, AI/planning
+  code (`server/`), security-sensitive path, or the agent pipeline itself
+  (`docs/AGENT_*.md`, `.github/`, `scripts/`).
+- You are **faithful and confident** — the implementation matches the issue's intent
+  with no judgement calls a reviewer would want to weigh in on. Any ambiguity,
+  novelty, or "the human should see this first" instinct → **don't** auto-merge.
+- The PR still carries the **before/after media** (per step 4 above) for any GUI
+  change, so the merged record is inspectable and easy to roll back.
+
+**When it qualifies:** add the `agent:auto-merge` label to the PR (in addition to
+`agent:built`) and enable auto-merge via the API (`enable_pr_auto_merge`, squash).
+**When in doubt, leave it for the human** — a PR that waits costs a click; a wrong
+auto-merge costs a revert. This lever only ever *adds* an automatic merge to a green
+PR; it never merges anything the human would otherwise have blocked, because the same
+checks still have to pass.
+
 ## Rules
 
 - **One issue → one PR.** Never bundle multiple issues into one PR.
 - **Small, reviewable diffs.** If the honest implementation would be a large
   refactor, stop and comment on the issue instead of opening a sprawling PR.
-- **Never merge.** Every PR waits for the human. Nothing auto-merges.
+- **Never merge by hand, and auto-merge only the narrow class above.** You never
+  click merge yourself. The default is still that every PR waits for the human; the
+  sole exception is a small, low-risk bug fix or minor GUI improvement that meets
+  every bar in [When to auto-merge](#when-to-auto-merge), where you enable GitHub
+  auto-merge so the green PR lands on its own. Everything else waits.
 - **Ship what you finish; stop cleanly when time is short.** Because issues are
   claimed and built one at a time, a run can end at any point with every completed PR
   already open and only the untouched queue behind it. If a run is dragging or a
@@ -137,6 +183,9 @@ repo. For any change, also consult the docs that bear on it —
 
 - Set `agent:building` when you claim an issue.
 - Set `agent:built` on the PR you open.
+- Set `agent:auto-merge` on the PR **and** enable GitHub auto-merge only when the PR
+  meets every bar in [When to auto-merge](#when-to-auto-merge); otherwise leave it for
+  the human. It's an addition to `agent:built`, never a replacement.
 - Clear `agent:building` when reclaiming a stuck issue (step 1 above) — including
   closing the issue if the linked PR's rejection was a plain "don't want this."
 - Never touch `agent:analyzed` or `agent:question` (both are Stage C's) and never

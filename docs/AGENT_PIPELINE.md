@@ -48,8 +48,12 @@ answer back into the learnings (see the label table below and
 [`AGENT_ANALYSIS.md`](AGENT_ANALYSIS.md)).
 
 There is **no human gate between propose and build** — everything proposed gets
-built so you can look at real, working changes before deciding. Your only decision
-point is the **merge** on each pull request.
+built so you can look at real, working changes before deciding. Your decision point
+is the **merge** on each pull request — with one scoped exception: small, low-risk
+bug fixes and minor GUI improvements can **auto-merge once every required check
+passes** (see the guardrails below and `AGENT_BUILD.md` →
+[*When to auto-merge*](AGENT_BUILD.md#when-to-auto-merge)). Everything larger still
+waits for you.
 
 ## The label state machine
 
@@ -60,6 +64,7 @@ Labels are the backbone. They are the contract between stages.
 | `agent:ready`    | Issue is queued for automatic implementation. **This is the trigger.**  | A (or you)  |
 | `agent:building` | Routine B has claimed the issue and is implementing it (avoids doubles) | B           |
 | `agent:built`    | A pull request is open and waiting for your merge decision              | B           |
+| `agent:auto-merge` | PR is a small, low-risk fix cleared to merge itself once checks pass  | B           |
 | `agent:analyzed` | Routine C has already learned from this issue/PR (won't re-process)     | C           |
 | `agent:question` | Routine C opened this issue to ask **you** something; answer in a comment | C         |
 
@@ -115,7 +120,15 @@ when a pattern is strong enough, into the agent instructions themselves.
   drain in a single run. The per-run cap is a throughput knob, not a safety one — since one-at-a-time
   claiming means a bigger batch can never strand work, raise the cap (or the run
   cadence) if the ready backlog grows.
-- **Nothing auto-merges.** Every change waits for you.
+- **Auto-merge is scoped to small, low-risk fixes.** By default every change waits
+  for you — that's still the norm. The one exception is a **small bug fix or minor
+  GUI improvement** that clears every bar in `AGENT_BUILD.md` →
+  [*When to auto-merge*](AGENT_BUILD.md#when-to-auto-merge): Stage B labels it
+  `agent:auto-merge` and enables GitHub auto-merge, so it lands **only once every
+  required check is green** — lint, test, build, **and the e2e run in desktop +
+  mobile** (`ci.yml`). The checks are the gate, so auto-merge can only add a merge to
+  a PR that already passes; it never lands anything the human would have blocked.
+  Anything larger, novel, or ambiguous still waits for your review.
 - **One issue = one small PR.** Keep scope tight and reviewable.
 - **Self-improvement stays reviewable too.** Stage C may edit the agent instruction
   docs and the loop's levers (caps, cadence, steps), and may correct **factual drift**
@@ -136,5 +149,23 @@ not find their instructions.
 
 **One-time label setup:** the `agent:question` label is new. Create it in the repo
 (any colour) before Stage C next runs — GitHub rejects an issue created with a label
-that doesn't exist, so the first question would otherwise fail to post. The other four
-pipeline labels already exist.
+that doesn't exist, so the first question would otherwise fail to post. The
+`agent:auto-merge` label (below) is also new — create it too. The other four pipeline
+labels already exist.
+
+**One-time auto-merge setup (human, in GitHub settings).** Stage B can only *request*
+auto-merge; the repo has to allow it and have something to gate on, so before the
+scoped auto-merge above can work you must, once:
+
+1. **Settings → General → Pull Requests → enable "Allow auto-merge."** Without this,
+   `enable_pr_auto_merge` fails and every PR simply waits as before (safe default).
+2. **Protect the default branch with the CI checks as *required* status checks** —
+   `Lint, test & build` **and** `E2E (desktop + mobile)` from `ci.yml`. This is what
+   makes auto-merge wait for green: with no required check, GitHub would merge
+   immediately, defeating the safety gate. (A required review would also gate it, but
+   the point here is to gate on CI, not to reintroduce a manual click.)
+3. **Create the `agent:auto-merge` label** (any colour).
+
+Until steps 1–2 are done, nothing auto-merges — Stage B's request is simply refused
+and the PR waits for you, exactly as today. So this change is safe to merge before the
+settings are flipped.
