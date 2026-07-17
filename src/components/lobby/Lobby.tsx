@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { confirmDialog, promptDialog } from '../../store/useDialogStore';
 import { openRoomToFurnish, openRoomToPlan, startNewRoomWizard } from '../../lib/nav';
@@ -19,9 +20,25 @@ export function Lobby() {
   const renameRoom = useDesignStore((s) => s.renameRoom);
   const removeRoom = useDesignStore((s) => s.removeRoom);
 
+  // The most recently duplicated room's id: while set, its card gets a brief
+  // highlight and is scrolled into view, so the copy doesn't look like the
+  // action silently did nothing on a longer room list.
+  const [justDuplicatedId, setJustDuplicatedId] = useState<string | null>(null);
+  const cardRefs = useRef(new Map<string, HTMLDivElement>());
+
+  useEffect(() => {
+    if (!justDuplicatedId) return;
+    cardRefs.current.get(justDuplicatedId)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [justDuplicatedId]);
+
   const rename = async (id: string, current: string) => {
     const next = await promptDialog({ title: 'Rename room', label: 'Room name', initial: current });
     if (next !== null) renameRoom(id, next);
+  };
+
+  const duplicate = (id: string) => {
+    const newId = duplicateRoom(id);
+    if (newId) setJustDuplicatedId(newId);
   };
 
   const remove = async (id: string, name: string) => {
@@ -56,8 +73,19 @@ export function Lobby() {
         <div className="room-grid">
           {rooms.map((r) => {
             const drawn = r.walls.some((w) => w.kind === 'exterior');
+            const justDuplicated = r.id === justDuplicatedId;
             return (
-              <div key={r.id} className="room-card">
+              <div
+                key={r.id}
+                ref={(el) => {
+                  if (el) cardRefs.current.set(r.id, el);
+                  else cardRefs.current.delete(r.id);
+                }}
+                className={justDuplicated ? 'room-card room-card-duplicated' : 'room-card'}
+                onAnimationEnd={() => {
+                  if (justDuplicated) setJustDuplicatedId(null);
+                }}
+              >
                 <button
                   type="button"
                   className="room-card-main"
@@ -96,7 +124,7 @@ export function Lobby() {
                     type="button"
                     className="btn"
                     title="Duplicate this room (floor plan + furnishings)"
-                    onClick={() => duplicateRoom(r.id)}
+                    onClick={() => duplicate(r.id)}
                   >
                     Duplicate
                   </button>

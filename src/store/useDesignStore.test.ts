@@ -353,3 +353,39 @@ describe('placing furniture clear of what is already in the room', () => {
     expect(furnitureFits(b, poly, store().design.walls, [furnitureCorners(a, 0)])).toBe(true);
   });
 });
+
+describe('duplicating a room (#229)', () => {
+  beforeEach(() => {
+    store().newProject();
+  });
+
+  it('names the copy after its source, not a generic "Room N"', () => {
+    store().renameRoom(store().design.id, 'Kitchen');
+    const srcId = store().design.id;
+
+    const copyId = store().duplicateRoom(srcId);
+
+    const names = store().project.rooms.map((r) => r.name);
+    expect(names).toContain('Kitchen copy');
+    expect(store().project.rooms.find((r) => r.id === copyId)?.name).toBe('Kitchen copy');
+  });
+
+  it('falls back to a numbered suffix when the exact copy name is already taken', () => {
+    store().renameRoom(store().design.id, 'Kitchen');
+    const srcId = store().design.id;
+
+    store().duplicateRoom(srcId); // "Kitchen copy"
+    store().duplicateRoom(srcId); // "Kitchen copy" taken -> "Kitchen copy 2"
+
+    const names = store().project.rooms.map((r) => r.name);
+    expect(names).toEqual(['Kitchen', 'Kitchen copy', 'Kitchen copy 2']);
+  });
+
+  it('leaves the original room in the lobby and does not activate the copy', () => {
+    const srcId = store().design.id;
+    const copyId = store().duplicateRoom(srcId);
+
+    expect(store().project.activeRoomId).toBe(srcId);
+    expect(store().project.rooms.map((r) => r.id)).toContain(copyId);
+  });
+});

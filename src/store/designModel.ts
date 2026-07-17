@@ -39,6 +39,21 @@ export function nextRoomName(rooms: Design[]): string {
   return `Room ${n}`;
 }
 
+/**
+ * First free "<source> copy" name for a duplicated room, so the copy stays
+ * traceable to where it came from. Falls back to a numbered suffix ("<source>
+ * copy 2", "copy 3", …) if that exact name is already taken — the same
+ * collision-avoidance shape as {@link nextRoomName}.
+ */
+export function nextRoomCopyName(rooms: Design[], sourceName: string): string {
+  const taken = new Set(rooms.map((r) => r.name));
+  const base = `${sourceName} copy`;
+  if (!taken.has(base)) return base;
+  let n = 2;
+  while (taken.has(`${base} ${n}`)) n++;
+  return `${base} ${n}`;
+}
+
 /** Deep-copies furniture with fresh ids — used when a new proposal starts from an existing one. */
 export function cloneFurniture(items: FurnitureItem[]): FurnitureItem[] {
   return items.map((f) => ({

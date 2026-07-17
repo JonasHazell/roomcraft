@@ -2462,6 +2462,27 @@ select {
   box-shadow: 0 12px 28px rgba(24, 24, 27, 0.16);
 }
 
+/* Briefly called out right after "Duplicate" — the copy is appended to the
+   end of the grid, so on a longer room list this is what tells the user the
+   action actually did something. Respects prefers-reduced-motion via the
+   global override above, which collapses the animation to ~0. */
+.room-card-duplicated {
+  animation: room-card-highlight 1.6s ease;
+}
+
+@keyframes room-card-highlight {
+  0%,
+  100% {
+    box-shadow: 0 6px 18px rgba(24, 24, 27, 0.1);
+    border-color: var(--ink);
+  }
+  15%,
+  55% {
+    box-shadow: 0 0 0 3px var(--accent), 0 6px 18px rgba(24, 24, 27, 0.1);
+    border-color: var(--accent);
+  }
+}
+
 .room-card-main {
   display: flex;
   flex-direction: column;

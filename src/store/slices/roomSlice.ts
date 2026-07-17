@@ -3,6 +3,7 @@ import {
   cloneRoom,
   createDefaultRoom,
   createEmptyRoom,
+  nextRoomCopyName,
   nextRoomName,
   syncedProject,
   touch,
@@ -75,7 +76,7 @@ export function createRoomSlice(set: DesignSet, get: DesignGet): RoomActions {
       const project = syncedProject(get().project, get().design);
       const src = project.rooms.find((r) => r.id === id);
       if (!src) return '';
-      const copy = cloneRoom(src, nextRoomName(project.rooms));
+      const copy = cloneRoom(src, nextRoomCopyName(project.rooms, src.name));
       // The copy is added but not activated — the user stays in the lobby.
       set({ project: { ...project, rooms: [...project.rooms, copy] } });
       return copy.id;
