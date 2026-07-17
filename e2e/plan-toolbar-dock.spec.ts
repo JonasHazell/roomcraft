@@ -9,7 +9,11 @@ import { test, expect } from '@playwright/test';
  * string concatenation. The refactor is meant to be behaviourally invisible, so
  * this spec drives every affected control end to end: mode switching (Select ↔
  * Interior, with the `active` prop), the Cancel/Delete danger actions, the
- * Undo/Redo history pill (`disabled` + `history` props), and Fit view.
+ * Undo/Redo history pill (`disabled` + `history` props).
+ *
+ * Issue #247 removed the user-facing "Fit view" control from the dock (the
+ * maintainer deemed it unwanted; the automatic auto-fit stays). The final test
+ * guards that removal: the button is gone while the zoom controls remain.
  *
  * A fresh browser context has empty localStorage, so a room with one interior
  * wall already drawn is seeded directly (schema v5, see src/lib/persistence.ts)
@@ -122,18 +126,24 @@ test('selecting the interior wall reveals Delete, and Undo/Redo restore it', asy
   await expect(page.locator('.plan-wall.interior')).toHaveCount(0);
 });
 
-test('Fit view is disabled until the view is zoomed, then resets it', async ({ page }) => {
-  const fitView = page.getByRole('button', { name: 'Fit view' });
-  await expect(fitView).toBeVisible();
-  await expect(fitView).toBeDisabled();
+test('the Fit view control is gone, while the dock and zoom controls remain (#247)', async ({
+  page,
+}, testInfo) => {
+  // The removed control must leave no trace in the dock.
+  await expect(page.getByRole('button', { name: 'Fit view' })).toHaveCount(0);
+
+  // The rest of the view-controls dock is untouched.
+  await expect(page.getByRole('toolbar', { name: 'Floor plan tools' })).toBeVisible();
 
   // Zoom in/out buttons are mouse-only (hidden on coarse/touch viewports, where
-  // pinch is used instead) — only exercise them when present.
+  // pinch is used instead) — assert they still exist there.
   const zoomIn = page.getByRole('button', { name: 'Zoom in' });
+  const zoomOut = page.getByRole('button', { name: 'Zoom out' });
   if (await zoomIn.isVisible()) {
-    await zoomIn.click();
-    await expect(fitView).toBeEnabled();
-    await fitView.click();
-    await expect(fitView).toBeDisabled();
+    await expect(zoomIn).toBeVisible();
+    await expect(zoomOut).toBeVisible();
   }
+
+  // Capture the toolbar/dock without the Fit view button (desktop + mobile per project).
+  await page.screenshot({ path: `plan-dock-no-fit-view-${testInfo.project.name}.png` });
 });

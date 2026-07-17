@@ -599,11 +599,9 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
         draftActive={draft.length > 0}
         hasExterior={hasExterior}
         canDelete={selectedWall?.kind === 'interior'}
-        canResetView={viewport.isCustom}
         onSelectTool={startSelect}
         onExteriorTool={startExterior}
         onInteriorTool={startInterior}
-        onResetView={viewport.reset}
         onZoomIn={viewport.zoomIn}
         onZoomOut={viewport.zoomOut}
         onFinishDraft={finishInterior}

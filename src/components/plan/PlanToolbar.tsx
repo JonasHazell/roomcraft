@@ -19,13 +19,10 @@ interface Props {
   /** Whether the room already has exterior walls — switches Draw ↔ Redraw wording. */
   hasExterior: boolean;
   canDelete: boolean;
-  /** True when the user has zoomed/panned away from the auto-fitted view. */
-  canResetView: boolean;
   onSelectTool: () => void;
   onExteriorTool: () => void;
   onInteriorTool: () => void;
   onDelete: () => void;
-  onResetView: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   /** Ends the current interior-wall chain (keyboard equivalent: Enter). */
@@ -64,12 +61,10 @@ export function PlanToolbar({
   draftActive,
   hasExterior,
   canDelete,
-  canResetView,
   onSelectTool,
   onExteriorTool,
   onInteriorTool,
   onDelete,
-  onResetView,
   onZoomIn,
   onZoomOut,
   onFinishDraft,
@@ -103,9 +98,9 @@ export function PlanToolbar({
 
       <div className="plan-dock" role="toolbar" aria-label="Floor plan tools">
         {/* Left: view controls. Touch relies on pinch/drag (as in the 3D view), so
-            the +/− buttons are mouse-only; Fit view is always offered. Redrawing the
-            whole outline is a rare, start-over action, so it sits here off to the
-            side as a small icon button rather than central among the mode switches. */}
+            the +/− buttons are mouse-only. Redrawing the whole outline is a rare,
+            start-over action, so it sits here off to the side as a small icon button
+            rather than central among the mode switches. */}
         <div className="dock-slot dock-left">
           <SelBar label="View controls">
             {!coarse && (
@@ -126,14 +121,6 @@ export function PlanToolbar({
                 />
               </>
             )}
-            <SelBarButton
-              icon={<Icon name="scan" />}
-              title="Fit the whole drawing in view"
-              ariaLabel="Fit view"
-              history
-              disabled={!canResetView}
-              onClick={onResetView}
-            />
             {!drawing && hasExterior && wizardStep !== 'openings' && (
               <>
                 <SelBarDivider />
