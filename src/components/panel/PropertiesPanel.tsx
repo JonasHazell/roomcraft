@@ -16,7 +16,7 @@ export function PropertiesPanel() {
   const furniture = useDesignStore((s) => s.design.furniture);
 
   if (!selected) {
-    return <p className="hint">Click a piece of furniture in the 3D view to edit it.</p>;
+    return <p className="hint">Select a piece of furniture in the 3D view to edit it.</p>;
   }
 
   // Read straight from live store state (walls, every other piece's current
