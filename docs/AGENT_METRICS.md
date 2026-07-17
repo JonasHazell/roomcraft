@@ -34,6 +34,14 @@ run, plus the running totals carried in the snapshot):
 | **Median PR size** | lines changed across merged agent PRs | Are diffs staying small and reviewable? |
 | **Time-to-decision** | median hours from issue open → merge/close | How long work sits waiting on the human |
 
+**Auto-merged PRs are a caveat on the clean-merge rate.** PRs Stage B landed via
+auto-merge (labelled `agent:auto-merge`) are *by construction* merged with no human
+edits, so they inflate the clean-merge rate without being evidence the human reviewed
+and approved the work unchanged. When they're a meaningful share of merges, report
+the clean-merge rate **split** — human-reviewed vs auto-merged — so the "Stage B hit
+the mark first try" signal stays honest. A rising auto-merge share is itself worth a
+note: it means more work is landing unreviewed, which is fine only while quality holds.
+
 ### 2. Pipeline-health metrics — is the machine itself running cleanly?
 
 Computed from label state and run history:
