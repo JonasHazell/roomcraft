@@ -141,7 +141,55 @@ note the promotion on the entry so the trail from evidence → rule stays tracea
   same file, it should be a signal to flag the risk in both issue bodies, or
   stagger them across runs, rather than proposing both blind to the collision.
 
+## Stage C methodology
+
+- **A PR's own description is evidence, not ground truth — always check it against
+  the actual diff before trusting what it claims to have changed.** The human's own
+  #258 is titled "Add portable agent-pipeline template for reuse in other projects"
+  and its body states it's "additive and self-contained... does not touch the
+  RoomCraft app, its docs, or its live pipeline." The real diff (17 files, +347/-185)
+  did the opposite: it deleted `docs/MONETIZATION.md` and `docs/TECHNICAL-CHALLENGES.md`
+  outright, added two brand-new human-owned direction docs (`PRINCIPLES.md`,
+  `VISION.md`), and edited `CLAUDE.md`, `README.md`, `ARCHITECTURE.md`,
+  `MOBILE-FIRST.md`, `STRATEGY.md`, `PURPOSE.md`, `docs/README.md`,
+  `interior-design-rules.md`, and all four `AGENT_*.md` pipeline docs — no
+  `agent-pipeline-template/` directory exists anywhere in the shipped result. The
+  PR's 10 commits show why: the session started by literally building the template
+  (`Add portable agent-pipeline template...`), then reversed course mid-session
+  (`Remove agent-pipeline template folder`) after live human steering (one commit is
+  titled `Fill in RoomCraft VISION destination from owner input`) and pivoted to the
+  docs consolidation that actually shipped — but the PR's title and top-level body
+  were never rewritten to describe the final scope, so they still describe the
+  abandoned first draft. The lesson cuts two ways: (1) for Stage C's own method —
+  since this whole stage's technique is "read the PR body, diff commits" — always
+  pull the actual file list/diff for anything that looks unusually broad or
+  meta, especially a multi-commit PR (this one had 10, versus the usual 1 for an
+  agent-built PR), rather than summarizing from the description alone; (2) for
+  Stage B's own PR-opening step — when a build's scope changes mid-session, the
+  title and body must be rewritten to match what actually shipped, not left
+  describing the original plan.
+
 ## Design & UI
+
+- **A new "first principle" now governs every UI decision: the app must be minimal
+  and explain itself without words.** The human hand-built #262, adding "minimal and
+  self-evident" as the lead section of `DESIGN.md`, above the token/primitive rules —
+  show don't tell, less on the screen, make the next step obvious, rely on the
+  shared vocabulary, treat explanatory text as a last resort rather than the way a
+  surface communicates its purpose. Read this before proposing or building any UI
+  change: a proposal that adds a label, caption, or instructional string to make a
+  control understandable is weaker than one that makes the control self-evident by
+  its shape, position, or icon alone; prefer the latter.
+
+- **When two sibling proposals both touch the same shared file, say so in the PR
+  body even if you can't avoid it — it costs nothing and de-risks the merge order.**
+  #255 (rebuilding `PlanToolbar` on `SelBar`) explicitly flagged in its own
+  description that #205 (rebuilding `HistoryBar` on the same primitives) might add
+  the same `disabled`/`history` props to `SelBar.tsx` and collide. No conflict
+  actually happened (#205's PR was rejected first), but the proactive flag is the
+  right habit regardless of outcome — it's what the #225/#226 postmortem (see
+  Scoping, above) asked future same-file pairs to do, and this is the first
+  instance of a PR actually doing it unprompted.
 
 - **When migrating a bespoke control onto a shared primitive like `.btn`, write a
   scoped override that only sets the properties that genuinely need to differ
@@ -240,6 +288,23 @@ note the promotion on the entry so the trail from evidence → rule stays tracea
   it. Don't just verify the tool you're building for — check whether the new
   files/paths intersect an existing tool's glob or config and would break it.
 
+- **If your own `npm run test:e2e` run surfaces a pre-existing failure unrelated to
+  your change, fix it in your PR instead of just noting it as "pre-existing" and
+  moving on — a red baseline erodes the validation gate for every other in-flight
+  PR, and "not my problem" means nobody fixes it.** Three same-batch PRs (#259,
+  #260, #261) independently hit the exact same stale assertion
+  (`e2e/touch-target.spec.ts` expecting 5 `.sel-action` pills; the real count had
+  been 3 since #170/#214 moved Auto-arrange/AI out of `ActionBar`) and each
+  confirmed via `git stash`/history that it was pre-existing and unrelated to their
+  own diff — but only the last one to be written, #261, actually spent the one-line
+  fix to correct it, noting in its body that the other two "may no-op harmlessly if
+  merged after this one." For the ~3.5 hours between the first of the batch
+  merging and #261 landing, `main`'s own e2e suite was failing this assertion,
+  which is exactly the kind of standing-red state `CLAUDE.md`'s validation rule is
+  meant to prevent. When a full-suite run turns up a stale, unrelated failure,
+  spend the one line to fix it rather than documenting around it — don't assume a
+  sibling PR in the same batch will be the one that does it.
+
 - **A regression test for a computed-style invariant (a touch-target minimum,
   a color, a layout dimension) must assert the actual computed value, not
   just look right in a manual/visual check — because a later, unrelated CSS
@@ -313,7 +378,18 @@ _No entries yet._
   not the image, per `scripts/pr-media.mjs`). Both are pipeline tooling, not
   a product signal — and the human already wired the new convention directly
   into `AGENT_BUILD.md`'s own PR-opening step in #218, so there's nothing
-  left for Stage C to promote here.
+  left for Stage C to promote here. This run adds three more, all hand-built, all
+  pipeline/doc infrastructure rather than product surface: #258 (a large docs
+  consolidation — new `PRINCIPLES.md`/`VISION.md`, `MONETIZATION.md`/
+  `TECHNICAL-CHALLENGES.md` folded in and removed, edits across every reference doc
+  and all four `AGENT_*.md` files — see the Stage C methodology entry above for the
+  catch in its misleading PR description), #265 (added the very `agent:question`
+  channel this stage now uses), and #266 (added this stage's own reference-doc-
+  honesty duty, the section this bullet lives under). The pattern keeps holding
+  without exception: every time the human invests same-day hand-built effort in
+  `docs/*.md`/pipeline tooling, it's about the pipeline or the taste docs, never a
+  signal to treat that area as a hot product zone the way `src/lib/validation/` or
+  `server/` are.
 
 - **[Promoted into `AGENT_BUILD.md` this run.] An issue whose PR is closed
   without merging must be reclaimed — `agent:building` doesn't clear itself, and

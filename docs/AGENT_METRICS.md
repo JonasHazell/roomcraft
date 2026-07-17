@@ -57,7 +57,7 @@ Surface those as trends so proposals can target real cost/latency/reliability pr
 the click-through can't see:
 
 | Metric | Source | What it tells us |
-| ------ | ------ | ---------------- |
+| ------ | ------ | ----------------- |
 | **AI proposal latency** | `durationMs` in `[proposals]` server logs | Is the core AI wait getting worse? |
 | **AI proposal cost** | `costUsd` in `[proposals]` server logs | Is a change making the backend expensive? |
 | **AI calls per proposal** | `calls` in `[proposals]` server logs | Are repair/retry loops fanning out? |
@@ -78,31 +78,32 @@ only where a single item dominates a metric.
 <!-- STAGE C: overwrite everything between the markers below each run. -->
 <!-- METRICS-SNAPSHOT:START -->
 
-**Fourth snapshot** (this run, 2026-07-16 22:00 UTC). Cumulative counts computed from
-every agent issue/PR to date (#124–#240; meta-PRs #131/#144/#169/#195/#219 excluded,
-as always). This run's new decisions: agent PRs #230–#237 (8 decided, **8 merged
-clean, 0 rejected** — #232 landed via a same-day human conflict-resolution branch,
-#238, see below), agent PRs #239/#240 (2 decided, **0 merged, 2 rejected**), issues
-#220,#221,#222,#223,#225,#226,#227,#228 (8 decided, all via a merged PR — 0
-rejected). Also reviewed the human's own merged PRs #238 (conflict-resolved rebase
-of #232 — see `AGENT_LEARNINGS.md`'s same-file-conflict entry) and #242 (pipeline
-tooling, matches the established "not a product signal" pattern; no new lesson). Δ
-is versus the third snapshot (from PR #219).
+**Fifth snapshot** (this run, 2026-07-17). Cumulative counts computed from every
+agent issue/PR to date (#124–#261; meta-PRs #131/#144/#169/#195/#219/#243 excluded,
+as always). This run's new decisions: agent PRs #254,#255,#256,#257,#259,#260,#261
+(7 decided, **7 merged clean, 0 rejected**), issues #229,#244,#245,#246,#248,#250,#251
+(7 decided via a merged PR, 0 rejected) and #224 (1 decided — closed `not_planned`
+directly by the human, no PR; the underlying rejection was already analyzed last run
+via PR #240, so this is bookkeeping, not a new lesson). Also reviewed the human's own
+merged PRs #258, #262, #265, #266 — see `AGENT_LEARNINGS.md`'s new "Stage C
+methodology" and "Design & UI" entries, and the extended pipeline-infra entry under
+"Areas to avoid." No open `agent:question` issues to fold back (none exist yet). Δ is
+versus the fourth snapshot (from PR #243).
 
 | Metric | Value | Δ | Window / note |
 | ------ | ----- | - | ------------- |
-| Merge rate | 31 / 38 = 82% | → (was 82%) | all 38 decided agent PRs to date; this run added 8 merges (#230–#237) and 2 rejections (#239, #240) |
-| Clean-merge rate | 31 / 31 = 100% | → (was 100%) | every merged agent PR to date, including this run's 8 (each a single commit by the agent, no human-added commits), landed with zero changes to the agent's commits — 27 clean merges in a row across the last three runs |
-| Edit rate | 0 / 31 = 0% | → (was 0%) | still no merged agent PR has ever needed a human edit |
-| PR-rejection rate | 7 / 38 = 18% | → (was 18%) | now #127,#129,#135,#153,#186,#239,#240 — 2 new this run, both from the same batch (see Stuck-building below) |
-| Issue-rejection rate | 4 / 35 = 11% | ↓ (was 15%) | of 35 *decided* `agent:ready` issues, still only 4 ever closed without a merged PR (#124,#125,#133,#148) — this run's 8 newly-decided issues (#220–#228, excluding the still-open #224) all landed a merged PR, 0 new issue-level rejections (#205 and #224 are *stuck*, not rejected — see below, they stay open) |
-| Median PR size | 106 lines | ↑ (was 80) | all 31 merged agent PRs to date (additions+deletions), sorted low→high, 16th of 31: 4,5,10,20,26,30,41,49,50,55,71,77,80,85,99,**106**,116,117,135,138,140,151,151,159,195,224,235,245,275,282,444 — a fourth straight run of increase (46→71→80→106). Still zero cost so far (clean-merge and edit rate both unchanged at 100%/0%), and this run's biggest outlier (#234, 444 lines) is a genuinely new feature (a keyboard-shortcuts modal) whose size is mostly its own e2e spec + docs, not scope creep — not promoting a size cap yet, but a fourth consecutive increase with no counter-example is close to the "trend across runs" bar; watch whether a future large PR *does* need an edit before treating this as free |
-| Time-to-decision | ~2h40m this run's window | ↑ (was ~1.2h) | this run's 8 newly-decided issues (#220–#228 minus stuck #224) ran creation (~02:47) → decision in ~2h29m–2h45m each (median ~2h40m). Unlike last run, the spread here is mostly *build* latency, not review latency: all 8 merges landed in a tight 05:15–05:32 human-review burst, so the wait was Stage B working through a 10-issue batch serially (each subagent taking 15–45 min per several PR bodies' own notes about heavy concurrent host load), not the human sitting on a decision |
-| Ready backlog | 1 | → (was 1) | #229 (name a duplicated room after its source) — open, not yet `agent:building`, no open PR; a fresh Stage A proposal Stage B hasn't picked up yet, not a stuck item |
-| Stuck-building count | 2 | ↑ (was 0) | #205 and #224 — both still open, still labelled `agent:building`, both PRs (#239, #240) closed without merging. This is the *second* occurrence of the gap flagged last run ("watch for a second rejection leaving an issue stuck... before promoting a label-clearing rule") — landing twice in the same run clears that bar. **Promoted this run:** `AGENT_BUILD.md`'s queue-finding step now reclaims stuck `agent:building` issues whose PR closed unmerged (clearing the label, and closing the issue too when the PR's rejection was a plain "don't want this"). #205 and #224 themselves are left as-is here — Stage C cannot touch `agent:building` — for Stage B's next run to reclaim under the new rule |
-| Duplicate-rejection count | 2 | → (was 2) | #129, #135 — #239/#240's rejections weren't "already did this myself" duplicates, so this count is unaffected |
-| Open questions | 0 | new | `agent:question` channel introduced this change; none asked yet |
-| Question-answer rate | n/a | new | no questions asked yet — first data point once Stage C opens one |
+| Merge rate | 38 / 45 = 84% | ↑ (was 82%) | all 45 decided agent PRs to date; this run added 7 merges (#254,#255,#256,#257,#259,#260,#261) and 0 rejections |
+| Clean-merge rate | 38 / 38 = 100% | → (was 100%) | every merged agent PR to date, including this run's 7 (each a single commit by the agent, no human-added commits), landed with zero changes to the agent's commits — 34 clean merges in a row across the last four runs |
+| Edit rate | 0 / 38 = 0% | → (was 0%) | still no merged agent PR has ever needed a human edit |
+| PR-rejection rate | 7 / 45 = 16% | ↓ (was 18%) | still just #127,#129,#135,#153,#186,#239,#240 — no new rejections this run |
+| Issue-rejection rate | 5 / 43 = 12% | ↑ (was 11%) | of 43 *decided* `agent:ready` issues, 5 ever closed without a merged PR (#124,#125,#133,#148,#224) — this run's 7 newly-merged issues (#229,#244,#245,#246,#248,#250,#251) added 0 new rejections, and #224 (already analyzed last run as a rejection via PR #240) is now counted as decided since the human closed the issue itself this run |
+| Median PR size | 126 lines | ↑ (was 106) | all 38 merged agent PRs to date (additions+deletions), sorted low→high; middle two of 38 are 117 and 135 (avg = 126) — a fifth straight run of increase (46→71→80→106→126). Clean-merge and edit rate are still 100%/0%, so still not promoting a size cap, but five consecutive increases with no counter-example is now past the "trend across runs" bar in `AGENT_ANALYSIS.md`'s promotion criteria — watch closely next run; a sixth increase or a first edit on a large PR should trigger tightening the "one issue → one small PR" guidance in `AGENT_BUILD.md` |
+| Time-to-decision | ~3h8m median this run's window | ↑ (was ~2h40m) | this run's 8 newly-decided issues ran creation → decision in: 6 issues from the #244–#251 batch at a tight ~3h5m–3h9m each (issue open ~14:39–14:40 → merge ~17:45–17:49, all same day), plus two outliers pulling the mean but not the median much: #224 (~12h20m, issue open 02:47 → human closed it directly at 15:07) and #229 (~21h22m, issue open 02:47 → its PR #261 wasn't opened until 17:10, the same batch-merge window as the others, but didn't itself merge until the next day at 00:09 — a ~7h PR-open-to-merge gap with no review comment explaining it, unlike its six siblings which merged within ~40–120 minutes of opening) |
+| Ready backlog | 4 | ↑ (was 1) | #252, #253, #263, #264 — open, not yet `agent:building`, no open PR; fresh Stage A proposals Stage B hasn't picked up yet, not stuck items |
+| Stuck-building count | 1 confirmed (#205) + 2 in-progress (#247, #249) | → (was 2, see correction) | #205 (PR #239 closed unmerged) is still open, still labelled `agent:building`, not yet reclaimed despite `AGENT_BUILD.md`'s queue-finding step being promoted last run to do exactly this — no evidence yet either way on whether the new rule works, since Stage B hasn't been observed acting on it. **Correction to last run's snapshot:** #224 was *not* reclaimed by the new Stage B rule as previously assumed — `closed_by` on the issue shows the human closed it directly, and its `closed_at` (15:07 on 2026-07-16) predates last run's own stated timestamp (22:00 the same day), so last run's claim that "#205 and #224 ... both still open" was already stale by the time it was written; treat it as corrected, not as a rule having fired. #247 and #249 are freshly claimed same-day builds with no PR yet — not confirmed stuck, but worth checking next run if they're still `agent:building` with no PR by then |
+| Duplicate-rejection count | 2 | → (was 2) | #129, #135 — no new duplicate rejections this run |
+| Open questions | 0 | → (was 0) | none asked yet |
+| Question-answer rate | n/a | → (was n/a) | no questions asked yet — first data point once Stage C opens one |
 | AI proposal latency | not sampled this run | — | still no reachable server/runtime logs from this GitHub-only Stage C session |
 | AI proposal cost | not sampled this run | — | same as above |
 | AI calls per proposal | not sampled this run | — | same as above |
