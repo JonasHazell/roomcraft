@@ -67,18 +67,29 @@ you propose.
 
 ## What to look for
 
-The focus of each run is **new features**: 10 concrete additions that make the app
-better at planning and furnishing a room. Ground them in the code analysis and the
-click-through, and let these categories shape the *kind* of feature you add:
+The focus of each run is **10 concrete, high-value improvements** to the core
+room-planning experience. Per [`PRINCIPLES.md`](PRINCIPLES.md)'s *depth over breadth*,
+these are **not** required to be new features — deepening, finishing, or simplifying an
+existing flow counts fully, and usually counts for more. Ground them in the code
+analysis and the click-through, and let these categories shape each proposal, listed
+roughly in order of preference:
 
-- **New features** — the core of every run. Each should be genuinely useful for
-  planning and furnishing a room, and buildable to the quality bar as a small,
-  self-contained addition.
-- **Changes to existing features** — deepen, finish, or fix a flow that's already
-  there so it works better.
+- **Deepen or finish an existing flow** — the default, highest-value shape. Take a
+  flow that's already there and make it noticeably better: more complete, more
+  reliable, less friction. This is *depth over breadth* in practice.
+- **Advance one of the three hardest problems** — the parts `STRATEGY.md` says the
+  whole experience *lives or dies by*: a simpler-yet-complete GUI, validation rules
+  that are general *and* relevant, and an AI engine that gives genuinely best
+  suggestions. These matter most — don't shy away from the core just because it's
+  hard (see the hot-area timing guidance in step 3 for how to propose there without
+  colliding with the human's own work).
 - **Removing unnecessary features** — cut things that add clutter, confuse the core
   journey, or aren't pulling their weight. A subtraction is a valid, valuable
   proposal.
+- **New features** — a genuinely core addition to planning and furnishing a room,
+  built to the quality bar as a small, self-contained addition. Welcome when one
+  earns its place by the litmus test, but held to `PRINCIPLES.md`'s feature-sprawl
+  non-goal — never the quota's reason for existing.
 - **GUI clarity & simplicity** — make the app **clearer and easier to use**:
   simpler layouts, more obvious controls, fewer choices, better mobile ergonomics.
   When in doubt, remove a choice rather than add one.
@@ -93,6 +104,11 @@ click-through, and let these categories shape the *kind* of feature you add:
 - **Serves the core experience.** It makes an existing, core flow better — faster,
   clearer, simpler, more reliable, more delightful — per `STRATEGY.md` and
   `PURPOSE.md`.
+- **Points toward the long-term goal, not just local polish.** Prefer proposals that
+  advance one of `STRATEGY.md`'s three hardest problems or move toward
+  [`VISION.md`](VISION.md)'s destination over cosmetic tweaks with no bearing on where
+  the product is heading. A clean, safe, tiny diff is necessary but not sufficient —
+  it should also *matter*.
 - **Makes the app simpler and clearer, mobile-first.** The bar is a first-time user
   on a phone getting from an empty room to one they love with as little friction as
   possible. Prefer changes that remove steps, choices, or confusion.
@@ -132,11 +148,18 @@ click-through, and let these categories shape the *kind* of feature you add:
    generation/repair) are hot in exactly this way — treat that as a live example
    of the check, not a permanent rule; re-verify against actual recent history
    each run rather than trusting this note indefinitely.
+   This is *collision avoidance, not a no-go zone.* `src/lib/validation/` and
+   `server/` are two of the three hardest problems the whole experience lives or
+   dies by, so when they are **not** currently hot — or when you can propose at the
+   scale the human is clearly already working at — they are exactly where the
+   highest-value proposals live. Propose there deliberately; don't avoid the core
+   out of habit.
 4. **Generate candidates.** From what you read and saw, find the highest-value,
-   in-scope improvements available right now, across all the categories above (new
-   features, changes to existing features, removals, and GUI clarity/simplicity).
+   in-scope improvements available right now, across all the categories above
+   (deepening existing flows, advancing the three hardest problems, removals, GUI
+   clarity/simplicity, reliability, and genuinely-core new features).
 5. **Select `N` = 10** of the best. Aim to fill the quota every run — each run
-   should produce 10 concrete proposals for new features. Hold every one to the
+   should produce 10 concrete proposals across the categories above. Hold every one to the
    quality bar; if truly great candidates are scarce, keep digging (more code
    analysis, more click-through, more categories) until you have 10 that serve the
    core experience. Every proposal becomes a real PR the human reviews, so make
@@ -161,10 +184,13 @@ click-through, and let these categories shape the *kind* of feature you add:
 
 ## Guardrails
 
-- **Target of `N` = 10 new-feature issues per run.** Each run should create 10
-  concrete proposals for new features — that is the intended volume, not a ceiling
-  to stay under. The human reviews every resulting PR, so the brake is *quality*,
-  not count: never pad the list with weak or duplicate ideas to hit the number.
+- **Target of `N` = 10 improvement issues per run**, across all the categories above —
+  deepening existing flows, advancing the three hardest problems, removals, GUI
+  clarity, reliability, and genuinely-core new features. That is the intended volume,
+  not a ceiling to stay under, and it is **not** a quota of *new features*: per *depth
+  over breadth*, prefer deepening what exists over adding surface area. The human
+  reviews every resulting PR, so the brake is *quality*, not count: never pad the list
+  with weak, sprawl-y, or duplicate ideas to hit the number.
 - **No monetization-driven proposals** — that phase is parked (`STRATEGY.md`).
 - **No speculative infrastructure** — build for the experience in front of us.
 - If, after a thorough look at the app, you genuinely cannot find 10 in-scope,
