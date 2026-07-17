@@ -21,6 +21,61 @@ export interface ViewInsets {
 
 const NO_INSETS: ViewInsets = { top: 0, bottom: 0 };
 
+/**
+ * Smallest fraction of the canvas height the auto-fit is ever allowed to squeeze
+ * the drawing into. A tall bottom inset — the mobile wall-detail sheet at its
+ * `min(48vh, 460px)` cap plus its ~82px dock offset — can otherwise reserve most
+ * of a phone's canvas, fitting the room into an un-tappable sliver so a tap on a
+ * wall misses and deselects (#249). Flooring the available fitting height here
+ * keeps the drawing at a usable size: its lower edge may tuck a little behind the
+ * sheet (the user can pan), but the walls stay big enough to tap. On desktop, and
+ * for any normal-height sheet, the inset never reduces the band below this floor,
+ * so the max() picks the un-inset value and the fit is byte-for-byte unchanged.
+ */
+export const MIN_FIT_HEIGHT_FRACTION = 0.4;
+
+/**
+ * The vertical band (px) the auto-fit gets to place the drawing in: the canvas
+ * height minus the top/bottom insets, but never less than
+ * {@link MIN_FIT_HEIGHT_FRACTION} of the canvas height. Pure and exported so the
+ * floor is unit-testable in isolation. Negative insets are ignored.
+ */
+export function availableFitHeight(canvasH: number, top: number, bottom: number): number {
+  const reduced = canvasH - Math.max(0, top) - Math.max(0, bottom);
+  return Math.max(canvasH * MIN_FIT_HEIGHT_FRACTION, reduced);
+}
+
+/**
+ * The auto-fit viewBox that lands `content` inside `size`, honouring `insets` but
+ * never letting them shrink the vertical fitting band below the floor (see
+ * {@link availableFitHeight}). With no insets and a known size it reproduces the
+ * plain centred fit; a bottom inset lifts the drawing clear of a panel without
+ * shrinking it past the floor. Pure and exported for unit testing; returns
+ * `content` unchanged when the size or content is degenerate. Only the vertical
+ * axis is floored — {@link ViewInsets} carries no left/right inset, so the
+ * horizontal band is never reduced and needs no clamp.
+ */
+export function fitViewBox(
+  content: Bounds,
+  size: { w: number; h: number } | null,
+  insets: ViewInsets,
+): Bounds {
+  const W = content.maxX - content.minX;
+  const H = content.maxZ - content.minZ;
+  if (!size || size.w <= 0 || size.h <= 0 || W <= 0 || H <= 0) return content;
+  const top = Math.max(0, insets.top);
+  const availH = availableFitHeight(size.h, insets.top, insets.bottom);
+  const scale = Math.min(size.w / W, availH / H);
+  const viewW = size.w / scale;
+  const viewH = size.h / scale;
+  const minX = content.minX - (viewW - W) / 2;
+  // Centre the content within the available vertical band, measured from the
+  // viewBox's top edge (which maps to the canvas top).
+  const bandTop = top / scale;
+  const minZ = content.minZ - (bandTop + (availH / scale - H) / 2);
+  return { minX, maxX: minX + viewW, minZ, maxZ: minZ + viewH };
+}
+
 interface PanState {
   x: number;
   y: number;
@@ -91,23 +146,14 @@ export function useViewport(
   // Auto-fit that lands the content inside the band left by the insets. With no
   // insets and a known size it reproduces the old centred fit exactly (the
   // viewBox just matches the canvas aspect instead of relying on SVG letterboxing);
-  // a bottom inset lifts the drawing clear of a panel without shrinking it.
+  // a bottom inset lifts the drawing clear of a panel without shrinking it — but
+  // never past the floor in `fitViewBox`, so a tall mobile sheet can't squeeze the
+  // room into an un-tappable sliver (#249).
   const { top, bottom } = insets;
-  const fitBounds = useMemo<Bounds>(() => {
-    const W = content.maxX - content.minX;
-    const H = content.maxZ - content.minZ;
-    if (!size || size.w <= 0 || size.h <= 0 || W <= 0 || H <= 0) return content;
-    const availH = Math.max(1, size.h - Math.max(0, top) - Math.max(0, bottom));
-    const scale = Math.min(size.w / W, availH / H);
-    const viewW = size.w / scale;
-    const viewH = size.h / scale;
-    const minX = content.minX - (viewW - W) / 2;
-    // Centre the content within the available vertical band, measured from the
-    // viewBox's top edge (which maps to the canvas top).
-    const bandTop = Math.max(0, top) / scale;
-    const minZ = content.minZ - (bandTop + (availH / scale - H) / 2);
-    return { minX, maxX: minX + viewW, minZ, maxZ: minZ + viewH };
-  }, [content, size, top, bottom]);
+  const fitBounds = useMemo<Bounds>(
+    () => fitViewBox(content, size, { top, bottom }),
+    [content, size, top, bottom],
+  );
 
   const bounds = view ?? fitBounds;
   const boundsRef = useRef(bounds);
