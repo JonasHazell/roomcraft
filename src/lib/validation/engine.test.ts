@@ -187,6 +187,26 @@ describe('FEN-02 the coffin position', () => {
   });
 });
 
+describe('ERG-09 nightstands at bed height', () => {
+  // A single bed with a nightstand tucked against its right side at the head end,
+  // so the presence check passes and the rule reaches the ±5 cm height comparison.
+  const bed = () => piece('bed', 2, 2, { width: 1, depth: 2, height: 0.5 }); // top at 0.5 m
+  const nightstand = (topHeight: number) =>
+    piece('nightstand', 2.6, 1.4, { width: 0.4, depth: 0.4, height: topHeight });
+
+  it('flags a nightstand 8 cm off the bed top (within the old 10 cm bound, past ±5 cm)', () => {
+    const outcome = outcomeOf(makeDesign([bed(), nightstand(0.58)]), 'ERG-09');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].message).toContain('within ±5 cm');
+    }
+  });
+
+  it('passes a nightstand 3 cm off the bed top (inside ±5 cm)', () => {
+    expect(outcomeOf(makeDesign([bed(), nightstand(0.53)]), 'ERG-09').status).toBe('passed');
+  });
+});
+
 describe('ACC-13 over-furnishing', () => {
   it('flags a room where furniture covers more than 60% of the floor', () => {
     const boxes = [
