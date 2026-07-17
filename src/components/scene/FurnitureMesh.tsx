@@ -198,13 +198,12 @@ export function FurnitureMesh({ id }: { id: string }) {
 
   const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
     if (e.button !== 0) return; // right button is left to camera panning
+    // A piece is selected on a still click (see onClick) — the same way walls
+    // and floors are — so pressing down never selects on its own. That means an
+    // orbit/pan that happens to start on a piece leaves it untouched. Only an
+    // already-selected piece begins a drag-to-move from here.
+    if (!selected) return;
     e.stopPropagation();
-    // A piece must be selected before it can be dragged: the first click only
-    // selects it, and a subsequent drag (while already selected) moves it.
-    if (!selected) {
-      select({ kind: 'furniture', id });
-      return;
-    }
     (e.target as Element).setPointerCapture(e.pointerId);
     if (e.ray.intersectPlane(FLOOR_PLANE, hit)) {
       dragOffset.current = { x: item.position.x - hit.x, z: item.position.z - hit.z };
@@ -237,6 +236,10 @@ export function FurnitureMesh({ id }: { id: string }) {
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
       onClick={(e) => {
+        // Select only on a still click — the same guard walls and floors use —
+        // so releasing a camera orbit over a piece doesn't select it. A drag
+        // (e.delta > 3) falls through without stopping propagation.
+        if (e.delta > 3) return;
         // Stop the click so the floor behind the furniture doesn't deselect it.
         e.stopPropagation();
         select({ kind: 'furniture', id });
