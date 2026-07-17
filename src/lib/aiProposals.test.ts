@@ -50,4 +50,33 @@ describe('fetchProposals', () => {
       'Could not reach the AI service. Check your connection and try again.',
     );
   });
+
+  it('applies a default abort signal when the caller supplies none', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ proposals: [], warnings: [] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await fetchProposals(design, 'a cozy reading nook');
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it('forwards a caller-supplied signal unchanged instead of the default', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ proposals: [], warnings: [] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const controller = new AbortController();
+    await fetchProposals(design, 'a cozy reading nook', controller.signal);
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(init.signal).toBe(controller.signal);
+  });
 });
