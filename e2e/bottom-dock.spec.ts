@@ -57,15 +57,23 @@ test.describe('narrow viewport (390x844, the issue repro size)', () => {
     const canvas = page.locator('canvas');
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('canvas not found');
-    // Slightly below dead-centre: the default orbit camera looks down at the
-    // room, so the floor's near edge sits in the lower half of the canvas —
-    // dead-centre can land on the far wall or the seam between two walls.
-    await canvas.click({ position: { x: canvasBox.width / 2, y: canvasBox.height * 0.65 } });
 
     const left = page.getByRole('toolbar', { name: 'Room actions' });
     const mid = page.locator('.dock-mid').getByRole('toolbar');
     await expect(left).toBeVisible();
-    await expect(mid).toBeVisible();
+
+    // Select something by clicking the centre of the 3D canvas — the default
+    // camera looks down over the room, so a click just below centre hits either
+    // the floor or a wall, which surfaces its contextual bar (FloorBar/WallBar —
+    // both share the dock-mid slot markup, so either is a valid regression check).
+    // Picking goes through the WebGL raycaster, which needs the scene rendered
+    // and pickable; under parallel load the first click can fire before that, so
+    // retry the click until the contextual pill appears rather than assuming one
+    // click lands. The geometry assertions below are unchanged.
+    await expect(async () => {
+      await canvas.click({ position: { x: canvasBox.width / 2, y: canvasBox.height * 0.65 } });
+      await expect(mid).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 20_000 });
 
     const leftBox = await left.boundingBox();
     const midBox = await mid.boundingBox();
