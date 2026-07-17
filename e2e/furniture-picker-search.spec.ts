@@ -59,6 +59,37 @@ test('the catalog tab filters by name and shows "No matches" for a query with no
   await expect(page.getByRole('button', { name: 'Bed', exact: true })).toBeVisible();
 });
 
+test('the search has a clear button and resets when switching tabs (#277)', async ({
+  page,
+}, testInfo) => {
+  await createRoomAndEnterFurnish(page);
+
+  await page.getByRole('button', { name: 'Add furniture' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Add furniture' });
+  await expect(dialog).toBeVisible();
+
+  const search = page.getByLabel('Search furniture', { exact: true });
+  const clear = dialog.getByRole('button', { name: 'Clear search' });
+
+  // No clear affordance until there's something to clear.
+  await expect(clear).toHaveCount(0);
+  await search.fill('cha');
+  await expect(clear).toBeVisible();
+  await page.screenshot({ path: `/tmp/pr-277-${testInfo.project.name}.png` });
+
+  // Clicking it empties the field and restores the full catalog.
+  await clear.click();
+  await expect(search).toHaveValue('');
+  await expect(clear).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Bed', exact: true })).toBeVisible();
+
+  // A query typed on one tab does not silently carry over to the other.
+  await search.fill('bed');
+  await page.getByRole('tab', { name: 'From library' }).click();
+  await expect(search).toHaveValue('');
+  await expect(page.getByText(/No matches/)).toHaveCount(0);
+});
+
 test('the library tab filters saved pieces by name', async ({ page }) => {
   // A longer flow (place, save, reopen, switch tabs, type twice) than the
   // default 30s budget comfortably covers under parallel worker load — mirrors

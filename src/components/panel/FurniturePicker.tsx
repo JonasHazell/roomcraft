@@ -55,6 +55,14 @@ export function FurniturePicker({
   // filtered results.
   const [query, setQuery] = useState('');
 
+  // Switching tabs clears the search: a query typed for one tab should never
+  // silently filter the other (e.g. "bed" carried onto an empty library tab,
+  // giving an inexplicable "no matches").
+  const switchSource = (next: Source) => {
+    setQuery('');
+    onSourceChange(next);
+  };
+
   const filteredLibraryEntries = query
     ? libraryEntries.filter((e) => matchesQuery(e.name, query))
     : libraryEntries;
@@ -70,7 +78,7 @@ export function FurniturePicker({
           role="tab"
           aria-selected={source === 'generic'}
           className={source === 'generic' ? 'active' : ''}
-          onClick={() => onSourceChange('generic')}
+          onClick={() => switchSource('generic')}
         >
           Generic
         </button>
@@ -79,7 +87,7 @@ export function FurniturePicker({
           role="tab"
           aria-selected={source === 'library'}
           className={source === 'library' ? 'active' : ''}
-          onClick={() => onSourceChange('library')}
+          onClick={() => switchSource('library')}
         >
           From library
         </button>
@@ -94,6 +102,16 @@ export function FurniturePicker({
             placeholder="Search by name…"
             onChange={(e) => setQuery(e.target.value)}
           />
+          {query && (
+            <button
+              type="button"
+              className="btn-icon"
+              aria-label="Clear search"
+              onClick={() => setQuery('')}
+            >
+              <Icon name="x" />
+            </button>
+          )}
         </span>
       </label>
 
