@@ -35,7 +35,7 @@ export function ValidationPanel() {
     <div className="stack">
       <p className="hint">
         The furnishing is checked automatically against the rule catalog (safety, accessibility,
-        ergonomics, feng shui, etc.). Click an issue to highlight it in the 3D view.
+        ergonomics, feng shui, etc.). Select an issue to highlight it in the 3D view.
       </p>
 
       {report && (
