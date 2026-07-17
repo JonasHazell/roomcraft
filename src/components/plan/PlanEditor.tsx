@@ -591,28 +591,35 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
         )
       )}
 
-      <PlanToolbar
-        tool={tool}
-        error={error}
-        coarse={coarse}
-        wizardStep={wizardStep}
-        draftActive={draft.length > 0}
-        hasExterior={hasExterior}
-        canDelete={selectedWall?.kind === 'interior'}
-        onSelectTool={startSelect}
-        onExteriorTool={startExterior}
-        onInteriorTool={startInterior}
-        onZoomIn={viewport.zoomIn}
-        onZoomOut={viewport.zoomOut}
-        onFinishDraft={finishInterior}
-        onCancelDraft={startSelect}
-        onDelete={() => {
-          if (selectedWall) {
-            removeWall(selectedWall.id);
-            select(null);
-          }
-        }}
-      />
+      {/* While the wizard's shape chooser is up, the drawing tool is armed
+          underneath it but the user hasn't chosen to draw yet — so suppress the
+          toolbar's hint pill and dock, which would otherwise bleed through the
+          translucent chooser (#273). It returns the moment the chooser is
+          dismissed (a template picked, or "draw by hand" chosen). */}
+      {!showChooser && (
+        <PlanToolbar
+          tool={tool}
+          error={error}
+          coarse={coarse}
+          wizardStep={wizardStep}
+          draftActive={draft.length > 0}
+          hasExterior={hasExterior}
+          canDelete={selectedWall?.kind === 'interior'}
+          onSelectTool={startSelect}
+          onExteriorTool={startExterior}
+          onInteriorTool={startInterior}
+          onZoomIn={viewport.zoomIn}
+          onZoomOut={viewport.zoomOut}
+          onFinishDraft={finishInterior}
+          onCancelDraft={startSelect}
+          onDelete={() => {
+            if (selectedWall) {
+              removeWall(selectedWall.id);
+              select(null);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
