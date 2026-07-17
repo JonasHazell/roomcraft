@@ -107,6 +107,7 @@ export function FurnitureFields({
           min={5}
           max={2000}
           step={1}
+          commitOnBlur
           onChange={(v) => onChange({ size: { width: v / 100 } })}
         />
         <NumberField
@@ -115,6 +116,7 @@ export function FurnitureFields({
           min={5}
           max={2000}
           step={1}
+          commitOnBlur
           onChange={(v) => onChange({ size: { depth: v / 100 } })}
         />
         <NumberField
@@ -123,6 +125,7 @@ export function FurnitureFields({
           min={2}
           max={600}
           step={1}
+          commitOnBlur
           onChange={(v) => onChange({ size: { height: v / 100 } })}
         />
         <NumberField
@@ -131,6 +134,7 @@ export function FurnitureFields({
           min={0}
           max={600}
           step={1}
+          commitOnBlur
           onChange={(v) => onChange({ elevation: v / 100 })}
         />
       </div>
