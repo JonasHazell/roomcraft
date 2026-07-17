@@ -9,6 +9,7 @@ import { HistoryBar } from './components/panel/HistoryBar';
 import { SidePanel } from './components/panel/SidePanel';
 import { ValidationScore } from './components/panel/ValidationScore';
 import { ProposalSwitcher } from './components/panel/ProposalSwitcher';
+import { EmptyRoomPrompt } from './components/panel/EmptyRoomPrompt';
 import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { DialogHost } from './components/panel/DialogHost';
 import { ShortcutsReference } from './components/panel/ShortcutsReference';
@@ -76,6 +77,11 @@ function FurnishView() {
         <span className="room-topbar-name">{roomName}</span>
       </div>
       <ProposalSwitcher />
+      {/* Never a blank page: a first-time user landing in an empty proposal gets a
+          calm, dismissible nudge with the two "get help furnishing" actions. It
+          hides while any other overlay owns the screen (same as the dock's
+          contextual bars) and vanishes once the room has furniture. */}
+      {!overlayOpen && <EmptyRoomPrompt />}
       <ValidationScore />
       <SidePanel />
       {/* Bottom dock in three fixed slots: the add-furniture pill locked to the
