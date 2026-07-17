@@ -208,7 +208,7 @@ export function ProposalSwitcher() {
               className="btn btn-accent proposal-menu-ai"
               onClick={aiSuggest}
             >
-              <Icon name="star" /> 3 AI suggestions
+              <Icon name="star" /> Suggest 3 layouts
             </button>
             <button type="button" className="btn" onClick={() => create(true)}>
               <Icon name="plus" /> New from current
