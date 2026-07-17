@@ -183,6 +183,7 @@ function OpeningRow({
               max={wallLenCm}
               step={1}
               suffix="cm"
+              commitOnBlur
               onChange={(cm) => updateOpening(o.id, { offset: cm / 100 })}
             />
             <NumberField
@@ -192,6 +193,7 @@ function OpeningRow({
               max={wallLenCm}
               step={1}
               suffix="cm"
+              commitOnBlur
               onChange={(cm) => updateOpening(o.id, { width: cm / 100 })}
             />
             <NumberField
@@ -201,6 +203,7 @@ function OpeningRow({
               max={heightCm}
               step={1}
               suffix="cm"
+              commitOnBlur
               onChange={(cm) => updateOpening(o.id, { height: cm / 100 })}
             />
             {o.kind === 'window' && (
@@ -211,6 +214,7 @@ function OpeningRow({
                 max={heightCm}
                 step={1}
                 suffix="cm"
+                commitOnBlur
                 onChange={(cm) => updateOpening(o.id, { elevation: cm / 100 })}
               />
             )}
