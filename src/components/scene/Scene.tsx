@@ -3,6 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { floorPolygon, polygonCenter } from '../../lib/polygon';
+import { initialCameraPosition } from '../../lib/cameraFit';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
 import { deselectOnStillClick, Floor } from './Floor';
@@ -65,10 +66,14 @@ export function Scene() {
   const walls = useDesignStore((s) => s.design.walls);
   const dragging = useUiStore((s) => s.draggingId !== null);
 
-  const center = useMemo(() => polygonCenter(floorPolygon(walls)), [walls]);
+  const floor = useMemo(() => floorPolygon(walls), [walls]);
+  const center = useMemo(() => polygonCenter(floor), [floor]);
+  // Frame the whole room on the first frame: scale the camera offset by the
+  // room's actual footprint instead of a fixed constant (#291).
+  const cameraPos = useMemo(() => initialCameraPosition(floor, center), [floor, center]);
 
   return (
-    <Canvas shadows camera={{ position: [center.x + 7, 5.5, center.z + 8.5], fov: 45 }}>
+    <Canvas shadows camera={{ position: cameraPos, fov: 45 }}>
       <color attach="background" args={['#eceef1']} />
       <fog attach="fog" args={['#eceef1', 28, 60]} />
 
