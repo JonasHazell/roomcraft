@@ -146,7 +146,11 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   `.window`) to tag kind (a static tag, not a button); `.section` (`<details>`)
   for collapsible groups; `.modal`
   (+ `.modal-sm`, `.modal-head`, `.modal-body`, `.modal-foot`, `.modal-message`)
-  for dialogs; `.side-panel` for the right-hand panel. `.shortcut-list` (a
+  for dialogs; `.side-panel` for the right-hand panel. `.modal-just-placed` is a
+  scoped modifier for the furniture create→edit hand-off only: on mobile
+  (`max-width: 768px`) it shortens the modal and anchors it to the bottom as a
+  sheet so the just-placed piece stays visible above it; desktop and every other
+  modal are unaffected (see `FurnitureDialog.tsx`). `.shortcut-list` (a
   `.shortcut-row` per binding, action left / `.key` keycap chips right, `+`/`or`
   joiners) lists a static reference inside a `.modal-sm` — currently the keyboard-
   shortcuts reference (`ShortcutsReference.tsx`, opened from the room top bar).
