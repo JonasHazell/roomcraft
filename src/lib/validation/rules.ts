@@ -460,10 +460,14 @@ export const RULES: RuleDef[] = [
         .filter((f) => f.kind !== 'rug' && f.elevation < 0.5)
         .reduce((sum, f) => sum + f.size.width * f.size.depth, 0);
       const freePct = Math.max(0, Math.round((1 - used / roomArea) * 100));
-      if (freePct >= 40) return ok;
+      // The catalog asks for ≥ 40% clear floor, but preferably ≥ 50% in bedrooms
+      // and living rooms, where circulation and calm matter more.
+      const roomy = ctx.roomTypes.has('sovrum') || ctx.roomTypes.has('vardagsrum');
+      const minFree = roomy ? 50 : 40;
+      if (freePct >= minFree) return ok;
       return fail([
         {
-          message: `The room has only about ${freePct}% free floor area (guideline ≥ 40%) — remove or downsize furniture.`,
+          message: `The room has only about ${freePct}% free floor area (guideline ≥ ${minFree}%) — remove or downsize furniture.`,
           furnitureIds: [],
         },
       ]);
