@@ -110,9 +110,9 @@ when a pattern is strong enough, into the agent instructions themselves.
 
 - **Volume is set at Stage A.** With no approval gate, the proposal target
   (`N` per day, currently 9 proposals in a fixed mix — **~3 larger steps toward the
-  long-term goal, 3 bugs, and 3 feature/GUI improvements**, not a quota of new surface
-  area) sets how many PRs you get. The brake is quality, not count — every proposal
-  must clear the bar.
+  long-term goal, 3 bugs, and 3 feature/GUI improvements**) sets how many PRs you get.
+  New features and new surface area toward the vision are welcome. The brake is
+  quality, not count — every proposal must clear the bar.
 - **Stage B builds up to 10 PRs per run**, claiming and building each issue **one at a
   time** so a crashed run strands at most the single in-flight issue instead of a
   whole batch; a larger backlog drains in order across successive runs rather than all
@@ -129,7 +129,9 @@ when a pattern is strong enough, into the agent instructions themselves.
   mobile** (`ci.yml`). The checks are the gate, so auto-merge can only add a merge to
   a PR that already passes; it never lands anything the human would have blocked.
   Anything larger, novel, or ambiguous still waits for your review.
-- **One issue = one small PR.** Keep scope tight and reviewable.
+- **One issue = one PR.** Keep each PR coherent and reviewable; it no longer has to be
+  *small* — a larger, ambitious build toward the vision is fine when the value warrants
+  it.
 - **Self-improvement stays reviewable too.** Stage C may edit the agent instruction
   docs and the loop's levers (caps, cadence, steps), and may correct **factual drift**
   in the descriptive reference docs (`ARCHITECTURE.md`, `MOBILE-FIRST.md`,

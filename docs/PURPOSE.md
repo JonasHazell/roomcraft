@@ -63,21 +63,19 @@ enjoyably.
 ## How this connects to the rest of the project
 
 - **Strategy.** [`STRATEGY.md`](STRATEGY.md) turns this purpose into a way of
-  working: build a **small number of well-built features** that make room
-  planning genuinely easy, and deepen them rather than sprawl. This document is
-  the *why*; the strategy is the *how we choose*.
-- **Vision.** [`VISION.md`](VISION.md) is where this promise is headed beyond the
-  current phase; this document is the *why*, the vision is the *where to*.
+  working: build toward the vision now — deepen the core *and* expand toward the
+  destination, with care and taste as the bar. This document is the *why*; the
+  strategy is the *how we choose*.
+- **Vision.** [`VISION.md`](VISION.md) is where this promise is headed — a room, a
+  home, people planning together, real buyable furniture, a marketplace — and it's
+  what we're building toward now. This document is the *why*, the vision is the *where to*.
 - **Principles.** [`PRINCIPLES.md`](PRINCIPLES.md) turns this purpose into the standing
-  rules — and non-goals — every change is judged against.
-- **Design.** Because "simple" is a feeling, not just a feature list, the UI has
-  to stay calm and coherent. That's what [`DESIGN.md`](DESIGN.md) and the
-  `#styleguide` gallery protect — one consistent product, never a pile of
-  controls. Ease of use is a design property, so keeping the interface simple *is*
-  part of the purpose.
-- **Monetization.** How RoomCraft eventually makes money is
-  [parked on purpose](STRATEGY.md#monetization-is-parked--for-now). We get the
-  core "help me furnish my room" experience right first, then decide.
+  values every change is weighed against.
+- **Design.** A calm, coherent UI is still something we value; [`DESIGN.md`](DESIGN.md)
+  and the `#styleguide` gallery keep the product consistent as it grows.
+- **Monetization.** How RoomCraft makes money is now
+  [in play](STRATEGY.md#monetization-is-in-play) — building the business is part of
+  building the product.
 
 ## The test for any new work
 

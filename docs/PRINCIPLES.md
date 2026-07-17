@@ -1,70 +1,68 @@
-# RoomCraft — principles & non-goals
+# RoomCraft — principles
 
-This document is the **operating contract** for every change to RoomCraft: the
-principles we hold to, and the things we deliberately don't do. Where
-[`PURPOSE.md`](PURPOSE.md) is the *why* and [`STRATEGY.md`](STRATEGY.md) is *what we
-build right now*, this is the ***how we behave*** — the standing rules a change is
-judged against, whoever (or whatever) makes it.
+This document is the **operating guide** for every change to RoomCraft: the
+principles we build with. Where [`PURPOSE.md`](PURPOSE.md) is the *why* and
+[`STRATEGY.md`](STRATEGY.md) is *what we build now*, this is the ***how we behave*** —
+the values a change is weighed against, whoever (or whatever) makes it.
 
-It matters most for the agent pipeline: Stage A checks a proposal against these
-principles and non-goals before proposing it, Stage B keeps a build faithful to them,
-and — in a more autonomous setup — an automated reviewer would score work against this
-exact list. Goals tell an agent what to aim for; principles tell it where the edges are.
+It matters most for the agent pipeline: Stage A weighs a proposal against these
+principles before proposing it, and Stage B keeps a build faithful to them. They are
+guiding values, not a rejection checklist — the goal is good, ambitious work toward the
+vision, built with care.
 
-Nothing here is new: it consolidates rules already stated across `PURPOSE.md`,
-`STRATEGY.md`, and `DESIGN.md` into one place so they can be applied consistently.
+These consolidate the direction already stated across `PURPOSE.md`, `STRATEGY.md`, and
+`VISION.md` into one place so it can be applied consistently.
 
 ## The litmus test
 
-Before anything else, every change answers the question from [`PURPOSE.md`](PURPOSE.md):
+Before anything else, every change answers a question rooted in
+[`PURPOSE.md`](PURPOSE.md) and now widened to the destination in
+[`VISION.md`](VISION.md):
 
-> **Does this make it easier for someone to find the best interior design for their
-> room?**
+> **Does this help someone find, plan, and get the interior design they love — for a
+> room, a home, together with others, and connected to real furniture?**
 
-If yes, and it can be built to the quality bar, it may belong. If it adds steps,
-choices, or complexity without making that outcome easier or better, it doesn't — no
-matter how clever it is.
+If yes, and we can build it with care, it belongs — whether it deepens an existing
+flow or opens a new one toward the vision.
 
 ## Principles
 
-1. **Depth over breadth.** A feature we already have, made noticeably better, beats a
-   new feature that's merely present. Prefer finishing and polishing what exists over
-   starting something new. (`STRATEGY.md`)
-2. **Simplicity is a feature.** Removing friction and clutter counts as much as adding
-   capability. When in doubt, **remove a choice rather than add one**. (`STRATEGY.md`)
-3. **Mobile-first, always.** Judge every idea on a small, touch-first screen first;
-   wider screens are an enhancement, never the starting point. (`STRATEGY.md`,
-   `MOBILE-FIRST.md`)
-4. **Craft and consistency.** Reuse existing primitives and design tokens; the app must
-   read as one coherent product, never a pile of features. (`STRATEGY.md`, `DESIGN.md`)
+These are the values we build with. They are **preferences that guide good work, not
+gates that block ambitious work** — when one of them pulls against a genuinely valuable
+step toward the vision, the step can still win.
+
+1. **Ambition toward the vision.** Both deepening what exists and opening new surface
+   toward the destination count. Breadth is welcome when it advances the vision.
+   (`STRATEGY.md`, `VISION.md`)
+2. **Simplicity is worth protecting.** Removing friction and clutter is valuable; keep
+   the app as clear as the work allows — but not at the cost of capability the vision
+   needs. (`STRATEGY.md`)
+3. **Phone-friendly by default.** Design so it works well on a small, touch-first
+   screen; wider screens build on that. A strong default, not an absolute veto.
+   (`MOBILE-FIRST.md`)
+4. **Craft and consistency.** Reuse existing primitives and design tokens where you can,
+   so the app reads as one coherent product. (`DESIGN.md`)
 5. **Reliability is a feature.** The basics — creating rooms, placing furniture, 2D/3D
-   editing, saving — must feel fast, predictable, and hard to break. A solid foundation
-   is a feature. (`STRATEGY.md`)
+   editing, saving — must feel fast, predictable, and hard to break. (`STRATEGY.md`)
 6. **Never a blank page.** The user should never stare at an empty room wondering where
    to begin — proposing a good starting point is the heart of the promise. (`PURPOSE.md`)
 7. **Experimenting is risk-free.** Undo/redo on everything, so trying things out never
    costs the user anything. (`PURPOSE.md`, `DESIGN.md`)
-8. **Simple is a feeling, not a feature list.** Keep the interface calm and coherent;
-   protecting that calm *is* part of the product, not a nicety. (`PURPOSE.md`)
 
-## Non-goals (for now)
+## What's in scope
 
-These are out of scope for the current phase. A proposal that depends on one of them is
-rejected regardless of quality. None are permanent bans — they're just not what this
-phase is about. (`STRATEGY.md`)
+Everything that moves RoomCraft toward the vision is in scope, including the things
+that used to be parked:
 
-- **Feature sprawl.** The default answer to a new feature is "not yet." A feature earns
-  its place by making the core experience clearly better, not by expanding surface area.
-- **Monetization-driven features.** Paywalls, tiers, upsell hooks, affiliate wiring —
-  none of it is built during this phase, even where it would be easy. (The candidate
-  models are sketched in [`VISION.md`](VISION.md#how-it-makes-money-later) as a parked
-  idea bank.)
-- **Speculative infrastructure.** No building for scale, teams, or platforms we don't
-  yet need. Build for the experience in front of us.
+- **New features and surface area** toward the destination — RoomCraft doing *more*,
+  not only doing what it has *better*.
+- **Monetization.** Paywalls, tiers, credits, affiliate/partner links, "Buy this room,"
+  and B2B licensing are all buildable now (see [`VISION.md`](VISION.md#how-it-makes-money)).
+- **Infrastructure for where we're going** — multi-room/multi-home models,
+  collaboration, accounts, a real-furniture catalogue.
 
 ## When principles conflict
 
-If two principles pull in different directions, **clarity and the core promise win over
-added capability**. `STRATEGY.md` states it plainly: when a change would make the app
-harder to understand or harder to use on a phone, it is the wrong change — *even if it
-adds capability*. Simplicity and the litmus test are the tie-breakers.
+If two principles pull in different directions, weigh them with judgment and taste —
+there is no automatic winner. Capability that advances the vision can outweigh keeping
+a surface maximally simple; the litmus test is the guide, not a veto.

@@ -17,9 +17,9 @@ Repository: `JonasHazell/roomcraft`.
 2. [`DESIGN.md`](DESIGN.md) + the `#styleguide` gallery — for any UI change, reuse
    existing primitives and design tokens. Never hard-code a colour/font/radius/shadow.
 3. [`STRATEGY.md`](STRATEGY.md) / [`PURPOSE.md`](PURPOSE.md) /
-   [`PRINCIPLES.md`](PRINCIPLES.md) — keep the change true to the issue's intent, the
-   core experience, and the project's non-goals (don't let a faithful build smuggle in
-   scope the principles rule out).
+   [`PRINCIPLES.md`](PRINCIPLES.md) — keep the change true to the issue's intent and
+   the direction (building toward the vision, with care and taste). New surface area
+   and monetization work are in scope; build them well.
 4. [`ARCHITECTURE.md`](ARCHITECTURE.md) — the feature→code map. Use it to find
    the files that own the feature you're changing, and to reuse the existing
    store slice / lib module instead of building a parallel one.
@@ -160,8 +160,10 @@ checks still have to pass.
 ## Rules
 
 - **One issue → one PR.** Never bundle multiple issues into one PR.
-- **Small, reviewable diffs.** If the honest implementation would be a large
-  refactor, stop and comment on the issue instead of opening a sprawling PR.
+- **Coherent, reviewable diffs.** Diffs no longer have to be *small* — a larger,
+  ambitious build toward the vision is fine. Keep the PR coherent and reviewable; if
+  the honest implementation is genuinely huge, say so on the issue and, where it helps,
+  land it in coherent stages rather than one unreadable PR.
 - **Never merge by hand, and auto-merge only the narrow class above.** You never
   click merge yourself. The default is still that every PR waits for the human; the
   sole exception is a small, low-risk bug fix or minor GUI improvement that meets

@@ -6,96 +6,87 @@ proposing new work, so effort keeps pointing in the same direction.
 
 ## Where we are
 
-RoomCraft is still building its **core experience**. The goal for this phase is
-simple to state and hard to do well:
+RoomCraft has a solid core, and we are now **building toward the vision** — the
+destination in [`VISION.md`](VISION.md): the best interior-design planner for one or
+more people, planning a room, several rooms, or a whole home together, with every
+suggestion connected to real furniture that's easy to buy, and a two-sided
+marketplace where people and retailers meet.
 
-> Make the best possible room-planning experience with a **small number of
-> well-built features** — not a long list of shallow ones.
+That destination is **in scope today**, not "later." We deepen the core *and* expand
+toward the destination in the same phase — multi-room and multi-home planning,
+collaboration between people, real/buyable furniture, and the revenue models that
+make it a business are all fair game now.
 
-Above everything else, the app must be **simple and clear to use, and
-mobile-first**. A first-time user on a phone should be able to go from an empty
-room to one they love with as little friction as possible. Every screen is
-designed for the small, touch-first viewport first (see
-[`MOBILE-FIRST.md`](MOBILE-FIRST.md)); wider screens are an enhancement, never the
-starting point. When a change would make the app harder to understand or harder to
-use on a phone, it is the wrong change — even if it adds capability.
-
-We are deliberately **not** optimizing for a monetization model yet. No feature
-should be shaped by "how will this make money" at this stage. That question is
-parked on purpose (see [Monetization](#monetization-is-parked--for-now) below).
+Quality still matters — simple, clear, and good on a phone is how RoomCraft wins — but
+those are **values we optimize for, not gates that block ambitious work**. A change
+that adds real capability toward the vision is welcome even when it's larger, broader,
+or reaches into new surface area, as long as we build it with care.
 
 ## What we optimize for
 
-Every decision is weighed against one question: **does this make the core
-experience better?** Concretely, we prioritise:
+Every decision is weighed against one question: **does this move RoomCraft toward
+the vision — a room, a home, and eventually a marketplace people love?** Concretely,
+we value:
 
-1. **Depth over breadth.** A feature we already have, made noticeably better,
-   beats a new feature that's merely present. Prefer finishing and polishing
-   what exists over starting something new.
-2. **Craft and consistency.** New UI reuses the existing primitives and design
-   tokens (`docs/DESIGN.md`, the `#styleguide` gallery). The app should read as
-   one coherent product, never a pile of features.
+1. **Ambition toward the destination.** Both deepening what exists *and* opening new
+   surface toward the vision count — multi-room, collaboration, real/buyable
+   furniture, revenue. Breadth is no longer discouraged; a genuinely new capability
+   that advances the vision is welcome.
+2. **Craft and consistency.** New UI should reuse the existing primitives and design
+   tokens (`docs/DESIGN.md`, the `#styleguide` gallery) where it can, so the app
+   reads as one coherent product. A preference, not a hard gate.
 3. **Reliability.** The basics — creating rooms, placing furniture, 2D/3D
    editing, saving — should feel fast, predictable, and hard to break. A solid
    foundation is a feature.
-4. **Clarity and simplicity, mobile-first.** Fewer, more obvious paths through the
-   app, and every one of them easy to use on a phone. When in doubt, remove a
-   choice rather than add one. Simplicity is a feature — removing friction and
-   clutter counts as much as adding capability.
+4. **Clarity and simplicity, phone-friendly.** Fewer, more obvious paths through the
+   app, easy to use on a phone, remain the goal we aim for — but no longer a veto on
+   work that adds capability.
 
-## What we say no to (for now)
+## What we're now taking on
 
-- **Feature sprawl.** New feature ideas are welcome, but the default answer is
-  "not yet." A feature earns its place by making the core experience clearly
-  better, not by expanding the surface area.
-- **Monetization-driven features.** Paywalls, tiers, upsell hooks, affiliate
-  wiring — none of it is built during this phase, even where it would be easy.
-- **Speculative infrastructure.** We don't build for scale, teams, or platforms
-  we don't yet need. Build for the experience in front of us.
+Everything that was parked "for later" is on the table:
 
-None of these are permanent bans — they're just not what this phase is about. These
-non-goals are consolidated, alongside our operating principles, in
-[`PRINCIPLES.md`](PRINCIPLES.md).
+- **New features and surface area** toward the vision — expanding what RoomCraft
+  does, not just polishing what it has.
+- **Monetization.** Paywalls, tiers, credits, affiliate/partner links, a
+  "Buy this room" flow, B2B licensing — all fair game to design and build now (see
+  [`VISION.md`](VISION.md#how-it-makes-money)).
+- **Infrastructure for where we're going** — multi-room/multi-home data models,
+  collaboration, accounts, a real-furniture catalogue, and the plumbing the
+  destination needs.
+
+Build with care and taste; that's the only remaining bar. Our operating principles
+are in [`PRINCIPLES.md`](PRINCIPLES.md).
 
 ## How to decide if something is "in scope"
 
 Before building, ask:
 
-- Does this make an existing, core flow **better** — faster, clearer, more
-  reliable, more delightful?
-- Can it be built to the **quality bar** (design consistency, tests, no rough
-  edges) within a reasonable scope?
-- If it's a *new* feature rather than a *deepening* of an existing one, is it
-  genuinely core to planning and furnishing a room — or is it a nice-to-have we
-  can defer?
+- Does this move RoomCraft toward the **vision** — a better room, a better home, a
+  path to real furniture, collaboration, or the marketplace?
+- Or does it make an existing flow **better** — faster, clearer, more reliable, more
+  delightful?
+- Can we build it with care?
 
-If the honest answer to the first two is "yes" and the feature is clearly core,
-it's a good candidate. Otherwise, write it down for later and move on.
+If yes, it's a good candidate — whether it deepens what exists or opens something
+new. There's no longer a "defer new features" default: pursue the highest-value work
+toward the vision, new surface area included.
 
-## Monetization is parked — for now
+## Monetization is in play
 
-We are intentionally **not** committing to a monetization model yet. Chasing a
-pricing or revenue strategy before the core experience is strong would distort
-the product and waste effort on features we might not keep.
-
-The plan is sequential:
-
-1. **Now:** build the best core room-planning experience (this document).
-2. **Later:** once the foundation is genuinely good, evaluate which monetization
-   model to pursue — the long-term destination this points toward is described in
-   [`VISION.md`](VISION.md).
-
-The candidate revenue models are sketched in
-[`VISION.md`](VISION.md#how-it-makes-money-later) as part of the long-term picture.
-Treat them as a **future idea bank**, not a current mandate — nothing there should
-drive what we build today. When the core experience is in place, we revisit them and
-choose a direction deliberately.
+Monetization is **no longer parked**. Building the business is part of building the
+product now — the candidate revenue models are described in
+[`VISION.md`](VISION.md#how-it-makes-money): freemium/subscription around the AI,
+validation and export features, affiliate/partner links and a "Buy this room" flow on
+the furniture catalogue, credits/one-off purchases, and B2B licensing. Design and
+build toward them deliberately; they no longer wait on a "core is done" gate.
 
 ## The hardest problems to get right
 
-Building the core experience well means solving a few genuinely hard problems — the
+Even as we expand toward the vision, a few genuinely hard problems stay central — the
 ones the whole experience lives or dies by. Each is easy to do *adequately* and
-genuinely hard to do *well*, which is exactly why they're worth calling out.
+genuinely hard to do *well*, which is exactly why they're worth calling out. They keep
+mattering alongside the new surface area, not instead of it.
 
 ### 1. A GUI that is simple to use, yet exposes every important feature
 
@@ -147,5 +138,5 @@ challenge 2.
 
 ## In short
 
-> Build fewer things, build them well, get the core experience right — and only
-> then decide how RoomCraft makes money.
+> Build toward the vision now — deepen the core, expand the surface, connect to real
+> furniture, and build the business — with care and taste as the bar.

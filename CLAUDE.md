@@ -15,26 +15,27 @@ interior design for your rooms** — see [`docs/PURPOSE.md`](docs/PURPOSE.md). R
 it when you need the *why* behind a feature: any work should make it easier for
 someone to go from an empty room to one they love.
 
-## Development strategy: build the core experience first
+## Development strategy: build toward the vision
 
 Before proposing or building new work, read [`docs/STRATEGY.md`](docs/STRATEGY.md).
-It's the north star for **what we build right now**: the best possible
-room-planning experience with a **small number of well-built features**, not a
-long list of shallow ones. Prefer deepening and polishing existing core flows
-over adding new surface area, and hold everything to the quality bar (design
-consistency, reliability, no rough edges). Monetization is intentionally parked
-during this phase — see below.
+It's the north star for **what we build now**: build toward the vision in
+[`docs/VISION.md`](docs/VISION.md) — deepen the core *and* expand the surface toward
+the destination (more rooms, whole homes, collaboration, real/buyable furniture, and
+the revenue models that make it a business). New features, new surface area, and
+monetization are all in scope. Craft, consistency, reliability, and a phone-friendly
+feel remain values we build with — but as guidance, not gates that block ambitious
+work.
 
 ## Principles & direction
 
 Two docs sit beside the strategy and are worth reading before you shape work:
 
-- [`docs/PRINCIPLES.md`](docs/PRINCIPLES.md) — the operating principles and
-  **non-goals** every change is judged against (depth over breadth, simplicity is a
-  feature, mobile-first, reliability, and the things we deliberately don't build). When
-  two good options conflict, this is the tie-breaker.
-- [`docs/VISION.md`](docs/VISION.md) — where RoomCraft is heading beyond the current
-  phase, so work points in one direction instead of optimising locally.
+- [`docs/PRINCIPLES.md`](docs/PRINCIPLES.md) — the operating values every change is
+  weighed against (ambition toward the vision, simplicity worth protecting,
+  phone-friendly by default, reliability, craft). Guidance for good, ambitious work —
+  not a rejection checklist.
+- [`docs/VISION.md`](docs/VISION.md) — where RoomCraft is heading and what we're building
+  toward now, so work points in one direction instead of optimising locally.
 
 ## UI work: always consult the design reference first
 
@@ -98,9 +99,9 @@ used automatically — never run `playwright install`.
 
 ## Monetization
 
-Monetization is **parked for now** — we focus on the core experience first (see
-[`docs/STRATEGY.md`](docs/STRATEGY.md)) and choose a model later. For the future
-idea bank (freemium/subscription, furniture catalog affiliate links, credits,
-B2B licensing, etc.), see the *How it makes money (later)* section of
-[`docs/VISION.md`](docs/VISION.md) — treat it as a reference, not a current mandate
-for what to build.
+Monetization is **in play now** — building the business is part of building the
+product (see [`docs/STRATEGY.md`](docs/STRATEGY.md#monetization-is-in-play)). The
+candidate models (freemium/subscription, furniture-catalogue affiliate links, a
+"Buy this room" flow, credits, B2B licensing, etc.) are in the
+*How it makes money* section of [`docs/VISION.md`](docs/VISION.md#how-it-makes-money) —
+now directions to design and build toward, not a parked idea bank.
