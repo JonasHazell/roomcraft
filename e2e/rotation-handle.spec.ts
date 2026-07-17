@@ -13,12 +13,8 @@ test('a selected piece still renders its 3D selection in both viewports', async 
   await page.goto('/');
 
   await page.getByRole('button', { name: /create a room/i }).click();
-  await expect(page.getByRole('heading', { name: /name your room/i })).toBeVisible();
-  await page.getByRole('button', { name: /^next/i }).click();
   await page.getByRole('button', { name: /small room/i }).click();
-  await expect(page.getByRole('button', { name: /^next/i })).toBeEnabled();
-  await page.getByRole('button', { name: /^next/i }).click();
-  await page.getByRole('button', { name: /create room/i }).click();
+  await page.getByRole('button', { name: /furnish this room/i }).click();
 
   // Add a bed; the pick→place flow lands on its editing surface with the piece
   // selected (so the rotation handle is rendered in the 3D scene).

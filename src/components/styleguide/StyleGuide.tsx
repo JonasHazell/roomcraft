@@ -402,7 +402,7 @@ export function StyleGuide() {
           </div>
         </Demo>
 
-        <Demo title="Room templates" note="Starting outlines in the New room picker: a .template-grid of .template-card buttons, each with an SVG .template-preview.">
+        <Demo title="Room templates" note="Starting outlines in the plan editor's shape chooser: a .template-grid of .template-card buttons, each with an SVG .template-preview.">
           <div className="template-grid" style={{ maxWidth: 460 }}>
             {ROOM_TEMPLATES.slice(0, 3).map((t) => (
               <button key={t.id} type="button" className="template-card">
@@ -426,62 +426,31 @@ export function StyleGuide() {
         </Demo>
 
         <Demo
-          title="New-room wizard"
-          note="The guided create-a-room flow: a .wizard-steps stepper header (steps go is-done → is-active → is-upcoming), a .wizard-body that swaps per step (the .wizard-name form, or the real plan editor), and a .wizard-foot with Back/Next. The walls step floats the .plan-chooser (reusing .template-*) over the canvas until the room has walls."
+          title="Plan editor top bar"
+          note="The floor-plan editor's top-left controls: the circular .room-back button, the editable room name (.plan-name — a card-filled pill with a muted pencil over a borderless .plan-name-input, reading as a plain title until focused), and the .plan-furnish-btn forward action. The name flexes and truncates so it never crowds the other two; below 560px .plan-furnish-btn drops to icon-only."
         >
-          <div
-            style={{
-              maxWidth: 560,
-              border: '1px solid var(--line)',
-              borderRadius: 'var(--popup-radius)',
-              overflow: 'hidden',
-            }}
-          >
-            <header className="wizard-head">
-              <ol className="wizard-steps">
-                {[
-                  { label: 'Name', state: 'is-done' },
-                  { label: 'Walls', state: 'is-active' },
-                  { label: 'Doors & windows', state: 'is-upcoming' },
-                ].map((s, i) => (
-                  <li key={s.label} className={`wizard-step ${s.state}`}>
-                    <button type="button" className="wizard-step-btn" disabled>
-                      <span className="wizard-step-num" aria-hidden="true">
-                        {s.state === 'is-done' ? <Icon name="check" /> : i + 1}
-                      </span>
-                      <span className="wizard-step-label">{s.label}</span>
-                    </button>
-                  </li>
-                ))}
-              </ol>
-              <button type="button" className="btn-icon wizard-close" aria-label="Cancel">
-                <Icon name="x" />
-              </button>
-            </header>
-            <div className="wizard-name" style={{ padding: '20px 16px' }}>
-              <div className="wizard-name-card">
-                <span className="wizard-name-thumb" aria-hidden="true">
-                  <Icon name="pencil" />
-                </span>
-                <h2>Name your room</h2>
-                <p className="hint">Pre-filled so you can just continue — rename it anytime.</p>
-                <label className="field">
-                  <span className="field-label">Room name</span>
-                  <span className="field-input">
-                    <input type="text" defaultValue="Room 1" />
-                  </span>
-                </label>
-              </div>
-            </div>
-            <footer className="wizard-foot">
-              <button type="button" className="btn">
-                <Icon name="chevron-left" /> Back
-              </button>
-              <span className="wizard-foot-title">Draw the walls</span>
-              <button type="button" className="btn btn-accent">
-                Next <Icon name="chevron-right" />
-              </button>
-            </footer>
+          <div className="sg-plan-stage" style={{ alignItems: 'center' }}>
+            <span className="room-back sg-static-pill" aria-hidden="true">
+              <span aria-hidden="true">
+                <Icon name="arrow-left" />
+              </span>
+            </span>
+            <label className="plan-name sg-static-pill" title="Rename this room">
+              <span className="plan-name-icon" aria-hidden="true">
+                <Icon name="pencil" />
+              </span>
+              <input
+                className="plan-name-input"
+                type="text"
+                aria-label="Room name"
+                defaultValue="Living room"
+                maxLength={60}
+              />
+            </label>
+            <button type="button" className="btn btn-accent plan-furnish-btn sg-static-pill">
+              <Icon name="square" />
+              <span>Furnish this room</span>
+            </button>
           </div>
         </Demo>
 

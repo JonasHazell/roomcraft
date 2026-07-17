@@ -10,11 +10,8 @@ test('the validation panel hint uses device-neutral "Select" wording', async ({ 
   await page.goto('/');
 
   await page.getByRole('button', { name: /create a room/i }).click();
-  await page.getByRole('button', { name: /^next/i }).click();
   await page.getByRole('button', { name: /small room/i }).click();
-  await expect(page.getByRole('button', { name: /^next/i })).toBeEnabled();
-  await page.getByRole('button', { name: /^next/i }).click();
-  await page.getByRole('button', { name: /create room/i }).click();
+  await page.getByRole('button', { name: /furnish this room/i }).click();
 
   await page.getByRole('button', { name: /open validation/i }).click();
   const panel = page.getByRole('complementary', { name: 'Validation' });

@@ -15,7 +15,6 @@ import { ShortcutsReference } from './components/panel/ShortcutsReference';
 import { AuthDialog } from './components/auth/AuthDialog';
 import { Icon } from './components/ui/Icon';
 import { PlanEditor } from './components/plan/PlanEditor';
-import { NewRoomWizard } from './components/wizard/NewRoomWizard';
 import { useDesignStore } from './store/useDesignStore';
 import { useUiStore } from './store/useUiStore';
 import { useDialogStore } from './store/useDialogStore';
@@ -123,7 +122,6 @@ function useHash(): string {
 
 function App() {
   const appView = useUiStore((s) => s.appView);
-  const wizardStep = useUiStore((s) => s.wizardStep);
   const hash = useHash();
 
   // Establish the session once on load; the store's `enabled`/`user` then drive
@@ -146,17 +144,9 @@ function App() {
 
   return (
     <div className="app">
-      {/* The guided new-room wizard, when running, replaces the lobby/plan/furnish
-          surfaces — it owns naming, drawing and openings before landing in 3D. */}
-      {wizardStep ? (
-        <NewRoomWizard />
-      ) : (
-        <>
-          {appView === 'lobby' && <Lobby />}
-          {appView === 'plan' && <PlanView />}
-          {appView === 'furnish' && <FurnishView />}
-        </>
-      )}
+      {appView === 'lobby' && <Lobby />}
+      {appView === 'plan' && <PlanView />}
+      {appView === 'furnish' && <FurnishView />}
       <FurnitureDialog />
       <DialogHost />
       <ShortcutsReference />

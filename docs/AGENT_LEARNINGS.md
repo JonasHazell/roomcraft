@@ -396,10 +396,15 @@ _No entries yet._
   single-modal template picker with a full stepped wizard (name → walls →
   openings, 858 lines, new `.wizard-*`/`.plan-chooser` primitives) in one
   hand-built PR. Treat "start a new room" the same way as the AI-furnishing
-  flow above for now — re-check recent commit history on
-  `src/components/*Wizard*`/`useUiStore`'s wizard state before proposing there,
+  flow above for now — re-check recent commit history before proposing there,
   since a narrow slice is likely to land inside or be made redundant by
-  whatever the human builds next in that flow.
+  whatever the human builds next in that flow. **Update:** that prediction
+  played out — the stepped wizard was later removed entirely and folded back
+  into a single `PlanEditor` surface (`.wizard-*` primitives and `useUiStore`'s
+  `wizardStep` are gone; a new room now opens straight in the plan editor, with
+  the shape chooser as its empty state and the name editable inline). The
+  standing lesson holds: room creation is a fast-moving core flow, so read the
+  current `nav.ts`/`PlanEditor.tsx` before assuming its shape.
 
 - **Pipeline/documentation infrastructure the human builds by hand
   (`docs/*.md`, `e2e/**`, `playwright.config.ts`, `scripts/*`,

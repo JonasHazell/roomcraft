@@ -12,7 +12,6 @@ test('wall and corner drag handles use the grab cursor', async ({ page }) => {
 
   await page.getByRole('button', { name: /create a room/i }).click();
   await page.getByLabel(/room name/i).fill('Cursor Test');
-  await page.getByRole('button', { name: /^next/i }).click();
   await page.getByRole('button', { name: /small room/i }).click();
 
   // The corner handle already used `grab`; the wall band used `pointer` and now

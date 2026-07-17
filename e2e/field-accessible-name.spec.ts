@@ -26,11 +26,10 @@ test('the wall Length field resolves via getByLabel and still shows its "cm" suf
   await page.goto('/');
 
   // Build a room from the "Small room" template — lands straight in the plan
-  // editor's walls step with the "select" tool active (same starting point as
+  // editor with the "select" tool active (same starting point as
   // e2e/plan-corner-drag.spec.ts).
   await page.getByRole('button', { name: /create a room/i }).click();
   await page.getByLabel(/room name/i).fill('Accessible Name Test');
-  await page.getByRole('button', { name: /^next/i }).click();
   await page.getByRole('button', { name: /small room/i }).click();
 
   // Select the first wall so its property sheet (.plan-wall-panel) opens. The

@@ -163,13 +163,21 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   `.selection-bar-wrap` three-slot grid — add left · contextual centre · undo/redo
   right — and the plan editor reuses the same family inside its `.plan-dock`.
 - **Floating plan chrome** — the floor-plan editor floats these over the canvas:
-  `.plan-hint-pill` (guidance) and `.plan-error-pill` (failure) top-centre,
-  `.plan-length-input` for typing an exact edge length, the `.plan-room-panel`
-  ceiling-height chip, and the `.plan-wall-panel` — the selected wall's editing
-  sheet, a `.plan-wall-title` header over a `.plan-wall-scroll` body of
-  `.field-grid` + the doors/windows editor. The sheet is height-capped and its
-  body scrolls, and the editor lifts the drawing clear of it (an auto-fit bottom
-  inset in `useViewport`) so a floating panel never hides the wall being edited.
+  the top-left bar (`.plan-topbar`) holding the circular `.room-back` button, the
+  editable room name `.plan-name` (a card-filled pill with a muted `.plan-name-icon`
+  pencil over a borderless `.plan-name-input` — the value reads as a plain title
+  until focused, when the pill lifts to an accent focus ring; it flexes and
+  truncates so it never crowds the bar, and `.plan-furnish-btn` drops to icon-only
+  below 560px) and the `.plan-furnish-btn` forward action; `.plan-hint-pill`
+  (guidance) and `.plan-error-pill` (failure) top-centre; `.plan-length-input` for
+  typing an exact edge length; the `.plan-room-panel` ceiling-height chip; and the
+  `.plan-wall-panel` — the selected wall's editing sheet, a `.plan-wall-title`
+  header over a `.plan-wall-scroll` body of `.field-grid` + the doors/windows
+  editor. The sheet is height-capped and its body scrolls, and the editor lifts the
+  drawing clear of it (an auto-fit bottom inset in `useViewport`) so a floating
+  panel never hides the wall being edited. An undrawn room's empty state is the
+  `.plan-chooser` shape sheet (reusing the `.template-*` cards) floated over the
+  canvas until the room has walls.
 - **Prompt & AI** — `.prompt-chips` is a wrap row of `.prompt-chip` buttons:
   tap-to-fill pills that seed a text field (interactive, unlike the tag-only
   `.chip`). `.ai-progress` is the in-flight readout for a long AI run — a rotating
@@ -189,18 +197,14 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   (uppercase muted label) over its `.palette` grid or `.save-list`.
 - **Room templates** — the `.template-grid` of `.template-card` buttons (each an SVG
   `.template-preview` + `.template-name` + `.template-meta`); `.template-card-blank`
-  is the dashed "draw it yourself" variant. Used by the wizard's shape chooser.
-- **New-room wizard** — the guided create-a-room flow (`.wizard`): a `.wizard-head`
-  holding the `.wizard-steps` stepper (`.wizard-step` items flip `is-active` /
-  `is-done` / `is-upcoming`, an earlier step is tap-to-revisit) plus a `.wizard-close`;
-  a `.wizard-body` that swaps per step — the `.wizard-name` naming card, or the real
-  plan editor for the walls/openings steps; and a `.wizard-foot` that owns Back/Next
-  (the step's task shows in `.wizard-foot-title`). Its walls step floats the
-  `.plan-chooser` sheet (reusing the `.template-*` cards) over the canvas until the
-  room has walls. Navigation lives only in the frame, so the embedded plan editor
-  drops its own back button and centre mode-switcher (`PlanEditor`'s `wizardStep`
-  prop). Prefer this flow for room creation; the standalone plan editor is for
-  editing an existing plan.
+  is the dashed "draw it yourself" variant. Used by the plan editor's shape chooser
+  (`.plan-chooser`), the empty state of an undrawn room.
+- **Room creation** — there is no separate wizard: both creating a new room and
+  editing an existing one happen on the single `PlanEditor` surface (reached from the
+  lobby's "New room" and "Edit plan"). A new room opens straight in that editor with
+  the shape chooser as its empty state; the room's name is editable inline in the top
+  bar (`.plan-name`), and "Furnish this room" (`.plan-furnish-btn`) carries it into
+  the 3D view. The provisional room is discarded if left before an outline is drawn.
 
 ## Behaviour conventions
 

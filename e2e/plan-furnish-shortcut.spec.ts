@@ -1,18 +1,16 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Regression coverage for issue #228: the plan editor's topbar (outside the
- * "New room" wizard) offers a second, explicit "Furnish this room" action next
- * to "Done", so a quick wall tweak on an already-furnished room doesn't force a
- * detour through the lobby. The two controls must read as distinct, always-
- * visible actions — not one control that silently branches on hidden state
- * (see docs/AGENT_LEARNINGS.md's #127 lesson) — and "Done" must keep doing
- * exactly what it did before: return to the lobby.
+ * Regression coverage for issue #228: the plan editor's topbar offers a second,
+ * explicit "Furnish this room" action next to "Done", so a quick wall tweak on
+ * an already-furnished room doesn't force a detour through the lobby. The two
+ * controls must read as distinct, always-visible actions — not one control that
+ * silently branches on hidden state (see docs/AGENT_LEARNINGS.md's #127 lesson) —
+ * and "Done" must keep doing exactly what it did before: return to the lobby.
  *
  * A fresh browser context has empty localStorage, so we seed one already-drawn
  * room directly (schema v5, see src/lib/persistence.ts) and open its floor
- * plan via the lobby's "Edit plan" action — the standalone entry point this
- * issue is about, not the wizard's own (unchanged) navigation.
+ * plan via the lobby's "Edit plan" action.
  */
 
 const project = {

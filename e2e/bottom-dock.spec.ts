@@ -19,17 +19,12 @@ import { test, expect, type Page } from '@playwright/test';
 async function createSmallRoom(page: Page): Promise<void> {
   await page.goto('/');
   await page.getByRole('button', { name: /create a room/i }).click();
-  await expect(page.getByRole('heading', { name: /name your room/i })).toBeVisible();
 
-  // Step 1 -> 2: name step has no outline yet, so "Next" is always enabled.
-  await page.getByRole('button', { name: /^next/i }).click();
-
-  // Step 2: pick a ready-made shape instead of drawing by hand.
+  // Pick a ready-made shape instead of drawing by hand.
   await page.getByRole('button', { name: /small room/i }).click();
-  await page.getByRole('button', { name: /^next/i }).click();
 
-  // Step 3 (last): finish into the furnish view.
-  await page.getByRole('button', { name: /create room/i }).click();
+  // Head into the furnish view.
+  await page.getByRole('button', { name: /furnish this room/i }).click();
   await expect(page.getByRole('toolbar', { name: 'Room actions' })).toBeVisible();
 }
 

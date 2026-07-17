@@ -20,12 +20,8 @@ import { test, expect, type Page, type Locator } from '@playwright/test';
 async function smallRoomWithCentredBed(page: Page) {
   await page.goto('/');
   await page.getByRole('button', { name: /create a room/i }).click();
-  await expect(page.getByRole('heading', { name: /name your room/i })).toBeVisible();
-  await page.getByRole('button', { name: /^next/i }).click();
   await page.getByRole('button', { name: /small room/i }).click();
-  await expect(page.getByRole('button', { name: /^next/i })).toBeEnabled();
-  await page.getByRole('button', { name: /^next/i }).click();
-  await page.getByRole('button', { name: /create room/i }).click();
+  await page.getByRole('button', { name: /furnish this room/i }).click();
 
   await page.getByRole('button', { name: 'Add furniture' }).click();
   await page.getByRole('button', { name: 'Bed', exact: true }).click();

@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 /**
  * Regression coverage for issue #250: a drawn room's lobby card thumbnail is a
  * small SVG outline of its own floor plan (`templatePath(floorPolygon(...))`,
- * the same helper + styling the "New room" wizard's shape chooser already uses
+ * the same helper + styling the New room flow's shape chooser already uses
  * for its `.template-preview` cards — see `PlanStartChooser.tsx`), not a fixed
  * generic `Icon name="square"` glyph. Two differently-shaped rooms must render
  * visibly different outlines, so cards become distinguishable by shape at a
