@@ -86,7 +86,11 @@ async function expectPillsMeetTouchTarget(page: Page) {
     if (isCoarse) {
       expect(minHeight).toBeGreaterThanOrEqual(44);
       const box = await pill.boundingBox();
-      expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+      // boundingBox() is rasterised through the emulated device scale factor, so
+      // a 44px min-height can come back as 43.9999… — sub-pixel jitter, not a
+      // real shortfall. Allow a 0.5px tolerance: it still catches any genuine
+      // regression (e.g. back to the 38px base) while ignoring that rounding.
+      expect(box?.height ?? 0).toBeGreaterThanOrEqual(43.5);
     } else {
       // Fine-pointer (mouse) behaviour must stay exactly as it was: 38px.
       expect(minHeight).toBe(38);
