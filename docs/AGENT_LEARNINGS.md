@@ -381,11 +381,16 @@ _No entries yet._
   generation, two-phase furniture planning, cost/latency logging, quality-score
   iteration). None of these were small — several added new files, new server
   modules, or a whole new rule category in one sitting, well past the pipeline's
-  "one issue = one small PR" scope. **Do not propose inside `src/lib/validation/`
-  or `server/` (AI proposal generation/repair) while this area stays this hot** —
-  check recent commit history on the target path before proposing there, and
-  prefer proposing in a different core flow (2D plan editing, room templates,
-  saved library) that isn't seeing this volume of same-day hand-built work.
+  "one issue = one small PR" scope. **While these areas are being actively
+  hand-built the same day, don't propose a narrow slice inside `src/lib/validation/`
+  or `server/` (AI proposal generation/repair) that a bigger hand-built PR would
+  make redundant within hours** — check recent commit history on the target path
+  before proposing there. This is *collision avoidance, not a no-go zone*: these are
+  two of the three hardest problems the whole experience lives or dies by
+  (`STRATEGY.md`), so when the area is quiet — or when you can propose at the scale
+  the human is clearly already working at — it is a **high-priority target, not one
+  to skip**. Only when it *is* hot and you can't match that scale should you prefer a
+  different core flow (2D plan editing, room templates, saved library) for that run.
 
 - **A new hot area, same mechanism: room creation.** #168 replaced the
   single-modal template picker with a full stepped wizard (name → walls →

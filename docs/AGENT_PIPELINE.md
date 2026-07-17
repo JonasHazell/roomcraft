@@ -104,8 +104,10 @@ when a pattern is strong enough, into the agent instructions themselves.
 ## Guardrails
 
 - **Volume is set at Stage A.** With no approval gate, the proposal target
-  (`N` per day, currently 10 new features) sets how many PRs you get. The brake is
-  quality, not count — every proposal must clear the bar.
+  (`N` per day, currently 10 improvements — deepening existing flows, advancing the
+  hardest problems, removals, and genuinely-core new features, not a quota of new
+  surface area) sets how many PRs you get. The brake is quality, not count — every
+  proposal must clear the bar.
 - **Stage B builds up to 5 PRs per run**, claiming and building each issue **one at a
   time** so a crashed run strands at most the single in-flight issue instead of a
   whole batch; a larger backlog drains in order across successive runs rather than all
