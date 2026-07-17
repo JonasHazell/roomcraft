@@ -141,6 +141,42 @@ note the promotion on the entry so the trail from evidence → rule stays tracea
   same file, it should be a signal to flag the risk in both issue bodies, or
   stagger them across runs, rather than proposing both blind to the collision.
 
+## Pipeline reliability
+
+- **Any batch/queue-processing step in the pipeline must claim and finish one
+  unit of work at a time, not claim the whole batch up front — so a crash
+  strands at most the item in flight, not the entire run.** A Stage B run
+  fired, labelled **10** open `agent:ready` issues `agent:building` within
+  ~2 minutes, then died before opening a single PR — a "0 delivered + 10
+  stranded" outcome. The human hand-built #278 (docs-only,
+  `AGENT_BUILD.md`/`AGENT_PIPELINE.md`, +40/-15, one commit) to make Stage B
+  claim → build → verify → open-PR **one issue at a time**, lower the
+  per-run cap 10→5 (now a throughput knob, not a safety one, since one-at-a-
+  time claiming means a bigger batch can never strand work), and strengthen
+  the stuck-issue reclaim to recover a **whole** crashed batch, not just the
+  first stuck issue found. The very next Stage B run validated the fix
+  end-to-end: of the 10 originally-stranded issues, 5 (#205, #247, #249,
+  #252, #253) each got a fresh individual PR (#279–#283) and the other 5
+  (#263, #264, #268, #269, #270) were correctly reclaimed to plain
+  `agent:ready`, sitting in the backlog for the next run — exactly "ship
+  what you finish; stop cleanly when time is short" in action, with zero
+  issues left silently stuck. The general rule extends beyond Stage B: any
+  future batch-processing step this pipeline adds — including one Stage C
+  might add to its own multi-item review loop — should claim-just-before-
+  processing, never claim-the-whole-batch-then-process, for the same reason.
+- **A full-batch pipeline failure (0 delivered, N stranded) is worth fixing
+  on a single occurrence — it doesn't need to recur first, the way a taste
+  or proposal-quality lesson would before it's promoted.** This file's
+  promotion bar (a lesson recurring, or a metric trending across ≥2 runs) is
+  calibrated for *taste* judgments, where one data point could be noise. An
+  operational crash that drops an entire run's output to zero isn't that
+  kind of signal: the human fixed #278 immediately, in the smallest
+  surgical diff that solved it, without waiting to see whether it happened
+  a second time. Stage C should hold its own operational failures to the
+  same bar (e.g. an `agent:question` queue silently exceeding its cap, a
+  metrics refresh silently failing) — a single severe operational incident
+  earns an immediate fix, not a wait-and-see.
+
 ## Stage C methodology
 
 - **A PR's own description is evidence, not ground truth — always check it against
@@ -389,7 +425,10 @@ _No entries yet._
   without exception: every time the human invests same-day hand-built effort in
   `docs/*.md`/pipeline tooling, it's about the pipeline or the taste docs, never a
   signal to treat that area as a hot product zone the way `src/lib/validation/` or
-  `server/` are.
+  `server/` are. This run adds a fourth instance: #278, a same-day hand-built
+  fix to the pipeline's own crash-resilience (Stage B's batch-claiming) — again
+  pipeline ops, not a product signal; see the new "Pipeline reliability"
+  section above for the operational lesson itself.
 
 - **[Promoted into `AGENT_BUILD.md` this run.] An issue whose PR is closed
   without merging must be reclaimed — `agent:building` doesn't clear itself, and
