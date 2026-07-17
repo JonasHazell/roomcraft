@@ -32,11 +32,19 @@ export function FurnitureDialog() {
   const [source, setSource] = useState<Source>('generic');
   // Which piece we've just saved to the library — drives the footer's ✓ feedback.
   const [savedForId, setSavedForId] = useState<string | null>(null);
+  // The piece just placed from the picker, whose edit session is the create→edit
+  // hand-off. Distinguishes that case from editing an existing piece via "More"
+  // (both land in `edit` mode) so only the hand-off gets the shorter mobile sheet.
+  const [justPlacedId, setJustPlacedId] = useState<string | null>(null);
 
   // Reset to "Generic" each time the create dialog (re)opens; clear any "saved"
-  // feedback each time the dialog changes.
+  // feedback each time the dialog changes. Clear the just-placed marker whenever
+  // we're not in an edit session — so a later "More" on the same piece is treated
+  // as a normal edit, not a hand-off. (The effect skips edit mode, so it never
+  // clears the marker `placeAndEdit` set for the session it just opened.)
   useEffect(() => {
     if (dialog?.mode === 'create') setSource('generic');
+    if (dialog?.mode !== 'edit') setJustPlacedId(null);
     setSavedForId(null);
   }, [dialog]);
 
@@ -87,6 +95,7 @@ export function FurnitureDialog() {
       useHistoryStore.getState().beginBatch();
       batchAlreadyOpenRef.current = true;
       const id = place();
+      setJustPlacedId(id);
       openEditFurniture(id);
     },
     [openEditFurniture],
@@ -106,10 +115,15 @@ export function FurnitureDialog() {
 
   const title = dialog.mode === 'edit' ? 'Selected furniture' : 'Add furniture';
 
+  // The just-placed hand-off: this edit session is for the piece we placed from
+  // the picker (not an existing piece opened via "More"). It gets the shorter
+  // mobile sheet so the room and the new piece stay visible above it.
+  const isJustPlaced = dialog.mode === 'edit' && dialog.id === justPlacedId;
+
   return (
     <div className="modal-backdrop" role="presentation" onClick={dismiss}>
       <div
-        className="modal"
+        className={isJustPlaced ? 'modal modal-just-placed' : 'modal'}
         role="dialog"
         aria-modal="true"
         aria-label={dialog.mode === 'edit' ? 'Furniture settings' : 'Add furniture'}

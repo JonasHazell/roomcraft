@@ -2177,6 +2177,21 @@ select {
   width: min(380px, 100%);
 }
 
+/* The create→edit hand-off (a piece placed from the picker, now being tweaked)
+   keeps the *room and the just-placed piece* visible behind it. On mobile the
+   full-height modal would cover almost the whole viewport, so this variant drops
+   the cap and anchors the dialog to the bottom as a shorter sheet, leaving the
+   upper part of the 3D view — where a centrally-placed new piece appears — in
+   sight. Desktop is unchanged (the base centred modal is already well clear of
+   the view). Only the just-placed hand-off gets this; editing an existing piece
+   via "More" keeps the normal full modal. */
+@media (max-width: 768px) {
+  .modal-just-placed {
+    max-height: min(52vh, 420px);
+    align-self: flex-end;
+  }
+}
+
 /* Head / title / body are shared by the modal and the side panel so the two
    surfaces match exactly. */
 .modal-head,

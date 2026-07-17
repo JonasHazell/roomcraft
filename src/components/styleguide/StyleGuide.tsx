@@ -526,7 +526,7 @@ export function StyleGuide() {
           </ul>
         </Demo>
 
-        <Demo title="Modal" note="Centred dialog on the shared --popup-* chrome. .modal-sm for short confirms.">
+        <Demo title="Modal" note="Centred dialog on the shared --popup-* chrome. .modal-sm for short confirms; .modal-just-placed shortens & bottom-anchors the furniture create→edit hand-off on mobile so the placed piece stays visible.">
           <button type="button" className="btn btn-accent" onClick={() => setModalOpen(true)}>
             Open modal
           </button>
