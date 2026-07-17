@@ -71,7 +71,13 @@ export function ValidationPanel() {
           </ul>
 
           {violated.length === 0 ? (
-            <p className="hint">No rule violations found — nicely furnished!</p>
+            // Only praise when there was actually something to check. When
+            // report.total is null (no applicable rules — e.g. an empty room),
+            // the "Room type unknown — add furniture…" line above already covers
+            // it, so a "nicely furnished!" compliment would be false.
+            report.total !== null && (
+              <p className="hint">No rule violations found — nicely furnished!</p>
+            )
           ) : (
             <ul className="validation-list">
               {violated.map((r) =>
