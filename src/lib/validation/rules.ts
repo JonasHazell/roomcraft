@@ -430,7 +430,9 @@ export const RULES: RuleDef[] = [
           const inWay = ctx.design.furniture.filter(
             (f) =>
               f.kind !== 'rug' &&
-              f.size.depth > 0.6 &&
+              // Inclusive: the catalog's default wardrobe is exactly 0.6 m deep, so
+              // a strict `> 0.6` let the most common window-blocker slip through.
+              f.size.depth >= 0.6 &&
               topOf(f) > win.sill &&
               convexOverlap(footprint(f), zone),
           );

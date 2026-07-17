@@ -447,6 +447,29 @@ describe('LGT-05 daylight at the window', () => {
   });
 });
 
+describe('ACC-11 windows openable for ventilation', () => {
+  it('flags a default 0.6 m-deep wardrobe standing flush against the window', () => {
+    // The catalog's default wardrobe is exactly 0.6 m deep (blocks: true, 2 m tall,
+    // so topOf > the 0.9 m sill). Standing flush in front of the north window it
+    // prevents opening it for airing — the inclusive (>= 0.6) depth test catches it,
+    // where the old strict (> 0.6) boundary let this common case slip through.
+    const wardrobe = piece('wardrobe', 1.9, 0.4, { width: 1.2, depth: 0.6, height: 2 });
+    const outcome = outcomeOf(makeDesign([wardrobe]), 'ACC-11');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].furnitureIds).toContain(wardrobe.id);
+      expect(outcome.violations[0].zones?.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('passes a shallow shelf against the window (below the 60 cm deep threshold)', () => {
+    // A 0.3 m-deep shelf flush against the window is not "deep furniture"; a hand can
+    // still reach past it to work the latch, so ACC-11 must not flag it.
+    const shelf = piece('bookshelf', 1.9, 0.4, { width: 1.2, depth: 0.3, height: 1.9 });
+    expect(outcomeOf(makeDesign([shelf]), 'ACC-11').status).toBe('passed');
+  });
+});
+
 describe('LGT-06 screen reflections', () => {
   it('flags a TV facing the window', () => {
     const tv = piece('tv', 1.9, 2, { width: 1.3, depth: 0.35, height: 0.8, rotationY: Math.PI });
