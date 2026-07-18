@@ -24,10 +24,8 @@ test('resizing and rotating furniture stays inside the app without crashing', as
   // starting geometry.
   await page.getByRole('button', { name: /create a room/i }).click();
   await page.getByLabel(/room name/i).fill('Collision test room');
-  await page.getByRole('button', { name: /^next/i }).click();
   await page.getByRole('button', { name: /living room/i }).click();
-  await page.getByRole('button', { name: /^next/i }).click();
-  await page.getByRole('button', { name: /create room/i }).click();
+  await page.getByRole('button', { name: /furnish this room/i }).click();
 
   // Add a chair and open its edit form straight away (the "pick → place → tweak"
   // flow described in FurnitureDialog).

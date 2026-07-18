@@ -15,9 +15,9 @@ import { mkdirSync } from 'node:fs';
  * drawing therefore always gets at least 40% of the canvas to fit into, no matter
  * how tall the sheet grows.
  *
- * This spec drives the real wizard on a phone-sized viewport, grows the sheet to
- * its cap, and asserts the drawing's ACTUAL on-screen size stays at (or above) the
- * 40% floor and that a wall is still tappable/selectable underneath the open
+ * This spec drives the real plan editor on a phone-sized viewport, grows the sheet
+ * to its cap, and asserts the drawing's ACTUAL on-screen size stays at (or above)
+ * the 40% floor and that a wall is still tappable/selectable underneath the open
  * sheet. Forcing the viewport (on top of the desktop + mobile projects) pins the
  * fit geometry to the exact narrow size the issue named, in both browser contexts.
  */
@@ -31,15 +31,14 @@ const PLAN_PAD_M = 2; // PlanEditor pads the walls bounds by 2 m on every side.
 const ROOM_M = 3; // The "Small room" template is 3 m x 3 m.
 const CONTENT_M = ROOM_M + 2 * PLAN_PAD_M; // 7 m of world height the fit must show.
 
-/** Build a "Small room" and advance to the wizard's openings step, where a wall
- *  can be selected to open the full doors/windows sheet. */
-async function reachOpeningsStep(page: Page): Promise<void> {
+/** Build a "Small room" and land in select mode, where a wall can be selected to
+ *  open the full doors/windows sheet. */
+async function reachSelectMode(page: Page): Promise<void> {
   await page.goto('/');
   await page.getByRole('button', { name: /create a room/i }).click();
-  await page.getByRole('button', { name: /^next/i }).click();
   await page.getByRole('button', { name: /small room/i }).click();
-  await page.getByRole('button', { name: /^next/i }).click();
-  await expect(page.locator('.plan-hint-pill')).toContainText(/ceiling height/i);
+  // The ceiling chip renders once the template lands us in select mode.
+  await expect(page.locator('.plan-room-panel')).toBeVisible();
 }
 
 /** Screen-space centre of the top-most exterior wall's hit target. */
@@ -60,7 +59,7 @@ test.describe('mobile plan editor (393x851, the #249 repro size)', () => {
   test('the wall-detail sheet cannot shrink the canvas below the fit floor', async ({
     page,
   }, testInfo) => {
-    await reachOpeningsStep(page);
+    await reachSelectMode(page);
 
     const svg = page.locator('.plan-editor > svg');
     const svgBox = await svg.boundingBox();
@@ -127,7 +126,7 @@ test.describe('desktop plan editor (1440x900, clamp inert)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
   test('the wall sheet opens without disturbing the desktop fit', async ({ page }, testInfo) => {
-    await reachOpeningsStep(page);
+    await reachSelectMode(page);
     const before = await topWallCentre(page);
     await page.mouse.click(before.x, before.y);
     const sheet = page.locator('.plan-wall-panel');

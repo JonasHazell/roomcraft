@@ -22,19 +22,15 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-/** Walks the "New room" wizard to a furnished 3D view using a template shape. */
+/** Walks the New room flow to a furnished 3D view using a template shape. */
 async function createRoomAndEnterFurnish(page: import('@playwright/test').Page) {
   await page.getByRole('button', { name: /create a room/i }).click();
-  await expect(page.getByRole('heading', { name: /name your room/i })).toBeVisible();
-  await page.getByRole('button', { name: /^next/i }).click();
 
-  // Walls step: pick a ready-made shape instead of drawing by hand.
+  // Pick a ready-made shape instead of drawing by hand.
   await page.getByRole('button', { name: /small room/i }).click();
-  await expect(page.getByRole('button', { name: /^next/i })).toBeEnabled();
-  await page.getByRole('button', { name: /^next/i }).click();
 
-  // Openings step: skip straight to finishing the room.
-  await page.getByRole('button', { name: /create room/i }).click();
+  // Head straight into the furnish view.
+  await page.getByRole('button', { name: /furnish this room/i }).click();
   await expect(page.getByRole('button', { name: 'Add furniture' })).toBeVisible();
 }
 

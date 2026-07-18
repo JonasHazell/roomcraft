@@ -25,7 +25,6 @@ test('dragging a room corner moves it in step with the pointer, not amplified', 
   // starting point used to verify #196 live.
   await page.getByRole('button', { name: /create a room/i }).click();
   await page.getByLabel(/room name/i).fill('Corner Drag Test');
-  await page.getByRole('button', { name: /^next/i }).click();
   await page.getByRole('button', { name: /small room/i }).click();
 
   const corners = page.locator('.plan-corner .corner-hit');

@@ -13,7 +13,7 @@ import { test, expect, type Page } from '@playwright/test';
  *
  * A fresh browser context has empty localStorage, so we seed a minimal, already
  * -drawn room directly (schema v5, see src/lib/persistence.ts) rather than
- * driving the multi-step room wizard's freehand wall-drawing canvas — this
+ * driving the New room flow's freehand wall-drawing canvas — this
  * lands straight on a room card in the lobby that opens directly into the
  * furnish view, where ActionBar (left pill) and HistoryBar (right pill) render
  * unconditionally, without needing to select any furniture/wall/floor.

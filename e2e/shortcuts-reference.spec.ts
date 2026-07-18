@@ -19,7 +19,7 @@ import { test, expect, type Page } from '@playwright/test';
  *
  * This spec seeds a minimal already-drawn room directly into localStorage (the
  * same fixture shape `touch-target.spec.ts` uses) so it lands straight on the
- * furnish view without driving the multi-step room wizard — the trigger renders
+ * furnish view without driving the New room flow — the trigger renders
  * unconditionally there, with nothing selected, which is exactly the "hidden
  * hint" gap this issue closes.
  *

@@ -17,9 +17,8 @@ import { test, expect } from '@playwright/test';
  *
  * A fresh browser context has empty localStorage, so a room with one interior
  * wall already drawn is seeded directly (schema v5, see src/lib/persistence.ts)
- * and opened via the lobby's "Edit plan" — the standalone (non-wizard) editor,
- * where the centre dock's full mode-switcher is shown (the wizard's own footer
- * owns navigation there instead).
+ * and opened via the lobby's "Edit plan" — the plan editor, where the centre
+ * dock's full mode-switcher is shown.
  */
 
 const project = {
