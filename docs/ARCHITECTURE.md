@@ -97,8 +97,8 @@ helpers** (`DesignData`, `RoomActions`, `FurnitureSpec`, `createDefaultRoom`,
   `lib/authApi.ts`.
 - **Furnish-view chrome / docks** — the 3D view's bars mount via
   `panel/SidePanel.tsx`, with `panel/ActionBar.tsx`, `panel/SelectionBar.tsx`, and the
-  shared `panel/SelBar.tsx` primitive (used by WallBar / ActionBar / FloorBar, and now
-  also by the 2D plan editor's own dock, `plan/PlanToolbar.tsx`);
+  shared `panel/SelBar.tsx` primitive (used by WallBar / ActionBar / FloorBar / HistoryBar,
+  and now also by the 2D plan editor's own dock, `plan/PlanToolbar.tsx`);
   `panel/ShortcutsReference.tsx` is the shortcuts overlay.
 - **Geometry & collision** — `lib/geometry.ts` (wall transforms), `lib/polygon.ts`
   (room outline math), `lib/collision.ts` (footprints, keep-inside-walls).
