@@ -5,7 +5,7 @@ export function Nightstand({ size, color, selected, options }: FurnitureProps) {
   const { width: w, depth: d, height: h } = size;
   const drawers = optNum(options, 'drawers', 2);
   const gap = 0.02;
-  const drawerH = (h - gap * (drawers + 1)) / drawers;
+  const drawerH = Math.max((h - gap * (drawers + 1)) / drawers, 0.01);
 
   return (
     <group>
