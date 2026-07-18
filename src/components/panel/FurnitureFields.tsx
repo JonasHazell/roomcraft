@@ -8,8 +8,21 @@ import {
   primaryPart,
 } from '../../lib/furnitureParts';
 import { MATERIAL_CHOICES } from '../../lib/materials';
+import type { FurnitureKind } from '../../types';
 import { ColorField, CountField, NumberField, SelectField, ToggleField } from './fields';
 import type { FurnitureDraft, FurnitureFieldPatch } from './furnitureDraft';
+
+/**
+ * A configurable part whose 3D mesh only renders while a companion toggle
+ * option is on (see the kind's `scene/furniture/*.tsx` and `furnitureOptions`)
+ * — recolouring it while the option is off would visibly do nothing, so its
+ * colour/material row is hidden until the option is switched on.
+ */
+const GATED_PARTS: Partial<Record<FurnitureKind, Record<string, string>>> = {
+  tv: { bench: 'bench' },
+  bookshelf: { doors: 'doors' },
+  sink: { pedestal: 'pedestal' },
+};
 
 export type { FurnitureDraft, FurnitureFieldPatch };
 
@@ -163,7 +176,14 @@ function FurnitureAppearanceFields({
   value: FurnitureDraft;
   onChange: (patch: FurnitureFieldPatch) => void;
 }) {
-  const parts = FURNITURE_PARTS[value.kind];
+  const gating = GATED_PARTS[value.kind];
+  const options = gating ? normalizeOptions(value.kind, value.options) : undefined;
+  // Hide a part's row while the option that draws it is off — a picker with no
+  // visible effect reads as broken (#356).
+  const parts = FURNITURE_PARTS[value.kind].filter((p) => {
+    const optionKey = gating?.[p.key];
+    return !optionKey || options?.[optionKey] !== false;
+  });
   const materials = normalizeMaterials(value.kind, value.materials, value.material);
   const multi = hasParts(value.kind);
   const primary = primaryPart(value.kind);
