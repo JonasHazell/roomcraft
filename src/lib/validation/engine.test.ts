@@ -3,6 +3,7 @@ import type { Design, FurnitureItem, FurnitureKind, WallOpening } from '../../ty
 import { wallsFromPolygon } from '../polygon';
 import { runValidation } from './engine';
 import { inferRoomTypes } from './rules';
+import { seatingSeats } from './ruleHelpers';
 import { inferZones } from './zones';
 
 /**
@@ -376,6 +377,63 @@ describe('ERG-04 surface within reach', () => {
     const sofa = piece('sofa', 2, 1, { width: 2, depth: 0.9 });
     const table = piece('table', 2, 2, { width: 1.1, depth: 0.6, height: 0.4 });
     expect(outcomeOf(makeDesign([sofa, table]), 'ERG-04').status).toBe('passed');
+  });
+});
+
+describe('seatingSeats classifier', () => {
+  const idsOf = (design: Design) => new Set(seatingSeats(design).map((f) => f.id));
+
+  it('excludes a desk chair facing its desk in a combined living-room / office', () => {
+    // A sofa (with its coffee table) plus a desk + desk chair. The desk chair
+    // faces the desk — away from the sofa — and has no surface within reach, so
+    // the old dining-only test miscounted it as a conversation seat and ERG-03 /
+    // ERG-04 fired on it. It should now be routed to the work zone and ignored.
+    const sofa = piece('sofa', 2, 1, { width: 2, depth: 0.9 });
+    const coffee = piece('table', 2, 2, { width: 1.1, depth: 0.6, height: 0.4 });
+    const desk = piece('desk', 1, 4.3, { width: 1.2, depth: 0.7, height: 0.74, rotationY: Math.PI });
+    const deskChair = piece('chair', 1, 3.6, { width: 0.5, depth: 0.5, name: 'desk chair' });
+    const design = makeDesign([sofa, coffee, desk, deskChair]);
+
+    const ids = idsOf(design);
+    expect(ids.has(sofa.id)).toBe(true);
+    expect(ids.has(deskChair.id)).toBe(false);
+
+    // ERG-03 / ERG-04 must not flag the desk chair.
+    const erg03 = outcomeOf(design, 'ERG-03');
+    const erg04 = outcomeOf(design, 'ERG-04');
+    const flagged = [erg03, erg04].flatMap((o) =>
+      o.status === 'violated' ? o.violations.flatMap((v) => v.furnitureIds) : [],
+    );
+    expect(flagged).not.toContain(deskChair.id);
+  });
+
+  it('still counts a genuine armchair angled away from the sofa', () => {
+    // The legitimate case that must keep being caught: an armchair in the
+    // seating group turned away from the sofa is a real ERG-03 violation.
+    const sofa = piece('sofa', 2, 1, { width: 2, depth: 0.9 });
+    const armchair = piece('chair', 2, 4.4, { width: 0.6, depth: 0.6, name: 'armchair' });
+    const design = makeDesign([sofa, armchair]);
+
+    expect(idsOf(design).has(armchair.id)).toBe(true);
+
+    const outcome = outcomeOf(design, 'ERG-03');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations.some((v) => v.furnitureIds.includes(armchair.id))).toBe(true);
+    }
+  });
+
+  it('excludes a dining chair pulled ~1 m out from its table', () => {
+    // A chair pulled well past the old 0.5 m radius (mid-use) still reads as a
+    // dining chair, not a conversation seat.
+    const sofa = piece('sofa', 2, 1, { width: 2, depth: 0.9 });
+    const table = piece('table', 2, 4.3, { width: 1.2, depth: 0.8, height: 0.75 });
+    const diningChair = piece('chair', 2, 2.7, { width: 0.45, depth: 0.45, name: 'dining chair' });
+    const design = makeDesign([sofa, table, diningChair]);
+
+    const ids = idsOf(design);
+    expect(ids.has(sofa.id)).toBe(true);
+    expect(ids.has(diningChair.id)).toBe(false);
   });
 });
 

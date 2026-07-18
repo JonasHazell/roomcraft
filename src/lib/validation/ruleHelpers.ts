@@ -8,11 +8,11 @@ import {
   frontDir,
   nearestWall,
   openingInfos,
-  quadGap,
   rightDir,
   stripZone,
 } from './geo.ts';
 import type { RuleCtx, RoomType, RuleOutcome, Violation } from './ruleTypes';
+import { inferZones } from './zones.ts';
 
 /** Minimum mattress width counted as a double bed (needs access on both sides). */
 export const DOUBLE_BED_MIN_WIDTH = 1.35;
@@ -128,18 +128,19 @@ export function names(items: FurnitureItem[]): string {
 }
 
 /**
- * Seats that belong to a conversation group: sofas plus armchairs. Dining
- * chairs (a chair pulled up to a dining table) are excluded so living-room
- * rules don't fire on the dining set.
+ * Seats that belong to a conversation group: sofas plus the armchairs the
+ * engine assigns to the seating zone. Chairs the engine routes to the dining
+ * or work zone (a chair pulled up to a dining table, or a desk chair facing
+ * its desk) are excluded, so living-room rules don't fire on them. This reuses
+ * {@link inferZones}' own chair-to-zone assignment rather than a separate
+ * dining-only proximity test, keeping it consistent with the rest of the engine.
  */
 export function seatingSeats(design: Design): FurnitureItem[] {
-  const diningTables = design.furniture.filter(isDiningTable);
-  return design.furniture.filter(
-    (f) =>
-      f.kind === 'sofa' ||
-      (f.kind === 'chair' &&
-        !diningTables.some((t) => quadGap(footprint(f), footprint(t)) <= 0.5)),
-  );
+  const seating = inferZones(design).find((z) => z.kind === 'seating');
+  if (!seating) return [];
+  return seating.members
+    .map((m) => m.item)
+    .filter((f) => f.kind === 'sofa' || f.kind === 'chair');
 }
 
 /** Infers room types from the furnishing (mixed rooms can yield several). */
