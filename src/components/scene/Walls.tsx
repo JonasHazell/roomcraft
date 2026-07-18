@@ -142,11 +142,31 @@ function WallMesh({
         />
       </mesh>
       {wallOpenings
+        .filter((o) => o.kind === 'door')
+        .map((o) => (
+          <DoorLeaf key={o.id} opening={o} />
+        ))}
+      {wallOpenings
         .filter((o) => o.kind === 'window')
         .map((o) => (
           <WindowPane key={o.id} opening={o} />
         ))}
     </group>
+  );
+}
+
+// A static door-coloured panel filling the opening — parity with WindowPane's
+// own static simplicity (no open/close animation), so a door reads as a door
+// in the 3D view instead of a bare hole in the wall (#355). Roughness anchors
+// to the shared 'wood' finish; the colour is a fixed wood tone, same simplicity
+// level WindowPane already uses for its glass tint.
+function DoorLeaf({ opening: o }: { opening: WallOpening }) {
+  const finish = materialSpec('wood');
+  return (
+    <mesh position={[o.offset + o.width / 2, o.elevation + o.height / 2, WALL_T / 2]}>
+      <boxGeometry args={[Math.max(o.width - 0.04, 0.02), Math.max(o.height - 0.04, 0.02), 0.02]} />
+      <meshStandardMaterial color="#8b5e34" roughness={finish.roughness} metalness={finish.metalness} />
+    </mesh>
   );
 }
 
