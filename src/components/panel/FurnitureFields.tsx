@@ -139,72 +139,24 @@ export function FurnitureFields({
         />
       </div>
       <FurnitureOptionFields value={value} onChange={onChange} />
-      <FurnitureColorFields value={value} onChange={onChange} />
-      <FurnitureMaterialFields value={value} onChange={onChange} />
+      <FurnitureAppearanceFields value={value} onChange={onChange} />
     </>
   );
 }
 
 /**
- * A colour picker per configurable part (a bed's frame vs its bedding). The
- * primary part edits the base colour (which cascades to any un-overridden part);
- * the rest set a per-part override, which comes with its own reset control once
- * set — so the detachment isn't permanent — to clear it back to following the
- * primary colour. Single-part kinds show one "Color" control.
+ * Appearance controls grouped *per part*: each configurable part (a bed's frame
+ * vs its bedding) shows its colour and material together, instead of one block
+ * listing every colour followed by a separate block listing every material — so
+ * the two decisions you make about a part live side by side. Single-part kinds
+ * show one colour + one material control under the same heading.
+ *
+ * Colour cascades from the primary part: the primary edits the base colour
+ * (which flows to any un-overridden part); a secondary part sets a per-part
+ * override that comes with its own reset control once set — so the detachment
+ * isn't permanent — to clear it back to following the primary colour.
  */
-function FurnitureColorFields({
-  value,
-  onChange,
-}: {
-  value: FurnitureDraft;
-  onChange: (patch: FurnitureFieldPatch) => void;
-}) {
-  const parts = FURNITURE_PARTS[value.kind];
-
-  if (!hasParts(value.kind)) {
-    return (
-      <ColorField label="Color" value={value.color} onChange={(color) => onChange({ color })} />
-    );
-  }
-
-  const primary = primaryPart(value.kind);
-  const primaryLabel = parts.find((p) => p.key === primary)?.label ?? 'primary';
-  return (
-    <div className="stack" style={{ gap: 10 }}>
-      <p className="field-label">Colours</p>
-      {parts.map((part) => {
-        const isPrimary = part.key === primary;
-        const override = isPrimary ? undefined : partColorOverride(value.colors, part.key);
-        const current = isPrimary ? value.color : (override ?? value.color);
-        return (
-          <ColorField
-            key={part.key}
-            label={part.label}
-            value={current}
-            onChange={(c) =>
-              onChange(isPrimary ? { color: c } : { colors: { [part.key]: c } })
-            }
-            // Only a secondary part with an active override gets a reset
-            // control — the primary part sets the base colour directly, and an
-            // un-overridden part is already following it.
-            onReset={
-              override !== undefined
-                ? () => onChange({ colors: { [part.key]: undefined } })
-                : undefined
-            }
-            resetLabel={`Match ${primaryLabel.toLowerCase()} colour`}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-/**
- * A material picker per configurable part (a bed's frame vs its bedding), driven
- * by the kind's part specs. Kinds with a single part show one "Material" control.
- */
-function FurnitureMaterialFields({
+function FurnitureAppearanceFields({
   value,
   onChange,
 }: {
@@ -213,33 +165,55 @@ function FurnitureMaterialFields({
 }) {
   const parts = FURNITURE_PARTS[value.kind];
   const materials = normalizeMaterials(value.kind, value.materials, value.material);
-
-  if (!hasParts(value.kind)) {
-    const part = parts[0];
-    return (
-      <SelectField
-        label={part.label}
-        title="Surface finish — changes how light reflects off the piece"
-        value={materials[part.key]}
-        choices={MATERIAL_CHOICES}
-        onChange={(m) => onChange({ materials: { [part.key]: m } })}
-      />
-    );
-  }
+  const multi = hasParts(value.kind);
+  const primary = primaryPart(value.kind);
+  const primaryLabel = parts.find((p) => p.key === primary)?.label ?? 'primary';
 
   return (
-    <div className="stack" style={{ gap: 10 }}>
-      <p className="field-label">Materials</p>
-      {parts.map((part) => (
-        <SelectField
-          key={part.key}
-          label={part.label}
-          title={`Surface finish for the ${part.label.toLowerCase()}`}
-          value={materials[part.key]}
-          choices={MATERIAL_CHOICES}
-          onChange={(m) => onChange({ materials: { [part.key]: m } })}
-        />
-      ))}
+    <div className="stack" style={{ gap: 12 }}>
+      <p className="field-label">{multi ? 'Colours & materials' : 'Colour & material'}</p>
+      {parts.map((part) => {
+        const isPrimary = part.key === primary;
+        const override = isPrimary ? undefined : partColorOverride(value.colors, part.key);
+        const current = isPrimary ? value.color : (override ?? value.color);
+        return (
+          // One tight group per part keeps its colour chip and material picker
+          // read as a pair; the wider gap between groups (the parent stack)
+          // separates one part from the next.
+          <div key={part.key} className="stack" style={{ gap: 8 }}>
+            <ColorField
+              // Multi-part kinds name the colour chip after the part (Frame,
+              // Cushions) — that's what pairs it with the material below it;
+              // single-part kinds just say "Color".
+              label={multi ? part.label : 'Color'}
+              value={current}
+              onChange={(c) =>
+                onChange(isPrimary ? { color: c } : { colors: { [part.key]: c } })
+              }
+              // Only a secondary part with an active override gets a reset
+              // control — the primary part sets the base colour directly, and an
+              // un-overridden part is already following it.
+              onReset={
+                override !== undefined
+                  ? () => onChange({ colors: { [part.key]: undefined } })
+                  : undefined
+              }
+              resetLabel={`Match ${primaryLabel.toLowerCase()} colour`}
+            />
+            <SelectField
+              label="Material"
+              title={
+                multi
+                  ? `Surface finish for the ${part.label.toLowerCase()}`
+                  : 'Surface finish — changes how light reflects off the piece'
+              }
+              value={materials[part.key]}
+              choices={MATERIAL_CHOICES}
+              onChange={(m) => onChange({ materials: { [part.key]: m } })}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
