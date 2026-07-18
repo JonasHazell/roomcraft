@@ -32,7 +32,7 @@ export function Fridge({ size, color, selected, options }: FurnitureProps) {
       {/* slightly proud front panel so it reads as doors, not a plain box */}
       <mesh position={[0, h / 2, face - 0.004]}>
         <boxGeometry args={[w - 0.03, h - 0.05, 0.01]} />
-        <Mat color={shade(color, 0.06)} selected={selected} part="body" />
+        <Mat color={shade(color, 0.06)} selected={selected} part="doors" />
       </mesh>
       {style === 'freezer-below' && [
         seam('s', false, h * 0.66),
