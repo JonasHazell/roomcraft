@@ -64,6 +64,7 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
         material: entry.material,
         materials: normalizeMaterials(entry.kind, entry.materials, entry.material),
         options: normalizeOptions(entry.kind, entry.options),
+        product: entry.product,
       });
       set({ design: touch({ ...d, furniture: [...d.furniture, item] }) });
       return item.id;
@@ -93,6 +94,7 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
           colors: src.colors ? { ...src.colors } : undefined,
           materials: src.materials ? { ...src.materials } : undefined,
           options: src.options ? { ...src.options } : undefined,
+          product: src.product ? { ...src.product } : undefined,
         },
         poly,
       );

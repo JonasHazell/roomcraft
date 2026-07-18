@@ -99,6 +99,20 @@ export type FurnitureOptionValue = number | boolean | string;
  */
 export type FurnitureOptions = Record<string, FurnitureOptionValue>;
 
+/**
+ * A real, purchasable product a furniture piece links to — the scaffold for the
+ * vision's furniture-catalogue/"Buy this room" model. Sparse and optional; the
+ * validation/normalization helpers live in {@link ../lib/furnitureProduct}.
+ */
+export interface FurnitureProduct {
+  /** Absolute http(s) link to the product. The only required field. */
+  url: string;
+  /** Optional price in whole cents (integer cents keeps a future cart total summable). */
+  priceCents?: number;
+  /** Optional retailer/brand name (e.g. "IKEA"). */
+  retailer?: string;
+}
+
 export interface FurnitureItem {
   id: string;
   kind: FurnitureKind;
@@ -134,6 +148,13 @@ export interface FurnitureItem {
    * resolved wherever the options are read (see {@link ../lib/furnitureOptions}).
    */
   options?: FurnitureOptions;
+  /**
+   * An optional link to the real, purchasable product this piece stands for — the
+   * first step toward the vision's "planning leads to purchase" catalogue model.
+   * Sparse and optional; absent for the vast majority of pieces. Validated /
+   * degraded on load like {@link colors} (see {@link ../lib/furnitureProduct}).
+   */
+  product?: FurnitureProduct;
 }
 
 /** A saved furniture piece in the library — reusable properties without placement. */
@@ -152,6 +173,8 @@ export interface FurnitureLibraryEntry {
   materials?: Record<string, string>;
   /** Saved per-type customization; see {@link FurnitureItem.options}. */
   options?: FurnitureOptions;
+  /** Saved product link; see {@link FurnitureItem.product}. */
+  product?: FurnitureProduct;
 }
 
 /** A named furnishing variant of one room. The room shape (walls, openings,

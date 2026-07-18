@@ -5,6 +5,7 @@ import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useEscape } from '../../lib/useEscape';
 import type { FurnitureKind, FurnitureLibraryEntry } from '../../types';
+import { buyButtonLabel, buyButtonTitle, isValidProductUrl } from '../../lib/furnitureProduct';
 import { Icon } from '../ui/Icon';
 import { FurniturePicker, type Source } from './FurniturePicker';
 import { PropertiesPanel } from './PropertiesPanel';
@@ -168,38 +169,53 @@ export function FurnitureDialog() {
 
         {dialog.mode === 'edit' && (
           <div className="modal-foot">
-            <button
-              type="button"
-              className="btn"
-              title="Save this piece with its dimensions and color so you can add it again"
-              aria-label="Save to library"
-              disabled={!editItem}
-              onClick={() => {
-                if (!editItem) return;
-                saveToLibrary({
-                  name: editItem.name,
-                  kind: editItem.kind,
-                  size: { ...editItem.size },
-                  elevation: editItem.elevation,
-                  color: editItem.color,
-                  colors: editItem.colors ? { ...editItem.colors } : undefined,
-                  material: editItem.material,
-                  materials: editItem.materials ? { ...editItem.materials } : undefined,
-                  options: editItem.options ? { ...editItem.options } : undefined,
-                });
-                setSavedForId(editItem.id);
-              }}
-            >
-              {savedForId && savedForId === editItem?.id ? (
-                <>
-                  <Icon name="check" /> Saved to library
-                </>
-              ) : (
-                <>
-                  <Icon name="star" /> Save to library
-                </>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {editItem?.product && isValidProductUrl(editItem.product.url) && (
+                <a
+                  className="btn"
+                  href={editItem.product.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={buyButtonTitle(editItem.product)}
+                  aria-label={buyButtonTitle(editItem.product)}
+                >
+                  <Icon name="shopping-bag" /> {buyButtonLabel(editItem.product)}
+                </a>
               )}
-            </button>
+              <button
+                type="button"
+                className="btn"
+                title="Save this piece with its dimensions and color so you can add it again"
+                aria-label="Save to library"
+                disabled={!editItem}
+                onClick={() => {
+                  if (!editItem) return;
+                  saveToLibrary({
+                    name: editItem.name,
+                    kind: editItem.kind,
+                    size: { ...editItem.size },
+                    elevation: editItem.elevation,
+                    color: editItem.color,
+                    colors: editItem.colors ? { ...editItem.colors } : undefined,
+                    material: editItem.material,
+                    materials: editItem.materials ? { ...editItem.materials } : undefined,
+                    options: editItem.options ? { ...editItem.options } : undefined,
+                    product: editItem.product ? { ...editItem.product } : undefined,
+                  });
+                  setSavedForId(editItem.id);
+                }}
+              >
+                {savedForId && savedForId === editItem?.id ? (
+                  <>
+                    <Icon name="check" /> Saved to library
+                  </>
+                ) : (
+                  <>
+                    <Icon name="star" /> Save to library
+                  </>
+                )}
+              </button>
+            </div>
             <button type="button" className="btn btn-accent" onClick={commitEdit}>
               OK
             </button>

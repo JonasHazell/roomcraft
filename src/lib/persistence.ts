@@ -7,6 +7,7 @@ import { FURNITURE_KINDS } from './furnitureCatalog';
 import { normalizeOptions } from './furnitureOptions';
 import { DEFAULT_MATERIAL, normalizeMaterial } from './materials';
 import { normalizeColors, normalizeMaterials } from './furnitureParts';
+import { normalizeProduct } from './furnitureProduct';
 
 const color = z.string().regex(HEX_COLOR_RE, 'invalid color code (expected #rrggbb)');
 const meters = (max: number) => z.number().min(0).max(max);
@@ -48,14 +49,17 @@ const furnitureSchema = z
     materials: z.record(z.string(), z.string()).optional(),
     /** Missing in saves made before the field existed — normalized to the kind's defaults. */
     options: furnitureOptionsSchema.optional(),
+    /** Optional product link; missing/malformed data degrades to no product on load. */
+    product: z.unknown().optional(),
   })
-  // Normalize options/materials/colours against the kind so stored data is always sound.
+  // Normalize options/materials/colours/product against the kind so stored data is always sound.
   .transform((f) => ({
     ...f,
     colors: normalizeColors(f.kind, f.colors),
     material: normalizeMaterial(f.material),
     materials: normalizeMaterials(f.kind, f.materials, f.material),
     options: normalizeOptions(f.kind, f.options),
+    product: normalizeProduct(f.product),
   }));
 
 // ---- v1 (older format: rectangular room, walls by compass direction) ----
@@ -488,6 +492,7 @@ const libraryEntrySchema = z
     material: z.string().optional(),
     materials: z.record(z.string(), z.string()).optional(),
     options: furnitureOptionsSchema.optional(),
+    product: z.unknown().optional(),
   })
   .transform((e) => ({
     ...e,
@@ -495,6 +500,7 @@ const libraryEntrySchema = z
     material: normalizeMaterial(e.material),
     materials: normalizeMaterials(e.kind, e.materials, e.material),
     options: normalizeOptions(e.kind, e.options),
+    product: normalizeProduct(e.product),
   }));
 
 /** Reads the library; invalid entries are filtered out instead of throwing. */

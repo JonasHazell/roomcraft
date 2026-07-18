@@ -8,6 +8,7 @@ import {
   primaryPart,
 } from '../../lib/furnitureParts';
 import { MATERIAL_CHOICES } from '../../lib/materials';
+import { isValidProductUrl } from '../../lib/furnitureProduct';
 import { ColorField, CountField, NumberField, SelectField, ToggleField } from './fields';
 import type { FurnitureDraft, FurnitureFieldPatch } from './furnitureDraft';
 
@@ -141,7 +142,97 @@ export function FurnitureFields({
       <FurnitureOptionFields value={value} onChange={onChange} />
       <FurnitureColorFields value={value} onChange={onChange} />
       <FurnitureMaterialFields value={value} onChange={onChange} />
+      <FurnitureProductFields value={value} onChange={onChange} />
     </>
+  );
+}
+
+/**
+ * An optional link to the real product this piece stands for — the first step
+ * toward the vision's "planning leads to purchase" catalogue model. A piece has no
+ * product by default; once a link is entered, the price/retailer details appear and
+ * a "Buy" affordance shows in the dialog footer (see FurnitureDialog). The whole
+ * product is edited as a unit and cleared by emptying the link.
+ */
+function FurnitureProductFields({
+  value,
+  onChange,
+}: {
+  value: FurnitureDraft;
+  onChange: (patch: FurnitureFieldPatch) => void;
+}) {
+  const product = value.product;
+  const url = product?.url ?? '';
+
+  const setUrl = (raw: string) => {
+    // An empty link clears the whole product; otherwise merge onto what's there,
+    // keeping any price/retailer already entered.
+    if (!raw.trim()) onChange({ product: undefined });
+    else onChange({ product: { ...product, url: raw } });
+  };
+  const setPrice = (raw: string) => {
+    if (!product) return; // price only means something once there's a link
+    const dollars = parseFloat(raw);
+    const priceCents =
+      Number.isFinite(dollars) && dollars >= 0 ? Math.round(dollars * 100) : undefined;
+    onChange({ product: { ...product, priceCents } });
+  };
+  const setRetailer = (raw: string) => {
+    if (!product) return;
+    onChange({ product: { ...product, retailer: raw.trim() ? raw : undefined } });
+  };
+
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      <p className="field-label">Where to buy</p>
+      <label className="field">
+        <span className="field-label">Product link</span>
+        <span className="field-input">
+          <input
+            type="url"
+            inputMode="url"
+            placeholder="https://…"
+            aria-label="Product link"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+        </span>
+      </label>
+      {url.trim() !== '' && !isValidProductUrl(url) && (
+        <p className="hint">Enter a full link starting with http:// or https://</p>
+      )}
+      {product && (
+        <div className="field-grid">
+          <label className="field">
+            <span className="field-label">Price</span>
+            <span className="field-input">
+              <input
+                type="number"
+                min={0}
+                step={1}
+                inputMode="decimal"
+                placeholder="—"
+                aria-label="Price"
+                value={product.priceCents != null ? String(product.priceCents / 100) : ''}
+                onChange={(e) => setPrice(e.target.value)}
+              />
+            </span>
+          </label>
+          <label className="field">
+            <span className="field-label">Retailer</span>
+            <span className="field-input">
+              <input
+                type="text"
+                placeholder="e.g. IKEA"
+                aria-label="Retailer"
+                value={product.retailer ?? ''}
+                onChange={(e) => setRetailer(e.target.value)}
+              />
+            </span>
+          </label>
+        </div>
+      )}
+    </div>
   );
 }
 

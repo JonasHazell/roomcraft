@@ -251,6 +251,38 @@ describe('parseProject', () => {
     expect(parsed.wallMaterial).toBe('matte');
   });
 
+  it('keeps a valid product link and drops a malformed one on load', () => {
+    const base = parseProject(V1_DESIGN);
+    const room = base.rooms[0];
+    const withLink = {
+      ...room.furniture[0],
+      product: { url: 'https://example.com/sofa', priceCents: 12900, retailer: 'IKEA' },
+    };
+    const badLink = {
+      ...room.furniture[0],
+      id: 'f2',
+      product: { url: 'not-a-url', priceCents: -5 },
+    };
+    const withProducts = {
+      ...base,
+      rooms: [
+        {
+          ...room,
+          furniture: [withLink, badLink],
+          proposals: [{ ...room.proposals[0], furniture: [withLink, badLink] }],
+        },
+      ],
+    };
+    const parsed = activeRoom(parseProject(JSON.parse(JSON.stringify(withProducts))));
+    expect(parsed.furniture[0].product).toEqual({
+      url: 'https://example.com/sofa',
+      priceCents: 12900,
+      retailer: 'IKEA',
+    });
+    // A malformed URL degrades the whole product to undefined, like colours/materials.
+    expect(parsed.furniture[1].product).toBeUndefined();
+  });
+
   it('rejects garbage and broken structures', () => {
     expect(parseProjectSafe(null)).toBeNull();
     expect(parseProjectSafe('hello')).toBeNull();

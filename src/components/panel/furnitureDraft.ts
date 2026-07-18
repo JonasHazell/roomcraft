@@ -1,5 +1,5 @@
 import type { FurnitureMaterials } from '../../lib/furnitureParts';
-import type { FurnitureKind, FurnitureOptions, FurnitureSize } from '../../types';
+import type { FurnitureKind, FurnitureOptions, FurnitureProduct, FurnitureSize } from '../../types';
 
 /**
  * The editable shape shared by `FurnitureFields`' two callers: the live "More"
@@ -16,6 +16,7 @@ export interface FurnitureDraft {
   material?: string;
   materials?: FurnitureMaterials;
   options?: FurnitureOptions;
+  product?: FurnitureProduct;
 }
 
 export type FurnitureFieldPatch = {
@@ -34,4 +35,10 @@ export type FurnitureFieldPatch = {
   materials?: FurnitureMaterials;
   /** Per-type option changes, merged onto the current options. */
   options?: FurnitureOptions;
+  /**
+   * The whole product link, replaced as a unit (`undefined` clears it). Unlike
+   * colours/materials/options there's no per-field merge — the product editor
+   * builds the full object and this overwrites what was there.
+   */
+  product?: FurnitureProduct;
 };

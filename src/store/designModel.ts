@@ -5,6 +5,7 @@ import type {
   FurnitureKind,
   FurnitureLibraryEntry,
   FurnitureOptions,
+  FurnitureProduct,
   FurnitureSize,
   Point,
   Project,
@@ -18,6 +19,7 @@ import { clampFurniture, clampOpening, findClearSpot, furnitureObstacles } from 
 import { normalizeOptions } from '../lib/furnitureOptions';
 import { DEFAULT_MATERIAL, normalizeMaterial } from '../lib/materials';
 import { normalizeColors, normalizeMaterials } from '../lib/furnitureParts';
+import { normalizeProduct } from '../lib/furnitureProduct';
 import { floorPolygon, polygonCenter, type LoopValidation } from '../lib/polygon';
 import { activeRoom, syncActiveProposal, syncActiveRoom } from '../lib/persistence';
 
@@ -89,6 +91,7 @@ export interface FurnitureSpec {
   material?: string;
   materials?: Record<string, string>;
   options?: FurnitureOptions;
+  product?: FurnitureProduct;
 }
 
 // ---- Factories ----
@@ -313,6 +316,7 @@ export function placeAtCenter(d: Design, spec: FurnitureSpec): FurnitureItem {
       material: normalizeMaterial(spec.material),
       materials: normalizeMaterials(spec.kind, spec.materials, spec.material),
       options: normalizeOptions(spec.kind, spec.options),
+      product: normalizeProduct(spec.product),
     },
     poly,
   );
