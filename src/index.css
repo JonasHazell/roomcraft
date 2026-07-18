@@ -723,6 +723,33 @@ select {
   background: var(--paper-2);
 }
 
+/* ---------- Empty-room prompt (#325) ---------- */
+
+/* A calm, dismissible nudge floated in the centre of the 3D view when the active
+   proposal has no furniture yet, so a first-time user never lands on a blank room.
+   It's a plain `.card` (no backdrop — it must not block the scene) whose two
+   actions reuse `.btn`/`.btn-accent`; only this positioning wrapper is new. */
+.empty-room-prompt {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 55;
+  width: min(340px, calc(100vw - 32px));
+}
+
+.empty-room-prompt .card {
+  box-shadow: var(--popup-shadow);
+}
+
+/* The one-line invitation, pushed left so the dismiss button sits at the row end. */
+.empty-room-prompt-title {
+  flex: 1;
+  font-family: var(--display);
+  font-size: 16px;
+  color: var(--ink);
+}
+
 /* ---------- Proposal switcher (furnishing variants) ---------- */
 
 /* Centred on the top row of the 3D view, between the back button and the score

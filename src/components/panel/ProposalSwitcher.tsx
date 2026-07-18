@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
-import { useAuthStore } from '../../store/useAuthStore';
 import { confirmDialog, promptDialog } from '../../store/useDialogStore';
+import { useAiSuggest } from '../../lib/useAiSuggest';
 import { useEscape } from '../../lib/useEscape';
 import { SwitcherList } from './SwitcherList';
 import { Icon } from '../ui/Icon';
@@ -30,12 +30,10 @@ export function ProposalSwitcher() {
   const autoArrange = useDesignStore((s) => s.autoArrange);
   const select = useUiStore((s) => s.select);
   const appView = useUiStore((s) => s.appView);
-  const openPanel = useUiStore((s) => s.openPanel);
-  const openAuthDialog = useUiStore((s) => s.openAuthDialog);
   // AI furnishing runs on the owner's Claude login, so when the server has
-  // sign-in configured it's gated behind an account.
-  const authEnabled = useAuthStore((s) => s.enabled);
-  const signedIn = useAuthStore((s) => s.user !== null);
+  // sign-in configured it's gated behind an account — the gating lives in the
+  // shared `useAiSuggest` hook (also used by the empty-room prompt).
+  const triggerAiSuggest = useAiSuggest();
   // Menu open state lives in the store so the contextual selection bar can
   // treat it as another open overlay and step aside for it.
   const open = useUiStore((s) => s.proposalMenuOpen);
@@ -96,17 +94,12 @@ export function ProposalSwitcher() {
   };
 
   // Third way to create furnishings, beside the two manual ones: let Claude
-  // suggest three complete layouts. Opens the AI panel (where you describe the
-  // room's needs and each suggestion is saved as its own proposal). If sign-in
-  // is required and the user isn't signed in, prompt to sign in first.
+  // suggest three complete layouts. Closes the menu, then hands off to the shared
+  // AI-suggest entry point (which clears the selection, gates on sign-in, and
+  // opens the AI panel).
   const aiSuggest = () => {
     setOpen(false);
-    select(null);
-    if (authEnabled && !signedIn) {
-      openAuthDialog();
-      return;
-    }
-    openPanel('ai');
+    triggerAiSuggest();
   };
 
   // Local, no-sign-in counterpart to the AI suggestions above: reshuffles the
