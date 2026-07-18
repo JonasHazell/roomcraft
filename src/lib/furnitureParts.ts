@@ -68,7 +68,10 @@ export const FURNITURE_PARTS: Record<FurnitureKind, PartSpec[]> = {
     { key: 'body', label: 'Body', default: 'metal' },
     { key: 'cooktop', label: 'Cooktop', default: 'gloss' },
   ],
-  fridge: [{ key: 'body', label: 'Body', default: 'gloss' }],
+  fridge: [
+    { key: 'body', label: 'Body', default: 'gloss' },
+    { key: 'doors', label: 'Doors', default: 'gloss' },
+  ],
   toilet: [{ key: 'ceramic', label: 'Ceramic', default: 'gloss' }],
   bathtub: [{ key: 'tub', label: 'Tub', default: 'gloss' }],
   sink: [
