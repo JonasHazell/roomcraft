@@ -80,6 +80,9 @@ export function PlanEditor() {
   // a snapshot taken at the start of the drag, not the live (actively-changing)
   // geometry. See `fitBounds` below for why.
   const dragFitWallsRef = useRef<typeof walls | null>(null);
+  // The panel inset frozen for the same drag, for the same reason — see
+  // `onWallPointerDown`/`onCornerPointerDown` below.
+  const panelInsetRef = useRef<number | null>(null);
   // A press-drag-release (or tap) drawing gesture: the pointer that owns it.
   const drawGestureRef = useRef<{ pointerId: number } | null>(null);
   // Walls whose length is actively changing under a drag, highlighted so the
@@ -150,9 +153,12 @@ export function PlanEditor() {
 
   // Reserve the sheet's footprint (plus a little top chrome) only while it's open,
   // so the room recentres into the free band above it and snaps back when it closes.
+  // While a wall/corner drag is in progress, use the inset frozen at drag start
+  // instead of the live value — see `panelInsetRef`'s declaration above.
+  const effectivePanelInset = panelInsetRef.current ?? panelInset;
   const viewport = useViewport(svgRef, fitBounds, {
-    top: panelInset > 0 ? 56 : 0,
-    bottom: panelInset,
+    top: effectivePanelInset > 0 ? 56 : 0,
+    bottom: effectivePanelInset,
   });
   const bounds = viewport.bounds;
 
@@ -243,6 +249,7 @@ export function PlanEditor() {
       dragRef.current = null;
       cornerDragRef.current = null;
       dragFitWallsRef.current = null;
+      panelInsetRef.current = null;
       setActiveWallIds([]);
       drawGestureRef.current = null;
       viewport.resetPinch();
@@ -272,8 +279,12 @@ export function PlanEditor() {
     const wall = walls.find((w) => w.id === id);
     if (!wall) return;
     dragRef.current = { id, horizontal: wall.a.z === wall.b.z };
-    // Freeze the auto-fit to the geometry as it is now — see `fitBounds`.
+    // Freeze the auto-fit to the geometry as it is now — see `fitBounds` — and
+    // the panel inset alongside it, so the viewport's insets can't change
+    // mid-drag either (see `panelInsetRef`'s declaration and the `useViewport`
+    // call below).
     dragFitWallsRef.current = walls;
+    panelInsetRef.current = panelInset;
     // Highlight the wall and any wall sharing a corner with it: sliding this wall
     // changes those neighbours' lengths, so their measurements are the relevant ones.
     const shares = (w: (typeof walls)[number]) =>
@@ -296,8 +307,13 @@ export function PlanEditor() {
     // lengths change as the corner moves.
     select(null);
     cornerDragRef.current = { wallAId, wallBId };
-    // Freeze the auto-fit to the geometry as it is now — see `fitBounds`.
+    // Freeze the auto-fit to the geometry as it is now — see `fitBounds` — and
+    // the panel inset alongside it. `select(null)` above unmounts the wall
+    // panel, which would otherwise drop `panelInset` to 0 mid-gesture while
+    // the frozen wall geometry stays fixed, jumping the fit height (and so the
+    // pixel↔world scale) partway through the drag (issue #362).
     dragFitWallsRef.current = walls;
+    panelInsetRef.current = panelInset;
     setActiveWallIds([wallAId, wallBId]);
     useHistoryStore.getState().beginBatch();
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
@@ -353,6 +369,7 @@ export function PlanEditor() {
     }
     // Release the frozen auto-fit — the view re-fits to the settled geometry.
     dragFitWallsRef.current = null;
+    panelInsetRef.current = null;
     // End of a drawing gesture: place the corner at the release point, or seal
     // the outline if released on the start corner. Every corner — including the
     // first — commits here on release, never on press, so a press-drag-release
