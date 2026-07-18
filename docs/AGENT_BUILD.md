@@ -160,6 +160,15 @@ checks still have to pass.
 ## Rules
 
 - **One issue → one PR.** Never bundle multiple issues into one PR.
+- **Flag same-file overlap with other in-flight work.** Before opening the PR,
+  check whether another issue built this run (or still open, unmerged) touches the
+  same file you just changed. If so, say so explicitly in the PR body — which
+  region/lines you touched — so a human resolving a later merge conflict has the
+  context already in hand instead of discovering it cold. This doesn't prevent the
+  conflict (a same-file collision can still happen depending on merge order), but it
+  costs nothing and makes it a five-second resolve instead of a cold read (see
+  `AGENT_LEARNINGS.md`'s Scoping section for why this keeps happening — same-batch
+  PRs go stale waiting for review while siblings merge ahead of them).
 - **Coherent, reviewable diffs.** Diffs no longer have to be *small* — a larger,
   ambitious build toward the vision is fine. Keep the PR coherent and reviewable; if
   the honest implementation is genuinely huge, say so on the issue and, where it helps,
