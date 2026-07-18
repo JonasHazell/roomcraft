@@ -4,6 +4,10 @@ import { Mat, MaterialContext, shade, type FurnitureProps } from './shared';
 
 // The foliage/trunk always render as soft matte greenery, independent of the pot.
 const FOLIAGE = materialSpec('matte');
+// Fixed foliage colour: the piece's live `color` controls the pot (the part the
+// panel's "Color" field is labelled for), so the leaves stay a plain green rather
+// than following it.
+const FOLIAGE_COLOR = '#4a7c3f';
 
 // Extra foliage clusters beyond the main sphere: offset position (× r) and radius (× r).
 const EXTRA_CLUSTERS = [
@@ -23,7 +27,7 @@ export function Plant({ size, color, selected, options }: FurnitureProps) {
       {/* pot */}
       <mesh castShadow position={[0, potH / 2, 0]}>
         <cylinderGeometry args={[r * 0.7, r * 0.55, potH, 16]} />
-        <Mat color="#a5623f" selected={selected} part="pot" />
+        <Mat color={color} selected={selected} part="pot" />
       </mesh>
       <MaterialContext.Provider value={FOLIAGE}>
         {/* trunk */}
@@ -34,13 +38,13 @@ export function Plant({ size, color, selected, options }: FurnitureProps) {
         {/* main foliage */}
         <mesh castShadow position={[0, potH + foliageH * 0.65, 0]}>
           <sphereGeometry args={[r, 16, 12]} />
-          <Mat color={color} selected={selected} />
+          <Mat color={FOLIAGE_COLOR} selected={selected} />
         </mesh>
         {/* extra foliage clusters */}
         {EXTRA_CLUSTERS.slice(0, Math.max(0, clusters - 1)).map((c, i) => (
           <mesh key={i} castShadow position={[r * c.x, potH + foliageH * c.y, r * c.z]}>
             <sphereGeometry args={[r * c.r, 12, 10]} />
-            <Mat color={shade(color, 0.15)} selected={selected} />
+            <Mat color={shade(FOLIAGE_COLOR, 0.15)} selected={selected} />
           </mesh>
         ))}
       </MaterialContext.Provider>
