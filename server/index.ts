@@ -469,13 +469,19 @@ async function generateOneProposal(
       `out ${first.usage.outputTokens})`,
   );
 
-  let assistant = first.assistant;
   // Keep the strongest response across all rounds — ranked on hard failures first,
   // then the soft 0–100 quality score (see isBetter), so a round that arranges the
   // room better without clearing a hard requirement can still win.
   let best = { data: prepareOne(first.structuredOutput, design) };
   let score = scoreProposals(best.data, design);
   let bestScore = score;
+  // The assistant reply that produced `bestScore`, i.e. the one describing the
+  // retained best layout. The repair/polish prompt each round is built from
+  // `bestScore`'s findings, so the assistant turn it is appended after must be the
+  // one that layout came from — otherwise the model is told to fix problems in a
+  // layout it is no longer looking at. Advances ONLY when a round is accepted
+  // (isBetter), never on a discarded worse round.
+  let bestAssistant = first.assistant;
 
   // Two budgets so cost is predictable: MAX_REPAIRS rounds may run while something
   // blocks, and POLISH_ROUNDS more may run purely to raise the quality score once
@@ -495,7 +501,7 @@ async function generateOneProposal(
       `[proposals] ${label}: ${clearing ? 'repair' : 'polish'} ` +
         `(${bestScore.blocking} blocking, quality ${Math.round(bestScore.quality)}, ${toFix.length} to address) …`,
     );
-    messages.push(assistant, { role: 'user', content: buildRepairPrompt(toFix) });
+    messages.push(bestAssistant, { role: 'user', content: buildRepairPrompt(toFix) });
     const repaired = await runClaude({
       messages,
       systemPrompt: SYSTEM_PROMPT,
@@ -510,12 +516,13 @@ async function generateOneProposal(
         `cache write ${repaired.usage.cacheWriteTokens}, cache read ${repaired.usage.cacheReadTokens}, ` +
         `out ${repaired.usage.outputTokens})`,
     );
-    assistant = repaired.assistant;
     const data = prepareOne(repaired.structuredOutput, design);
     score = scoreProposals(data, design);
     if (isBetter(score, bestScore)) {
       best = { data };
       bestScore = score;
+      // This round is now the retained best, so future rounds must repair from it.
+      bestAssistant = repaired.assistant;
     }
 
     // Adaptive stop: once nothing blocks, keep going only while quality is still
