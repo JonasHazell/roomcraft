@@ -9,13 +9,13 @@ import { HistoryBar } from './components/panel/HistoryBar';
 import { SidePanel } from './components/panel/SidePanel';
 import { ValidationScore } from './components/panel/ValidationScore';
 import { ProposalSwitcher } from './components/panel/ProposalSwitcher';
+import { EmptyRoomPrompt } from './components/panel/EmptyRoomPrompt';
 import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { DialogHost } from './components/panel/DialogHost';
 import { ShortcutsReference } from './components/panel/ShortcutsReference';
 import { AuthDialog } from './components/auth/AuthDialog';
 import { Icon } from './components/ui/Icon';
 import { PlanEditor } from './components/plan/PlanEditor';
-import { NewRoomWizard } from './components/wizard/NewRoomWizard';
 import { useDesignStore } from './store/useDesignStore';
 import { useUiStore } from './store/useUiStore';
 import { useDialogStore } from './store/useDialogStore';
@@ -76,6 +76,11 @@ function FurnishView() {
         <span className="room-topbar-name">{roomName}</span>
       </div>
       <ProposalSwitcher />
+      {/* Never a blank page: a first-time user landing in an empty proposal gets a
+          calm, dismissible nudge with the two "get help furnishing" actions. It
+          hides while any other overlay owns the screen (same as the dock's
+          contextual bars) and vanishes once the room has furniture. */}
+      {!overlayOpen && <EmptyRoomPrompt />}
       <ValidationScore />
       <SidePanel />
       {/* Bottom dock in three fixed slots: the add-furniture pill locked to the
@@ -123,7 +128,6 @@ function useHash(): string {
 
 function App() {
   const appView = useUiStore((s) => s.appView);
-  const wizardStep = useUiStore((s) => s.wizardStep);
   const hash = useHash();
 
   // Establish the session once on load; the store's `enabled`/`user` then drive
@@ -146,17 +150,9 @@ function App() {
 
   return (
     <div className="app">
-      {/* The guided new-room wizard, when running, replaces the lobby/plan/furnish
-          surfaces — it owns naming, drawing and openings before landing in 3D. */}
-      {wizardStep ? (
-        <NewRoomWizard />
-      ) : (
-        <>
-          {appView === 'lobby' && <Lobby />}
-          {appView === 'plan' && <PlanView />}
-          {appView === 'furnish' && <FurnishView />}
-        </>
-      )}
+      {appView === 'lobby' && <Lobby />}
+      {appView === 'plan' && <PlanView />}
+      {appView === 'furnish' && <FurnishView />}
       <FurnitureDialog />
       <DialogHost />
       <ShortcutsReference />

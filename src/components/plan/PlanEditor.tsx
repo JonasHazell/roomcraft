@@ -35,16 +35,19 @@ const CLOSE_RADIUS = 0.25;
 const PAD = 2;
 
 /**
- * The 2D floor-plan editor. Used standalone (from the lobby's "Edit plan") and,
- * when `wizardStep` is set, as the two floor-plan steps of the new-room wizard —
- * in which case the wizard chrome supplies navigation, so the editor drops its
- * own back button and centre mode-switcher and locks the tool to the step:
- * `walls` draws the outline (offering the shape chooser first), `openings`
- * selects walls to fit doors, windows and the ceiling height.
+ * The 2D floor-plan editor — the single surface for both creating a new room and
+ * editing an existing one (reached from the lobby's "New room" and "Edit plan").
+ * There is no separate wizard: everything a room needs is here at once. An
+ * undrawn room opens on the shape chooser (pick a template or draw the outline by
+ * hand); once there's an outline, selecting a wall fits doors and windows and the
+ * ceiling height. The room's name is editable inline in the top bar, so it can be
+ * set on the way in or changed later without leaving.
  */
-export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' } = {}) {
+export function PlanEditor() {
   const walls = useDesignStore((s) => s.design.walls);
   const hasExterior = walls.some((w) => w.kind === 'exterior');
+  const name = useDesignStore((s) => s.design.name);
+  const setName = useDesignStore((s) => s.setName);
   const commitExteriorPolygon = useDesignStore((s) => s.commitExteriorPolygon);
   const addInteriorWall = useDesignStore((s) => s.addInteriorWall);
   const moveWall = useDesignStore((s) => s.moveWall);
@@ -60,24 +63,14 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
   const wallPanelRef = useRef<HTMLDivElement>(null);
   const [panelInset, setPanelInset] = useState(0);
   const coarse = useMediaQuery(COARSE_POINTER);
-  // A new room opens with the exterior tool armed so the user draws its outline
-  // right away; editing an existing plan opens in select mode. Inside the wizard
-  // the tool is fixed by the step: draw walls, or select them to fit openings.
-  const initialTool: PlanTool =
-    wizardStep === 'openings'
-      ? 'select'
-      : wizardStep === 'walls'
-        ? // Re-entering the walls step with an outline already drawn opens in
-          // select mode; a still-empty room arms the exterior tool to draw.
-          useDesignStore.getState().design.walls.some((w) => w.kind === 'exterior')
-          ? 'select'
-          : 'exterior'
-        : useUiStore.getState().planStartTool;
+  // A new room opens with the exterior tool armed (set by `startNewRoom`) so the
+  // user draws its outline right away; editing an existing plan opens in select
+  // mode. Either way the one-shot start tool comes from the UI store.
+  const initialTool: PlanTool = useUiStore.getState().planStartTool;
   const draw = usePlanDraft(initialTool);
   const { tool, draft, hover, guide, closable, selectedEdge, error } = draw.state;
-  // Whether the user has left the wizard's shape chooser to draw by hand. The
-  // chooser only shows while a wall-step room is still empty; drawing or picking
-  // a template dismisses it.
+  // Whether the user has left the shape chooser to draw by hand. The chooser is
+  // the empty state of an undrawn room; drawing or picking a template dismisses it.
   const [drawSelfChosen, setDrawSelfChosen] = useState(false);
   // A wall being dragged in select mode (domain drag, distinct from viewport pan).
   const dragRef = useRef<{ id: string; horizontal: boolean } | null>(null);
@@ -104,30 +97,11 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
     useUiStore.getState().setPlanStartTool('select');
   }, []);
 
-  // Keep the latest draft controls reachable from effects that must fire only on
-  // a wizard step change (not on every draw tick), without listing `draw` — whose
-  // identity changes each keystroke — as a dependency.
-  const drawRef = useRef(draw);
-  drawRef.current = draw;
-
-  // Lock the tool to the wizard step: the openings step selects walls; the walls
-  // step draws (or, once an outline exists, selects so it can be nudged).
+  // Dropping back to select mode with nothing drawn (Esc, or cancelling a draft)
+  // returns to the shape chooser rather than a blank canvas.
   useEffect(() => {
-    if (!wizardStep) return;
-    if (wizardStep === 'openings') {
-      select(null);
-      drawRef.current.setTool('select');
-    } else {
-      const drawn = useDesignStore.getState().design.walls.some((w) => w.kind === 'exterior');
-      drawRef.current.setTool(drawn ? 'select' : 'exterior');
-    }
-  }, [wizardStep, select]);
-
-  // In the walls step, dropping back to select mode with nothing drawn (Esc, or
-  // cancelling a draft) returns to the shape chooser rather than a blank canvas.
-  useEffect(() => {
-    if (wizardStep === 'walls' && !hasExterior && tool === 'select') setDrawSelfChosen(false);
-  }, [wizardStep, hasExterior, tool]);
+    if (!hasExterior && tool === 'select') setDrawSelfChosen(false);
+  }, [hasExterior, tool]);
 
   // A placed point (or a tool switch) invalidates the aimed edge: drop it so the
   // length box waits for the next aim rather than reusing a stale direction.
@@ -461,8 +435,8 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
 
   const startSelect = () => draw.setTool('select');
 
-  // Wizard shape chooser: a template fills the outline straight in; "draw it
-  // yourself" arms the exterior tool on a blank canvas.
+  // Shape chooser (an undrawn room's empty state): a template fills the outline
+  // straight in; "draw it yourself" arms the exterior tool on a blank canvas.
   const chooserPick = (points: Point[]) => {
     if (commitExteriorPolygon(points).ok) draw.setTool('select');
   };
@@ -470,7 +444,7 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
     setDrawSelfChosen(true);
     draw.setTool('exterior');
   };
-  const showChooser = wizardStep === 'walls' && !hasExterior && !drawSelfChosen;
+  const showChooser = !hasExterior && !drawSelfChosen;
 
   const selectedWall =
     selection?.kind === 'wall' ? walls.find((w) => w.id === selection.id) : undefined;
@@ -482,18 +456,24 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
 
   // A second, explicit way out of the plan editor: jump straight into
   // furnishing this same room instead of round-tripping through the lobby.
-  // Reuses the exact transition the lobby's own room card and the wizard's
-  // finish step use (`openRoomToFurnish`) rather than a parallel path — see
-  // `lib/nav.ts`. Kept as its own visible button (not a second meaning on
-  // "Done") per the #127 lesson: a control must not branch on state the user
-  // can't see.
+  // Reuses the exact transition the lobby's own room card uses
+  // (`openRoomToFurnish`) rather than a parallel path — see `lib/nav.ts`. Kept
+  // as its own visible button (not a second meaning on "Done") per the #127
+  // lesson: a control must not branch on state the user can't see.
   const onFurnish = () => {
     draw.setTool('select');
     openRoomToFurnish(useDesignStore.getState().design.id);
   };
 
+  // Restore a default name if the field is left blank, so a room is never
+  // nameless (mirrors the lobby's rename, which also refuses an empty name).
+  const normaliseName = () => {
+    const { design, renameRoom } = useDesignStore.getState();
+    if (!design.name.trim()) renameRoom(design.id, '');
+  };
+
   return (
-    <div className={`plan-editor${wizardStep === 'openings' ? ' plan-wizard-openings' : ''}`}>
+    <div className="plan-editor">
       <svg
         ref={svgRef}
         viewBox={`${bounds.minX} ${bounds.minZ} ${bounds.maxX - bounds.minX} ${bounds.maxZ - bounds.minZ}`}
@@ -528,45 +508,59 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
       </svg>
 
       {/* Top-left controls: the circular back button — the same compact control as
-          the 3D view — plus a second, explicit "Furnish this room" action so a quick
-          wall tweak doesn't require a detour through the lobby. Two distinct, always-
-          visible buttons rather than one control that branches on hidden state (#127).
-          Inside the wizard, navigation lives in the wizard footer, so both are dropped. */}
-      {!wizardStep && (
-        <div className="plan-topbar">
-          <button
-            type="button"
-            className="btn room-back"
-            onClick={onDone}
-            title="Done · back to your rooms"
-            aria-label="Done · back to your rooms"
-          >
-            <span aria-hidden="true">
-              <Icon name="arrow-left" />
-            </span>
-          </button>
-          <button
-            type="button"
-            className="btn btn-accent plan-furnish-btn"
-            onClick={onFurnish}
-            title="Furnish this room in 3D"
-            aria-label="Furnish this room"
-          >
-            <Icon name="square" />
-            <span>Furnish this room</span>
-          </button>
-        </div>
-      )}
+          the 3D view — the inline room-name field, and a second, explicit "Furnish
+          this room" action so a quick wall tweak doesn't require a detour through the
+          lobby. Distinct, always-visible controls rather than one that branches on
+          hidden state (#127). */}
+      <div className="plan-topbar">
+        <button
+          type="button"
+          className="btn room-back"
+          onClick={onDone}
+          title="Done · back to your rooms"
+          aria-label="Done · back to your rooms"
+        >
+          <span aria-hidden="true">
+            <Icon name="arrow-left" />
+          </span>
+        </button>
+        {/* The room name, editable in place: set it on the way in or rename it later
+            without leaving. Pre-filled with a default so it can simply be left. */}
+        <label className="plan-name" title="Rename this room">
+          <span className="plan-name-icon" aria-hidden="true">
+            <Icon name="pencil" />
+          </span>
+          <input
+            className="plan-name-input"
+            type="text"
+            aria-label="Room name"
+            value={name}
+            maxLength={60}
+            onChange={(e) => setName(e.target.value)}
+            onFocus={(e) => e.target.select()}
+            onBlur={normaliseName}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.currentTarget.blur();
+            }}
+          />
+        </label>
+        <button
+          type="button"
+          className="btn btn-accent plan-furnish-btn"
+          onClick={onFurnish}
+          title="Furnish this room in 3D"
+          aria-label="Furnish this room"
+        >
+          <Icon name="square" />
+          <span>Furnish this room</span>
+        </button>
+      </div>
 
       {/* Room + wall property editors float clear of the canvas: ceiling height as
           a compact top-right chip, the selected wall's fields as a sheet above the
-          dock — so the drawing stays visible, unlike the old full-width top panel.
-          In the wizard, ceiling height belongs to the openings step; the walls step
-          keeps the wall sheet to length-only (no door/window editor). */}
-      {tool === 'select' && wizardStep !== 'walls' && <PlanRoomPanel />}
-      {tool === 'select' && (
-        <PlanWallPanel ref={wallPanelRef} openings={wizardStep !== 'walls'} />
-      )}
+          dock — so the drawing stays visible, unlike the old full-width top panel. */}
+      {tool === 'select' && <PlanRoomPanel />}
+      {tool === 'select' && <PlanWallPanel ref={wallPanelRef} />}
 
       {showChooser && <PlanStartChooser onPick={chooserPick} onDraw={chooserDraw} />}
 
@@ -591,17 +585,16 @@ export function PlanEditor({ wizardStep }: { wizardStep?: 'walls' | 'openings' }
         )
       )}
 
-      {/* While the wizard's shape chooser is up, the drawing tool is armed
-          underneath it but the user hasn't chosen to draw yet — so suppress the
-          toolbar's hint pill and dock, which would otherwise bleed through the
-          translucent chooser (#273). It returns the moment the chooser is
-          dismissed (a template picked, or "draw by hand" chosen). */}
+      {/* While the shape chooser is up, the drawing tool is armed underneath it
+          but the user hasn't chosen to draw yet — so suppress the toolbar's hint
+          pill and dock, which would otherwise bleed through the translucent
+          chooser (#273). It returns the moment the chooser is dismissed (a
+          template picked, or "draw by hand" chosen). */}
       {!showChooser && (
         <PlanToolbar
           tool={tool}
           error={error}
           coarse={coarse}
-          wizardStep={wizardStep}
           draftActive={draft.length > 0}
           hasExterior={hasExterior}
           canDelete={selectedWall?.kind === 'interior'}

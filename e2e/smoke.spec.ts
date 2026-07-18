@@ -23,28 +23,27 @@ test('lobby shows the empty-workspace call to action', async ({ page }) => {
   await expect(page.getByRole('button', { name: /create a room/i })).toBeVisible();
 });
 
-test('the new-room wizard opens and advances to drawing walls', async ({ page }) => {
+test('creating a room opens straight in the plan editor with the shape chooser', async ({
+  page,
+}) => {
   await page.getByRole('button', { name: /create a room/i }).click();
 
-  // Step 1 — name the room.
-  await expect(page.getByRole('heading', { name: /name your room/i })).toBeVisible();
-  await page.getByLabel(/room name/i).fill('Test Room');
-
-  // Advance to step 2 — drawing the walls. We've left the naming step, and the
-  // walls step keeps Next disabled until an outline is drawn — a signal that
-  // holds in both desktop and mobile layouts.
-  await page.getByRole('button', { name: /^next/i }).click();
-  await expect(page.getByRole('heading', { name: /name your room/i })).toBeHidden();
-  await expect(page.getByRole('button', { name: /^next/i })).toBeDisabled();
+  // No wizard, no naming step: we land directly on the plan editor. An undrawn
+  // room shows its shape chooser as the empty state, and the room name is
+  // editable inline in the top bar — a signal that holds in both layouts.
+  await expect(page.locator('.plan-chooser')).toBeVisible();
+  const nameField = page.getByLabel(/room name/i);
+  await expect(nameField).toBeVisible();
+  await nameField.fill('Test Room');
+  await expect(nameField).toHaveValue('Test Room');
 });
 
-test('the wizard can be cancelled back to the lobby', async ({ page }) => {
+test('leaving a new room without drawing returns to the lobby', async ({ page }) => {
   await page.getByRole('button', { name: /create a room/i }).click();
-  await expect(page.getByRole('heading', { name: /name your room/i })).toBeVisible();
+  await expect(page.locator('.plan-chooser')).toBeVisible();
 
-  // On the first step, "Cancel" leaves nothing behind (no outline drawn yet).
-  // Exact match avoids the close button, whose label starts with "Cancel".
-  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  // "Done" with nothing drawn discards the provisional room and returns home.
+  await page.getByRole('button', { name: /back to your rooms/i }).click();
   await expect(page.getByRole('heading', { name: /create your first room/i })).toBeVisible();
 });
 

@@ -12,11 +12,8 @@ test('an empty room is not told it is "nicely furnished"', async ({ page }, test
 
   // Create an empty, drawn room and land in the 3D furnish view with no furniture.
   await page.getByRole('button', { name: /create a room/i }).click();
-  await page.getByRole('button', { name: /^next/i }).click();
   await page.getByRole('button', { name: /small room/i }).click();
-  await expect(page.getByRole('button', { name: /^next/i })).toBeEnabled();
-  await page.getByRole('button', { name: /^next/i }).click();
-  await page.getByRole('button', { name: /create room/i }).click();
+  await page.getByRole('button', { name: /furnish this room/i }).click();
 
   await page.getByRole('button', { name: /open validation/i }).click();
   const panel = page.getByRole('complementary', { name: 'Validation' });

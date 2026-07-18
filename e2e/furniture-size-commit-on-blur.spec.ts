@@ -17,11 +17,8 @@ test('furniture size fields commit on blur/Enter, not per keystroke', async ({ p
   await page.goto('/');
 
   await page.getByRole('button', { name: /create a room/i }).click();
-  await expect(page.getByRole('heading', { name: /name your room/i })).toBeVisible();
-  await page.getByRole('button', { name: /^next/i }).click();
   await page.getByRole('button', { name: /^bedroom/i }).click();
-  await page.getByRole('button', { name: /^next/i }).click();
-  await page.getByRole('button', { name: /create room/i }).click();
+  await page.getByRole('button', { name: /furnish this room/i }).click();
 
   await page.getByRole('button', { name: 'Add furniture' }).click();
   await page.getByRole('button', { name: 'Sofa', exact: true }).click();

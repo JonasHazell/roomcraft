@@ -15,12 +15,8 @@ test('a furniture drag does not error and validation is current afterwards', asy
 
   await page.goto('/');
   await page.getByRole('button', { name: /create a room/i }).click();
-  await expect(page.getByRole('heading', { name: /name your room/i })).toBeVisible();
-  await page.getByRole('button', { name: /^next/i }).click();
   await page.getByRole('button', { name: /small room/i }).click();
-  await expect(page.getByRole('button', { name: /^next/i })).toBeEnabled();
-  await page.getByRole('button', { name: /^next/i }).click();
-  await page.getByRole('button', { name: /create room/i }).click();
+  await page.getByRole('button', { name: /furnish this room/i }).click();
 
   // Add a bed — it lands centred and selected, so it can be dragged directly.
   await page.getByRole('button', { name: 'Add furniture' }).click();

@@ -19,17 +19,12 @@ import { test, expect, type Page } from '@playwright/test';
 async function createSmallRoom(page: Page): Promise<void> {
   await page.goto('/');
   await page.getByRole('button', { name: /create a room/i }).click();
-  await expect(page.getByRole('heading', { name: /name your room/i })).toBeVisible();
 
-  // Step 1 -> 2: name step has no outline yet, so "Next" is always enabled.
-  await page.getByRole('button', { name: /^next/i }).click();
-
-  // Step 2: pick a ready-made shape instead of drawing by hand.
+  // Pick a ready-made shape instead of drawing by hand.
   await page.getByRole('button', { name: /small room/i }).click();
-  await page.getByRole('button', { name: /^next/i }).click();
 
-  // Step 3 (last): finish into the furnish view.
-  await page.getByRole('button', { name: /create room/i }).click();
+  // Head into the furnish view.
+  await page.getByRole('button', { name: /furnish this room/i }).click();
   await expect(page.getByRole('toolbar', { name: 'Room actions' })).toBeVisible();
 }
 
@@ -115,14 +110,20 @@ test.describe('narrow viewport (390x844, the issue repro size)', () => {
     const menu = page.getByRole('menu', { name: /furnishing proposals/i });
     await expect(menu).toBeVisible();
 
-    // Auto-arrange: clickable, rearranges without throwing, and closes the
-    // menu when it settles (see ProposalSwitcher's busy-guard `runAutoArrange`).
+    // Auto-arrange: clickable, rearranges without throwing, and reports its
+    // result in a status line inside the (still open) menu — the menu now stays
+    // open so the feedback is visible where the tap happened (#332, see
+    // e2e/autoarrange-feedback.spec.ts).
     await page.getByRole('button', { name: /auto-arrange/i }).click();
-    await expect(menu).toBeHidden();
+    await expect(menu.getByRole('status')).toBeVisible();
+    await expect(menu).toBeVisible();
 
-    // AI suggestions: still one tap away, now via the switcher menu instead of
-    // the dock's ActionBar pill. The entry point reads "Suggest 3 layouts"
-    // (reworded in ProposalSwitcher — see e2e/proposal-ai-label.spec.ts).
+    // Dismiss the menu, then reopen for the AI entry point. AI suggestions are
+    // still one tap away, now via the switcher menu instead of the dock's
+    // ActionBar pill. The entry point reads "Suggest 3 layouts" (reworded in
+    // ProposalSwitcher — see e2e/proposal-ai-label.spec.ts).
+    await page.getByRole('button', { name: 'Close' }).click();
+    await expect(menu).toBeHidden();
     await page.locator('.proposal-pill').click();
     await page.getByRole('button', { name: /suggest 3 layouts/i }).click();
     await expect(page.getByLabel('AI furnishing')).toBeVisible();

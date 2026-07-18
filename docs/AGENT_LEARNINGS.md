@@ -28,6 +28,26 @@ note the promotion on the entry so the trail from evidence → rule stays tracea
 
 ---
 
+## Direction change: the vision is unparked (2026-07-17)
+
+The human's own #335 rewrote `STRATEGY.md`, `VISION.md`, and `PRINCIPLES.md` (a
+near-total rewrite, +249/-249 across those three files) to remove the "core first,
+commerce later" sequencing several older entries below were written under. The old
+"Non-goals (for now)" — feature sprawl, monetization-driven features, speculative
+infrastructure — are now explicitly **in scope**: "Monetization is in play now… no
+longer wait on a 'core is done' gate," and the tie-breaker for scope-vs-capability
+tradeoffs changed from "clarity and the core promise win over added capability" to
+"weigh them with judgment and taste — there is no automatic winner." `AGENT_PROPOSALS.md`
+/ `AGENT_BUILD.md` / `AGENT_PIPELINE.md` were mirrored in the same PR. **Read any
+older entry below that cites a "non-goal," "core-first," or "parked" monetization/scope
+decision as historical evidence for the *mechanism* it demonstrates (sibling-comparison,
+duplicate detection, and so on), not as a still-standing scope boundary** — the
+boundary itself moved, so the general technique survives even where the specific
+example no longer would be rejected today. Nothing below needed rewriting for this: the
+one section that stated the old boundary as its actual point ("Areas to avoid"'s
+"no-go zone" framing) had already been corrected directly by the human's own #300/#314,
+before this pivot landed.
+
 ## Proposal selection (Stage A)
 
 - **A strong proposal finds an inconsistency by comparing a control to its own
@@ -67,7 +87,11 @@ note the promotion on the entry so the trail from evidence → rule stays tracea
   more sibling rules a few lines away already tokenized) all named their
   sibling by file/line. Nineteen straight clean merges across two runs is
   strong enough that this is no longer a hypothesis to test — it's the
-  default proposal shape to keep using.
+  default proposal shape to keep using. This run's batch extends it again, at
+  larger scale: of 27 freshly-decided agent PRs, 25 merged clean and 0 were
+  rejected — the only 2 exceptions (#279/#205, #297/#263) needed a
+  human-assisted merge purely from branch staleness against a same-batch
+  sibling, not a scoping or approach problem (see Scoping, below).
 
 - **When re-proposing a previously-rejected issue, treat the human's
   rejection comment as the spec for the retry — build exactly the
@@ -119,7 +143,13 @@ note the promotion on the entry so the trail from evidence → rule stays tracea
   worth building, but it is not itself evidence of *need* — don't treat "an
   analogous control exists elsewhere" as sufficient justification on its own,
   especially when the supporting evidence is a single one-off repro rather than a
-  repeated friction point.
+  repeated friction point. **Confirmed further this run:** when #280 later removed
+  the 2D plan editor's own long-standing "Fit view" button, its PR cited the *same*
+  rejection comment on #240 verbatim — "neither in this nor in the floor plan view" —
+  as the reason to remove the existing sibling control too, not just decline to add
+  a new one. The human's stated skepticism about a feature applies retroactively to
+  an existing control just as much as to a proposed one; don't read a rejection as
+  scoped only to the specific PR it closed.
 
 ## Scoping (Stage B)
 
@@ -140,6 +170,27 @@ note the promotion on the entry so the trail from evidence → rule stays tracea
   (`AGENT_PROPOSALS.md` step 2) notices two same-run candidates would touch the
   same file, it should be a signal to flag the risk in both issue bodies, or
   stagger them across runs, rather than proposing both blind to the collision.
+
+- **Two more instances confirm this is a recurring cost of Stage B's serial,
+  one-at-a-time build model, not a one-off — promoted into `AGENT_BUILD.md` this
+  run.** #205 (PR #279, rebuilding `HistoryBar` on `SelBar`) sat open long enough
+  that a same-batch sibling PR (#255, rebuilding `PlanToolbar` on the same `SelBar`
+  primitives) landed first and left #279 stale against `main`; the human resolved
+  it via #296 (a comment-only conflict in a shared e2e spec — no executable code
+  actually collided). #263 (PR #297, an ERG-09 threshold fix) went stale the same
+  way against #298 (ERG-02), which appended a sibling `describe` block to the same
+  `engine.test.ts` insertion point moments earlier; the human resolved it via #305.
+  In both cases the *build* itself was correct — the entire cost was branch
+  staleness during the gap between a PR opening and the human getting to review it,
+  while other same-batch PRs kept merging ahead of it. `AGENT_BUILD.md` now asks
+  Stage B to name any other open or recently-merged issue touching the same file
+  directly in the PR body — already an emergent, unprompted habit in #282/#283
+  (which coordinated disjoint regions of the same file and merged with only a
+  trivial expected conflict) — so a human resolving a conflict has the context
+  already in hand instead of discovering it cold. A structural fix for the specific
+  `engine.test.ts` collision point — one test file per rule instead of one shared
+  file every new rule appends to — would remove that particular collision entirely
+  and is a legitimate future Stage A candidate.
 
 ## Pipeline reliability
 
@@ -204,6 +255,17 @@ note the promotion on the entry so the trail from evidence → rule stays tracea
   Stage B's own PR-opening step — when a build's scope changes mid-session, the
   title and body must be rewritten to match what actually shipped, not left
   describing the original plan.
+
+- **Instruction docs must be checked for self-consistency against `PRINCIPLES.md`/
+  `STRATEGY.md` and against each other, not just against product code.** The
+  human's own #300 found that `AGENT_PROPOSALS.md`'s own quota language ("10 new
+  features") silently contradicted `PRINCIPLES.md`'s depth-over-breadth stance and
+  `STRATEGY.md`'s direction, and that `AGENT_BUILD.md`'s "no-go zone" phrasing had
+  drifted more restrictive than the direction docs intended — both corrected in the
+  same PR. When Stage C edits a stage's instructions (including this file), read the
+  edit against the direction docs and the *other* stage docs before landing it — the
+  same scrutiny already applied when judging a human decision against
+  `PRINCIPLES.md`/`VISION.md`.
 
 ## Design & UI
 
@@ -278,6 +340,18 @@ note the promotion on the entry so the trail from evidence → rule stays tracea
   illegible. **Resolved this run:** #170/#214 rebuilt it by moving
   Auto-arrange/AI into the proposal-switcher menu, exactly as asked, and
   merged clean — see the "rejection comment as retry spec" entry above.
+
+- **An interaction convention shared by several parallel, same-purpose components
+  must be implemented identically on all of them — a sibling drifting out of sync
+  is itself a bug.** The human's own #323 found that walls/floors select only on a
+  *still* click (`onClick`, guarded by `e.delta > 3` so a small drag-then-release
+  doesn't fire it), while furniture selected on raw `onPointerDown` — so an
+  imprecise touch/drag on a piece of furniture could select it mid-gesture, unlike
+  its two siblings. The fix moved furniture to the same `onClick` + `delta` guard,
+  and `onPointerDown` now only starts a drag if the piece is already selected. When
+  proposing or building a change to one of several parallel components (selection,
+  drag, keyboard handling), check the others for the pattern to match — generalising
+  an existing convention beats inventing a new one for a single component.
 
 ## Testing & verification
 
@@ -356,7 +430,36 @@ note the promotion on the entry so the trail from evidence → rule stays tracea
   the pre-fix CSS — that's what would have caught this the moment the 38px
   rule was added. When a fix's whole point is a specific computed value,
   test that value directly rather than trusting that it'll keep looking
-  right.
+  right. **A related but distinct failure mode, caught by the human's own #334:**
+  a rendered-geometry e2e assertion (a bounding-box pixel height/width) needs
+  sub-pixel tolerance on mobile emulation — an exact floating-point comparison
+  against a rasterised value is a latent flake, not a one-off. `e2e/touch-target.spec.ts`
+  (from the #197/#212 fix above) occasionally reported `43.99993896484375` instead
+  of `44` under mobile device-scale-factor rasterisation; the fix added a 0.5px
+  tolerance to the *rendered* `boundingBox()` check while leaving the *computed-style*
+  check at an exact 44px floor, so a real regression (e.g. a slip to 38px) is still
+  caught. Generalises beyond touch targets to any geometry assertion in the mobile
+  Playwright project: assert computed CSS values exactly, but give rendered/rasterised
+  pixel measurements a small tolerance.
+
+- **Renaming a user-facing string/accessible-name is a cross-cutting change — grep
+  the whole `e2e/` tree for every spec asserting the old text, not just add a fresh
+  spec for the new one.** The human's own #324 fixed a CI break: a same-day rename
+  ("3 AI suggestions" → "Suggest 3 layouts") added a new spec for the new label but
+  left `e2e/bottom-dock.spec.ts` asserting the old one. "Add a test for the new
+  state" is not equivalent to "update every test referencing the old state" — treat
+  a rename like any other refactor and search for all call sites, where a call site
+  is any spec's string assertion.
+
+- **A flakiness workaround discovered once in a spec file is a property of the flow,
+  not of the individual test case — apply it to every test in that file exercising
+  the same path, not just the one that happened to flake first.** The human's own
+  #336 found one test in `e2e/furniture-picker-search.spec.ts` timing out under CI
+  load (r3f's render loop saturating the main thread), and fixed it with
+  `test.setTimeout(120000)` — a workaround a *sibling* test in the same file already
+  used for the identical reason. The PR that added the extended timeout to one test
+  didn't apply it to the other, so the same fix had to be rediscovered reactively
+  once CI broke.
 
 ## Code style & conventions
 
@@ -396,10 +499,15 @@ _No entries yet._
   single-modal template picker with a full stepped wizard (name → walls →
   openings, 858 lines, new `.wizard-*`/`.plan-chooser` primitives) in one
   hand-built PR. Treat "start a new room" the same way as the AI-furnishing
-  flow above for now — re-check recent commit history on
-  `src/components/*Wizard*`/`useUiStore`'s wizard state before proposing there,
+  flow above for now — re-check recent commit history before proposing there,
   since a narrow slice is likely to land inside or be made redundant by
-  whatever the human builds next in that flow.
+  whatever the human builds next in that flow. **Update:** that prediction
+  played out — the stepped wizard was later removed entirely and folded back
+  into a single `PlanEditor` surface (`.wizard-*` primitives and `useUiStore`'s
+  `wizardStep` are gone; a new room now opens straight in the plan editor, with
+  the shape chooser as its empty state and the name editable inline). The
+  standing lesson holds: room creation is a fast-moving core flow, so read the
+  current `nav.ts`/`PlanEditor.tsx` before assuming its shape.
 
 - **Pipeline/documentation infrastructure the human builds by hand
   (`docs/*.md`, `e2e/**`, `playwright.config.ts`, `scripts/*`,

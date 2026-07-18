@@ -45,12 +45,8 @@ test('a cleared per-part colour override resumes following the primary colour', 
 
   // Build a room from a template — fast, no manual wall-drawing needed.
   await page.getByRole('button', { name: /create a room/i }).click();
-  await expect(page.getByRole('heading', { name: /name your room/i })).toBeVisible();
-  await page.getByRole('button', { name: /^next/i }).click();
-
   await page.getByRole('button', { name: /^bedroom/i }).click();
-  await page.getByRole('button', { name: /^next/i }).click();
-  await page.getByRole('button', { name: /create room/i }).click();
+  await page.getByRole('button', { name: /furnish this room/i }).click();
 
   // Sofa splits into two parts (frame, cushions) — picking it lands directly
   // in the live edit form the colour controls live in.

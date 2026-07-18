@@ -26,12 +26,8 @@ test('clicking a single-piece validation finding selects and opens that piece fo
   // Build a small room — a bed placed at its center sits well clear of every
   // wall, so ERG-08 always fires.
   await page.getByRole('button', { name: /create a room/i }).click();
-  await expect(page.getByRole('heading', { name: /name your room/i })).toBeVisible();
-  await page.getByRole('button', { name: /^next/i }).click();
   await page.getByRole('button', { name: /small room/i }).click();
-  await expect(page.getByRole('button', { name: /^next/i })).toBeEnabled();
-  await page.getByRole('button', { name: /^next/i }).click();
-  await page.getByRole('button', { name: /create room/i }).click();
+  await page.getByRole('button', { name: /furnish this room/i }).click();
 
   // Add a bed and place it at the room's default (centered) position — the
   // "pick -> place -> tweak" flow hands off straight to the edit surface.

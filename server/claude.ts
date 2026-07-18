@@ -56,8 +56,34 @@ const PRICES: Record<string, { input: number; output: number }> = {
 const CACHE_WRITE_MULTIPLIER = 1.25;
 const CACHE_READ_MULTIPLIER = 0.1;
 
+// Each Messages API call is a streamed HTTP request with no deadline of its own, and
+// one /api/proposals request fans out into up to ~15 sequential logical calls (planning,
+// three directions × up to 4 rounds each, an optional judge) behind a small
+// MAX_CONCURRENT gate (=2, server/index.ts). So a single wedged stream can hold a scarce
+// concurrency slot and shed ALL AI traffic (503s) until it finally gives up — the
+// reliability failure #331 is about. These two knobs bound how long that can last.
+//
+// REQUEST_TIMEOUT_MS — per-call ceiling. The [proposals] logs measure real calls in
+// seconds to low tens of seconds, and even a maximal 16k-token streamed completion lands
+// comfortably inside two minutes, so this will not cut off a legitimately slow
+// generation. It is ~5× tighter than the SDK's ~10-minute default, so a truly stuck
+// stream frees its slot in minutes rather than ten. It also sits under the client's own
+// 240s whole-request budget (TIMEOUT_MS in src/store/useAiStore.ts). If production
+// durationMs shows a higher real p99 per call, raise this — it is the one number a
+// reviewer with logs will want to tune.
+const REQUEST_TIMEOUT_MS = 120_000;
+
+// MAX_RETRIES — set explicitly (this equals the SDK's own default of 2, previously
+// inherited invisibly). Kept at 2 so transient 429/500/529 blips still recover: each
+// request issues many calls, so one flake should not fail a whole direction. Pinning it
+// here makes the behaviour visible to the cost/latency accounting and independent of any
+// future SDK default change. Retries only re-fire on retryable errors (which include
+// connection timeouts), so in the pathological case a stuck stream gives up after at most
+// (MAX_RETRIES + 1) × REQUEST_TIMEOUT_MS = 6 min — still well under the SDK default.
+const MAX_RETRIES = 2;
+
 // Reads credentials from the environment (ANTHROPIC_API_KEY, or ANTHROPIC_AUTH_TOKEN).
-const client = new Anthropic();
+const client = new Anthropic({ timeout: REQUEST_TIMEOUT_MS, maxRetries: MAX_RETRIES });
 
 /**
  * Calls the Anthropic Messages API with structured outputs, constraining the

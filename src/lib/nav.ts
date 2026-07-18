@@ -35,48 +35,23 @@ export function openRoomToPlan(id: string): void {
 }
 
 /**
- * Start the guided "New room" wizard. Creates the room up front (so every step
- * edits the live design) and marks it provisional, then opens on the naming
- * step. Cancelling the wizard discards this room; finishing it keeps the room
- * and drops the user into the 3D view.
+ * Start a new room. Creates the room up front (so the editor works on the live
+ * design) and marks it provisional, then opens it straight in the plan editor
+ * with the exterior tool armed — the same surface used to edit an existing
+ * plan, no separate wizard. Leaving without drawing an outline discards the
+ * room (see {@link backToLobby} / {@link discardRoomIfUndrawn}); drawing it and
+ * leaving keeps it.
  */
-export function startNewRoomWizard(): string {
+export function startNewRoom(): string {
   const id = useDesignStore.getState().createRoom();
   useHistoryStore.getState().clear();
   useUiStore.getState().select(null);
   useUiStore.getState().setPendingRoomId(id);
-  useUiStore.getState().setWizardStep('name');
-  // Keep the app in the "plan" surface so in-room shortcuts (undo/redo) work
-  // while the wizard drives the floor-plan steps; the wizard chrome is what
-  // actually renders (see App.tsx).
+  // Arm the exterior tool so the empty canvas is ready to draw straight away —
+  // the plan editor also offers its shape chooser as the empty state.
+  useUiStore.getState().setPlanStartTool('exterior');
   useUiStore.getState().setAppView('plan');
   return id;
-}
-
-/**
- * Finish the wizard: keep the freshly built room and open it in the 3D
- * furnishing view, ready to lay out furniture.
- */
-export function finishNewRoomWizard(): void {
-  const id = useDesignStore.getState().design.id;
-  useUiStore.getState().setWizardStep(null);
-  useUiStore.getState().setPendingRoomId(null);
-  openRoomToFurnish(id);
-}
-
-/**
- * Abandon the wizard: discard the provisional room entirely (the flow was never
- * completed) and return to the lobby.
- */
-export function cancelNewRoomWizard(): void {
-  const pendingId = useUiStore.getState().pendingRoomId;
-  if (pendingId) useDesignStore.getState().removeRoom(pendingId);
-  else useDesignStore.getState().exitToLobby();
-  useUiStore.getState().setPendingRoomId(null);
-  useUiStore.getState().setWizardStep(null);
-  useHistoryStore.getState().clear();
-  useUiStore.getState().select(null);
-  useUiStore.getState().setAppView('lobby');
 }
 
 /** Return to the lobby, folding the on-screen room back into the workspace. */

@@ -3,6 +3,7 @@ import type { Design, FurnitureItem, FurnitureKind, WallOpening } from '../../ty
 import { wallsFromPolygon } from '../polygon';
 import { runValidation } from './engine';
 import { inferRoomTypes } from './rules';
+import { seatingSeats } from './ruleHelpers';
 import { inferZones } from './zones';
 
 /**
@@ -379,6 +380,63 @@ describe('ERG-04 surface within reach', () => {
   });
 });
 
+describe('seatingSeats classifier', () => {
+  const idsOf = (design: Design) => new Set(seatingSeats(design).map((f) => f.id));
+
+  it('excludes a desk chair facing its desk in a combined living-room / office', () => {
+    // A sofa (with its coffee table) plus a desk + desk chair. The desk chair
+    // faces the desk — away from the sofa — and has no surface within reach, so
+    // the old dining-only test miscounted it as a conversation seat and ERG-03 /
+    // ERG-04 fired on it. It should now be routed to the work zone and ignored.
+    const sofa = piece('sofa', 2, 1, { width: 2, depth: 0.9 });
+    const coffee = piece('table', 2, 2, { width: 1.1, depth: 0.6, height: 0.4 });
+    const desk = piece('desk', 1, 4.3, { width: 1.2, depth: 0.7, height: 0.74, rotationY: Math.PI });
+    const deskChair = piece('chair', 1, 3.6, { width: 0.5, depth: 0.5, name: 'desk chair' });
+    const design = makeDesign([sofa, coffee, desk, deskChair]);
+
+    const ids = idsOf(design);
+    expect(ids.has(sofa.id)).toBe(true);
+    expect(ids.has(deskChair.id)).toBe(false);
+
+    // ERG-03 / ERG-04 must not flag the desk chair.
+    const erg03 = outcomeOf(design, 'ERG-03');
+    const erg04 = outcomeOf(design, 'ERG-04');
+    const flagged = [erg03, erg04].flatMap((o) =>
+      o.status === 'violated' ? o.violations.flatMap((v) => v.furnitureIds) : [],
+    );
+    expect(flagged).not.toContain(deskChair.id);
+  });
+
+  it('still counts a genuine armchair angled away from the sofa', () => {
+    // The legitimate case that must keep being caught: an armchair in the
+    // seating group turned away from the sofa is a real ERG-03 violation.
+    const sofa = piece('sofa', 2, 1, { width: 2, depth: 0.9 });
+    const armchair = piece('chair', 2, 4.4, { width: 0.6, depth: 0.6, name: 'armchair' });
+    const design = makeDesign([sofa, armchair]);
+
+    expect(idsOf(design).has(armchair.id)).toBe(true);
+
+    const outcome = outcomeOf(design, 'ERG-03');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations.some((v) => v.furnitureIds.includes(armchair.id))).toBe(true);
+    }
+  });
+
+  it('excludes a dining chair pulled ~1 m out from its table', () => {
+    // A chair pulled well past the old 0.5 m radius (mid-use) still reads as a
+    // dining chair, not a conversation seat.
+    const sofa = piece('sofa', 2, 1, { width: 2, depth: 0.9 });
+    const table = piece('table', 2, 4.3, { width: 1.2, depth: 0.8, height: 0.75 });
+    const diningChair = piece('chair', 2, 2.7, { width: 0.45, depth: 0.45, name: 'dining chair' });
+    const design = makeDesign([sofa, table, diningChair]);
+
+    const ids = idsOf(design);
+    expect(ids.has(sofa.id)).toBe(true);
+    expect(ids.has(diningChair.id)).toBe(false);
+  });
+});
+
 describe('FEN-14 poison arrows', () => {
   it('flags a sharp corner aimed at the bed', () => {
     const bed = piece('bed', 3, 4, { width: 1.2, depth: 1.4, height: 0.5 });
@@ -390,6 +448,35 @@ describe('FEN-14 poison arrows', () => {
     const bed = piece('bed', 3, 4, { width: 1.2, depth: 1.4, height: 0.5 });
     const box = piece('box', 0.6, 0.6, { width: 0.8, depth: 0.8, height: 1 });
     expect(outcomeOf(makeDesign([bed, box]), 'FEN-14').status).toBe('passed');
+  });
+
+  // A squared-up SHARP piece standing parallel, alongside a sofa — the very
+  // room-divider placement ZON-02 recommends — presents a face, not a corner, at
+  // the sofa. Its nearest corner sits ~45° off the line to the sofa's centre, so it
+  // must NOT read as a poison arrow. (Before the bisector fix this flagged: the
+  // sofa's centre merely landing in the corner's outward 90° quadrant was enough.)
+  it('passes a table standing squared-up alongside a sofa (a ZON-02 divider)', () => {
+    const sofa = piece('sofa', 2, 3.5, { width: 2, depth: 0.9, height: 0.8 });
+    const table = piece('table', 1.35, 2.5, { width: 1.2, depth: 0.5, height: 0.75 });
+    expect(outcomeOf(makeDesign([sofa, table]), 'FEN-14').status).toBe('passed');
+  });
+
+  // A genuine corner-on confrontation: a table rotated 45° so one corner points
+  // straight at the bed from close range. This must still flag (it does under both
+  // the old and new geometry test — the corner's diagonal aims dead at the bed).
+  it('still flags a rotated table whose corner points at the bed', () => {
+    const bed = piece('bed', 2, 4, { width: 1.4, depth: 1.4, height: 0.5 });
+    const table = piece('table', 2, 2.4, {
+      width: 0.9,
+      depth: 0.9,
+      height: 0.75,
+      rotationY: Math.PI / 4,
+    });
+    const outcome = outcomeOf(makeDesign([bed, table]), 'FEN-14');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].furnitureIds).toContain(table.id);
+    }
   });
 });
 
@@ -444,6 +531,29 @@ describe('LGT-05 daylight at the window', () => {
   it('passes a low piece in front of the window', () => {
     const bench = piece('box', 1.9, 0.4, { width: 1.2, depth: 0.4, height: 0.5 });
     expect(outcomeOf(makeDesign([bench]), 'LGT-05').status).toBe('passed');
+  });
+});
+
+describe('ACC-11 windows openable for ventilation', () => {
+  it('flags a default 0.6 m-deep wardrobe standing flush against the window', () => {
+    // The catalog's default wardrobe is exactly 0.6 m deep (blocks: true, 2 m tall,
+    // so topOf > the 0.9 m sill). Standing flush in front of the north window it
+    // prevents opening it for airing — the inclusive (>= 0.6) depth test catches it,
+    // where the old strict (> 0.6) boundary let this common case slip through.
+    const wardrobe = piece('wardrobe', 1.9, 0.4, { width: 1.2, depth: 0.6, height: 2 });
+    const outcome = outcomeOf(makeDesign([wardrobe]), 'ACC-11');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].furnitureIds).toContain(wardrobe.id);
+      expect(outcome.violations[0].zones?.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('passes a shallow shelf against the window (below the 60 cm deep threshold)', () => {
+    // A 0.3 m-deep shelf flush against the window is not "deep furniture"; a hand can
+    // still reach past it to work the latch, so ACC-11 must not flag it.
+    const shelf = piece('bookshelf', 1.9, 0.4, { width: 1.2, depth: 0.3, height: 1.9 });
+    expect(outcomeOf(makeDesign([shelf]), 'ACC-11').status).toBe('passed');
   });
 });
 

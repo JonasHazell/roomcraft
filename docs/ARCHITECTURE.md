@@ -62,7 +62,7 @@ helpers** (`DesignData`, `RoomActions`, `FurnitureSpec`, `createDefaultRoom`,
 
 | Feature (see README for behaviour) | UI | State | Logic / lib |
 | --- | --- | --- | --- |
-| **Rooms** — multiple per project, switch/create/rename/delete | `lobby/Lobby.tsx`, `wizard/NewRoomWizard.tsx`, `panel/SwitcherList.tsx` | `slices/roomSlice.ts` | `lib/roomTemplates.ts`, `lib/nav.ts` |
+| **Rooms** — multiple per project, switch/create/rename/delete | `lobby/Lobby.tsx`, `plan/PlanEditor.tsx` (new rooms open straight here), `panel/SwitcherList.tsx` | `slices/roomSlice.ts` | `lib/roomTemplates.ts`, `lib/nav.ts` |
 | **2D floor plan** — free room outline + interior walls, snapping | `plan/PlanEditor.tsx` and siblings (`PlanWalls`, `PlanCorners`, `PlanDraft`, `PlanGrid`, `PlanToolbar`, `PlanRoomPanel`, `PlanStartChooser`, `usePlanDraft.ts`, `useViewport.ts`) | `slices/planSlice.ts` | `lib/polygon.ts`, `lib/geometry.ts` |
 | **Doors & windows** — per wall, position/size/height | `plan/PlanWallPanel.tsx`, `plan/PlanLengthInput.tsx`, `panel/WallBar.tsx` | `slices/planSlice.ts` (openings on `Wall`) | `lib/geometry.ts` |
 | **3D view** — orbit camera, near walls auto-hidden | `scene/Scene.tsx`, `scene/Walls.tsx`, `scene/Floor.tsx` | `useUiStore` (`furnish` surface) | `lib/materials.ts`, `scene/materialTextures.ts` |
@@ -97,8 +97,8 @@ helpers** (`DesignData`, `RoomActions`, `FurnitureSpec`, `createDefaultRoom`,
   `lib/authApi.ts`.
 - **Furnish-view chrome / docks** — the 3D view's bars mount via
   `panel/SidePanel.tsx`, with `panel/ActionBar.tsx`, `panel/SelectionBar.tsx`, and the
-  shared `panel/SelBar.tsx` primitive (used by WallBar / ActionBar / FloorBar, and now
-  also by the 2D plan editor's own dock, `plan/PlanToolbar.tsx`);
+  shared `panel/SelBar.tsx` primitive (used by WallBar / ActionBar / FloorBar / HistoryBar,
+  and now also by the 2D plan editor's own dock, `plan/PlanToolbar.tsx`);
   `panel/ShortcutsReference.tsx` is the shortcuts overlay.
 - **Geometry & collision** — `lib/geometry.ts` (wall transforms), `lib/polygon.ts`
   (room outline math), `lib/collision.ts` (footprints, keep-inside-walls).

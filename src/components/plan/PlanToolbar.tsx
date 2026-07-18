@@ -8,12 +8,6 @@ interface Props {
   error: string | null;
   /** Touch-first device: swaps in tap/pinch hints and hides the mouse-only zoom buttons. */
   coarse: boolean;
-  /**
-   * Which new-room wizard step this editor is serving, if any. In the wizard the
-   * footer owns navigation and the tool is locked to the step, so the dock drops
-   * its centre mode-switcher and the hint speaks to the step's task.
-   */
-  wizardStep?: 'walls' | 'openings';
   /** True while an outline/interior chain is being drawn. */
   draftActive: boolean;
   /** Whether the room already has exterior walls — switches Draw ↔ Redraw wording. */
@@ -57,7 +51,6 @@ export function PlanToolbar({
   tool,
   error,
   coarse,
-  wizardStep,
   draftActive,
   hasExterior,
   canDelete,
@@ -76,16 +69,9 @@ export function PlanToolbar({
   const redo = useHistoryStore((s) => s.redo);
 
   const drawing = tool !== 'select';
-  // The guidance pill normally speaks only while drawing; the wizard also guides
-  // its select-mode steps so each one reads as self-contained.
-  let hint: string | null = drawing ? (coarse ? TOUCH_HINTS : HINTS)[tool] : null;
-  if (wizardStep === 'openings') {
-    hint = coarse
-      ? 'Tap a wall to add doors & windows · set the ceiling height, top-right'
-      : 'Click a wall to add doors & windows · set the ceiling height, top-right';
-  } else if (wizardStep === 'walls' && !drawing && hasExterior) {
-    hint = 'Outline done — nudge a wall if you like, then tap Next';
-  }
+  // The guidance pill speaks only while drawing; select mode reads as clean as
+  // the 3D view, its interactions discoverable by direct manipulation.
+  const hint: string | null = drawing ? (coarse ? TOUCH_HINTS : HINTS)[tool] : null;
 
   return (
     <>
@@ -121,7 +107,7 @@ export function PlanToolbar({
                 />
               </>
             )}
-            {!drawing && hasExterior && wizardStep !== 'openings' && (
+            {!drawing && hasExterior && (
               <>
                 <SelBarDivider />
                 <SelBarButton
@@ -137,24 +123,9 @@ export function PlanToolbar({
         </div>
 
         {/* Centre: while drawing, the finish/cancel actions; otherwise the mode
-            switches plus a Delete action when an interior wall is selected. In the
-            wizard the footer owns navigation, so the centre only offers a way to
-            bail out of an in-progress outline. */}
+            switches plus a Delete action when an interior wall is selected. */}
         <div className="dock-slot dock-mid">
-          {wizardStep ? (
-            drawing && (
-              <SelBar label="Drawing actions">
-                <SelBarButton
-                  icon={<Icon name="x" />}
-                  label="Cancel"
-                  title="Cancel drawing"
-                  ariaLabel="Cancel drawing"
-                  danger
-                  onClick={onCancelDraft}
-                />
-              </SelBar>
-            )
-          ) : drawing ? (
+          {drawing ? (
             <SelBar label="Drawing actions">
               {tool === 'interior' && draftActive && (
                 <SelBarButton

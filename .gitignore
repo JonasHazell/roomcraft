@@ -30,5 +30,6 @@ dist-ssr
 /test-results/
 /playwright-report/
 /playwright/.cache/
+/e2e-artifacts/
 # Local stamp of the last Playwright-validated source state (see scripts/)
 .claude/.e2e-stamp

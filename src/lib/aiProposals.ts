@@ -58,6 +58,17 @@ export function toFurnitureItem(f: AiFurniture): Omit<FurnitureItem, 'id'> {
   };
 }
 
+// Fallback request timeout used only when the caller passes no AbortSignal of its own.
+// Without it a signal-less caller (e.g. a test, or any programmatic use) would hang
+// forever on a stalled server or a dropped connection — the comment above promises "up
+// to a minute", not "indefinitely". Sized to match the app's existing generous
+// whole-request cap (TIMEOUT_MS in src/store/useAiStore.ts) so it comfortably exceeds a
+// normal run — single Claude calls finish in seconds and the directions run
+// concurrently — and stays well above the server's own per-call ceiling, so the client
+// never gives up on a request the server is still legitimately working on. The main UI
+// caller (useAiStore) passes its own signal, so this default only guards signal-less use.
+const DEFAULT_TIMEOUT_MS = 4 * 60 * 1000;
+
 /**
  * Asks the AI server (npm run server) for furnishing proposals for the room.
  * Can take up to a minute — Claude works out the layout behind the scenes (the
@@ -66,7 +77,9 @@ export function toFurnitureItem(f: AiFurniture): Omit<FurnitureItem, 'id'> {
  * Pass an {@link AbortSignal} to make the request cancellable (a user "Cancel",
  * or a timeout guard). An abort surfaces as the native `AbortError`, which the
  * caller distinguishes from a real failure by inspecting the signal — so it is
- * rethrown untouched rather than dressed up as a connection error.
+ * rethrown untouched rather than dressed up as a connection error. When no signal
+ * is given, a {@link DEFAULT_TIMEOUT_MS} hang-guard is applied so the request can
+ * never stay pending forever.
  */
 export async function fetchProposals(
   design: Design,
@@ -79,7 +92,7 @@ export async function fetchProposals(
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ design, needs }),
-      signal,
+      signal: signal ?? AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
     });
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') throw e;

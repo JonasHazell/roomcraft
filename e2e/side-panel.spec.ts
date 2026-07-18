@@ -21,18 +21,12 @@ test('creates a room and opens the validation side panel', async ({ page }) => {
   await page.goto('/');
 
   await page.getByRole('button', { name: /create a room/i }).click();
-  await expect(page.getByRole('heading', { name: /name your room/i })).toBeVisible();
 
-  // Name step: keep the pre-filled default and advance.
-  await page.getByRole('button', { name: /^next/i }).click();
-
-  // Walls step: pick a ready-made shape instead of drawing by hand.
+  // Pick a ready-made shape instead of drawing by hand.
   await page.getByRole('button', { name: /small room/i }).click();
-  await expect(page.getByRole('button', { name: /^next/i })).toBeEnabled();
-  await page.getByRole('button', { name: /^next/i }).click();
 
-  // Openings step: finish straight into the 3D furnishing view.
-  await page.getByRole('button', { name: /create room/i }).click();
+  // Head straight into the 3D furnishing view.
+  await page.getByRole('button', { name: /furnish this room/i }).click();
 
   // The always-visible score badge is the entry point into the validation panel;
   // its accessible name always ends with "open validation".
