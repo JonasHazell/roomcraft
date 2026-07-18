@@ -86,6 +86,7 @@ export function PlanWallPanel({ ref }: { ref?: Ref<HTMLDivElement> }) {
               max={3000}
               step={1}
               suffix="cm"
+              commitOnBlur
               onChange={(cm) => moveWall(wall.id, (vertical ? bounds.minX : bounds.minZ) + cm / 100)}
             />
           )}
