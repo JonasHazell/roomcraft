@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
 import { SCHEMA_VERSION } from '../types';
 import { parseProjectSafe } from '../lib/persistence';
+import { safeSetItem } from '../lib/safeStorage';
 import {
   activeOrPlaceholder,
   createDefaultProject,
@@ -30,6 +31,27 @@ export {
 
 const bootProject = createEmptyProject();
 
+// A `setItem` failure (quota exceeded, or Safari Private Browsing where it
+// throws unconditionally) would otherwise propagate straight out of the store
+// mutation that triggered it, crashing to the app-wide error boundary and
+// losing the very edit that caused it. `safeSetItem` catches that case; the
+// edit stays in memory (this only guards the write to disk), and
+// `useStorageStatus` drives an honest, non-blocking notice.
+//
+// `localStorage` is read here (not only inside the closures below) so that
+// `createJSONStorage`'s own try/catch still treats a *fully missing*
+// `localStorage` (SSR, this repo's Node-based test environment) as "no
+// storage" exactly as before — this wrapper only guards the browser case
+// where `localStorage` exists but a write throws.
+function safeLocalStorage(): StateStorage {
+  const raw = localStorage;
+  return {
+    getItem: (name) => raw.getItem(name),
+    setItem: (name, value) => safeSetItem(name, value),
+    removeItem: (name) => raw.removeItem(name),
+  };
+}
+
 export const useDesignStore = create<DesignState>()(
   persist(
     (set, get) => {
@@ -46,7 +68,7 @@ export const useDesignStore = create<DesignState>()(
     {
       name: 'roomcraft:current',
       version: SCHEMA_VERSION,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(safeLocalStorage),
       // Only the project is persisted; the live `design` is rebuilt from it as
       // the active room on rehydrate (see merge). The active room is synced back
       // into the project first so the stored snapshot matches the screen.

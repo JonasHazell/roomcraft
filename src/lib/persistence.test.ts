@@ -1,12 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   activeRoom,
+  deleteFurnitureFromLibrary,
   migrateV1toV2,
   parseProject,
   parseProjectSafe,
+  saveFurnitureToLibrary,
   syncActiveRoom,
 } from './persistence';
 import { signedArea, validateExteriorLoop } from './polygon';
+import { useStorageStatus } from '../store/useStorageStatus';
 
 /** Matches the old default design (schema v1). */
 const V1_DESIGN = {
@@ -281,5 +284,67 @@ describe('parseProject', () => {
     const migrated = migrateV1toV2(structuredClone(V1_DESIGN) as never);
     expect(migrated.walls).toHaveLength(4);
     expect(migrated.openings).toHaveLength(2);
+  });
+});
+
+describe('furniture library storage failures', () => {
+  // This suite runs under Node (no jsdom), which has no `localStorage` global
+  // at all, so stub one in rather than relying on a real browser API.
+  function createMockStorage() {
+    const data = new Map<string, string>();
+    return {
+      getItem: (key: string) => data.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        data.set(key, value);
+      },
+      removeItem: (key: string) => {
+        data.delete(key);
+      },
+    };
+  }
+
+  beforeEach(() => {
+    useStorageStatus.setState({ saveFailed: false });
+    vi.stubGlobal('localStorage', createMockStorage());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('does not throw when localStorage.setItem fails, and flags the failure', () => {
+    vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+
+    expect(() =>
+      saveFurnitureToLibrary({
+        name: 'Chair',
+        kind: 'chair',
+        size: { width: 0.5, depth: 0.5, height: 0.8 },
+        elevation: 0,
+        color: '#aabbcc',
+      }),
+    ).not.toThrow();
+
+    expect(useStorageStatus.getState().saveFailed).toBe(true);
+  });
+
+  it('clears the failure flag once a save succeeds again', () => {
+    vi.spyOn(localStorage, 'setItem').mockImplementationOnce(() => {
+      throw new Error('QuotaExceededError');
+    });
+    const saved = saveFurnitureToLibrary({
+      name: 'Chair',
+      kind: 'chair',
+      size: { width: 0.5, depth: 0.5, height: 0.8 },
+      elevation: 0,
+      color: '#aabbcc',
+    });
+    expect(useStorageStatus.getState().saveFailed).toBe(true);
+
+    deleteFurnitureFromLibrary(saved.id);
+    expect(useStorageStatus.getState().saveFailed).toBe(false);
   });
 });

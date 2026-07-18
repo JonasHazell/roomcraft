@@ -14,6 +14,7 @@ import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { DialogHost } from './components/panel/DialogHost';
 import { ShortcutsReference } from './components/panel/ShortcutsReference';
 import { AuthDialog } from './components/auth/AuthDialog';
+import { SaveErrorBanner } from './components/ui/SaveErrorBanner';
 import { Icon } from './components/ui/Icon';
 import { PlanEditor } from './components/plan/PlanEditor';
 import { useDesignStore } from './store/useDesignStore';
@@ -157,6 +158,7 @@ function App() {
       <DialogHost />
       <ShortcutsReference />
       <AuthDialog />
+      <SaveErrorBanner />
     </div>
   );
 }
