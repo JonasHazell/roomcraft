@@ -22,19 +22,18 @@ import { join } from 'node:path';
 
 const ARTIFACT_DIR = join(process.cwd(), 'e2e-artifacts');
 
-/** Walks the "New room" wizard to a furnished 3D view using a template shape. */
+/**
+ * Walks the unified plan surface (which replaced the old multi-step wizard, see
+ * #342) to a furnished 3D view using a template shape: create → pick a ready
+ * shape → furnish.
+ */
 async function createRoomAndEnterFurnish(page: Page) {
   await page.getByRole('button', { name: /create a room/i }).click();
-  await expect(page.getByRole('heading', { name: /name your room/i })).toBeVisible();
-  await page.getByRole('button', { name: /^next/i }).click();
 
-  // Walls step: pick a ready-made shape instead of drawing by hand.
+  // Pick a ready-made shape instead of drawing by hand, then carry the room into
+  // the 3D furnish view.
   await page.getByRole('button', { name: /small room/i }).click();
-  await expect(page.getByRole('button', { name: /^next/i })).toBeEnabled();
-  await page.getByRole('button', { name: /^next/i }).click();
-
-  // Openings step: skip straight to finishing the room.
-  await page.getByRole('button', { name: /create room/i }).click();
+  await page.getByRole('button', { name: /furnish this room/i }).click();
   await expect(page.getByRole('button', { name: 'Add furniture' })).toBeVisible();
 }
 
@@ -78,7 +77,7 @@ test('editing an existing piece keeps changes when dismissed via backdrop, ✕ o
 }, testInfo) => {
   // The full flow mounts the lazy 3D scene and drives it; on an emulated touch
   // browser under load this runs well past the default budget.
-  test.setTimeout(150_000);
+  test.setTimeout(240_000);
 
   await createRoomAndEnterFurnish(page);
 

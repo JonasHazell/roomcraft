@@ -86,6 +86,12 @@ test('a large room is framed with its floor visible on the first frame', async (
   await expect(page.getByRole('button', { name: 'Add furniture' })).toBeVisible();
   await expect(page.locator('.scene-loading')).toBeHidden({ timeout: 90_000 });
 
+  // This room is seeded empty, so the "never a blank page" prompt (#325) greets
+  // it centred over the canvas — right where we sample for floor. Dismiss it so
+  // the floor pixel is the framed room, not the prompt card.
+  await page.getByRole('button', { name: 'Dismiss' }).click();
+  await expect(page.locator('.empty-room-prompt')).toHaveCount(0);
+
   const canvas = page.locator('canvas');
   await expect(canvas).toBeVisible();
   const box = await canvas.boundingBox();

@@ -14,7 +14,9 @@ import { Icon } from '../ui/Icon';
  *
  * - **Suggest 3 layouts** — the primary AI path (`useAiSuggest`, which carries the
  *   same sign-in gating the proposal menu uses).
- * - **Add furniture** — opens the same picker as the dock's `+` pill.
+ * - **Browse furniture** — opens the same picker as the dock's `+` pill. (Worded
+ *   distinctly from the dock's own "Add furniture" affordance so the two controls
+ *   stay unambiguous while the room is empty and both are on screen.)
  *
  * It disappears the moment the room has any piece, and can be dismissed (Esc or
  * the close button). Dismissal is scoped to the active proposal, so switching to —
@@ -58,7 +60,7 @@ export function EmptyRoomPrompt() {
             <Icon name="star" /> Suggest 3 layouts
           </button>
           <button type="button" className="btn" onClick={openAddFurniture}>
-            <Icon name="plus" /> Add furniture
+            <Icon name="plus" /> Browse furniture
           </button>
         </div>
       </div>
