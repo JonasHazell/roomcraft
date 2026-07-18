@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
  * cushions vs its frame) gets its own colour override, there must be a way to
  * undo it and let the part resume following the primary colour — not a
  * permanent detachment for the life of the piece. See
- * `FurnitureFields.tsx`'s `FurnitureColorFields` (the reset control) and
+ * `FurnitureFields.tsx`'s `FurnitureAppearanceFields` (the reset control) and
  * `furnitureSlice.ts`'s `updateFurniture` (the `colors` merge that now deletes
  * a key given an `undefined` patch value).
  *
@@ -56,9 +56,9 @@ test('a cleared per-part colour override resumes following the primary colour', 
   const dialog = page.getByRole('dialog', { name: 'Furniture settings' });
   await expect(dialog).toBeVisible();
 
-  // Scoped to the colour chip specifically — the per-part material <select>
-  // just below shares the same "Frame"/"Cushions" wrapping <label> text, so a
-  // plain getByLabel would also match it.
+  // Scoped to the colour chip specifically — each part now groups its colour
+  // chip (named after the part) with a "Material" picker just below it, and this
+  // test only drives the colours.
   const frame = dialog.locator('input.color-field-chip[aria-label="Frame"]');
   const cushions = dialog.locator('input.color-field-chip[aria-label="Cushions"]');
   const resetButton = dialog.getByRole('button', { name: /match frame colour/i });
