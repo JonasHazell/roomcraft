@@ -7,6 +7,7 @@ import { FURNITURE_KINDS } from './furnitureCatalog';
 import { normalizeOptions } from './furnitureOptions';
 import { DEFAULT_MATERIAL, normalizeMaterial } from './materials';
 import { normalizeColors, normalizeMaterials } from './furnitureParts';
+import { safeSetItem } from './safeStorage';
 
 const color = z.string().regex(HEX_COLOR_RE, 'invalid color code (expected #rrggbb)');
 const meters = (max: number) => z.number().min(0).max(max);
@@ -516,7 +517,7 @@ export function listFurnitureLibrary(): FurnitureLibraryEntry[] {
 }
 
 function writeLibrary(entries: FurnitureLibraryEntry[]) {
-  localStorage.setItem(LIBRARY_KEY, JSON.stringify(entries));
+  safeSetItem(LIBRARY_KEY, JSON.stringify(entries));
 }
 
 export function saveFurnitureToLibrary(

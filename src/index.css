@@ -439,6 +439,37 @@ select {
   padding: 8px 10px;
 }
 
+/* A calm, dismissible notice when a save to localStorage fails (quota exceeded,
+   Safari Private Browsing) — see SaveErrorBanner.tsx. Sits above the modal layer
+   so it stays visible no matter what else is open. */
+.save-error-banner {
+  position: fixed;
+  /* Every surface's top band is already contested — the top-left back/name
+     row, the centred proposal switcher, and a top-right chip (validation
+     score, the room panel). Row two of the top-LEFT column is the one spot
+     nothing else claims, so the notice stacks under the back/name row
+     instead of overlapping any of them. */
+  top: calc(84px + env(safe-area-inset-top));
+  left: calc(14px + env(safe-area-inset-left));
+  z-index: 71;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: min(200px, calc(100% - 28px));
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
+  border-radius: 4px;
+  padding: 4px 4px 4px 10px;
+  box-shadow: var(--popup-shadow);
+}
+
+.save-error-banner .error {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 4px 0;
+}
+
 /* Full-screen fallback shown by the top-level ErrorBoundary when the UI crashes. */
 .error-screen {
   height: 100svh;
