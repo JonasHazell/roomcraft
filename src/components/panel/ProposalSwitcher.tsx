@@ -44,10 +44,21 @@ export function ProposalSwitcher() {
   // The auto-arrange search is a short synchronous burst; the busy flag both
   // guards against a double-tap and shows the button as busy while it runs.
   const [arranging, setArranging] = useState(false);
+  // A transient result line for the last auto-arrange, shown inside the (still
+  // open) menu. Cleared whenever the menu closes, so it never lingers as stale
+  // text — the next time the menu opens it starts empty.
+  const [arrangeStatus, setArrangeStatus] = useState<string | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
 
   const active = proposals.find((p) => p.id === activeId) ?? proposals[0];
+
+  // The auto-arrange result is tied to the menu being open: drop it the moment
+  // the menu closes (an X, Esc, outside click, or another action that closes it)
+  // so a stale "Score …" line can never reappear next time.
+  useEffect(() => {
+    if (!open) setArrangeStatus(null);
+  }, [open]);
 
   // Close on outside click or Esc, like the other floating surfaces.
   useEscape(() => setOpen(false), open);
@@ -104,15 +115,23 @@ export function ProposalSwitcher() {
   const runAutoArrange = () => {
     if (arranging) return;
     select(null);
+    setArrangeStatus(null);
     setArranging(true);
     // Defer past this render so the busy state paints before the search blocks
-    // the main thread for its (brief) run, then close the menu once it's done.
+    // the main thread for its (brief) run. The menu stays open so the result
+    // line below the actions is visible right where the tap happened.
     setTimeout(() => {
       try {
-        autoArrange();
+        const result = autoArrange();
+        setArrangeStatus(
+          result === null
+            ? 'Add some furniture first'
+            : result.after > result.before
+              ? `Score ${result.before} → ${result.after}`
+              : 'Already looks good',
+        );
       } finally {
         setArranging(false);
-        setOpen(false);
       }
     }, 16);
   };
@@ -224,6 +243,11 @@ export function ProposalSwitcher() {
             >
               <Icon name="scan" /> {arranging ? 'Arranging…' : 'Auto-arrange'}
             </button>
+            {arrangeStatus && (
+              <p className="hint proposal-menu-status" role="status" aria-live="polite">
+                {arrangeStatus}
+              </p>
+            )}
           </div>
         </div>
       )}

@@ -115,14 +115,20 @@ test.describe('narrow viewport (390x844, the issue repro size)', () => {
     const menu = page.getByRole('menu', { name: /furnishing proposals/i });
     await expect(menu).toBeVisible();
 
-    // Auto-arrange: clickable, rearranges without throwing, and closes the
-    // menu when it settles (see ProposalSwitcher's busy-guard `runAutoArrange`).
+    // Auto-arrange: clickable, rearranges without throwing, and reports its
+    // result in a status line inside the (still open) menu — the menu now stays
+    // open so the feedback is visible where the tap happened (#332, see
+    // e2e/autoarrange-feedback.spec.ts).
     await page.getByRole('button', { name: /auto-arrange/i }).click();
-    await expect(menu).toBeHidden();
+    await expect(menu.getByRole('status')).toBeVisible();
+    await expect(menu).toBeVisible();
 
-    // AI suggestions: still one tap away, now via the switcher menu instead of
-    // the dock's ActionBar pill. The entry point reads "Suggest 3 layouts"
-    // (reworded in ProposalSwitcher — see e2e/proposal-ai-label.spec.ts).
+    // Dismiss the menu, then reopen for the AI entry point. AI suggestions are
+    // still one tap away, now via the switcher menu instead of the dock's
+    // ActionBar pill. The entry point reads "Suggest 3 layouts" (reworded in
+    // ProposalSwitcher — see e2e/proposal-ai-label.spec.ts).
+    await page.getByRole('button', { name: 'Close' }).click();
+    await expect(menu).toBeHidden();
     await page.locator('.proposal-pill').click();
     await page.getByRole('button', { name: /suggest 3 layouts/i }).click();
     await expect(page.getByLabel('AI furnishing')).toBeVisible();
