@@ -225,6 +225,39 @@ describe('ERG-09 nightstands at bed height', () => {
   });
 });
 
+describe('ERG-10 kitchen work triangle', () => {
+  const stove = (x: number, z: number) => piece('stove', x, z, { width: 0.6, depth: 0.6, height: 0.9 });
+  const sink = (x: number, z: number) => piece('sink', x, z, { width: 0.6, depth: 0.45, height: 0.85 });
+  const fridge = (x: number, z: number) => piece('fridge', x, z, { width: 0.7, depth: 0.7, height: 1.8 });
+
+  it('is not applicable when the fridge is missing', () => {
+    const outcome = outcomeOf(makeDesign([stove(1, 1), sink(3, 1)]), 'ERG-10');
+    expect(outcome.status).toBe('not-applicable');
+  });
+
+  it('flags a leg under 1.2 m even when the total stays within 4.0-8.0 m', () => {
+    // stove-sink = 0.9 m (< 1.2 m leg minimum); total is still within 4-8 m.
+    const outcome = outcomeOf(
+      makeDesign([stove(1, 1), sink(1.9, 1), fridge(3, 3)]),
+      'ERG-10',
+    );
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].message).toContain('work triangle');
+    }
+  });
+
+  it('passes a legitimate triangle with every leg in range and the total within 4.0-8.0 m', () => {
+    // stove-sink = 2.0 m, sink-fridge = 1.8 m, fridge-stove = hypot(2, 1.8) ≈ 2.69 m.
+    // Total ≈ 6.49 m — every leg between 1.2-2.7 m, total between 4.0-8.0 m.
+    const outcome = outcomeOf(
+      makeDesign([stove(1, 1), sink(3, 1), fridge(3, 2.8)]),
+      'ERG-10',
+    );
+    expect(outcome.status).toBe('passed');
+  });
+});
+
 describe('ACC-13 over-furnishing', () => {
   it('flags a room where furniture covers more than 60% of the floor', () => {
     const boxes = [
