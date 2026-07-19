@@ -267,6 +267,34 @@ describe('adding doors and windows to a wall', () => {
     store().removeOpening(id);
     expect(store().design.openings).toHaveLength(0);
   });
+
+  it('places a second opening clear of the first instead of overlapping it (#384)', () => {
+    // Repro from the issue: a door (default 0.5-1.4m) followed by a window
+    // (default 0.8-2.0m) on the same wall used to overlap by 60cm.
+    const wallId = store().design.walls[0].id;
+    const doorId = store().addOpening(defaultOpening('door', wallId))!;
+    const windowId = store().addOpening(defaultOpening('window', wallId))!;
+
+    const door = store().design.openings.find((o) => o.id === doorId)!;
+    const win = store().design.openings.find((o) => o.id === windowId)!;
+
+    expect(win.offset).toBeGreaterThanOrEqual(door.offset + door.width);
+  });
+
+  it('never lands a second opening as an exact duplicate of the first', () => {
+    // Repro from the issue: adding a second window used to land at the exact
+    // same offset/width as the first — an invisible, perfect duplicate.
+    const wallId = store().design.walls[0].id;
+    const firstId = store().addOpening(defaultOpening('window', wallId))!;
+    const secondId = store().addOpening(defaultOpening('window', wallId))!;
+
+    const first = store().design.openings.find((o) => o.id === firstId)!;
+    const second = store().design.openings.find((o) => o.id === secondId)!;
+
+    expect(second.offset).not.toBe(first.offset);
+    const [a, b] = [first, second].sort((x, y) => x.offset - y.offset);
+    expect(a.offset + a.width).toBeLessThanOrEqual(b.offset + 1e-9);
+  });
 });
 
 describe('resizing a wall reclamps — never deletes — its openings', () => {
