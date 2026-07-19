@@ -172,7 +172,7 @@ export interface Proposal {
   wallMaterial: string;
 }
 
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 /**
  * One room within a {@link Project}: its floor plan (walls, openings), its
@@ -214,17 +214,33 @@ export interface Design {
 }
 
 /**
- * The whole document: several rooms, each with its own floor plan and
- * furnishing proposals. The active room is the live `design` in the store; the
- * matching entry in `rooms` is refreshed from it whenever the project is
- * persisted, exported or a different room is activated.
+ * One home: several rooms, each with its own floor plan and furnishing
+ * proposals. The active room is the live `design` in the store; the matching
+ * entry in `rooms` is refreshed from it whenever the project is persisted,
+ * exported or a different room is activated.
  */
 export interface Project {
+  /** Stable id of the home inside the workspace (see {@link Workspace}). */
+  id: string;
   schemaVersion: number;
   name: string;
   updatedAt: string; // ISO
-  /** The rooms in this project; always at least one. */
+  /** The rooms in this home; always at least one. */
   rooms: Design[];
   /** Which room the store's live `design` currently mirrors. */
   activeRoomId: string;
+}
+
+/**
+ * The whole local workspace: every home project on this device, and which one
+ * is active. Each home keeps its own independent rooms, furniture and
+ * proposals — homes never share state with one another. Local-only for now
+ * (no server sync/accounts integration; that's #369's job, kept independent
+ * of this).
+ */
+export interface Workspace {
+  /** The home projects on this device; always at least one. */
+  projects: Project[];
+  /** Which project the store's live `project`/`design` currently mirror. */
+  activeProjectId: string;
 }
