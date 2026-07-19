@@ -22,6 +22,14 @@ import {
   type PlanActions,
 } from '../designModel';
 
+/**
+ * Upper bound on a single wall's length, in metres — matches the Length field's
+ * declared `max={3000}` (cm) in `PlanWallPanel.tsx`. `resizeWall` enforces this
+ * itself (not just the field) since it's also the store-level entry point any
+ * other caller (e.g. a future drag-resize path) would go through.
+ */
+const MAX_WALL_LEN = 30;
+
 /** Applies a new wall set, re-clamping openings and furniture to the new shape. */
 function commitWalls(set: DesignSet, d: Design, walls: Wall[]): void {
   const poly = floorPolygon(walls);
@@ -117,7 +125,7 @@ export function createPlanSlice(set: DesignSet, get: DesignGet): PlanActions {
       const d = get().design;
       const wall = wallById(d, id);
       if (!wall) return;
-      const len = Math.max(GRID, Math.round(newLen * 1000) / 1000);
+      const len = Math.min(MAX_WALL_LEN, Math.max(GRID, Math.round(newLen * 1000) / 1000));
       const delta = len - wallLen(wall);
       if (Math.abs(delta) < 0.0005) return;
       const dir = wallDir(wall);
