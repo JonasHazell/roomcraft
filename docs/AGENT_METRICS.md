@@ -86,32 +86,39 @@ only where a single item dominates a metric.
 <!-- STAGE C: overwrite everything between the markers below each run. -->
 <!-- METRICS-SNAPSHOT:START -->
 
-**Eighth snapshot** (this run, 2026-07-18). This run's 9 freshly-decided agent
-PRs (#337–#346, minus the human's own #342) all merged, 0 rejected, via the
-human's own large integration PR #357 (which merged all 11 same-batch open PRs
-— 10 agent-built plus #342 — onto one branch and resolved their conflicts in a
-single session; see `AGENT_LEARNINGS.md`'s new Scoping and Stage C methodology
-entries). The matching 9 issues (#325–#333) were labelled in step. Also
-processed: 3 more of the human's own merged PRs (#357 itself, #358, #360) — see
-`AGENT_LEARNINGS.md`'s corrected distance-readout entry and new grouping-by-part
-entry. No open `agent:question` issues to fold back (none exist yet). Δ is
-versus the seventh snapshot.
+**Ninth snapshot** (this run, 2026-07-19). **A genuine empty run for outcomes** —
+this run landed only ~13 hours after the prior one (#361, which merged the
+#337–#360 batch and its own learnings at 2026-07-19T00:00), and nothing new had
+reached a decision in that window: 0 open `agent:question` issues, 0
+`agent:built` PRs (merged or closed) missing `agent:analyzed` (the only 10 such
+PRs are Stage C's own prior meta-PRs — out of scope by definition), 0
+`agent:ready` issues closed without a merged PR missing `agent:analyzed` (all 87
+closed `agent:ready` issues to date already carry it), and 0 of the human's own
+merged PRs since 2026-07-14 missing `agent:built`/`agent:analyzed`. Six issues
+that might have looked like fresh candidates (#348–#350, #354–#356) turned out
+to already be closed and `agent:analyzed` — auto-merged and processed by the
+*previous* run in the last few minutes before midnight (its own PRs #371–#378),
+confirmed by checking `closed_at`/labels directly on each issue. So: no new
+lesson, no promotion, no doc-drift fix this run — outcome metrics below are
+carried forward unchanged from the eighth snapshot; only the pipeline-health
+rows are refreshed against current label state. Δ is versus the eighth
+snapshot.
 
 | Metric | Value | Δ | Window / note |
 | ------ | ----- | - | ------------- |
-| Merge rate | 74 / 81 = 91% | ↑ (was 90%) | +9 newly-decided agent PRs this run, all 9 merged, 0 rejected — cumulative 74 merged / 81 decided to date |
-| Clean-merge rate | 70 / 74 = 95% | ↑ (was 97% off a smaller base; up from 63/65) | 7 of this run's 9 were clean; 2 (#337, #346) were touched by the human's own integration pass #357 for reasons unrelated to their own approach (an accessible-name collision and a room-creation-flow dependency — see `AGENT_LEARNINGS.md`'s Scoping section), not scope/approach misses. Not from auto-merge inflation — `agent:auto-merge` still unused |
-| Edit rate | 4 / 74 = 5% | ↑ (was 3%) | the same 2 integration-touched PRs above, on top of the prior 2 |
-| PR-rejection rate | 7 / 81 = 9% | ↓ (was 10%) | numerator unchanged (still #240, #239, #186, #153, #135, #129, #127) — denominator grew from this run's 9 new decisions, all merged |
-| Issue-rejection rate | 5 / 79 = 6% | ↓ (was 7%) | numerator unchanged; denominator grew by the 9 issues newly decided this run |
-| Median PR size | 74 lines | → (was 73) | this run's 9 freshly-merged agent PRs (additions+deletions), range 13–234 — essentially flat versus last run's 73-line median |
-| Time-to-decision | ≈643 min (10.7h) median this run's PRs | ↑ (was ≈101 min) | **proxy metric, not the full definition** (PR-open→merge, not issue-open→decision). The jump is structural, not a slowdown in review care: all 9 PRs were opened within ~90 min on 2026-07-17 evening and sat overnight until the human's single integration session the next morning (#357) merged the whole batch at once, rather than reviewing each as it landed — see the new Scoping entry on same-day batches outrunning same-day review. Watch whether this recurs; if large batches keep waiting for one big integration pass, consider whether that's a sign Stage A/B's same-evening cadence is outrunning review capacity |
-| Ready backlog | 9 | ↑ (was 0) | #348–#356, a fresh same-day Stage A batch (created ~02:20 UTC today) in the documented 3/3/3 mix — 3 bugs (#348 Plant colour, #349 Nightstand drawer clamp, #350 unguarded localStorage writes), 3 vision/monetization steps (#351 product link + Buy, #352 freemium gate, #353 shareable room link), 3 feature/consistency fixes (#354 Fridge doors material, #355 door leaf visual, #356 hide inert colour/material controls) — none yet claimed by Stage B |
-| Stuck-building count | 0 confirmed | → (unchanged) | no open `agent:building` issues at all this run (the prior 9 all resolved via #357); nothing to reclaim |
+| Merge rate | 74 / 81 = 91% | → (unchanged) | no newly-decided agent PRs this run |
+| Clean-merge rate | 70 / 74 = 95% | → (unchanged) | no newly-decided agent PRs this run |
+| Edit rate | 4 / 74 = 5% | → (unchanged) | no newly-decided agent PRs this run |
+| PR-rejection rate | 7 / 81 = 9% | → (unchanged) | no newly-decided agent PRs this run |
+| Issue-rejection rate | 5 / 79 = 6% | → (unchanged) | no newly-decided issues this run |
+| Median PR size | 74 lines | → (unchanged) | no newly-merged agent PRs this run to fold in |
+| Time-to-decision | ≈643 min (10.7h) median, prior run's PRs | → (unchanged) | no newly-decided PRs this run to recompute against |
+| Ready backlog | 0 | ↓ (was 9) | the #348–#356 batch is fully drained: 6 (#348–#350, #354–#356) auto-merged already; the remaining 3 (#351–#353) plus a fresh #364–#370 batch are all labelled `agent:building` with open PRs (#389–#398) awaiting human decision — none sitting unclaimed |
+| Stuck-building count | 0 | → (unchanged) | all 10 open `agent:building` issues have a linked open PR created within the last several hours (03:49–09:49 UTC today); none abandoned |
 | Duplicate-rejection count | 2 | → (unchanged) | #129, #135 — no new duplicate rejections this run |
 | Open questions | 0 | → (unchanged) | none asked yet |
 | Question-answer rate | n/a | → (unchanged) | no questions asked yet — first data point once Stage C opens one |
-| AI proposal latency | not sampled this run | — | 8th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session — if this persists, worth a future Stage A proposal to log/export these metrics somewhere Stage C can reach |
+| AI proposal latency | not sampled this run | — | 9th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session — if this persists, worth a future Stage A proposal to log/export these metrics somewhere Stage C can reach |
 | AI proposal cost | not sampled this run | — | same as above |
 | AI calls per proposal | not sampled this run | — | same as above |
 | AI failure/timeout rate | not sampled this run | — | same as above |
