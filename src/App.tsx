@@ -13,6 +13,7 @@ import { EmptyRoomPrompt } from './components/panel/EmptyRoomPrompt';
 import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { DialogHost } from './components/panel/DialogHost';
 import { ShortcutsReference } from './components/panel/ShortcutsReference';
+import { RoomSummary } from './components/summary/RoomSummary';
 import { AuthDialog } from './components/auth/AuthDialog';
 import { SaveErrorBanner } from './components/ui/SaveErrorBanner';
 import { Icon } from './components/ui/Icon';
@@ -39,6 +40,7 @@ function FurnishView() {
   const furnitureDialog = useUiStore((s) => s.furnitureDialog);
   const proposalMenuOpen = useUiStore((s) => s.proposalMenuOpen);
   const openShortcuts = useUiStore((s) => s.openShortcuts);
+  const openSummary = useUiStore((s) => s.openSummary);
   const dialogActive = useDialogStore((s) => s.active);
   const overlayOpen = !!panel || !!furnitureDialog || !!dialogActive || proposalMenuOpen;
   return (
@@ -72,6 +74,20 @@ function FurnishView() {
         >
           <span aria-hidden="true">
             <Icon name="keyboard" />
+          </span>
+        </button>
+        {/* Print/export summary (#368) lives here too — a room-scoped action
+            reachable regardless of selection or pointer type, same rationale as
+            the keyboard-shortcuts icon right next to it. */}
+        <button
+          type="button"
+          className="btn room-topbar-icon"
+          onClick={openSummary}
+          title="Print / export room summary"
+          aria-label="Print / export room summary"
+        >
+          <span aria-hidden="true">
+            <Icon name="printer" />
           </span>
         </button>
         <span className="room-topbar-name">{roomName}</span>
@@ -129,6 +145,7 @@ function useHash(): string {
 
 function App() {
   const appView = useUiStore((s) => s.appView);
+  const summaryOpen = useUiStore((s) => s.summaryOpen);
   const hash = useHash();
 
   // Establish the session once on load; the store's `enabled`/`user` then drive
@@ -149,14 +166,18 @@ function App() {
   // UI primitive from the real classes so the app stays visually consistent.
   if (hash === '#styleguide') return <StyleGuide />;
 
+  // While the room summary is open, `@media print` (index.css) hides every
+  // other `.app` child so printing (or "Save as PDF") produces only the
+  // summary sheet, not the 3D view/dock underneath it.
   return (
-    <div className="app">
+    <div className={summaryOpen ? 'app app-printing' : 'app'}>
       {appView === 'lobby' && <Lobby />}
       {appView === 'plan' && <PlanView />}
       {appView === 'furnish' && <FurnishView />}
       <FurnitureDialog />
       <DialogHost />
       <ShortcutsReference />
+      <RoomSummary />
       <AuthDialog />
       <SaveErrorBanner />
     </div>
