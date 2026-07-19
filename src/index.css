@@ -725,12 +725,6 @@ select {
   white-space: nowrap;
 }
 
-.switch-count {
-  font-weight: 400;
-  font-size: 11.5px;
-  color: var(--muted);
-}
-
 /* ---------- 3D view ---------- */
 
 .viewport {
