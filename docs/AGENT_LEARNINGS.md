@@ -91,7 +91,11 @@ before this pivot landed.
   larger scale: of 27 freshly-decided agent PRs, 25 merged clean and 0 were
   rejected — the only 2 exceptions (#279/#205, #297/#263) needed a
   human-assisted merge purely from branch staleness against a same-batch
-  sibling, not a scoping or approach problem (see Scoping, below).
+  sibling, not a scoping or approach problem (see Scoping, below). This run's
+  9 freshly-decided agent PRs (#337–#346, minus #342 which is the human's own)
+  all merged too, 0 rejected — 7 clean, 2 (#337, #346) touched by the human's
+  own same-day integration pass (#357) for reasons unrelated to their own
+  approach (see Scoping, below).
 
 - **When re-proposing a previously-rejected issue, treat the human's
   rejection comment as the spec for the retry — build exactly the
@@ -192,6 +196,46 @@ before this pivot landed.
   file every new rule appends to — would remove that particular collision entirely
   and is a legitimate future Stage A candidate.
 
+- **A same-day batch of 9-10 agent PRs can outrun same-day human review, and when
+  it does, the human may resolve the whole backlog with one large hand-built
+  integration PR rather than merging each individually — which is where two
+  smaller lessons below actually surfaced.** This run's 9 agent PRs (#337–#346,
+  minus the human's own #342) were all opened within about 90 minutes on
+  2026-07-17 evening and sat open overnight; the human's own #357 the next
+  morning merged all of them (plus #342 and Stage C's own #347) onto one branch
+  `--no-ff` and resolved the conflicts in a single 25-commit, 92-file session,
+  rather than reviewing/merging each PR one at a time. Two real cross-PR issues
+  only became visible at that integration point, not to any individual PR's own
+  review:
+  - **A new control's natural label collided with an existing control's
+    accessible name.** #337's empty-room prompt added its own "Add furniture"
+    button, reusing the same label the dock's own persistent "Add furniture"
+    pill already had — harmless in isolation (#337 alone never had both mounted
+    in a way its own spec exercised), but once both controls could be on screen
+    together it broke the dock selector's uniqueness assumption used across the
+    whole e2e suite. Fixed by renaming the new one to "Browse furniture." When
+    proposing or building a new affordance, check not just "does this label read
+    well" but "does an existing control elsewhere in the same view already use
+    this exact accessible name" — the same sibling-comparison discipline
+    Proposal selection already applies to primitives and thresholds applies here
+    too, just checking uniqueness instead of consistency.
+  - **Concurrent PRs built e2e coverage against a flow another same-day PR was
+    mid-replacing.** #342 (human's own) removed the New Room wizard the same
+    evening #337 and #346 were built, and both of those PRs' specs still drove
+    room creation through the now-deleted wizard steps — mechanical breakage
+    requiring their room-creation helpers to be rewritten, unrelated to either
+    PR's actual approach. This is the "Areas to avoid" room-creation entry's
+    prediction landing concretely: a proposal/build that adds e2e coverage
+    exercising a flow already flagged as hot and in flux inherits that flow's
+    churn, even when the PR's own feature is unrelated to what's changing.
+  - **Counter-example, same run:** #341 (FEN-14) and #343 (ACC-11) both edited
+    `src/lib/validation/rules.ts` at different line ranges, each explicitly
+    flagged the overlap in its own PR body per the existing same-file lesson —
+    and the integration confirms they auto-merged with no conflict at all.
+    Flagging a same-file overlap doesn't guarantee a collision; it just makes
+    the actual outcome (conflict or clean) cheap to resolve either way, which is
+    exactly why the habit is worth keeping regardless of outcome.
+
 ## Pipeline reliability
 
 - **Any batch/queue-processing step in the pipeline must claim and finish one
@@ -267,6 +311,23 @@ before this pivot landed.
   same scrutiny already applied when judging a human decision against
   `PRINCIPLES.md`/`VISION.md`.
 
+- **A single large hand-built "integration" PR that merges several other PRs onto
+  one branch is a new artifact shape, not a single item — unpack it into its
+  constituent decisions rather than reading it as one PR.** #357 merged 11 open
+  PRs (10 agent-built plus the human's own #342) `--no-ff` onto one branch and
+  resolved the conflicts between them in a single commit. Reading its own PR body
+  and file list was enough to trust it this time (unlike #258's misleading
+  description, see above) — the body enumerated every merged PR by number and its
+  own diff matched exactly what the body claimed — but the *processing* still
+  needs to be per-item: each of the 10 agent PRs was analysed and labelled against
+  its own issue as usual, and the integration commit's own conflict-resolution
+  edits were read separately as the human's-own-PR exemplar (the accessible-name
+  and flow-dependency lessons above came from *that* diff, not from any individual
+  agent PR's). When a merged PR's body says "merges N other PRs," treat it as N+1
+  things to learn from — the individual PRs by the normal recipe, and the
+  integration/conflict-resolution work by the human's-own-PR recipe — not as one
+  oversized PR to summarize.
+
 ## Design & UI
 
 - **A new "first principle" now governs every UI decision: the app must be minimal
@@ -320,9 +381,40 @@ before this pivot landed.
   visual interaction, prefer values the user can already relate to something they
   see (distance to the nearest wall, gap to the next piece) over absolute
   coordinates in a coordinate system the UI never otherwise exposes.
-  **Resolved this run:** #199/#213 built exactly the distance-readout
+  **Resolved that run:** #199/#213 built exactly the distance-readout
   alternative the human asked for and merged clean — see the "rejection
-  comment as retry spec" entry above.
+  comment as retry spec" entry above. **Reversed two runs later, in two steps:**
+  the human's own #358 dropped the "N cm to wall" half of the readout, then
+  #360 (same day) removed the rest ("N cm to nearest piece") entirely,
+  folding the panel into a single "Colours & materials" section instead (see
+  the grouping entry below). Neither PR left a rejection comment to explain
+  why — this is hand-built simplification, not a rejected proposal — so don't
+  invent a reason the evidence doesn't support; the safe read is that the
+  readout didn't earn its place once other panel work made the trade-off
+  visible, consistent with `DESIGN.md`'s "minimal and self-evident" principle
+  (#262) and "when in doubt, remove a choice rather than add one." **The
+  standing lesson for Stage A/B is now the opposite of what this entry said
+  two runs ago: do not propose reintroducing a wall/nearest-piece distance
+  readout** — it was tried, it worked, and the human still cut it. More
+  generally: a feature that clean-merged after satisfying an explicit ask is
+  not thereby permanent — when a later merged PR reverses or removes it,
+  correct the earlier "positive exemplar" entry in place (as here) rather than
+  leaving stale praise standing that could steer a future proposal to rebuild
+  something the human deliberately removed.
+
+- **Group a settings panel's controls by the *entity* they act on, not by the
+  *kind* of decision they represent — a user makes several decisions about one
+  part together, not all of one decision-kind at once.** The furniture editor
+  used to show one "Colours" block listing every part's colour, then a
+  separate "Materials" block listing every part's material. The human's own
+  #360 collapsed both into one "Colours & materials" section that pairs each
+  part's colour chip with its material picker side by side (frame colour +
+  frame material, then cushions colour + cushions material), because those two
+  fields are the pair of decisions a user actually makes about one part at a
+  time, not two unrelated axes to compare across parts. When a panel has two or
+  more independent fields per repeated entity (part, wall, room), group by
+  entity first, then by field — not the other way round — even if the fields
+  started as separately-added, separately-maintained blocks.
 
 - **Stopping controls from overlapping isn't the same as keeping them usable —
   if the fix works by shrinking a control until it's no longer legible, that's
@@ -502,7 +594,7 @@ _No entries yet._
   flow above for now — re-check recent commit history before proposing there,
   since a narrow slice is likely to land inside or be made redundant by
   whatever the human builds next in that flow. **Update:** that prediction
-  played out — the stepped wizard was later removed entirely and folded back
+  played out — the human's own #342 removed the stepped wizard entirely and folded back
   into a single `PlanEditor` surface (`.wizard-*` primitives and `useUiStore`'s
   `wizardStep` are gone; a new room now opens straight in the plan editor, with
   the shape chooser as its empty state and the name editable inline). The
