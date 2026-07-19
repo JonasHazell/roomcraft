@@ -19,6 +19,13 @@ interface AuthState {
   /** Whether the server has sign-in configured (a database is connected). */
   enabled: boolean;
   status: AuthStatus;
+  /**
+   * Set by `lib/projectSync.ts` when the account's free-tier saved-room cap
+   * was hit on the last sync attempt (the limit that was hit, or null when
+   * nothing is currently over it) — drives the `RoomCapDialog` upgrade prompt.
+   */
+  roomCapLimit: number | null;
+  setRoomCapLimit: (limit: number | null) => void;
   /** Fetches the current session; called once on app start. */
   refresh: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
@@ -30,6 +37,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
   user: null,
   enabled: false,
   status: 'loading',
+  roomCapLimit: null,
+  setRoomCapLimit: (roomCapLimit) => set({ roomCapLimit }),
   refresh: async () => {
     const { user, authEnabled } = await apiMe();
     set({ user, enabled: authEnabled, status: 'ready' });
@@ -44,6 +53,6 @@ export const useAuthStore = create<AuthState>()((set) => ({
   },
   logout: async () => {
     await apiLogout();
-    set({ user: null });
+    set({ user: null, roomCapLimit: null });
   },
 }));

@@ -76,7 +76,7 @@ helpers** (`DesignData`, `RoomActions`, `FurnitureSpec`, `createDefaultRoom`,
 | **Design validation / score** — rule findings + score | `panel/ValidationPanel.tsx`, `panel/ValidationScore.tsx`, `scene/ValidationOverlay.tsx` | `useValidationStore` | `lib/validation/*` (see below) |
 | **Undo / redo** — every editing step, one drag = one step | `panel/HistoryBar.tsx` | `useHistoryStore` | `lib/globalKeydown.ts` (shortcuts) |
 | **Autosave & named saves** — localStorage, schema migration | `panel/DialogHost.tsx` (save/load prompts) | `useDesignStore` persist middleware | `lib/persistence.ts` (v1→current migrations) |
-| **Accounts / sign-in** — gates server AI when DB configured | `auth/AuthDialog.tsx`, `auth/AccountControl.tsx` | `useAuthStore` | `lib/authApi.ts` → `server/auth.ts`, `server/db.ts` |
+| **Accounts / sign-in** — gates server AI when DB configured; syncs a signed-in user's whole project to their account (free-tier room cap, `RoomCapDialog` upgrade prompt) | `auth/AuthDialog.tsx`, `auth/AccountControl.tsx`, `auth/RoomCapDialog.tsx` | `useAuthStore` | `lib/authApi.ts`, `lib/projectSync.ts` → `server/auth.ts`, `server/projects.ts`, `server/db.ts` |
 | **Keyboard shortcuts** — R, Delete, Esc, Enter, undo/redo | (global) | various | `lib/globalKeydown.ts`, `lib/useEscape.ts` |
 
 ## Shared building blocks
