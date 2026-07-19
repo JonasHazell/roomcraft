@@ -54,6 +54,7 @@ Computed from label state and run history:
 | **Empty-run rate** | runs that produced nothing ÷ runs | Are the stages starved or over-cautious? |
 | **Open questions** | open `agent:question` issues awaiting an answer | Is the question channel backing up or unused? |
 | **Question-answer rate** | answered ÷ asked `agent:question` issues | Are the questions worth asking — does the human engage? |
+| **Required-check integrity** | were merged PRs' required checks actually green at merge time (spot-checked via `get_check_runs`)? | Is the auto-merge safety gate actually enforcing, or only nominally configured? |
 
 ### 3. Product observability — what the running app tells us
 
@@ -86,32 +87,34 @@ only where a single item dominates a metric.
 <!-- STAGE C: overwrite everything between the markers below each run. -->
 <!-- METRICS-SNAPSHOT:START -->
 
-**Eighth snapshot** (this run, 2026-07-18). This run's 9 freshly-decided agent
-PRs (#337–#346, minus the human's own #342) all merged, 0 rejected, via the
-human's own large integration PR #357 (which merged all 11 same-batch open PRs
-— 10 agent-built plus #342 — onto one branch and resolved their conflicts in a
-single session; see `AGENT_LEARNINGS.md`'s new Scoping and Stage C methodology
-entries). The matching 9 issues (#325–#333) were labelled in step. Also
-processed: 3 more of the human's own merged PRs (#357 itself, #358, #360) — see
-`AGENT_LEARNINGS.md`'s corrected distance-readout entry and new grouping-by-part
-entry. No open `agent:question` issues to fold back (none exist yet). Δ is
-versus the seventh snapshot.
+**Ninth snapshot** (this run, 2026-07-19). This run's 8 freshly-decided agent
+PRs (#371–#378, from issues #348–#350/#354–#356/#362/#363) all merged clean, 0
+rejected, 0 edited. The matching 8 issues were labelled in step. No open
+`agent:question` issues to fold back, and no hand-built human PRs merged since
+2026-07-14 to process this run. **Headline finding, not just a number:** 7 of
+these 8 merged via `agent:auto-merge` — the first real use of the auto-merge
+lever — but their own `E2E (desktop + mobile)` required check was reporting
+`failure` at the exact commit that merged, and `main`'s own latest push is
+failing the same check right now. See `AGENT_LEARNINGS.md`'s new Pipeline
+reliability entry and the matching `AGENT_BUILD.md` promotion. Δ is versus the
+eighth snapshot.
 
 | Metric | Value | Δ | Window / note |
 | ------ | ----- | - | ------------- |
-| Merge rate | 74 / 81 = 91% | ↑ (was 90%) | +9 newly-decided agent PRs this run, all 9 merged, 0 rejected — cumulative 74 merged / 81 decided to date |
-| Clean-merge rate | 70 / 74 = 95% | ↑ (was 97% off a smaller base; up from 63/65) | 7 of this run's 9 were clean; 2 (#337, #346) were touched by the human's own integration pass #357 for reasons unrelated to their own approach (an accessible-name collision and a room-creation-flow dependency — see `AGENT_LEARNINGS.md`'s Scoping section), not scope/approach misses. Not from auto-merge inflation — `agent:auto-merge` still unused |
-| Edit rate | 4 / 74 = 5% | ↑ (was 3%) | the same 2 integration-touched PRs above, on top of the prior 2 |
-| PR-rejection rate | 7 / 81 = 9% | ↓ (was 10%) | numerator unchanged (still #240, #239, #186, #153, #135, #129, #127) — denominator grew from this run's 9 new decisions, all merged |
-| Issue-rejection rate | 5 / 79 = 6% | ↓ (was 7%) | numerator unchanged; denominator grew by the 9 issues newly decided this run |
-| Median PR size | 74 lines | → (was 73) | this run's 9 freshly-merged agent PRs (additions+deletions), range 13–234 — essentially flat versus last run's 73-line median |
-| Time-to-decision | ≈643 min (10.7h) median this run's PRs | ↑ (was ≈101 min) | **proxy metric, not the full definition** (PR-open→merge, not issue-open→decision). The jump is structural, not a slowdown in review care: all 9 PRs were opened within ~90 min on 2026-07-17 evening and sat overnight until the human's single integration session the next morning (#357) merged the whole batch at once, rather than reviewing each as it landed — see the new Scoping entry on same-day batches outrunning same-day review. Watch whether this recurs; if large batches keep waiting for one big integration pass, consider whether that's a sign Stage A/B's same-evening cadence is outrunning review capacity |
-| Ready backlog | 9 | ↑ (was 0) | #348–#356, a fresh same-day Stage A batch (created ~02:20 UTC today) in the documented 3/3/3 mix — 3 bugs (#348 Plant colour, #349 Nightstand drawer clamp, #350 unguarded localStorage writes), 3 vision/monetization steps (#351 product link + Buy, #352 freemium gate, #353 shareable room link), 3 feature/consistency fixes (#354 Fridge doors material, #355 door leaf visual, #356 hide inert colour/material controls) — none yet claimed by Stage B |
-| Stuck-building count | 0 confirmed | → (unchanged) | no open `agent:building` issues at all this run (the prior 9 all resolved via #357); nothing to reclaim |
+| Merge rate | 82 / 89 = 92% | ↑ (was 91%) | +8 newly-decided agent PRs this run, all 8 merged, 0 rejected |
+| Clean-merge rate | 78 / 82 = 95% | → (was 95%) | **split, as this file's own guidance asks now that auto-merge is a meaningful share:** human-reviewed 71/75 = 95% (unchanged mix of prior clean/edited PRs plus this run's one human-merged #373, itself clean); auto-merged 7/7 = 100% **by construction** (auto-merge only completes on a passing-checks PR with no further edits) — that 100% is not evidence of review quality, see the required-check-integrity finding below, which casts doubt on whether "passing checks" was even true |
+| Edit rate | 4 / 82 = 5% | → (was 5%) | no new edits this run |
+| PR-rejection rate | 7 / 89 = 8% | ↓ (was 9%) | numerator unchanged — denominator grew by this run's 8 new decisions, all merged |
+| Issue-rejection rate | 5 / 87 = 6% | → (was 6%) | numerator unchanged; denominator grew by the 8 issues newly decided this run |
+| Median PR size | 65 lines | ↓ (was 74) | this run's 8 freshly-merged agent PRs (additions+deletions), range 2–309 (the 2-line Nightstand clamp to the 309-line storage-guard PR) |
+| Time-to-decision | ≈1294 min (21.6h) median, true definition | n/a (was a different proxy metric) | **computed via the actual definition (issue-open → merge/close) for the first time**, not the PR-open→merge proxy used last run — not directly comparable to the prior ≈643 min figure. Two sub-batches: the 02:2x-created issues (#348–#350/#354–#356) waited ~21.5h; the 14:4x-created issues (#362/#363) waited ~9.3h; both groups merged in the same late-evening burst (23:54–23:59 UTC), consistent with Stage B/auto-merge processing a queue in one pass rather than issue age driving order |
+| Ready backlog | 10 | ↑ (was 9) | #364–#370 (a fresh 7-issue Stage A batch, created 2026-07-18T14:4x) plus #351–#353 (the 3 vision/monetization proposals from the 02:2x batch — **still unbuilt, now >24h old**, while the 6 smaller bugs/features from that same batch were all built same-evening). Worth watching next run: do #351–#353 finally get built, or does Stage B keep passing over the larger/vision-scoped issues in favor of newer, smaller arrivals? One occurrence so far, not yet a pattern |
+| Stuck-building count | 0 confirmed | → (unchanged) | no open `agent:building` issues at all this run |
 | Duplicate-rejection count | 2 | → (unchanged) | #129, #135 — no new duplicate rejections this run |
 | Open questions | 0 | → (unchanged) | none asked yet |
-| Question-answer rate | n/a | → (unchanged) | no questions asked yet — first data point once Stage C opens one |
-| AI proposal latency | not sampled this run | — | 8th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session — if this persists, worth a future Stage A proposal to log/export these metrics somewhere Stage C can reach |
+| Question-answer rate | n/a | → (unchanged) | no questions asked yet |
+| **Required-check integrity** | **failed this run** | **new metric** | Spot-checked via `get_check_runs` on all 8 PRs' head commits: #371/#372/#374–#378 each show `E2E (desktop + mobile): failure` at their merged commit, yet still auto-merged; `main`'s own latest CI run (post-#361) fails the identical 4 mobile specs right now. Most likely cause: branch protection's required-status-checks list may not actually include the `E2E (desktop + mobile)` context. **Needs a human check of Settings → Branches** — see `AGENT_LEARNINGS.md` |
+| AI proposal latency | not sampled this run | — | 9th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session |
 | AI proposal cost | not sampled this run | — | same as above |
 | AI calls per proposal | not sampled this run | — | same as above |
 | AI failure/timeout rate | not sampled this run | — | same as above |
@@ -138,6 +141,10 @@ Some standing rules of thumb:
   "one issue → one small PR" rule.
 - **AI cost or latency trending up** → propose a performance/cost issue for that flow
   (a legitimate Stage A candidate, per `AGENT_PROPOSALS.md`).
+- **Required-check integrity failing** → stop trusting the platform gate; verify each
+  auto-merge candidate's checks directly (now in `AGENT_BUILD.md`), and flag the
+  repo-settings gap for the human immediately — this one doesn't wait for a trend,
+  see `AGENT_LEARNINGS.md`'s Pipeline reliability entry.
 
 **Don't over-steer.** A metric has to move consistently across **more than one run**
 before it justifies changing an instruction — one noisy data point is not a trend.

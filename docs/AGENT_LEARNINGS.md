@@ -95,7 +95,16 @@ before this pivot landed.
   9 freshly-decided agent PRs (#337–#346, minus #342 which is the human's own)
   all merged too, 0 rejected — 7 clean, 2 (#337, #346) touched by the human's
   own same-day integration pass (#357) for reasons unrelated to their own
-  approach (see Scoping, below).
+  approach (see Scoping, below). This run's 8 freshly-decided agent PRs
+  (#371–#378, from issues #348–#350/#354–#356/#362/#363) all merged clean too,
+  0 rejected, 0 edited — every issue again named its sibling by file/line:
+  #372 (Nightstand drawer clamp) reused the exact `Math.max(..., floor)` shape
+  already in `Wardrobe.tsx`/`Counter.tsx`; #354→#374 (fridge doors part) and
+  #348→#371 (plant pot/foliage colour swap) each pointed at the one sibling
+  kind/mesh doing it right; #376 (corner-drag inset freeze) named the existing
+  `dragFitWallsRef` pattern to mirror and its own e2e spec verified (via `git
+  stash`) that the fix actually changes the outcome, not just adds a test that
+  would pass either way. Twenty-seven straight clean merges across three runs now.
 
 - **When re-proposing a previously-rejected issue, treat the human's
   rejection comment as the spec for the retry — build exactly the
@@ -272,6 +281,39 @@ before this pivot landed.
   metrics refresh silently failing) — a single severe operational incident
   earns an immediate fix, not a wait-and-see.
 
+- **[Urgent — fixed in `AGENT_BUILD.md` this run, but the underlying repo
+  setting needs a human check.] Auto-merge landed 7 PRs despite their own
+  required `E2E (desktop + mobile)` check reporting `failure`, and the default
+  branch itself is standing red on the same check.** `AGENT_BUILD.md` states
+  plainly: "Auto-merge only completes when CI is green... A red or pending
+  check holds the merge." That did not hold in practice. Checked directly via
+  `get_check_runs` on the PRs' own head commits: #371, #372, #374, #375, #376,
+  #377, #378 (all `agent:auto-merge`, merged 2026-07-18 evening) each show
+  `E2E (desktop + mobile): failure` at the exact commit that merged, with no
+  later re-run and no fix commit — the same 4 mobile specs every time
+  (`autoarrange-feedback.spec.ts`, `furniture-dialog-dismiss-keep.spec.ts`,
+  `furniture-size-commit-on-blur.spec.ts`, `history-bar.spec.ts`, all failing
+  on a 60s timeout, not an assertion mismatch — a resource/timeout flake, not a
+  regression any one of these PRs introduced). Confirming this isn't confined
+  to PR-triggered runs: `main`'s own latest push-triggered CI run (after #361,
+  a docs-only PR) **also** fails the identical 4 mobile specs right now — the
+  default branch is currently red on its own required check. The most likely
+  cause: the repo's branch-protection required-status-checks list may not
+  actually include the `E2E (desktop + mobile)` context (the one-time human
+  setup step named in `AGENT_PIPELINE.md`'s Activation note), so GitHub's
+  auto-merge waits only on `Lint, test & build` and merges regardless of the
+  E2E conclusion. **A human needs to check Settings → Branches → the default
+  branch's required status checks and confirm both contexts are actually
+  listed**, and separately, the 4-test mobile timeout flake itself needs
+  fixing (or the suite needs more headroom) — until then it's silently masking
+  whatever a future PR's E2E run would otherwise have caught. As an immediate
+  safety net, `AGENT_BUILD.md`'s auto-merge step now tells Stage B to verify
+  the E2E check's own conclusion via `get_check_runs` before enabling
+  auto-merge, rather than trusting the platform gate alone — see the promoted
+  rule there. This is a single-occurrence finding but treated as urgent per
+  this file's own standing rule for full-batch operational failures: a safety
+  gate silently not gating doesn't need to recur before it's worth fixing.
+
 ## Stage C methodology
 
 - **A PR's own description is evidence, not ground truth — always check it against
@@ -444,6 +486,25 @@ before this pivot landed.
   proposing or building a change to one of several parallel components (selection,
   drag, keyboard handling), check the others for the pattern to match — generalising
   an existing convention beats inventing a new one for a single component.
+
+- **A genuinely new user-facing primitive must land with its gallery entry and
+  `DESIGN.md` rule in the same PR — CLAUDE.md says so explicitly, and #373
+  shows a build can still skip it.** #373 (localStorage-write guard) added
+  `.save-error-banner`, a new dismissible fixed-position notice class in
+  `src/index.css` and a matching `SaveErrorBanner.tsx` component — a genuinely
+  new primitive (nothing in `DESIGN.md`'s "Feedback" vocabulary — `.hint`,
+  `.error`, `.score-badge`, `.severity`, — covers a dismissible floating
+  banner), but the PR touched neither `StyleGuide.tsx`'s gallery nor
+  `DESIGN.md`. It merged clean anyway (no human comment caught it either), so
+  the living gallery has silently drifted one primitive behind `index.css`.
+  First occurrence of this specific miss — not yet promoted into
+  `AGENT_BUILD.md`'s own checklist, but if it recurs, add an explicit
+  "introducing a new class not in DESIGN.md's vocabulary? add the gallery
+  entry + doc rule in this PR" check there. (Stage C left `DESIGN.md` itself
+  alone here rather than describing a primitive with no gallery entry to
+  back it — the gallery entry needs a `src/` change, out of Stage C's scope;
+  a small Stage A candidate: "add `.save-error-banner` to the StyleGuide
+  gallery and document it in DESIGN.md" would close the gap the normal way.)
 
 ## Testing & verification
 
