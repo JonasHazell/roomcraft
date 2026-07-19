@@ -2911,6 +2911,156 @@ select {
   white-space: nowrap;
 }
 
+/* ---------- Room summary (print/export, #368) ----------
+   A printable, static snapshot of the room: floor plan, validation score and
+   furniture list, opened from the printer icon in the room top bar. Built on
+   the shared .modal chrome; `.room-summary-modal` only overrides the
+   properties that genuinely need to differ (wider, taller) rather than
+   redeclaring the primitive's base rules. */
+
+.room-summary-modal {
+  width: min(760px, 100%);
+  max-height: min(88vh, 760px);
+}
+
+.room-summary-toolbar {
+  gap: 10px;
+}
+
+.room-summary-body {
+  background: var(--paper-2);
+}
+
+.room-summary-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.room-summary-head {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px;
+}
+
+.room-summary-title {
+  margin: 0 0 4px;
+  font-family: var(--display);
+  font-variation-settings: 'opsz' 40, 'wght' 560;
+  font-size: 24px;
+}
+
+.room-summary-heading {
+  margin: 0 0 10px;
+  font-family: var(--display);
+  font-variation-settings: 'opsz' 24, 'wght' 560;
+  font-size: 15px;
+}
+
+/* The plan sits centred, same as the template picker's SVG previews. */
+.room-summary-plan-svg {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.room-summary-plan-floor {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+.room-summary-plan-item {
+  stroke: rgba(24, 24, 27, 0.35);
+  stroke-width: 0.75;
+}
+
+.room-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.room-summary-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: 13px;
+}
+
+.room-summary-swatch {
+  width: 14px;
+  height: 14px;
+}
+
+.room-summary-row-name {
+  font-weight: 600;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.room-summary-row-kind {
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.room-summary-row-size {
+  color: var(--muted);
+  flex: 1 1 auto;
+  text-align: right;
+}
+
+/* Printing (or "Save as PDF"): show only the summary sheet, laid out for
+   paper — no backdrop dimming, no modal chrome, no app dock/panels behind it.
+   `.app-printing` is set on the app root only while the summary is open
+   (App.tsx), so this never has to know about every other surface's classes. */
+@media print {
+  .app-printing > *:not(.room-summary-backdrop) {
+    display: none !important;
+  }
+
+  .room-summary-backdrop {
+    position: static;
+    padding: 0;
+    background: none;
+    animation: none;
+  }
+
+  .room-summary-modal {
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    border: none;
+    box-shadow: none;
+    animation: none;
+  }
+
+  .room-summary-toolbar {
+    display: none;
+  }
+
+  .room-summary-body {
+    overflow: visible;
+    padding: 0;
+    background: none;
+  }
+
+  .room-summary-sheet {
+    border: none;
+    padding: 0;
+  }
+}
+
 /* ==========================================================================
    Style guide (#styleguide) — layout chrome for the living component gallery.
    Everything here is namespaced `.sg-` so it never touches the app itself; the

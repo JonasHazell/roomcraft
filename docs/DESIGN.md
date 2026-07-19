@@ -205,6 +205,18 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   the shape chooser as its empty state; the room's name is editable inline in the top
   bar (`.plan-name`), and "Furnish this room" (`.plan-furnish-btn`) carries it into
   the 3D view. The provisional room is discarded if left before an outline is drawn.
+- **Room summary (print/export)** — a printable, static snapshot of the active
+  room (`RoomSummary.tsx`), opened from the printer icon in the room top bar
+  (next to the keyboard-shortcuts icon). Built on the shared `.modal` chrome,
+  widened via `.room-summary-modal`: a `.room-summary-sheet` holding a
+  `.room-summary-plan-svg` (the exterior outline plus every piece's real
+  footprint, reusing `lib/polygon.ts`'s `floorPolygon`/`rectCorners` — not the
+  live `PlanEditor`), the validation score (reusing `ValidationPanel`'s own
+  `.validation-summary` markup), and a `.room-summary-list` of
+  `.room-summary-row` furniture entries (a `.swatch` + kind/size). "Print /
+  save PDF" calls `window.print()`; a scoped `@media print` block hides the
+  rest of the app (via `.app-printing`, set on the app root only while the
+  summary is open) and drops the modal chrome so only the sheet prints.
 
 ## Behaviour conventions
 
