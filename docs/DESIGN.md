@@ -221,6 +221,16 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   view (a floor ring + front knob) for free-angle rotation. It magnetises to the
   nearest right angle (0/90/180/270°) as you pass it, so pieces square up to the
   walls with no key; hold `Shift` while dragging for a finer 15° snap.
+- **Multi-selecting furniture** — shift/ctrl/cmd-click a piece to add it to (or
+  remove it from) the current selection; on a coarse pointer, tap the selection
+  bar's **"Select multiple"** toggle (`.sel-action`, `layers` icon) first, then
+  tap pieces to add/remove them without needing a modifier key. Once 2+ pieces
+  are selected, `SelectionBar`'s Duplicate and Delete act on the whole group, drag
+  moves every selected piece together, and `Ctrl/Cmd+D` / `Delete`/`Backspace`
+  extend the same way. Rotation, colour and "More" stay single-piece-only and are
+  hidden for a multi-selection — deliberately out of scope for the group actions.
+  A plain (non-additive) click or `Esc` always replaces the selection and drops
+  out of multi-select mode.
 - **Touch** — interactive controls keep a ≥44px hit area on coarse pointers.
 - **Disabled actions** — wrap in `.btn-tooltip-wrap` with a `title` so the reason
   shows on hover.

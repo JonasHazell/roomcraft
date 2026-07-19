@@ -1,20 +1,22 @@
 import { FURNITURE_PARTS, normalizeMaterials, primaryPart } from '../../lib/furnitureParts';
 import { MATERIAL_CHOICES } from '../../lib/materials';
-import { useMediaQuery } from '../../lib/useMediaQuery';
+import { COARSE_POINTER, useMediaQuery } from '../../lib/useMediaQuery';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
-import { useSelectedFurniture } from '../../store/selectors';
+import { useSelectedFurniture, useSelectedFurnitureIds } from '../../store/selectors';
 import { SelBar, SelBarButton, SelBarDivider, SelBarSelect } from './SelBar';
 import { Icon } from '../ui/Icon';
 
 /**
- * Action bar for the selected furniture piece. It surfaces the most-used actions
- * (duplicate, delete) in a compact pill pinned to the bottom of the viewport — on
- * both desktop and mobile. Rotation is handled by the in-scene ring handle (and
- * the R / Shift+R shortcuts), so it stays out of the bar. Colour lives under
- * "More", alongside the piece's name and size, so the bar stays focused on quick
- * actions. "More" opens the full furniture dialog pre-filled with this piece's
- * values.
+ * Action bar for the selected furniture — one piece, or a multi-selection built
+ * with shift/ctrl-click (desktop) or the "Select multiple" toggle below (touch).
+ * It surfaces the most-used actions (duplicate, delete) in a compact pill pinned
+ * to the bottom of the viewport, and runs them over every selected piece when
+ * there's more than one. Rotation is handled by the in-scene ring handle (and the
+ * R / Shift+R shortcuts) and colour/material fine-tuning lives under "More" —
+ * both are single-piece-only, so they're hidden for a multi-selection (out of
+ * scope for v1's move/duplicate/delete group actions). "More" opens the full
+ * furniture dialog pre-filled with the piece's values.
  */
 export function SelectionBar() {
   const appView = useUiStore((s) => s.appView);
@@ -22,41 +24,62 @@ export function SelectionBar() {
   const openEditFurniture = useUiStore((s) => s.openEditFurniture);
   const dialog = useUiStore((s) => s.furnitureDialog);
   const selected = useSelectedFurniture();
+  const selectedIds = useSelectedFurnitureIds();
+  const multiSelectMode = useUiStore((s) => s.multiSelectMode);
+  const setMultiSelectMode = useUiStore((s) => s.setMultiSelectMode);
   const updateFurniture = useDesignStore((s) => s.updateFurniture);
   const duplicateFurniture = useDesignStore((s) => s.duplicateFurniture);
   const removeFurniture = useDesignStore((s) => s.removeFurniture);
   // The furniture bar is the busiest one; the inline material picker only fits
   // alongside the actions on wider screens. On phones it stays under "More".
   const showMaterial = useMediaQuery('(min-width: 620px)');
+  // A mouse already has shift/ctrl-click to build a multi-selection; the
+  // "Select multiple" toggle is the touch equivalent, so it only needs to show
+  // up where there's no modifier key to press.
+  const coarse = useMediaQuery(COARSE_POINTER);
 
-  if (appView !== 'furnish' || !selected) return null;
+  if (appView !== 'furnish' || selectedIds.length === 0) return null;
 
-  const editing = dialog?.mode === 'edit' && dialog.id === selected.id;
+  const multi = selectedIds.length > 1;
+  const editing = !!selected && dialog?.mode === 'edit' && dialog.id === selected.id;
 
   return (
-    <SelBar label="Furniture actions">
+    <SelBar
+      label={multi ? `Furniture actions (${selectedIds.length} selected)` : 'Furniture actions'}
+    >
       <SelBarButton
         icon={<Icon name="copy" />}
         label="Duplicate"
-        title="Create an identical piece with the same dimensions"
+        title={
+          multi
+            ? 'Create identical copies of every selected piece'
+            : 'Create an identical piece with the same dimensions'
+        }
         ariaLabel="Duplicate"
         onClick={() => {
-          const newId = duplicateFurniture(selected.id);
-          if (newId) select({ kind: 'furniture', id: newId });
+          const newIds = selectedIds
+            .map((id) => duplicateFurniture(id))
+            .filter((newId): newId is string => !!newId);
+          if (newIds.length === 0) return;
+          select(
+            newIds.length > 1
+              ? { kind: 'furniture-multi', ids: newIds }
+              : { kind: 'furniture', id: newIds[0] },
+          );
         }}
       />
       <SelBarButton
         icon={<Icon name="x" />}
         label="Delete"
-        title="Delete this piece"
+        title={multi ? 'Delete every selected piece' : 'Delete this piece'}
         ariaLabel="Delete"
         danger
         onClick={() => {
-          removeFurniture(selected.id);
+          selectedIds.forEach((id) => removeFurniture(id));
           select(null);
         }}
       />
-      {showMaterial && (
+      {selected && showMaterial && (
         <>
           <SelBarDivider />
           <SelBarSelect
@@ -79,16 +102,38 @@ export function SelectionBar() {
           />
         </>
       )}
-      <SelBarDivider />
-      <SelBarButton
-        icon={<Icon name="more-horizontal" />}
-        label="More"
-        title="More settings"
-        ariaLabel="More settings"
-        expandable
-        active={editing}
-        onClick={() => openEditFurniture(selected.id)}
-      />
+      {coarse && (
+        <>
+          <SelBarDivider />
+          <SelBarButton
+            icon={<Icon name="layers" />}
+            label="Select multiple"
+            title={
+              multiSelectMode
+                ? 'Stop adding to the selection'
+                : 'Tap other pieces to add them to this selection'
+            }
+            ariaLabel="Select multiple"
+            expandable
+            active={multiSelectMode}
+            onClick={() => setMultiSelectMode(!multiSelectMode)}
+          />
+        </>
+      )}
+      {selected && (
+        <>
+          <SelBarDivider />
+          <SelBarButton
+            icon={<Icon name="more-horizontal" />}
+            label="More"
+            title="More settings"
+            ariaLabel="More settings"
+            expandable
+            active={editing}
+            onClick={() => openEditFurniture(selected.id)}
+          />
+        </>
+      )}
     </SelBar>
   );
 }

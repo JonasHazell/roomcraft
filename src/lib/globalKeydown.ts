@@ -71,12 +71,31 @@ export function handleGlobalKeydown(e: KeyboardEvent): void {
       e.preventDefault();
       const newId = useDesignStore.getState().duplicateFurniture(selection.id);
       if (newId) select({ kind: 'furniture', id: newId });
+    } else if (selection.kind === 'furniture-multi') {
+      // Same duplicate call as a single piece, just run over every id in the
+      // group — the fresh copies become the new selection, same as one does.
+      e.preventDefault();
+      const { duplicateFurniture } = useDesignStore.getState();
+      const newIds = selection.ids
+        .map((id) => duplicateFurniture(id))
+        .filter((newId): newId is string => !!newId);
+      if (newIds.length > 0) {
+        select(
+          newIds.length > 1
+            ? { kind: 'furniture-multi', ids: newIds }
+            : { kind: 'furniture', id: newIds[0] },
+        );
+      }
     }
     return;
   }
   if (e.key === 'Delete' || e.key === 'Backspace') {
     if (selection.kind === 'furniture') {
       useDesignStore.getState().removeFurniture(selection.id);
+      select(null);
+    } else if (selection.kind === 'furniture-multi') {
+      const { removeFurniture } = useDesignStore.getState();
+      selection.ids.forEach((id) => removeFurniture(id));
       select(null);
     } else if (selection.kind === 'wall') {
       // Only interior walls can be removed; the store ignores exterior walls.
