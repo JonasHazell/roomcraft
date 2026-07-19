@@ -19,6 +19,9 @@ interface AuthState {
   /** Whether the server has sign-in configured (a database is connected). */
   enabled: boolean;
   status: AuthStatus;
+  /** Free-tier AI-generation cap from the server (#352), or null until the
+   * first `/api/auth/me` resolves, or when auth is disabled. */
+  aiGenerationCap: number | null;
   /** Fetches the current session; called once on app start. */
   refresh: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
@@ -30,9 +33,10 @@ export const useAuthStore = create<AuthState>()((set) => ({
   user: null,
   enabled: false,
   status: 'loading',
+  aiGenerationCap: null,
   refresh: async () => {
-    const { user, authEnabled } = await apiMe();
-    set({ user, enabled: authEnabled, status: 'ready' });
+    const { user, authEnabled, aiGenerationCap } = await apiMe();
+    set({ user, enabled: authEnabled, aiGenerationCap, status: 'ready' });
   },
   login: async (email, password) => {
     const user = await apiLogin(email, password);

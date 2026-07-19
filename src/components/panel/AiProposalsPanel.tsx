@@ -57,7 +57,9 @@ export function AiProposalsPanel() {
   const closePanel = useUiStore((s) => s.closePanel);
   const openAuthDialog = useUiStore((s) => s.openAuthDialog);
   const authEnabled = useAuthStore((s) => s.enabled);
-  const signedIn = useAuthStore((s) => s.user !== null);
+  const user = useAuthStore((s) => s.user);
+  const signedIn = user !== null;
+  const aiGenerationCap = useAuthStore((s) => s.aiGenerationCap);
 
   const needs = useAiStore((s) => s.needs);
   const setNeeds = useAiStore((s) => s.setNeeds);
@@ -123,6 +125,13 @@ export function AiProposalsPanel() {
   }
 
   const canGenerate = needs.trim().length > 0;
+  // Remaining-generations context (#352), shown before the wall is ever hit —
+  // only meaningful for a signed-in free-plan account; a 'pro' account or a
+  // server with no cap configured (dev, no database) has nothing to count down.
+  const remaining =
+    user && user.plan === 'free' && aiGenerationCap != null
+      ? Math.max(0, aiGenerationCap - user.aiGenerationsUsed)
+      : null;
 
   return (
     <div className="stack">
@@ -130,6 +139,11 @@ export function AiProposalsPanel() {
         Describe what the room will be used for and Claude will suggest 3 furnishing layouts
         with reasoning (including feng shui). Each suggestion is saved as its own proposal.
       </p>
+      {remaining !== null && (
+        <p className="hint">
+          {remaining} of {aiGenerationCap} free generations left.
+        </p>
+      )}
       <label className="field">
         <span className="field-label">Needs &amp; wishes</span>
         <span className="field-input">

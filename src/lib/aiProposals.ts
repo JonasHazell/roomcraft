@@ -42,6 +42,14 @@ export interface ProposalsResponse {
   warnings: string[];
 }
 
+/**
+ * Thrown when the server reports the free-tier AI-generation cap has been
+ * reached (#352: a 402 response shaped `{ error: 'limit', message }`). Kept
+ * distinct from a generic {@link Error} so the caller can show a calm upgrade
+ * prompt instead of the generic AI-failure message.
+ */
+export class GenerationLimitError extends Error {}
+
 /** Turns an AI furniture piece into a FurnitureItem (without id — the store sets it). */
 export function toFurnitureItem(f: AiFurniture): Omit<FurnitureItem, 'id'> {
   return {
@@ -99,9 +107,14 @@ export async function fetchProposals(
     throw new Error('Could not reach the AI service. Check your connection and try again.');
   }
   const payload = (await res.json().catch(() => null)) as
-    | (ProposalsResponse & { error?: string })
+    | (ProposalsResponse & { error?: string; message?: string })
     | null;
   if (!res.ok || !payload) {
+    if (res.status === 402 && payload?.error === 'limit') {
+      throw new GenerationLimitError(
+        payload.message ?? "You've used all your free AI generations.",
+      );
+    }
     throw new Error(payload?.error ?? "Couldn't get suggestions right now — please try again in a moment.");
   }
   return { proposals: payload.proposals ?? [], warnings: payload.warnings ?? [] };

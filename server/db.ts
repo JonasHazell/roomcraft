@@ -55,6 +55,16 @@ export async function initSchema(): Promise<void> {
       created_at timestamptz NOT NULL DEFAULT now()
     );
   `);
+  // Freemium plumbing (#352): a plan tier plus a lifetime counter of successful AI
+  // furnishing generations, used by server/index.ts's free-tier cap. Added via
+  // ALTER TABLE rather than the CREATE TABLE body above, since `CREATE TABLE IF
+  // NOT EXISTS` no-ops once the table already exists — a new column on an
+  // existing deployment needs its own idempotent statement to actually land.
+  await pool.query(`
+    ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS plan text NOT NULL DEFAULT 'free',
+      ADD COLUMN IF NOT EXISTS ai_generations_used integer NOT NULL DEFAULT 0;
+  `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS sessions (
       id text PRIMARY KEY,

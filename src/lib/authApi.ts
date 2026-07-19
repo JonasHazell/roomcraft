@@ -4,15 +4,25 @@
  * browser sends it automatically on same-origin requests.
  */
 
+/** A user's subscription tier (#352). Everyone starts on 'free'; 'pro' has no
+ * real billing behind it yet — see the upgrade prompt in useAiStore/AiProposalsPanel. */
+export type Plan = 'free' | 'pro';
+
 export interface AuthUser {
   id: string;
   email: string;
+  plan: Plan;
+  /** Lifetime count of successful AI furnishing generations this account has run. */
+  aiGenerationsUsed: number;
 }
 
 export interface MeResponse {
   user: AuthUser | null;
   /** Whether the server has sign-in configured (a database is connected). */
   authEnabled: boolean;
+  /** Free-tier generation cap (server/index.ts's FREE_TIER_GENERATION_CAP), or
+   * null when auth is disabled and the cap doesn't apply. */
+  aiGenerationCap: number | null;
 }
 
 interface ErrorPayload {
@@ -46,9 +56,13 @@ export async function apiMe(): Promise<MeResponse> {
   try {
     const res = await fetch('/api/auth/me');
     const payload = (await res.json().catch(() => null)) as Partial<MeResponse> | null;
-    return { user: payload?.user ?? null, authEnabled: payload?.authEnabled ?? false };
+    return {
+      user: payload?.user ?? null,
+      authEnabled: payload?.authEnabled ?? false,
+      aiGenerationCap: payload?.aiGenerationCap ?? null,
+    };
   } catch {
-    return { user: null, authEnabled: false };
+    return { user: null, authEnabled: false, aiGenerationCap: null };
   }
 }
 

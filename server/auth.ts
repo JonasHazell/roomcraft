@@ -4,10 +4,17 @@ import { pool } from './db.ts';
 
 const scrypt = promisify(scryptCb);
 
+/** A user's subscription tier (#352). Every account starts on 'free'; 'pro' is
+ * plumbing for the eventual upgrade — there's no real billing behind it yet. */
+export type Plan = 'free' | 'pro';
+
 /** A logged-in user as exposed to the client — never includes the password hash. */
 export interface AuthUser {
   id: string;
   email: string;
+  plan: Plan;
+  /** Lifetime count of successful AI furnishing generations this account has run. */
+  aiGenerationsUsed: number;
 }
 
 /** Name of the session cookie. */
@@ -138,14 +145,21 @@ export async function createUser(email: string, password: string): Promise<AuthU
     }
     throw e;
   }
-  return { id, email };
+  // A brand-new row always matches the columns' own defaults ('free', 0), so
+  // there's no need to round-trip the database again just to read them back.
+  return { id, email, plan: 'free', aiGenerationsUsed: 0 };
 }
 
 /** Returns the user if the email/password match, otherwise null. */
 export async function authenticate(email: string, password: string): Promise<AuthUser | null> {
   const db = requirePool();
-  const res = await db.query('SELECT id, email, password_hash FROM users WHERE email = $1', [email]);
-  const row = res.rows[0] as { id: string; email: string; password_hash: string } | undefined;
+  const res = await db.query(
+    'SELECT id, email, password_hash, plan, ai_generations_used FROM users WHERE email = $1',
+    [email],
+  );
+  const row = res.rows[0] as
+    | { id: string; email: string; password_hash: string; plan: Plan; ai_generations_used: number }
+    | undefined;
   if (!row) {
     // Hash a throwaway password so a missing user and a wrong password take about
     // the same time (doesn't leak which emails exist via response timing).
@@ -153,7 +167,7 @@ export async function authenticate(email: string, password: string): Promise<Aut
     return null;
   }
   if (!(await verifyPassword(password, row.password_hash))) return null;
-  return { id: row.id, email: row.email };
+  return { id: row.id, email: row.email, plan: row.plan, aiGenerationsUsed: row.ai_generations_used };
 }
 
 /** Issues a new session for a user and returns its opaque token. */
@@ -173,22 +187,37 @@ export async function createSession(userId: string): Promise<string> {
 export async function getSessionUser(token: string | undefined): Promise<AuthUser | null> {
   if (!token || !pool) return null;
   const res = await pool.query(
-    `SELECT u.id, u.email, s.expires_at
+    `SELECT u.id, u.email, u.plan, u.ai_generations_used, s.expires_at
        FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.id = $1`,
     [token],
   );
-  const row = res.rows[0] as { id: string; email: string; expires_at: Date } | undefined;
+  const row = res.rows[0] as
+    | { id: string; email: string; plan: Plan; ai_generations_used: number; expires_at: Date }
+    | undefined;
   if (!row) return null;
   if (new Date(row.expires_at).getTime() <= Date.now()) {
     await deleteSession(token);
     return null;
   }
-  return { id: row.id, email: row.email };
+  return { id: row.id, email: row.email, plan: row.plan, aiGenerationsUsed: row.ai_generations_used };
 }
 
 /** Deletes a session (logout / expiry cleanup). Safe to call with any token. */
 export async function deleteSession(token: string | undefined): Promise<void> {
   if (!token || !pool) return;
   await pool.query('DELETE FROM sessions WHERE id = $1', [token]);
+}
+
+/**
+ * Records one successful AI furnishing generation against the account (the
+ * lifetime counter server/index.ts's free-tier cap reads). Only called after a
+ * generation actually finishes, so a failed or cancelled run never costs the
+ * user one of their free generations.
+ */
+export async function incrementAiGenerations(userId: string): Promise<void> {
+  const db = requirePool();
+  await db.query('UPDATE users SET ai_generations_used = ai_generations_used + 1 WHERE id = $1', [
+    userId,
+  ]);
 }
