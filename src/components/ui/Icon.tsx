@@ -127,6 +127,13 @@ const PATHS: Record<string, ReactNode> = {
       <path d="M12 3v18" />
     </>
   ),
+  'external-link': (
+    <>
+      <path d="M15 3h6v6" />
+      <path d="M10 14 21 3" />
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    </>
+  ),
   keyboard: (
     <>
       <rect width="20" height="16" x="2" y="4" rx="2" />
