@@ -454,6 +454,16 @@ export function StyleGuide() {
           </div>
         </Demo>
 
+        <Demo
+          title="Shared room viewer"
+          note="ShareView.tsx's read-only label (#353) — a .card floated over the 3D view (.share-badge is only the positioning wrapper) so a visitor always knows this is someone else's shared room, not their own workspace."
+        >
+          <div className="share-badge card" style={{ position: 'static' }}>
+            <Icon name="share" />
+            <span>This is a shared view of a RoomCraft room — &ldquo;Living room&rdquo;.</span>
+          </div>
+        </Demo>
+
         <Demo title="Validation: score bands & severity" note="Score number is coloured by band; severity dots run 5 (worst) → 1.">
           <div className="sg-inline-row">
             <span className="score-badge score-good" style={{ position: 'static' }}>

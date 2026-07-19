@@ -160,7 +160,11 @@ function WallMesh({
 // in the 3D view instead of a bare hole in the wall (#355). Roughness anchors
 // to the shared 'wood' finish; the colour is a fixed wood tone, same simplicity
 // level WindowPane already uses for its glass tint.
-function DoorLeaf({ opening: o }: { opening: WallOpening }) {
+//
+// Both are exported (with WindowPane below) so the read-only shared-room viewer
+// (`components/share/ShareScene.tsx`) renders identical door/window fill without
+// duplicating the geometry.
+export function DoorLeaf({ opening: o }: { opening: WallOpening }) {
   const finish = materialSpec('wood');
   return (
     <mesh position={[o.offset + o.width / 2, o.elevation + o.height / 2, WALL_T / 2]}>
@@ -170,7 +174,7 @@ function DoorLeaf({ opening: o }: { opening: WallOpening }) {
   );
 }
 
-function WindowPane({ opening: o }: { opening: WallOpening }) {
+export function WindowPane({ opening: o }: { opening: WallOpening }) {
   return (
     <mesh
       position={[o.offset + o.width / 2, o.elevation + o.height / 2, WALL_T / 2]}

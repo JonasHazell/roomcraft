@@ -205,6 +205,13 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   the shape chooser as its empty state; the room's name is editable inline in the top
   bar (`.plan-name`), and "Furnish this room" (`.plan-furnish-btn`) carries it into
   the 3D view. The provisional room is discarded if left before an outline is drawn.
+- **Shared room viewer** — the first collaboration step (#353): "Share" in the
+  proposal switcher's menu posts a point-in-time snapshot and opens a dialog
+  (reusing `.modal`/`.field-input`) with the resulting `#share/:id` link to copy.
+  That link opens `ShareView.tsx`, a read-only 3D view with no dock, no side panel,
+  and no selection — just the room plus `.share-badge` (a plain `.card`, only its
+  row layout and top-left position over the canvas are new), which always names it
+  as a shared snapshot so a visitor never lands on an unexplained bare view.
 
 ## Behaviour conventions
 

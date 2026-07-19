@@ -773,6 +773,37 @@ select {
   box-shadow: var(--popup-shadow);
 }
 
+/* ---------- Shared room viewer (#353) ---------- */
+
+/* The read-only label floated over `ShareView.tsx`'s 3D view, in the same
+   top-left slot the in-room top bar uses, so a visitor always knows this is a
+   shared snapshot rather than their own workspace. Plain `.card`, row layout —
+   only this positioning/row wrapper is new. */
+.share-badge {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  left: calc(14px + env(safe-area-inset-left));
+  z-index: 56;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 28px);
+  box-shadow: var(--popup-shadow);
+}
+
+.share-badge .icon {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.share-badge span {
+  font-size: 13px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* The one-line invitation, pushed left so the dismiss button sits at the row end. */
 .empty-room-prompt-title {
   flex: 1;

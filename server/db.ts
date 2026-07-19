@@ -64,4 +64,21 @@ export async function initSchema(): Promise<void> {
     );
   `);
   await pool.query('CREATE INDEX IF NOT EXISTS sessions_user_id_idx ON sessions(user_id);');
+  // Read-only room sharing (#353): a point-in-time snapshot of one room's Design
+  // (see src/lib/persistence.ts's `designSchema`), keyed by an opaque id handed
+  // out from POST /api/share and read back by GET /api/share/:id. Unrelated to
+  // the `users`/`sessions` tables above — sharing needs no account — so it's a
+  // separate CREATE TABLE rather than columns on an existing one. Note for merge
+  // order: another in-flight PR (#352, a freemium generation cap) also edits this
+  // same `initSchema` function, adding an ALTER TABLE on `users`. That's a
+  // disjoint statement from this new CREATE TABLE, so the two should apply
+  // cleanly regardless of which merges first — flagging it here per the
+  // same-file-overlap convention (see AGENT_LEARNINGS.md).
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS shared_rooms (
+      id text PRIMARY KEY,
+      design_json jsonb NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now()
+    );
+  `);
 }

@@ -13,6 +13,8 @@ import { EmptyRoomPrompt } from './components/panel/EmptyRoomPrompt';
 import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { DialogHost } from './components/panel/DialogHost';
 import { ShortcutsReference } from './components/panel/ShortcutsReference';
+import { ShareDialog } from './components/panel/ShareDialog';
+import { ShareView } from './components/share/ShareView';
 import { AuthDialog } from './components/auth/AuthDialog';
 import { SaveErrorBanner } from './components/ui/SaveErrorBanner';
 import { Icon } from './components/ui/Icon';
@@ -132,10 +134,14 @@ function App() {
   const hash = useHash();
 
   // Establish the session once on load; the store's `enabled`/`user` then drive
-  // whether sign-in is shown and whether AI furnishing is gated behind it.
+  // whether sign-in is shown and whether AI furnishing is gated behind it. A
+  // shared, read-only view (#353) needs no session at all — skip the
+  // handshake so opening someone else's link never depends on (or waits on)
+  // an auth round-trip that has nothing to do with viewing it.
   useEffect(() => {
+    if (hash.startsWith('#share/')) return;
     void useAuthStore.getState().refresh();
-  }, []);
+  }, [hash]);
 
   // The app's single global keydown handler (undo/redo, Esc, selection
   // shortcuts) lives in `lib/globalKeydown.ts` so it can be unit tested
@@ -149,6 +155,22 @@ function App() {
   // UI primitive from the real classes so the app stays visually consistent.
   if (hash === '#styleguide') return <StyleGuide />;
 
+  // A read-only shared-room link (#353): `#share/<id>`, reachable with no
+  // sign-in and independent of the local project entirely — it never touches
+  // `useDesignStore` (see ShareView.tsx/ShareScene.tsx), so viewing someone
+  // else's shared room can't affect the visitor's own rooms. Still wrapped in
+  // `.app` (the `height: 100svh` + flex layout every other surface renders
+  // in) so `.viewport`'s `flex: 1` has a sized parent to fill, the same way
+  // FurnishView/PlanView below get their height.
+  const shareMatch = /^#share\/(.+)$/.exec(hash);
+  if (shareMatch) {
+    return (
+      <div className="app">
+        <ShareView id={decodeURIComponent(shareMatch[1])} />
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       {appView === 'lobby' && <Lobby />}
@@ -158,6 +180,7 @@ function App() {
       <DialogHost />
       <ShortcutsReference />
       <AuthDialog />
+      <ShareDialog />
       <SaveErrorBanner />
     </div>
   );
