@@ -2000,6 +2000,14 @@ select {
     justify-content: center;
   }
 
+  /* The per-part colour swatch in the furniture editor's "Colours & materials"
+     section is a 22px round chip (see .color-field-chip's base rule) — widen
+     it to a real 44px tap target on coarse pointers, matching .sel-color above. */
+  .color-field-chip {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   .section summary {
     padding: 16px 20px;
   }
