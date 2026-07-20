@@ -105,6 +105,17 @@ before this pivot landed.
   `dragFitWallsRef` pattern to mirror and its own e2e spec verified (via `git
   stash`) that the fix actually changes the outcome, not just adds a test that
   would pass either way. Twenty-seven straight clean merges across three runs now.
+  **This run adds a data point at a larger, vision-scale build, not just small
+  fixes:** #368/#397 ("Add a printable/exportable room summary — floor plan,
+  furniture list, and score," one of the run's *larger steps toward the vision*,
+  636 lines) named the exact building blocks the lobby's own room-card thumbnail
+  already used (`floorPolygon`/`rectCorners` in `lib/polygon.ts`) and reused
+  `ValidationPanel`'s own `.validation-summary` markup verbatim rather than
+  inventing a parallel score display, and still merged clean with zero edits
+  despite being roughly ten times the size of a typical clean-merge PR. The
+  sibling-comparison shape isn't just a small-fix trick — it de-risks a bigger,
+  vision-scoped build exactly the same way, by giving the reviewer building
+  blocks they already trust instead of new ones to evaluate from scratch.
 
 - **When re-proposing a previously-rejected issue, treat the human's
   rejection comment as the spec for the retry — build exactly the
@@ -314,6 +325,64 @@ before this pivot landed.
   this file's own standing rule for full-batch operational failures: a safety
   gate silently not gating doesn't need to recur before it's worth fixing.
 
+- **[Still unresolved a full day later — escalating, not repeating.] The
+  required-check-integrity gap above has not been fixed, and the cost of
+  leaving it open is compounding, not sitting still.** This run found zero new
+  auto-merges to test whether branch protection was corrected, because `main`'s
+  own CI is still failing its required `E2E (desktop + mobile)` check (reconfirmed
+  directly: the push-triggered run right after #397 merged is `failure`) — so
+  nothing can complete the platform's own auto-merge gate right now regardless of
+  the settings question. In the same window, the built-but-unmerged backlog
+  roughly doubled (7 → 15 open PRs: #389–#398, #410–#415), none of which can
+  auto-merge and all of which show a red required check to a human reviewer too.
+  A flagged safety-gate gap that sits for a day while the queue behind it grows is
+  exactly the situation this file's "single severe operational incident" rule
+  exists for — noting it again, more loudly, rather than assuming last run's
+  mention was sufficient.
+
+- **A brand-new e2e spec passing in its own authoring session is not the same
+  claim as "this spec passes in CI" — verify the CI run itself before trusting a
+  PR's own `npm run test:e2e` report.** The human's own #396 reported
+  `e2e/door-leaf-fade.spec.ts` passing locally ("170 passed") in its PR body, but
+  every CI run since it merged (checked directly across 5 independent later PR
+  branches, spanning several hours, desktop **and** mobile) times out at the
+  exact orbit-drag line the spec drives (`mouse.move: Test timeout of 30000ms
+  exceeded`) — a new, 100%-reproducible-in-CI failure, not a rare flake, stacked
+  on top of the 4 already-known mobile-timeout specs from last run's finding
+  above. It never showed up in the PR's own authoring session, only under CI's
+  resource constraints. Combined with the still-open required-check gap, this
+  means essentially the entire current backlog is failing its E2E gate for two
+  independent reasons at once. A human needs to look at `Walls.tsx`'s new
+  per-frame door-registry loop (added by #396) or the spec's own orbit-drag
+  interaction — Stage C can observe and report this, per its own guardrails, but
+  can't fix product code or the spec itself.
+
+- **Stage C must reuse its own canonical branch and PR, not whichever branch a
+  session happens to default to.** A prior run pushed its update to
+  `claude/funny-bardeen-j34znb` (the session's own default branch) instead of
+  `agent/learnings-update`, opening a second, redundant `chore(agent): update
+  learnings, metrics & pipeline` PR (#399) alongside the still-open, substantive
+  #379 on the correct branch — two conflicting meta-PRs open at once, with #399's
+  "ready backlog is 0" claim already stale and contradicted by #379's own
+  content and this run's real (large, growing) backlog. Closed #399 as
+  superseded this run, folding its still-valid observations into this update
+  instead. **Promoted into `AGENT_ANALYSIS.md`'s "Writing the learnings" section**
+  this run: always check for an already-open PR on `agent/learnings-update`
+  first and push new commits there instead of assuming a fresh branch/PR is
+  needed.
+
+- **A single stuck `agent:building` issue can hide inside an otherwise-healthy
+  claimed batch — check every claimed issue for its own PR, not just whether
+  the batch as a whole looks fine.** Of 16 open `agent:building` issues this
+  run, 15 each have their own open PR (a healthy, actively-reviewed backlog);
+  the 16th, #386 ("furniture part's colour swatch below the 44px touch
+  target"), has carried `agent:building` since 2026-07-19T02:49 with no PR ever
+  opened for it (confirmed directly — no PR anywhere references #386). A 15/16
+  healthy ratio would look fine at a glance; only checking each one individually
+  surfaced the crash-recovery case `AGENT_BUILD.md`'s reclaim step exists for.
+  Left for Stage B's next run to reclaim (Stage C doesn't touch `agent:building`
+  itself, per its own label guardrails).
+
 ## Stage C methodology
 
 - **A PR's own description is evidence, not ground truth — always check it against
@@ -505,6 +574,23 @@ before this pivot landed.
   back it — the gallery entry needs a `src/` change, out of Stage C's scope;
   a small Stage A candidate: "add `.save-error-banner` to the StyleGuide
   gallery and document it in DESIGN.md" would close the gap the normal way.)
+
+- **A visual/material effect driven by a parent's existing per-frame loop should
+  be extended to cover its attached children by registering into that same
+  loop, not by adding a second, parallel one.** The human's own #396 found that
+  `Walls.tsx`'s fade loop (an exterior wall standing between the camera and the
+  room turns to a faint glass plane) never touched a door mounted on that wall —
+  the door kept rendering fully opaque, floating in front of an otherwise
+  see-through wall. The fix added a small registry (`doorMatRefs`, keyed by wall
+  id) that `DoorLeaf` registers its material into on mount; the wall's existing
+  per-frame effect now also mirrors its own `opacity`/`depthWrite` onto every
+  door registered against it, right next to where it already sets its own. One
+  loop, one source of truth, instead of a second effect racing the first.
+  Generalises past doors and walls: any child mesh whose visual state should
+  track a parent's animated property (an opening on a fading wall, a decoration
+  on a moving piece of furniture, …) should hook into the parent's existing
+  per-frame mechanism via a small registration callback, not duplicate the
+  update logic in its own `useFrame`.
 
 ## Testing & verification
 
