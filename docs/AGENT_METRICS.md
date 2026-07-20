@@ -87,35 +87,38 @@ only where a single item dominates a metric.
 <!-- STAGE C: overwrite everything between the markers below each run. -->
 <!-- METRICS-SNAPSHOT:START -->
 
-**Tenth snapshot** (this run, 2026-07-20). Only one freshly-decided agent PR this
-run — #397 (issue #368, "Room summary"), merged clean, 0 edits — plus one hand-built
-human PR, #396 ("Fade door leaves in lock-step with their host wall"), also merged
-clean. No open `agent:question` issues to fold back. **Headline: the required-check
-gap flagged last run (#379, still open/unmerged) has not been resolved, and it's now
-compounded by a second, new E2E failure** — `e2e/door-leaf-fade.spec.ts` (added by
-#396) times out in every CI run since it merged, on top of the 4 already-known mobile
-flakes. `main`'s own latest CI run is `failure`. The built-but-unmerged backlog grew
-from 7 to 15 PRs in the same window, none able to cleanly pass the required E2E check.
-Also found and closed a stray duplicate meta-PR (#399, wrong branch) — see
-`AGENT_LEARNINGS.md`'s new Pipeline reliability entries for all three findings. Δ is
-versus the ninth snapshot.
+**Eleventh snapshot** (this run, 2026-07-20). **Empty run for outcomes** — zero
+agent PRs merged/closed, zero issues rejected, zero human PRs merged since the
+tenth snapshot (confirmed directly: every one of the 17 open PRs in the repo,
+including this one, predates this run; nothing new landed to learn a taste
+lesson from). The subject of this run is entirely the standing operational
+incident: **the required `E2E (desktop + mobile)` check is still `failure`,
+now reconfirmed ~28 hours after it was first flagged**, checked directly
+against the newest PR in the backlog (#416, completed 2026-07-20T05:04:15Z).
+One concrete improvement: the stuck-`agent:building` issue flagged last run
+(#386) was reclaimed and built within hours (PR #416) — the reclaim mechanism
+itself is healthy. But the check-integrity gap is now visibly shaping Stage
+B's own behaviour, not just sitting latent: #416 explicitly declined
+auto-merge, citing this PR's own prior finding, even though it otherwise
+qualifies — see `AGENT_LEARNINGS.md`'s Pipeline reliability section for the
+full update. Δ is versus the tenth snapshot.
 
 | Metric | Value | Δ | Window / note |
 | ------ | ----- | - | ------------- |
-| Merge rate | 83 / 90 = 92% | → (was 92%) | +1 newly-decided agent PR this run (#397), merged, 0 rejected |
-| Clean-merge rate | 79 / 83 = 95% | → (was 95%) | split: human-reviewed 72/76 = 95% (this run's #397 was human-reviewed-and-merged, not auto-merged, so it joins this bucket clean); auto-merged still 7/7 = 100% by construction, unchanged this run (no new auto-merges — see Required-check integrity row) |
-| Edit rate | 4 / 83 = 5% | → (was 5%) | no new edits this run |
-| PR-rejection rate | 7 / 90 = 8% | → (was 8%) | numerator unchanged; denominator +1 |
-| Issue-rejection rate | 5 / 88 = 6% | → (was 6%) | numerator unchanged; denominator +1 (issue #368) |
-| Median PR size | 641 lines (n=1) | ↑ (was 65) | this run's only freshly-merged agent PR, #397, is a single large data point (636 additions + 5 deletions) — one of the run's *larger steps toward the vision* per `AGENT_PIPELINE.md`'s 3/3/3 mix, not evidence of scope creep on the usual small-fix PRs; treat as low-confidence with n=1 |
-| Time-to-decision | ≈1422 min (23.7h) median, true definition (issue-open → merge) | → (was ≈1294 min / 21.6h) | single data point (#368 created 2026-07-18T14:43 → #397 merged 2026-07-19T14:25), broadly consistent with last run's true-definition figure |
-| Ready backlog | 11 | ↑ (was 10) | issues `agent:ready` **without** `agent:building` (claimed-but-unbuilt issues don't count as backlog): #401–#409 (a fresh 9-issue batch, created 2026-07-19T14:56) plus #387/#388 (unclaimed stragglers from the 2026-07-19T02:48 batch) |
-| Stuck-building count | 1 (#386) | ↑ (was 0) | of 16 open `agent:building` issues, 15 have an open PR; #386 ("furniture part's colour swatch below 44px touch target," claimed 2026-07-19T02:49) has none — see `AGENT_LEARNINGS.md`'s new entry. Left for Stage B's reclaim step |
+| Merge rate | 83 / 90 = 92% | → (unchanged) | no new decisions this run |
+| Clean-merge rate | 79 / 83 = 95% | → (unchanged) | no new decisions this run |
+| Edit rate | 4 / 83 = 5% | → (unchanged) | no new decisions this run |
+| PR-rejection rate | 7 / 90 = 8% | → (unchanged) | no new decisions this run |
+| Issue-rejection rate | 5 / 88 = 6% | → (unchanged) | no new decisions this run |
+| Median PR size | 641 lines (n=1) | → (unchanged) | still last run's single data point; no new merges to add to it |
+| Time-to-decision | ≈1422 min (23.7h) median | → (unchanged) | no new decisions this run |
+| Ready backlog | 11 | → (unchanged) | issues `agent:ready` **without** `agent:building`: #401–#409 plus #387/#388 — same set as last snapshot, no new Stage A batch this run |
+| Stuck-building count | 0 | ↓ (was 1) | #386 reclaimed and built (PR #416) within hours of being flagged — see `AGENT_LEARNINGS.md`. All 16 currently `agent:building` issues now have an open PR |
 | Duplicate-rejection count | 2 | → (unchanged) | #129, #135 — no new duplicate rejections this run |
 | Open questions | 0 | → (unchanged) | none asked yet |
 | Question-answer rate | n/a | → (unchanged) | no questions asked yet |
-| **Required-check integrity** | **still failing, unresolved** | **↓ (worse)** | No new auto-merges this run to test whether branch protection was fixed — `main`'s own required `E2E (desktop + mobile)` check is still red (reconfirmed on the push right after #397), now failing for *two* independent reasons (the pre-existing 4-spec mobile flake **and** the new `door-leaf-fade.spec.ts` CI-only timeout from #396). The built-but-unmerged backlog roughly doubled (7→15) in the same window. Still needs a human check of Settings → Branches, and now also a fix for the new spec/regression — see `AGENT_LEARNINGS.md` |
-| AI proposal latency | not sampled this run | — | 10th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session |
+| **Required-check integrity** | **still failing, unresolved (~28h)** | **→ (unchanged, still bad)** | Reconfirmed directly on the newest PR (#416, `E2E (desktop + mobile)`: `failure` at 2026-07-20T05:04:15Z). Built-but-unmerged backlog now **16 open agent-built PRs** (#389–#395, #398, #400, #410–#416) plus this meta-PR, none able to auto-merge or show a human reviewer a green required check. Still needs the human Settings → Branches check named twice before — see `AGENT_LEARNINGS.md` |
+| AI proposal latency | not sampled this run | — | 11th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session |
 | AI proposal cost | not sampled this run | — | same as above |
 | AI calls per proposal | not sampled this run | — | same as above |
 | AI failure/timeout rate | not sampled this run | — | same as above |

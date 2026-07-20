@@ -338,7 +338,25 @@ before this pivot landed.
   A flagged safety-gate gap that sits for a day while the queue behind it grows is
   exactly the situation this file's "single severe operational incident" rule
   exists for — noting it again, more loudly, rather than assuming last run's
-  mention was sufficient.
+  mention was sufficient. **Update, this run (still unresolved, third
+  consecutive flag):** re-checked directly against the newest PR in the backlog
+  (#416, `E2E (desktop + mobile)` completed 2026-07-20T05:04:15Z) — still
+  `failure`, ~28 hours after the gap was first found. Zero agent PRs merged or
+  rejected in this window (nothing for Stage C to learn from on the taste side
+  this run), but the gap is now visibly steering *behaviour*, not just sitting
+  latent: #416 (a small, faithful, otherwise auto-merge-qualifying CSS fix)
+  explicitly declined to request auto-merge, citing PR #379's own
+  required-check-integrity finding as the reason not to trust the platform gate
+  yet — the promoted `AGENT_BUILD.md` caution from the first flag is visibly
+  changing Stage B's behavior mid-incident, which is the fix working as
+  intended, but it also means the backlog (now 17 open agent-built PRs) can't
+  self-clear through auto-merge *or* confident human review while the check
+  stays red. The one lever this file doesn't control is the human actually
+  opening Settings → Branches — two prior snapshots asked in the learnings
+  body, which a human reviewing a merged doc might not read closely; this
+  run's PR description leads with the ask instead, on the theory that
+  un-merged-for-a-day is itself evidence the ask needs to be louder, not
+  repeated in the same place.
 
 - **A brand-new e2e spec passing in its own authoring session is not the same
   claim as "this spec passes in CI" — verify the CI run itself before trusting a
@@ -381,7 +399,10 @@ before this pivot landed.
   healthy ratio would look fine at a glance; only checking each one individually
   surfaced the crash-recovery case `AGENT_BUILD.md`'s reclaim step exists for.
   Left for Stage B's next run to reclaim (Stage C doesn't touch `agent:building`
-  itself, per its own label guardrails).
+  itself, per its own label guardrails). **Resolved the very next Stage B run:**
+  #416 (`Closes #386`) opened within hours, confirming the reclaim step works
+  once the instance is flagged — no further action needed on this specific
+  issue.
 
 ## Stage C methodology
 
