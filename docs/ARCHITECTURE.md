@@ -75,6 +75,7 @@ helpers** (`DesignData`, `RoomActions`, `FurnitureSpec`, `createDefaultRoom`,
 | **Auto-arrange** — local, no-AI reshuffle to raise score | `panel/ProposalSwitcher.tsx` (the "Auto-arrange" menu action) | `slices/furnitureSlice.ts` | `lib/autoArrange.ts` |
 | **Proposals** — switch between furnishing options per room | `panel/ProposalSwitcher.tsx`, `panel/SwitcherList.tsx` | `slices/proposalSlice.ts` | — |
 | **Design validation / score** — rule findings + score | `panel/ValidationPanel.tsx`, `panel/ValidationScore.tsx`, `scene/ValidationOverlay.tsx` | `useValidationStore` | `lib/validation/*` (see below) |
+| **Room summary** — printable/exportable plan + furniture list + score | `summary/RoomSummary.tsx` (opened from the room top bar, `App.tsx`) | `useUiStore` (`summaryOpen`) | `lib/polygon.ts` (plan), `useValidationStore` (score) |
 | **Undo / redo** — every editing step, one drag = one step | `panel/HistoryBar.tsx` | `useHistoryStore` | `lib/globalKeydown.ts` (shortcuts) |
 | **Autosave & named saves** — localStorage, schema migration, failed-write notice | `panel/DialogHost.tsx` (save/load prompts), `ui/SaveErrorBanner.tsx` | `useDesignStore` persist middleware, `useStorageStatus` | `lib/persistence.ts` (v1→current migrations), `lib/safeStorage.ts` (guards a `setItem` failure so it can't crash the app) |
 | **Accounts / sign-in** — gates server AI when DB configured | `auth/AuthDialog.tsx`, `auth/AccountControl.tsx` | `useAuthStore` | `lib/authApi.ts` → `server/auth.ts`, `server/db.ts` |

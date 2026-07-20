@@ -560,6 +560,60 @@ export function StyleGuide() {
           </ul>
         </Demo>
 
+        <Demo
+          title="Room summary (print/export)"
+          note="A printable snapshot of the room (RoomSummary.tsx, opened from the printer icon next to the room top bar's keyboard-shortcuts icon, #368): the outline plus each piece's real footprint (floorPolygon/rectCorners — the same geometry the lobby thumbnail and collision engine use) in .room-summary-plan-svg, the score reusing ValidationPanel's own .validation-summary markup, and a .room-summary-list of furniture rows. A scoped @media print block (.app-printing, set on the app root only while open) hides the rest of the app so only the sheet prints."
+        >
+          <div className="room-summary-sheet" style={{ maxWidth: 420 }}>
+            <header className="room-summary-head">
+              <h1 className="room-summary-title">Bedroom</h1>
+              <p className="hint">Ceiling height 240 cm · Generated 2026-07-19</p>
+            </header>
+            <section className="room-summary-section">
+              <h2 className="room-summary-heading">Floor plan</h2>
+              <svg className="room-summary-plan-svg" viewBox="0 0 40 40" style={{ maxWidth: 200 }}>
+                <path
+                  className="room-summary-plan-floor"
+                  d={templatePath(ROOM_TEMPLATES[1].points)}
+                  style={{ fill: '#c9a878' }}
+                />
+                <rect className="room-summary-plan-item" x="8" y="22" width="14" height="10" style={{ fill: '#7d8c72' }} />
+                <rect className="room-summary-plan-item" x="24" y="6" width="8" height="8" style={{ fill: '#4a453c' }} />
+              </svg>
+            </section>
+            <section className="room-summary-section">
+              <h2 className="room-summary-heading">Validation score</h2>
+              <div className="validation-summary">
+                <div className="validation-total score-good">
+                  <strong>88 pts</strong>
+                  <span>of 100</span>
+                </div>
+                <div className="validation-meta">
+                  <span>Interpreted as: Bedroom</span>
+                  <span>11 passed · 2 violated</span>
+                </div>
+              </div>
+            </section>
+            <section className="room-summary-section">
+              <h2 className="room-summary-heading">Furniture (2)</h2>
+              <ul className="room-summary-list">
+                <li className="room-summary-row">
+                  <span className="swatch room-summary-swatch" style={{ background: '#7d8c72' }} />
+                  <span className="room-summary-row-name">Bed</span>
+                  <span className="room-summary-row-kind">Bed</span>
+                  <span className="room-summary-row-size">160 cm × 200 cm × 50 cm</span>
+                </li>
+                <li className="room-summary-row">
+                  <span className="swatch room-summary-swatch" style={{ background: '#4a453c' }} />
+                  <span className="room-summary-row-name">Chair</span>
+                  <span className="room-summary-row-kind">Chair</span>
+                  <span className="room-summary-row-size">45 cm × 45 cm × 90 cm</span>
+                </li>
+              </ul>
+            </section>
+          </div>
+        </Demo>
+
         <Demo title="Collapsible section" note="Sidebar grouping (<details class='section'>) with the +/− marker.">
           <details className="section" open style={{ maxWidth: 360, border: '1px solid var(--line)', borderRadius: 6 }}>
             <summary>Room</summary>
