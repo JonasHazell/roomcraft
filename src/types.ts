@@ -33,6 +33,21 @@ export function isHexColor(c: string | undefined | null): c is string {
   return typeof c === 'string' && HEX_COLOR_RE.test(c);
 }
 
+/**
+ * True if `url` is an absolute `https://` address — the only scheme accepted
+ * for a furniture piece's product link (see {@link FurnitureItem.product}).
+ * Shared by persistence (normalizing loaded/saved data) and the UI (deciding
+ * whether to show the "Buy" affordance).
+ */
+export function isHttpsUrl(url: string | undefined | null): url is string {
+  if (typeof url !== 'string') return false;
+  try {
+    return new URL(url).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export interface WallOpening {
   id: string;
   kind: OpeningKind;
@@ -99,6 +114,25 @@ export type FurnitureOptionValue = number | boolean | string;
  */
 export type FurnitureOptions = Record<string, FurnitureOptionValue>;
 
+/**
+ * A real, purchasable product a placed piece links to — the first step toward
+ * the furniture-catalogue revenue model (see docs/VISION.md#how-it-makes-money).
+ * User-entered from the "More" editor's "Product link" field (see
+ * `FurnitureFields.tsx`); when set, the furniture dialog shows a "Buy" button
+ * that opens `url` in a new tab (see `FurnitureDialog.tsx`). `url` must be an
+ * absolute `https://` address (see {@link isHttpsUrl}); a malformed link is
+ * dropped on load rather than rejecting the whole piece, the same
+ * degrade-gracefully convention as {@link FurnitureItem.colors}/
+ * {@link FurnitureItem.materials} (see `lib/persistence.ts`).
+ */
+export interface FurnitureProduct {
+  url: string;
+  /** Price in whole cents, avoiding float rounding; omitted when unknown. */
+  priceCents?: number;
+  /** Retailer/store name shown alongside the price. */
+  retailer?: string;
+}
+
 export interface FurnitureItem {
   id: string;
   kind: FurnitureKind;
@@ -134,6 +168,11 @@ export interface FurnitureItem {
    * resolved wherever the options are read (see {@link ../lib/furnitureOptions}).
    */
   options?: FurnitureOptions;
+  /**
+   * A real, purchasable product this piece links to. Optional and sparse —
+   * most pieces have none. See {@link FurnitureProduct}.
+   */
+  product?: FurnitureProduct;
 }
 
 /** A saved furniture piece in the library — reusable properties without placement. */
@@ -152,6 +191,8 @@ export interface FurnitureLibraryEntry {
   materials?: Record<string, string>;
   /** Saved per-type customization; see {@link FurnitureItem.options}. */
   options?: FurnitureOptions;
+  /** Saved product link; see {@link FurnitureItem.product}. */
+  product?: FurnitureProduct;
 }
 
 /** A named furnishing variant of one room. The room shape (walls, openings,

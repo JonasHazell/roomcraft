@@ -293,6 +293,7 @@ select {
 }
 
 .btn {
+  display: inline-block;
   font: inherit;
   font-weight: 600;
   font-size: 13px;
@@ -301,6 +302,10 @@ select {
   border-radius: 4px;
   background: transparent;
   color: var(--ink);
+  /* A <button> never has an underline, so this only matters when .btn is used
+     on an <a> (e.g. the furniture dialog's "Buy" link, FurnitureDialog.tsx) —
+     without it, the browser's default anchor underline shows through. */
+  text-decoration: none;
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
 }

@@ -1,7 +1,13 @@
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
-import type { Design, FurnitureLibraryEntry, Project, Proposal, Wall, Workspace } from '../types';
-import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, HEX_COLOR_RE, SCHEMA_VERSION } from '../types';
+import type { Design, FurnitureLibraryEntry, FurnitureProduct, Project, Proposal, Wall, Workspace } from '../types';
+import {
+  DEFAULT_FLOOR_COLOR,
+  DEFAULT_WALL_COLOR,
+  HEX_COLOR_RE,
+  SCHEMA_VERSION,
+  isHttpsUrl,
+} from '../types';
 import { isAxisParallel, validateExteriorLoop } from './polygon';
 import { FURNITURE_KINDS } from './furnitureCatalog';
 import { normalizeOptions } from './furnitureOptions';
@@ -30,6 +36,27 @@ const furnitureOptionsSchema = z.record(
   z.union([z.number(), z.boolean(), z.string()]),
 );
 
+/**
+ * Normalizes a saved product link: dropped entirely (rather than rejecting the
+ * whole piece) if `url` isn't a valid `https://` address — same
+ * degrade-gracefully convention as `normalizeColors`/`normalizeMaterials`.
+ * Checked with plain runtime guards (not a zod shape) so a malformed field of
+ * any shape — a string, a number, missing `url` — degrades to "no product"
+ * instead of throwing and rejecting the whole save.
+ */
+function normalizeProduct(raw: unknown): FurnitureProduct | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.url !== 'string' || !isHttpsUrl(r.url)) return undefined;
+  const priceCents =
+    typeof r.priceCents === 'number' && Number.isFinite(r.priceCents) && r.priceCents >= 0
+      ? Math.round(r.priceCents)
+      : undefined;
+  const retailer =
+    typeof r.retailer === 'string' && r.retailer.trim() ? r.retailer.trim().slice(0, 100) : undefined;
+  return { url: r.url, priceCents, retailer };
+}
+
 const furnitureSchema = z
   .object({
     id: z.string().min(1),
@@ -49,6 +76,8 @@ const furnitureSchema = z
     materials: z.record(z.string(), z.string()).optional(),
     /** Missing in saves made before the field existed — normalized to the kind's defaults. */
     options: furnitureOptionsSchema.optional(),
+    /** Missing on every piece before this field existed; validated freeform, see `normalizeProduct`. */
+    product: z.unknown().optional(),
   })
   // Normalize options/materials/colours against the kind so stored data is always sound.
   .transform((f) => ({
@@ -57,6 +86,7 @@ const furnitureSchema = z
     material: normalizeMaterial(f.material),
     materials: normalizeMaterials(f.kind, f.materials, f.material),
     options: normalizeOptions(f.kind, f.options),
+    product: normalizeProduct(f.product),
   }));
 
 // ---- v1 (older format: rectangular room, walls by compass direction) ----
@@ -595,6 +625,7 @@ const libraryEntrySchema = z
     material: z.string().optional(),
     materials: z.record(z.string(), z.string()).optional(),
     options: furnitureOptionsSchema.optional(),
+    product: z.unknown().optional(),
   })
   .transform((e) => ({
     ...e,
@@ -602,6 +633,7 @@ const libraryEntrySchema = z
     material: normalizeMaterial(e.material),
     materials: normalizeMaterials(e.kind, e.materials, e.material),
     options: normalizeOptions(e.kind, e.options),
+    product: normalizeProduct(e.product),
   }));
 
 /** Reads the library; invalid entries are filtered out instead of throwing. */

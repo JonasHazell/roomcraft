@@ -259,6 +259,38 @@ describe('parseProject', () => {
     expect(parsed.wallMaterial).toBe('matte');
   });
 
+  it('keeps a valid https product link and drops a malformed one', () => {
+    const base = parseProject(V1_DESIGN);
+    const room = base.rooms[0];
+    const linkedBed = {
+      ...room.furniture[0],
+      product: { url: 'https://example.com/bed', priceCents: 12999, retailer: 'Example Co' },
+    };
+    const badBed = {
+      ...room.furniture[0],
+      id: 'f2',
+      // Not https — must be dropped rather than rejecting the whole piece.
+      product: { url: 'http://example.com/bed' },
+    };
+    const withProducts = {
+      ...base,
+      rooms: [
+        {
+          ...room,
+          furniture: [linkedBed, badBed],
+          proposals: [{ ...room.proposals[0], furniture: [linkedBed, badBed] }],
+        },
+      ],
+    };
+    const parsed = activeRoom(parseProject(JSON.parse(JSON.stringify(withProducts))));
+    expect(parsed.furniture[0].product).toEqual({
+      url: 'https://example.com/bed',
+      priceCents: 12999,
+      retailer: 'Example Co',
+    });
+    expect(parsed.furniture[1].product).toBeUndefined();
+  });
+
   it('rejects garbage and broken structures', () => {
     expect(parseProjectSafe(null)).toBeNull();
     expect(parseProjectSafe('hello')).toBeNull();

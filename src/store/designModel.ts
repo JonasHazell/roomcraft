@@ -5,6 +5,7 @@ import type {
   FurnitureKind,
   FurnitureLibraryEntry,
   FurnitureOptions,
+  FurnitureProduct,
   FurnitureSize,
   Point,
   Project,
@@ -79,6 +80,7 @@ export function cloneFurniture(items: FurnitureItem[]): FurnitureItem[] {
     colors: f.colors ? { ...f.colors } : undefined,
     materials: f.materials ? { ...f.materials } : undefined,
     options: f.options ? { ...f.options } : undefined,
+    product: f.product ? { ...f.product } : undefined,
   }));
 }
 
@@ -104,6 +106,7 @@ export interface FurnitureSpec {
   material?: string;
   materials?: Record<string, string>;
   options?: FurnitureOptions;
+  product?: FurnitureProduct;
 }
 
 // ---- Factories ----
@@ -359,6 +362,7 @@ export function placeAtCenter(d: Design, spec: FurnitureSpec): FurnitureItem {
       material: normalizeMaterial(spec.material),
       materials: normalizeMaterials(spec.kind, spec.materials, spec.material),
       options: normalizeOptions(spec.kind, spec.options),
+      product: spec.product,
     },
     poly,
   );
