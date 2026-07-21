@@ -175,6 +175,27 @@ before this pivot landed.
   an existing control just as much as to a proposed one; don't read a rejection as
   scoped only to the specific PR it closed.
 
+- **[Promoted into `AGENT_PROPOSALS.md` this run.] Proposal volume must respond
+  to whether anything downstream can actually merge — a healthy proposal can
+  still be the wrong thing to add to a pipeline that's jammed.** Across the
+  required-check-integrity incident tracked in *Pipeline reliability* below,
+  Stage A kept firing a full 9-proposal batch every run — quality wasn't the
+  problem, each batch matched the usual 3/3/3 mix and the usual sibling-cited
+  shape — while zero PRs merged for two-plus days because `main`'s own CI
+  stayed red. The unclaimed (`agent:ready`, not yet `agent:building`) backlog
+  grew from roughly 20 to 20 again between two runs simply because Stage B
+  worked through one batch while Stage A added a fresh one on top, and the
+  combined queue awaiting the human (unclaimed issues + in-progress issues +
+  open built PRs) reached 53 items. None of this is a proposal-quality
+  failure; it's a volume-vs-throughput failure the existing "ready backlog
+  growing → rebalance Stage A/B" metric rule already anticipates in the
+  abstract (`AGENT_METRICS.md`'s *Acting on the metrics*) but never turned into
+  a concrete check Stage A runs itself. The general rule: proposing at full
+  volume assumes the pipeline downstream can absorb it; when the evidence says
+  otherwise (a red required check on the default branch, or an already-large
+  combined backlog), the right move is to throttle the *count*, not to lower
+  the *bar* — see the new check added to `AGENT_PROPOSALS.md`'s algorithm.
+
 ## Scoping (Stage B)
 
 - **Two issues proposed in the same batch that touch the same file are a real
@@ -356,7 +377,32 @@ before this pivot landed.
   body, which a human reviewing a merged doc might not read closely; this
   run's PR description leads with the ask instead, on the theory that
   un-merged-for-a-day is itself evidence the ask needs to be louder, not
-  repeated in the same place.
+  repeated in the same place. **Update, this run (12th snapshot, fourth
+  consecutive flag, now unresolved ~2 days):** re-checked directly against
+  `main`'s own most recent CI run — still the same head commit (`0f047fa`,
+  from #397, merged 2026-07-19T14:25), because **no PR has merged since**, so
+  there has been no fresh chance for the platform gate to prove itself either
+  way. Pulled that run's own job log: `E2E (desktop + mobile)` fails with 6
+  failed specs (`door-leaf-fade.spec.ts` timing out on both desktop *and*
+  mobile at the exact orbit-drag line, plus `autoarrange-feedback`,
+  `furniture-dialog-dismiss-keep`, `furniture-library-rename` — a fifth
+  chronically-flaking mobile spec joining the list this run — and
+  `furniture-size-commit-on-blur`), 1 flaky (`color-undo-batch`), 168 passed.
+  Nothing has changed about the underlying break; only the cost of leaving it
+  has: the combined queue awaiting the human — 20 unclaimed `agent:ready`
+  issues, 16 `agent:building` issues each with their own open PR, and 16 open
+  agent-built PRs (plus this meta-PR) — is now **53 items**, up from roughly
+  20 at the first flag. Stage A kept proposing a full 9-per-run batch every
+  run through this entire incident (the unclaimed backlog alone grew 11→20
+  this run, meaning a full fresh batch landed on top of one Stage B hadn't
+  even started on yet), which is itself a second, distinct problem from the
+  CI gate: **proposing more when nothing downstream can merge just deepens a
+  pile nobody asked for.** Promoted a backlog/CI-aware throttle into
+  `AGENT_PROPOSALS.md` this run for exactly that reason (see *Proposal
+  selection*, below) — the CI-gate finding itself still has no fix Stage C can
+  make; only a human opening Settings → Branches resolves it, and separately,
+  someone needs to either fix or skip `door-leaf-fade.spec.ts`'s orbit-drag
+  step so `main`'s own required check can go green again.
 
 - **A brand-new e2e spec passing in its own authoring session is not the same
   claim as "this spec passes in CI" — verify the CI run itself before trusting a

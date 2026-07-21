@@ -87,21 +87,24 @@ only where a single item dominates a metric.
 <!-- STAGE C: overwrite everything between the markers below each run. -->
 <!-- METRICS-SNAPSHOT:START -->
 
-**Eleventh snapshot** (this run, 2026-07-20). **Empty run for outcomes** — zero
-agent PRs merged/closed, zero issues rejected, zero human PRs merged since the
-tenth snapshot (confirmed directly: every one of the 17 open PRs in the repo,
-including this one, predates this run; nothing new landed to learn a taste
-lesson from). The subject of this run is entirely the standing operational
-incident: **the required `E2E (desktop + mobile)` check is still `failure`,
-now reconfirmed ~28 hours after it was first flagged**, checked directly
-against the newest PR in the backlog (#416, completed 2026-07-20T05:04:15Z).
-One concrete improvement: the stuck-`agent:building` issue flagged last run
-(#386) was reclaimed and built within hours (PR #416) — the reclaim mechanism
-itself is healthy. But the check-integrity gap is now visibly shaping Stage
-B's own behaviour, not just sitting latent: #416 explicitly declined
-auto-merge, citing this PR's own prior finding, even though it otherwise
-qualifies — see `AGENT_LEARNINGS.md`'s Pipeline reliability section for the
-full update. Δ is versus the tenth snapshot.
+**Twelfth snapshot** (this run, 2026-07-21). **Empty run for outcomes, fourth
+consecutive** — zero agent PRs merged/closed, zero issues rejected, zero human
+PRs merged since the eleventh snapshot (confirmed directly: no PR has merged
+to `main` since #397 on 2026-07-19T14:25; the default branch's own CI hasn't
+re-run since, so there's been no fresh evidence either way on the
+required-check question). The subject of this run is again the standing
+operational incident, now escalated further: pulled the actual CI job log for
+`main`'s latest run and confirmed 6 failing specs, including
+`door-leaf-fade.spec.ts` timing out on **both** desktop and mobile at the same
+orbit-drag line, plus a newly-observed fifth chronically-flaking mobile spec
+(`furniture-library-rename`) alongside the four already known. The combined
+queue awaiting the human — unclaimed `agent:ready` issues + `agent:building`
+issues (each with its own open PR) + open `agent:built` PRs — is now **53
+items**, up sharply from the low-20s at the first flag, because Stage A kept
+proposing a full 9-per-run batch throughout the outage. Promoted a
+backlog/CI-aware proposal throttle into `AGENT_PROPOSALS.md` this run to stop
+that compounding — see `AGENT_LEARNINGS.md`'s Proposal selection and Pipeline
+reliability sections. Δ is versus the eleventh snapshot.
 
 | Metric | Value | Δ | Window / note |
 | ------ | ----- | - | ------------- |
@@ -112,13 +115,13 @@ full update. Δ is versus the tenth snapshot.
 | Issue-rejection rate | 5 / 88 = 6% | → (unchanged) | no new decisions this run |
 | Median PR size | 641 lines (n=1) | → (unchanged) | still last run's single data point; no new merges to add to it |
 | Time-to-decision | ≈1422 min (23.7h) median | → (unchanged) | no new decisions this run |
-| Ready backlog | 11 | → (unchanged) | issues `agent:ready` **without** `agent:building`: #401–#409 plus #387/#388 — same set as last snapshot, no new Stage A batch this run |
-| Stuck-building count | 0 | ↓ (was 1) | #386 reclaimed and built (PR #416) within hours of being flagged — see `AGENT_LEARNINGS.md`. All 16 currently `agent:building` issues now have an open PR |
+| Ready backlog | 20 | ↑↑ (was 11) | issues `agent:ready` **without** `agent:building`: #401–#409, #417–#425, plus #387/#388 — a full fresh Stage A batch (#417–#425) landed on top of the prior one (#401–#409) while nothing downstream could merge. This is the trend the new `AGENT_PROPOSALS.md` throttle targets |
+| Stuck-building count | 0 | → (unchanged) | all 16 `agent:building` issues (#351–#353, #364–#370, #380–#386) have their own open PR (#389–#395, #398, #400, #410–#416); none abandoned |
 | Duplicate-rejection count | 2 | → (unchanged) | #129, #135 — no new duplicate rejections this run |
 | Open questions | 0 | → (unchanged) | none asked yet |
 | Question-answer rate | n/a | → (unchanged) | no questions asked yet |
-| **Required-check integrity** | **still failing, unresolved (~28h)** | **→ (unchanged, still bad)** | Reconfirmed directly on the newest PR (#416, `E2E (desktop + mobile)`: `failure` at 2026-07-20T05:04:15Z). Built-but-unmerged backlog now **16 open agent-built PRs** (#389–#395, #398, #400, #410–#416) plus this meta-PR, none able to auto-merge or show a human reviewer a green required check. Still needs the human Settings → Branches check named twice before — see `AGENT_LEARNINGS.md` |
-| AI proposal latency | not sampled this run | — | 11th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session |
+| **Required-check integrity** | **still failing, unresolved (~2 days, 4th consecutive flag)** | **→ (unchanged, still bad)** | `main`'s latest CI run (head `0f047fa`, after #397) is still the most recent — confirmed `failure` on `E2E (desktop + mobile)` via the actual job log (6 failed specs, 1 flaky, 168 passed). Built-but-unmerged backlog holds at **16 open agent-built PRs** (#389–#395, #398, #400, #410–#416) plus this meta-PR. Still needs the human's Settings → Branches check (repo-admin action only a human can take) and, separately, a fix for `door-leaf-fade.spec.ts`'s orbit-drag timeout — see `AGENT_LEARNINGS.md` |
+| AI proposal latency | not sampled this run | — | 12th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session |
 | AI proposal cost | not sampled this run | — | same as above |
 | AI calls per proposal | not sampled this run | — | same as above |
 | AI failure/timeout rate | not sampled this run | — | same as above |
