@@ -146,6 +146,7 @@ export async function generatePlan(
   design: Design,
   needs: string,
   model: string,
+  signal?: AbortSignal,
 ): Promise<{ plan: FurniturePlan; costUsd: number; calls: number }> {
   const shared = buildUserPrompt(design, needs);
   const messages: ChatMessages = [
@@ -157,6 +158,7 @@ export async function generatePlan(
     systemPrompt: PLANNING_SYSTEM_PROMPT,
     jsonSchema: planJsonSchema,
     model,
+    signal,
   });
   // Accumulate cost/calls so the caller can fold the planning phase into the
   // per-request total alongside the placement calls.
@@ -178,6 +180,7 @@ export async function generatePlan(
     systemPrompt: PLANNING_SYSTEM_PROMPT,
     jsonSchema: planJsonSchema,
     model,
+    signal,
   });
   costUsd += repaired.costUsd;
   calls += 1;

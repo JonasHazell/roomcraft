@@ -120,3 +120,66 @@ for (const width of [900, 656, 430, 400]) {
     await expectPillsMeetTouchTarget(page);
   });
 }
+
+/**
+ * Regression coverage for issue #386: the per-part colour swatch in the
+ * furniture editor's "Colours & materials" section (`.color-field-chip`, see
+ * FurnitureFields.tsx) is a fixed 22px round chip that never got the
+ * coarse-pointer 44px floor its sibling `.sel-color` swatch already has. This
+ * spec measures the real computed style — mirroring `expectPillsMeetTouchTarget`
+ * above — rather than just eyeballing the screenshot, so a regression back to
+ * the bare 22px chip can't silently slip in.
+ */
+test('per-part colour chip (.color-field-chip) keeps its pointer-aware touch target', async ({
+  page,
+}, testInfo) => {
+  // The flow mounts the 3D scene and opens the furniture dialog on top of it —
+  // WebGL under mobile Chrome emulation is slower, so give it headroom.
+  test.setTimeout(60_000);
+
+  // Reuse the seeded room from the file-level beforeEach above (rather than
+  // the lobby's "Create a room" template flow) — this file's beforeEach
+  // already has a room in localStorage, so the lobby never offers that empty
+  // -state button.
+  await openFurnishView(page);
+
+  // A sofa splits into two parts (frame, cushions), landing directly in the
+  // live edit form the appearance controls live in.
+  await page.getByRole('button', { name: 'Add furniture' }).click();
+  await page.getByRole('button', { name: 'Sofa', exact: true }).click();
+
+  const dialog = page.getByRole('dialog', { name: 'Furniture settings' });
+  await expect(dialog).toBeVisible();
+
+  const chip = dialog.locator('input.color-field-chip[aria-label="Frame"]');
+  await expect(chip).toBeVisible();
+
+  await page.screenshot({
+    path: `/tmp/color-chip-${testInfo.project.name}.png`,
+  });
+
+  const isCoarse = await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches);
+  const minWidth = await chip.evaluate((el) => parseFloat(getComputedStyle(el).minWidth));
+  const minHeight = await chip.evaluate((el) => parseFloat(getComputedStyle(el).minHeight));
+
+  if (isCoarse) {
+    expect(minWidth).toBeGreaterThanOrEqual(44);
+    expect(minHeight).toBeGreaterThanOrEqual(44);
+    const box = await chip.boundingBox();
+    // boundingBox() is rasterised through the emulated device scale factor, so
+    // a 44px min-width/height can come back as 43.9999… — sub-pixel jitter, not
+    // a real shortfall (same tolerance as expectPillsMeetTouchTarget above).
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(43.5);
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(43.5);
+  } else {
+    // Fine-pointer (mouse) behaviour must stay exactly as it was: the base rule
+    // sets no min-width/min-height at all (computed style is the browser
+    // default, e.g. "auto" — not "0px" — hence the NaN check), so the chip
+    // stays the bare 22px round swatch.
+    expect(Number.isNaN(minWidth) || minWidth === 0).toBe(true);
+    expect(Number.isNaN(minHeight) || minHeight === 0).toBe(true);
+    const box = await chip.boundingBox();
+    expect(box?.width ?? 0).toBeCloseTo(22, 0);
+    expect(box?.height ?? 0).toBeCloseTo(22, 0);
+  }
+});

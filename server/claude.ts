@@ -15,6 +15,17 @@ export interface ClaudeRunOptions {
   model: string;
   systemPrompt?: string;
   maxTokens?: number;
+  /**
+   * Aborts this call the moment the signal fires — wired by the caller from the
+   * originating client request (see server/index.ts's `/api/proposals` handler), so
+   * a client that disconnects, backgrounds the tab, or drops the network stops the
+   * in-flight Claude call immediately instead of running (and billing) to
+   * completion. The Anthropic SDK forwards this straight to the underlying
+   * `fetch`, so an already-aborted signal short-circuits before any network call
+   * is even made. Independent of REQUEST_TIMEOUT_MS below, which bounds a call
+   * that has no client-side signal to react to at all.
+   */
+  signal?: AbortSignal;
 }
 
 /** Token counts for one Messages API call, split so cache tokens are visible. */
@@ -106,16 +117,19 @@ const client = new Anthropic({ timeout: REQUEST_TIMEOUT_MS, maxRetries: MAX_RETR
 export async function runClaude(opts: ClaudeRunOptions): Promise<ClaudeRunResult> {
   const start = Date.now();
   const message = await client.messages
-    .stream({
-      model: opts.model,
-      max_tokens: opts.maxTokens ?? 16000,
-      thinking: { type: 'disabled' },
-      system: opts.systemPrompt
-        ? [{ type: 'text', text: opts.systemPrompt, cache_control: { type: 'ephemeral' } }]
-        : undefined,
-      messages: opts.messages,
-      output_config: { format: { type: 'json_schema', schema: opts.jsonSchema } },
-    })
+    .stream(
+      {
+        model: opts.model,
+        max_tokens: opts.maxTokens ?? 16000,
+        thinking: { type: 'disabled' },
+        system: opts.systemPrompt
+          ? [{ type: 'text', text: opts.systemPrompt, cache_control: { type: 'ephemeral' } }]
+          : undefined,
+        messages: opts.messages,
+        output_config: { format: { type: 'json_schema', schema: opts.jsonSchema } },
+      },
+      { signal: opts.signal },
+    )
     .finalMessage();
   const durationMs = Date.now() - start;
 

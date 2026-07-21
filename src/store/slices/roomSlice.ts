@@ -5,6 +5,7 @@ import {
   createEmptyRoom,
   nextRoomCopyName,
   nextRoomName,
+  syncActiveWorkspace,
   syncedProject,
   touch,
   type DesignGet,
@@ -12,11 +13,20 @@ import {
   type RoomActions,
 } from '../designModel';
 
-/** Room- and project-level actions: create, duplicate, switch, rename and remove rooms. */
+/**
+ * Room- and project-level actions: create, duplicate, switch, rename and
+ * remove rooms within the active home. Every branch that replaces `project`
+ * also folds it back into `workspace.projects` via {@link syncActiveWorkspace}
+ * (see `lib/persistence.ts`), so the "My homes" switcher — which reads
+ * `workspace.projects` directly — never shows stale data for the active home
+ * once its room list changes.
+ */
 export function createRoomSlice(set: DesignSet, get: DesignGet): RoomActions {
   return {
-    setProjectName: (name) =>
-      set({ project: { ...get().project, name, updatedAt: new Date().toISOString() } }),
+    setProjectName: (name) => {
+      const project = { ...get().project, name, updatedAt: new Date().toISOString() };
+      set({ workspace: syncActiveWorkspace(get().workspace, project), project });
+    },
 
     addRoom: ({ name, copyCurrent }) => {
       // Snapshot the current room into the project before adding a sibling.
@@ -24,8 +34,10 @@ export function createRoomSlice(set: DesignSet, get: DesignGet): RoomActions {
       const room = copyCurrent
         ? cloneRoom(get().design, name?.trim() || nextRoomName(project.rooms))
         : createDefaultRoom(name?.trim() || nextRoomName(project.rooms));
+      const next = { ...project, rooms: [...project.rooms, room], activeRoomId: room.id };
       set({
-        project: { ...project, rooms: [...project.rooms, room], activeRoomId: room.id },
+        workspace: syncActiveWorkspace(get().workspace, next),
+        project: next,
         design: room,
       });
       return room.id;
@@ -34,16 +46,20 @@ export function createRoomSlice(set: DesignSet, get: DesignGet): RoomActions {
     createRoom: (name) => {
       const project = syncedProject(get().project, get().design);
       const room = createEmptyRoom(name?.trim() || nextRoomName(project.rooms));
+      const next = { ...project, rooms: [...project.rooms, room], activeRoomId: room.id };
       set({
-        project: { ...project, rooms: [...project.rooms, room], activeRoomId: room.id },
+        workspace: syncActiveWorkspace(get().workspace, next),
+        project: next,
         design: room,
       });
       return room.id;
     },
 
     exitToLobby: () => {
-      // Fold the on-screen room back into the project so its lobby card is current.
-      set({ project: syncedProject(get().project, get().design) });
+      // Fold the on-screen room back into the project (and the project into the
+      // workspace) so the lobby's room list and "My homes" switcher are current.
+      const project = syncedProject(get().project, get().design);
+      set({ workspace: syncActiveWorkspace(get().workspace, project), project });
     },
 
     discardRoomIfUndrawn: (id) => {
@@ -54,20 +70,23 @@ export function createRoomSlice(set: DesignSet, get: DesignGet): RoomActions {
       const room = project.rooms.find((r) => r.id === id);
       const drawn = !!room && room.walls.some((w) => w.kind === 'exterior');
       if (!room || drawn) {
-        set({ project });
+        set({ workspace: syncActiveWorkspace(cur.workspace, project), project });
         return;
       }
       // Undrawn: drop it. If it was active, fall back to the previous room (or an
-      // empty workspace), mirroring removeRoom.
+      // empty project), mirroring removeRoom.
       const idx = project.rooms.findIndex((r) => r.id === id);
       const rooms = project.rooms.filter((r) => r.id !== id);
       if (id !== project.activeRoomId) {
-        set({ project: { ...project, rooms } });
+        const next = { ...project, rooms };
+        set({ workspace: syncActiveWorkspace(cur.workspace, next), project: next });
         return;
       }
       const nextActive = rooms[Math.max(0, idx - 1)];
+      const next = { ...project, rooms, activeRoomId: nextActive?.id ?? '' };
       set({
-        project: { ...project, rooms, activeRoomId: nextActive?.id ?? '' },
+        workspace: syncActiveWorkspace(cur.workspace, next),
+        project: next,
         design: nextActive ?? createEmptyRoom(),
       });
     },
@@ -78,7 +97,8 @@ export function createRoomSlice(set: DesignSet, get: DesignGet): RoomActions {
       if (!src) return '';
       const copy = cloneRoom(src, nextRoomCopyName(project.rooms, src.name));
       // The copy is added but not activated — the user stays in the lobby.
-      set({ project: { ...project, rooms: [...project.rooms, copy] } });
+      const next = { ...project, rooms: [...project.rooms, copy] };
+      set({ workspace: syncActiveWorkspace(get().workspace, next), project: next });
       return copy.id;
     },
 
@@ -89,17 +109,20 @@ export function createRoomSlice(set: DesignSet, get: DesignGet): RoomActions {
       const project = syncedProject(cur.project, cur.design);
       const target = project.rooms.find((r) => r.id === id);
       if (!target) return;
-      set({ project: { ...project, activeRoomId: id }, design: target });
+      const next = { ...project, activeRoomId: id };
+      set({ workspace: syncActiveWorkspace(cur.workspace, next), project: next, design: target });
     },
 
     renameRoom: (id, name) => {
-      const { project, design } = get();
+      const { workspace, project, design } = get();
       const trimmed = name.trim() || nextRoomName(project.rooms.filter((r) => r.id !== id));
+      const next = {
+        ...project,
+        rooms: project.rooms.map((r) => (r.id === id ? { ...r, name: trimmed } : r)),
+      };
       set({
-        project: {
-          ...project,
-          rooms: project.rooms.map((r) => (r.id === id ? { ...r, name: trimmed } : r)),
-        },
+        workspace: syncActiveWorkspace(workspace, next),
+        project: next,
         design: design.id === id ? { ...design, name: trimmed } : design,
       });
     },
@@ -111,14 +134,17 @@ export function createRoomSlice(set: DesignSet, get: DesignGet): RoomActions {
       if (idx === -1) return;
       const rooms = project.rooms.filter((r) => r.id !== id);
       if (id !== project.activeRoomId) {
-        set({ project: { ...project, rooms } });
+        const next = { ...project, rooms };
+        set({ workspace: syncActiveWorkspace(cur.workspace, next), project: next });
         return;
       }
       // Removing the active room: fall back to the previous room, or leave the
-      // workspace empty (the lobby shows its create-first-room state).
+      // home empty (the lobby shows its create-first-room state).
       const nextActive = rooms[Math.max(0, idx - 1)];
+      const next = { ...project, rooms, activeRoomId: nextActive?.id ?? '' };
       set({
-        project: { ...project, rooms, activeRoomId: nextActive?.id ?? '' },
+        workspace: syncActiveWorkspace(cur.workspace, next),
+        project: next,
         design: nextActive ?? createEmptyRoom(),
       });
     },
