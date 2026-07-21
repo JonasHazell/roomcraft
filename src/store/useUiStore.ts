@@ -47,6 +47,8 @@ interface UiState {
   authDialogOpen: boolean;
   /** Whether the keyboard-shortcuts reference is open (see ShortcutsReference). */
   shortcutsOpen: boolean;
+  /** Whether the printable room summary is open (see RoomSummary). */
+  summaryOpen: boolean;
   panel: Panel;
   /**
    * Whether the proposal switcher's dropdown menu is open. Lifted out of the
@@ -67,6 +69,8 @@ interface UiState {
   closeAuthDialog: () => void;
   openShortcuts: () => void;
   closeShortcuts: () => void;
+  openSummary: () => void;
+  closeSummary: () => void;
   openPanel: (panel: Exclude<Panel, null>) => void;
   closePanel: () => void;
 }
@@ -82,6 +86,7 @@ export const useUiStore = create<UiState>()((set) => ({
   furnitureDialog: null,
   authDialogOpen: false,
   shortcutsOpen: false,
+  summaryOpen: false,
   panel: null,
   proposalMenuOpen: false,
   select: (selection) =>
@@ -114,6 +119,8 @@ export const useUiStore = create<UiState>()((set) => ({
   closeAuthDialog: () => set({ authDialogOpen: false }),
   openShortcuts: () => set({ shortcutsOpen: true }),
   closeShortcuts: () => set({ shortcutsOpen: false }),
+  openSummary: () => set({ summaryOpen: true }),
+  closeSummary: () => set({ summaryOpen: false }),
   openPanel: (panel) => set({ panel }),
   closePanel: () => set({ panel: null }),
 }));

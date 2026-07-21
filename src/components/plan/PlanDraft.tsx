@@ -11,11 +11,26 @@ interface Props {
   selectedEdge: number | null;
   /** Picks the draft edge `i` (spanning draft[i]..draft[i+1]) for length editing. */
   onSelectEdge: (index: number) => void;
+  /**
+   * The very first segment's press-drag start point, before it's committed to
+   * `draft` on release. Every later segment already has a `last` placed corner
+   * to preview from; the first one doesn't, so this stands in for it while a
+   * press-drag is in progress and `draft` is still empty.
+   */
+  dragAnchor?: Point | null;
 }
 
 /** Drawing in progress: placed corners, rubber band to the cursor and live measurements. */
-export function PlanDraft({ draft, hover, guide, closable, selectedEdge, onSelectEdge }: Props) {
-  const last = draft[draft.length - 1];
+export function PlanDraft({
+  draft,
+  hover,
+  guide,
+  closable,
+  selectedEdge,
+  onSelectEdge,
+  dragAnchor = null,
+}: Props) {
+  const last = draft[draft.length - 1] ?? dragAnchor ?? undefined;
   const rubber = last && hover && !closable ? { a: last, b: hover } : null;
   const rubberLen = rubber ? dist(rubber.a, rubber.b) : 0;
 
@@ -97,10 +112,18 @@ export function PlanDraft({ draft, hover, guide, closable, selectedEdge, onSelec
       {draft.map((p, i) => (
         <circle key={i} cx={p.x} cy={p.z} r={0.08} className="draft-point" />
       ))}
-      {/* Before any corner is placed there is no rubber band to preview from, so
-          show the pending first corner directly under the cursor. */}
-      {draft.length === 0 && hover && (
+      {/* Before any corner is placed there is normally no rubber band to preview
+          from, so show the pending first corner directly under the cursor —
+          unless a press-drag is already under way, in which case its anchor
+          (below) takes over as the fixed end of the rubber band instead. */}
+      {draft.length === 0 && !dragAnchor && hover && (
         <circle cx={hover.x} cy={hover.z} r={0.08} className="draft-point" />
+      )}
+      {/* The first segment's press-drag start point: draft is still empty, so it
+          isn't in `draft` yet, but it needs the same fixed dot every later
+          segment's already-placed corner gets. */}
+      {draft.length === 0 && dragAnchor && (
+        <circle cx={dragAnchor.x} cy={dragAnchor.z} r={0.08} className="draft-point" />
       )}
       {closable && draft[0] && (
         <circle cx={draft[0].x} cy={draft[0].z} r={0.22} className="draft-close-ring" />

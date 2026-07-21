@@ -24,6 +24,8 @@ const STEPS: { after: number; label: string }[] = [
   { after: 10, label: 'Placing furniture and picking colours …' },
   { after: 30, label: 'Checking clearances and walkways …' },
   { after: 55, label: 'Finishing the three layouts …' },
+  { after: 90, label: 'Refining the layouts …' },
+  { after: 150, label: 'Still working — complex rooms take longer …' },
 ];
 
 function stepFor(elapsed: number): string {

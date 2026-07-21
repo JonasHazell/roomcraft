@@ -8,12 +8,102 @@ import { Icon } from '../ui/Icon';
 import { AccountControl } from '../auth/AccountControl';
 
 /**
+ * The "My homes" switcher: every home project on this device, plus a way to
+ * create another one (#382). A sibling of the room grid below it — same card
+ * language, one level up — so a user with more than one home to plan (their
+ * own place and a parent's, say) can keep them side by side instead of one
+ * silently replacing the other. Each home keeps its own independent rooms,
+ * furniture and proposals; switching never merges or leaks state between them.
+ */
+function HomeSwitcher() {
+  const projects = useDesignStore((s) => s.workspace.projects);
+  const activeProjectId = useDesignStore((s) => s.workspace.activeProjectId);
+  const setActiveHome = useDesignStore((s) => s.setActiveHome);
+  const renameHome = useDesignStore((s) => s.renameHome);
+  const removeHome = useDesignStore((s) => s.removeHome);
+  const addHome = useDesignStore((s) => s.addHome);
+
+  const rename = async (id: string, current: string) => {
+    const next = await promptDialog({ title: 'Rename home', label: 'Home name', initial: current });
+    if (next !== null) renameHome(id, next);
+  };
+
+  const remove = async (id: string, name: string) => {
+    const ok = await confirmDialog({
+      title: 'Delete home',
+      message: `Delete “${name}”? Its rooms and furnishings are removed too.`,
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (ok) removeHome(id);
+  };
+
+  return (
+    <section className="home-switcher" aria-label="My homes">
+      <h2 className="home-switcher-title">My homes</h2>
+      <div className="home-list">
+        {projects.map((p) => {
+          const active = p.id === activeProjectId;
+          return (
+            <div key={p.id} className={active ? 'home-card home-card-active' : 'home-card'}>
+              <button
+                type="button"
+                className="home-card-main"
+                title={`Switch to “${p.name}”`}
+                onClick={() => setActiveHome(p.id)}
+              >
+                <span className="home-card-icon" aria-hidden="true">
+                  <Icon name="home" />
+                </span>
+                <span className="home-card-name">{p.name}</span>
+                <span className="home-card-meta">
+                  {p.rooms.length} room{p.rooms.length === 1 ? '' : 's'}
+                </span>
+              </button>
+              <div className="home-card-actions">
+                <button
+                  type="button"
+                  className="btn-icon"
+                  title="Rename home"
+                  aria-label={`Rename home ${p.name}`}
+                  onClick={() => rename(p.id, p.name)}
+                >
+                  <Icon name="pencil" />
+                </button>
+                <button
+                  type="button"
+                  className="btn-icon"
+                  title="Delete home"
+                  aria-label={`Delete home ${p.name}`}
+                  disabled={projects.length <= 1}
+                  onClick={() => remove(p.id, p.name)}
+                >
+                  <Icon name="x" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        <button type="button" className="home-card home-card-new" onClick={() => addHome()}>
+          <span className="home-card-icon" aria-hidden="true">
+            <Icon name="plus" />
+          </span>
+          New home
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/**
  * The lobby: the app's home surface, kept separate from furnishing. Here you
  * pick a room to furnish, create a new room (which opens straight in the plan
  * editor — name it, draw it, add doors & windows, all on one surface — then
  * furnish it in 3D), edit an existing room's floor plan, and
  * duplicate/rename/delete rooms. Furnishing a room happens on its own surface,
- * reached by opening a room card.
+ * reached by opening a room card. The "My homes" switcher above the room grid
+ * (#382) lets a user keep more than one home project — each with its own
+ * independent rooms — side by side on the same device.
  */
 export function Lobby() {
   const rooms = useDesignStore((s) => s.project.rooms);
@@ -61,6 +151,8 @@ export function Lobby() {
         </div>
         <AccountControl />
       </header>
+
+      <HomeSwitcher />
 
       {rooms.length === 0 ? (
         <div className="lobby-empty">

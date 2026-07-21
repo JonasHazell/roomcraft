@@ -74,4 +74,15 @@ export async function initSchema(): Promise<void> {
     );
   `);
   await pool.query('CREATE INDEX IF NOT EXISTS sessions_user_id_idx ON sessions(user_id);');
+  // One row per user: their whole `Project` (all rooms), synced from the client
+  // (see server/projects.ts). A signed-in user gets exactly one saved project,
+  // last-write-wins — no history/versioning, matching the app's local-first
+  // persistence model (src/lib/persistence.ts).
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS projects (
+      user_id text PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      data jsonb NOT NULL,
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+  `);
 }

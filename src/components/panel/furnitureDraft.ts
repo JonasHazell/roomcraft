@@ -1,5 +1,5 @@
 import type { FurnitureMaterials } from '../../lib/furnitureParts';
-import type { FurnitureKind, FurnitureOptions, FurnitureSize } from '../../types';
+import type { FurnitureKind, FurnitureOptions, FurnitureProduct, FurnitureSize } from '../../types';
 
 /**
  * The editable shape shared by `FurnitureFields`' two callers: the live "More"
@@ -16,6 +16,7 @@ export interface FurnitureDraft {
   material?: string;
   materials?: FurnitureMaterials;
   options?: FurnitureOptions;
+  product?: FurnitureProduct;
 }
 
 export type FurnitureFieldPatch = {
@@ -34,4 +35,6 @@ export type FurnitureFieldPatch = {
   materials?: FurnitureMaterials;
   /** Per-type option changes, merged onto the current options. */
   options?: FurnitureOptions;
+  /** Full replace: set to attach/change a product link, `undefined` to remove it. */
+  product?: FurnitureProduct;
 };

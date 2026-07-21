@@ -14,7 +14,9 @@ import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { DialogHost } from './components/panel/DialogHost';
 import { ShortcutsReference } from './components/panel/ShortcutsReference';
 import { UpgradeDialog } from './components/panel/UpgradeDialog';
+import { RoomSummary } from './components/summary/RoomSummary';
 import { AuthDialog } from './components/auth/AuthDialog';
+import { RoomCapDialog } from './components/auth/RoomCapDialog';
 import { SaveErrorBanner } from './components/ui/SaveErrorBanner';
 import { Icon } from './components/ui/Icon';
 import { PlanEditor } from './components/plan/PlanEditor';
@@ -24,6 +26,7 @@ import { useDialogStore } from './store/useDialogStore';
 import { useAuthStore } from './store/useAuthStore';
 import { backToLobby } from './lib/nav';
 import { handleGlobalKeydown } from './lib/globalKeydown';
+import { initProjectSync } from './lib/projectSync';
 
 // three.js and the whole 3D scene are the bulk of the bundle; load them only
 // when a room is actually opened so the lobby/first paint stays light.
@@ -40,6 +43,7 @@ function FurnishView() {
   const furnitureDialog = useUiStore((s) => s.furnitureDialog);
   const proposalMenuOpen = useUiStore((s) => s.proposalMenuOpen);
   const openShortcuts = useUiStore((s) => s.openShortcuts);
+  const openSummary = useUiStore((s) => s.openSummary);
   const dialogActive = useDialogStore((s) => s.active);
   const overlayOpen = !!panel || !!furnitureDialog || !!dialogActive || proposalMenuOpen;
   return (
@@ -73,6 +77,20 @@ function FurnishView() {
         >
           <span aria-hidden="true">
             <Icon name="keyboard" />
+          </span>
+        </button>
+        {/* Print/export summary (#368) lives here too — a room-scoped action
+            reachable regardless of selection or pointer type, same rationale as
+            the keyboard-shortcuts icon right next to it. */}
+        <button
+          type="button"
+          className="btn room-topbar-icon"
+          onClick={openSummary}
+          title="Print / export room summary"
+          aria-label="Print / export room summary"
+        >
+          <span aria-hidden="true">
+            <Icon name="printer" />
           </span>
         </button>
         <span className="room-topbar-name">{roomName}</span>
@@ -130,11 +148,16 @@ function useHash(): string {
 
 function App() {
   const appView = useUiStore((s) => s.appView);
+  const summaryOpen = useUiStore((s) => s.summaryOpen);
   const hash = useHash();
 
   // Establish the session once on load; the store's `enabled`/`user` then drive
   // whether sign-in is shown and whether AI furnishing is gated behind it.
+  // `initProjectSync` wires the account-sync side effects (see lib/projectSync.ts)
+  // that key off that same `user` transition, so it must be set up before refresh()
+  // can resolve.
   useEffect(() => {
+    initProjectSync();
     void useAuthStore.getState().refresh();
   }, []);
 
@@ -150,16 +173,21 @@ function App() {
   // UI primitive from the real classes so the app stays visually consistent.
   if (hash === '#styleguide') return <StyleGuide />;
 
+  // While the room summary is open, `@media print` (index.css) hides every
+  // other `.app` child so printing (or "Save as PDF") produces only the
+  // summary sheet, not the 3D view/dock underneath it.
   return (
-    <div className="app">
+    <div className={summaryOpen ? 'app app-printing' : 'app'}>
       {appView === 'lobby' && <Lobby />}
       {appView === 'plan' && <PlanView />}
       {appView === 'furnish' && <FurnishView />}
       <FurnitureDialog />
       <DialogHost />
       <ShortcutsReference />
+      <RoomSummary />
       <AuthDialog />
       <UpgradeDialog />
+      <RoomCapDialog />
       <SaveErrorBanner />
     </div>
   );

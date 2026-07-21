@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { useDesignStore } from './useDesignStore';
 import { useHistoryStore } from './useHistoryStore';
 import { furnitureCorners, furnitureFits } from '../lib/collision';
-import { defaultOpening, floorPolygon } from '../lib/polygon';
+import { defaultOpening, floorPolygon, wallLen } from '../lib/polygon';
 import { runValidation } from '../lib/validation/engine';
 import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR } from '../types';
 
@@ -214,7 +214,7 @@ describe('discarding an undrawn new room', () => {
     expect(store().project.activeRoomId).toBe(newId);
   });
 
-  it('leaves an empty workspace when the only room is undrawn', () => {
+  it('leaves an empty home when the only room is undrawn', () => {
     store().loadProject({ ...store().project, rooms: [], activeRoomId: '' });
     const onlyId = store().createRoom();
     expect(store().project.rooms).toHaveLength(1);
@@ -266,6 +266,34 @@ describe('adding doors and windows to a wall', () => {
 
     store().removeOpening(id);
     expect(store().design.openings).toHaveLength(0);
+  });
+
+  it('places a second opening clear of the first instead of overlapping it (#384)', () => {
+    // Repro from the issue: a door (default 0.5-1.4m) followed by a window
+    // (default 0.8-2.0m) on the same wall used to overlap by 60cm.
+    const wallId = store().design.walls[0].id;
+    const doorId = store().addOpening(defaultOpening('door', wallId))!;
+    const windowId = store().addOpening(defaultOpening('window', wallId))!;
+
+    const door = store().design.openings.find((o) => o.id === doorId)!;
+    const win = store().design.openings.find((o) => o.id === windowId)!;
+
+    expect(win.offset).toBeGreaterThanOrEqual(door.offset + door.width);
+  });
+
+  it('never lands a second opening as an exact duplicate of the first', () => {
+    // Repro from the issue: adding a second window used to land at the exact
+    // same offset/width as the first — an invisible, perfect duplicate.
+    const wallId = store().design.walls[0].id;
+    const firstId = store().addOpening(defaultOpening('window', wallId))!;
+    const secondId = store().addOpening(defaultOpening('window', wallId))!;
+
+    const first = store().design.openings.find((o) => o.id === firstId)!;
+    const second = store().design.openings.find((o) => o.id === secondId)!;
+
+    expect(second.offset).not.toBe(first.offset);
+    const [a, b] = [first, second].sort((x, y) => x.offset - y.offset);
+    expect(a.offset + a.width).toBeLessThanOrEqual(b.offset + 1e-9);
   });
 });
 
@@ -326,6 +354,16 @@ describe('resizing a wall reclamps — never deletes — its openings', () => {
     // 1cm dip: clampOpening has no memory of the door's original width.
     const after = store().design.openings.find((o) => o.id === id)!;
     expect(after.width).toBeLessThan(0.9);
+  });
+
+  it('clamps an absurdly large committed length instead of accepting it unbounded (#383)', () => {
+    // Typing e.g. "99999" into the Length field used to reach resizeWall
+    // unbounded — no upper clamp existed at the store level at all, only the
+    // NumberField's advisory (non-enforcing) `max` HTML attribute.
+    const wallId = store().design.walls[0].id;
+    store().resizeWall(wallId, 99999);
+    const wall = store().design.walls.find((w) => w.id === wallId)!;
+    expect(wallLen(wall)).toBe(30); // MAX_WALL_LEN in planSlice.ts
   });
 });
 

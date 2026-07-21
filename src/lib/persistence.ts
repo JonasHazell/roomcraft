@@ -1,7 +1,13 @@
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
-import type { Design, FurnitureLibraryEntry, Project, Proposal, Wall } from '../types';
-import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, HEX_COLOR_RE, SCHEMA_VERSION } from '../types';
+import type { Design, FurnitureLibraryEntry, FurnitureProduct, Project, Proposal, Wall, Workspace } from '../types';
+import {
+  DEFAULT_FLOOR_COLOR,
+  DEFAULT_WALL_COLOR,
+  HEX_COLOR_RE,
+  SCHEMA_VERSION,
+  isHttpsUrl,
+} from '../types';
 import { isAxisParallel, validateExteriorLoop } from './polygon';
 import { FURNITURE_KINDS } from './furnitureCatalog';
 import { normalizeOptions } from './furnitureOptions';
@@ -30,6 +36,27 @@ const furnitureOptionsSchema = z.record(
   z.union([z.number(), z.boolean(), z.string()]),
 );
 
+/**
+ * Normalizes a saved product link: dropped entirely (rather than rejecting the
+ * whole piece) if `url` isn't a valid `https://` address — same
+ * degrade-gracefully convention as `normalizeColors`/`normalizeMaterials`.
+ * Checked with plain runtime guards (not a zod shape) so a malformed field of
+ * any shape — a string, a number, missing `url` — degrades to "no product"
+ * instead of throwing and rejecting the whole save.
+ */
+function normalizeProduct(raw: unknown): FurnitureProduct | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.url !== 'string' || !isHttpsUrl(r.url)) return undefined;
+  const priceCents =
+    typeof r.priceCents === 'number' && Number.isFinite(r.priceCents) && r.priceCents >= 0
+      ? Math.round(r.priceCents)
+      : undefined;
+  const retailer =
+    typeof r.retailer === 'string' && r.retailer.trim() ? r.retailer.trim().slice(0, 100) : undefined;
+  return { url: r.url, priceCents, retailer };
+}
+
 const furnitureSchema = z
   .object({
     id: z.string().min(1),
@@ -49,6 +76,8 @@ const furnitureSchema = z
     materials: z.record(z.string(), z.string()).optional(),
     /** Missing in saves made before the field existed — normalized to the kind's defaults. */
     options: furnitureOptionsSchema.optional(),
+    /** Missing on every piece before this field existed; validated freeform, see `normalizeProduct`. */
+    product: z.unknown().optional(),
   })
   // Normalize options/materials/colours against the kind so stored data is always sound.
   .transform((f) => ({
@@ -57,6 +86,7 @@ const furnitureSchema = z
     material: normalizeMaterial(f.material),
     materials: normalizeMaterials(f.kind, f.materials, f.material),
     options: normalizeOptions(f.kind, f.options),
+    product: normalizeProduct(f.product),
   }));
 
 // ---- v1 (older format: rectangular room, walls by compass direction) ----
@@ -216,10 +246,20 @@ const projectSchemaV5 = z.object({
   schemaVersion: z.literal(5),
   name: z.string().max(200),
   updatedAt: z.string(),
-  // A workspace may be empty (a new user has not created a room yet).
+  // A project may be empty (a new user has not created a room yet).
   rooms: z.array(roomSchemaEntryV5).max(50),
-  // Empty while no room is active (empty workspace / sitting in the lobby).
+  // Empty while no room is active (empty project / sitting in the lobby).
   activeRoomId: z.string(),
+});
+
+type ProjectV5 = z.infer<typeof projectSchemaV5>;
+
+// ---- v6 (current format: the project gets a stable id, so a workspace can hold several) ----
+
+/** Same shape as v5, plus a stable id so a {@link Workspace} can hold several homes. */
+const projectSchemaV6 = projectSchemaV5.extend({
+  schemaVersion: z.literal(6),
+  id: z.string().min(1).default(() => nanoid(8)),
 });
 
 /** Structural post-validation of a single room that the zod schema cannot express. */
@@ -308,9 +348,9 @@ export function migrateV3toV4(d: DesignV3): ProjectV4 {
  * The room's shared floor/wall colours move onto every furnishing proposal (and
  * the live mirror), so each variant can then be recoloured independently.
  */
-export function migrateV4toV5(p: ProjectV4): Project {
+export function migrateV4toV5(p: ProjectV4): ProjectV5 {
   return {
-    schemaVersion: SCHEMA_VERSION,
+    schemaVersion: 5,
     name: p.name,
     updatedAt: p.updatedAt,
     activeRoomId: p.activeRoomId,
@@ -342,6 +382,14 @@ export function migrateV4toV5(p: ProjectV4): Project {
       };
     }),
   };
+}
+
+/**
+ * Gives the project a stable id so a {@link Workspace} can hold it alongside
+ * other homes (#382) — no other structural change.
+ */
+export function migrateV5toV6(p: ProjectV5): Project {
+  return { ...p, schemaVersion: SCHEMA_VERSION, id: nanoid(8) };
 }
 
 /**
@@ -447,15 +495,19 @@ export function parseProject(raw: unknown): Project {
   const version = (raw as { schemaVersion?: unknown } | null)?.schemaVersion;
   let project: Project;
   if (version === 1) {
-    project = migrateV4toV5(migrateV3toV4(migrateV2toV3(migrateV1toV2(designSchemaV1.parse(raw)))));
+    project = migrateV5toV6(
+      migrateV4toV5(migrateV3toV4(migrateV2toV3(migrateV1toV2(designSchemaV1.parse(raw))))),
+    );
   } else if (version === 2) {
-    project = migrateV4toV5(migrateV3toV4(migrateV2toV3(designSchemaV2.parse(raw))));
+    project = migrateV5toV6(migrateV4toV5(migrateV3toV4(migrateV2toV3(designSchemaV2.parse(raw)))));
   } else if (version === 3) {
-    project = migrateV4toV5(migrateV3toV4(designSchemaV3.parse(raw)));
+    project = migrateV5toV6(migrateV4toV5(migrateV3toV4(designSchemaV3.parse(raw))));
   } else if (version === 4) {
-    project = migrateV4toV5(projectSchemaV4.parse(raw));
+    project = migrateV5toV6(migrateV4toV5(projectSchemaV4.parse(raw)));
+  } else if (version === 5) {
+    project = migrateV5toV6(projectSchemaV5.parse(raw));
   } else if (version === SCHEMA_VERSION) {
-    project = projectSchemaV5.parse(raw);
+    project = projectSchemaV6.parse(raw);
   } else {
     throw new Error(
       `The file has schema version ${String(version)}, but the app supports version ${SCHEMA_VERSION}.`,
@@ -468,6 +520,90 @@ export function parseProject(raw: unknown): Project {
 export function parseProjectSafe(raw: unknown): Project | null {
   try {
     return parseProject(raw);
+  } catch {
+    return null;
+  }
+}
+
+// ---- Workspace: every home project on this device (#382) ----
+
+/** The active home — the one whose active room the store's live `project`/`design` mirror. */
+export function activeProject(w: Workspace): Project {
+  return w.projects.find((p) => p.id === w.activeProjectId) ?? w.projects[0];
+}
+
+/**
+ * Writes the live active home back into the workspace's `projects` so the
+ * stored snapshot matches what is on screen. Called before persisting/exporting
+ * and before switching homes — the workspace counterpart of {@link syncActiveRoom}
+ * one level down.
+ */
+export function syncActiveWorkspace(w: Workspace, project: Project): Workspace {
+  return {
+    ...w,
+    projects: w.projects.map((p) => (p.id === w.activeProjectId ? project : p)),
+  };
+}
+
+/**
+ * Guarantees the workspace invariants: at least one home, unique home ids, and
+ * a valid active home id. Runs after every load so older or hand-edited data
+ * can't leave the workspace inconsistent — the workspace counterpart of
+ * {@link normalizeProject}.
+ */
+function normalizeWorkspace(w: Workspace): Workspace {
+  const seen = new Set<string>();
+  const projects = w.projects.map((p) => {
+    let id = p.id;
+    while (seen.has(id)) id = nanoid(8);
+    seen.add(id);
+    return id === p.id ? p : { ...p, id };
+  });
+  const active = projects.find((p) => p.id === w.activeProjectId) ?? projects[0];
+  return { projects, activeProjectId: active.id };
+}
+
+/** Parses each raw home independently via {@link parseProject}, dropping any that are corrupt. */
+function parseEachProject(raw: unknown[]): Project[] {
+  const out: Project[] = [];
+  for (const item of raw) {
+    try {
+      out.push(parseProject(item));
+    } catch {
+      // Drop the one corrupt home rather than sinking the whole workspace.
+    }
+  }
+  return out;
+}
+
+/**
+ * The single entry point for the whole local workspace (every home + which one
+ * is active). Handles the one-time migration from the pre-#382 shape, where a
+ * single `Project` (or an even older bare `Design`) was the entire persisted
+ * document — that project becomes the workspace's first (and only) home. A new,
+ * already-multi-home workspace blob is recognised by its own `projects` array
+ * and parsed directly, with each entry still going through {@link parseProject}
+ * so every per-home migration (v1→current) keeps working unchanged.
+ */
+export function parseWorkspace(raw: unknown): Workspace {
+  const obj = raw as { workspace?: unknown; project?: unknown; design?: unknown } | null;
+  const wsRaw = obj?.workspace as { projects?: unknown; activeProjectId?: unknown } | undefined;
+  if (wsRaw && Array.isArray(wsRaw.projects)) {
+    const projects = parseEachProject(wsRaw.projects);
+    if (projects.length === 0) throw new Error('No valid home projects found.');
+    return normalizeWorkspace({
+      projects,
+      activeProjectId: typeof wsRaw.activeProjectId === 'string' ? wsRaw.activeProjectId : '',
+    });
+  }
+  // Legacy (pre-#382): a single project — or a bare design older still — persisted directly.
+  const project = parseProject(obj?.project ?? obj?.design);
+  return { projects: [project], activeProjectId: project.id };
+}
+
+export function parseWorkspaceSafe(raw: unknown): Workspace | null {
+  try {
+    return parseWorkspace(raw);
   } catch {
     return null;
   }
@@ -489,6 +625,7 @@ const libraryEntrySchema = z
     material: z.string().optional(),
     materials: z.record(z.string(), z.string()).optional(),
     options: furnitureOptionsSchema.optional(),
+    product: z.unknown().optional(),
   })
   .transform((e) => ({
     ...e,
@@ -496,6 +633,7 @@ const libraryEntrySchema = z
     material: normalizeMaterial(e.material),
     materials: normalizeMaterials(e.kind, e.materials, e.material),
     options: normalizeOptions(e.kind, e.options),
+    product: normalizeProduct(e.product),
   }));
 
 /** Reads the library; invalid entries are filtered out instead of throwing. */

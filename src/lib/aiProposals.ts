@@ -1,4 +1,5 @@
 import { isHexColor, type Design, type FurnitureItem } from '../types';
+import { FURNITURE_CATALOG } from './furnitureCatalog';
 import { defaultOptions } from './furnitureOptions';
 import { DEFAULT_MATERIAL } from './materials';
 import { defaultMaterials } from './furnitureParts';
@@ -59,7 +60,7 @@ export function toFurnitureItem(f: AiFurniture): Omit<FurnitureItem, 'id'> {
     rotationY: f.rotationY,
     size: f.size,
     elevation: f.elevation,
-    color: f.color,
+    color: validHexColor(f.color) ?? FURNITURE_CATALOG[f.kind].defaultColor,
     material: DEFAULT_MATERIAL,
     materials: defaultMaterials(f.kind),
     options: defaultOptions(f.kind),

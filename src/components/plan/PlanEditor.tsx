@@ -83,8 +83,13 @@ export function PlanEditor() {
   // The panel inset frozen for the same drag, for the same reason — see
   // `onWallPointerDown`/`onCornerPointerDown` below.
   const panelInsetRef = useRef<number | null>(null);
-  // A press-drag-release (or tap) drawing gesture: the pointer that owns it.
-  const drawGestureRef = useRef<{ pointerId: number } | null>(null);
+  // A press-drag-release (or tap) drawing gesture: the pointer that owns it,
+  // plus — only for the very first segment (`draft` still empty at press) —
+  // the snapped press-down point. Every later segment already has a placed
+  // corner to preview the rubber band from; the first one doesn't, so this
+  // anchor stands in for it until release commits the real corner (see
+  // `PlanDraft`'s `dragAnchor` prop).
+  const drawGestureRef = useRef<{ pointerId: number; anchor: Point | null } | null>(null);
   // Walls whose length is actively changing under a drag, highlighted so the
   // relevant measurements stand out while the corner or edge moves.
   const [activeWallIds, setActiveWallIds] = useState<string[]>([]);
@@ -262,7 +267,11 @@ export function PlanEditor() {
       // releasing places it where the measurement reads right (or seals the
       // outline if released on the start corner). A plain tap is a zero-length
       // drag, so it places one corner — identically on mouse and touch.
-      drawGestureRef.current = { pointerId: e.pointerId };
+      // For the very first segment there's no placed corner yet to preview
+      // from, so snapshot the press-down point as a stand-in anchor (see
+      // `drawGestureRef`'s declaration) — later segments already have one.
+      const anchor = draft.length === 0 ? drawTarget(viewport.toWorld(e)).point : null;
+      drawGestureRef.current = { pointerId: e.pointerId, anchor };
       capture(e);
       return;
     }
@@ -520,6 +529,7 @@ export function PlanEditor() {
             closable={closable}
             selectedEdge={selectedEdge}
             onSelectEdge={draw.selectEdge}
+            dragAnchor={drawGestureRef.current?.anchor ?? null}
           />
         )}
       </svg>

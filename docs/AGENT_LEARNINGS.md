@@ -95,7 +95,27 @@ before this pivot landed.
   9 freshly-decided agent PRs (#337–#346, minus #342 which is the human's own)
   all merged too, 0 rejected — 7 clean, 2 (#337, #346) touched by the human's
   own same-day integration pass (#357) for reasons unrelated to their own
-  approach (see Scoping, below).
+  approach (see Scoping, below). This run's 8 freshly-decided agent PRs
+  (#371–#378, from issues #348–#350/#354–#356/#362/#363) all merged clean too,
+  0 rejected, 0 edited — every issue again named its sibling by file/line:
+  #372 (Nightstand drawer clamp) reused the exact `Math.max(..., floor)` shape
+  already in `Wardrobe.tsx`/`Counter.tsx`; #354→#374 (fridge doors part) and
+  #348→#371 (plant pot/foliage colour swap) each pointed at the one sibling
+  kind/mesh doing it right; #376 (corner-drag inset freeze) named the existing
+  `dragFitWallsRef` pattern to mirror and its own e2e spec verified (via `git
+  stash`) that the fix actually changes the outcome, not just adds a test that
+  would pass either way. Twenty-seven straight clean merges across three runs now.
+  **This run adds a data point at a larger, vision-scale build, not just small
+  fixes:** #368/#397 ("Add a printable/exportable room summary — floor plan,
+  furniture list, and score," one of the run's *larger steps toward the vision*,
+  636 lines) named the exact building blocks the lobby's own room-card thumbnail
+  already used (`floorPolygon`/`rectCorners` in `lib/polygon.ts`) and reused
+  `ValidationPanel`'s own `.validation-summary` markup verbatim rather than
+  inventing a parallel score display, and still merged clean with zero edits
+  despite being roughly ten times the size of a typical clean-merge PR. The
+  sibling-comparison shape isn't just a small-fix trick — it de-risks a bigger,
+  vision-scoped build exactly the same way, by giving the reviewer building
+  blocks they already trust instead of new ones to evaluate from scratch.
 
 - **When re-proposing a previously-rejected issue, treat the human's
   rejection comment as the spec for the retry — build exactly the
@@ -154,6 +174,27 @@ before this pivot landed.
   a new one. The human's stated skepticism about a feature applies retroactively to
   an existing control just as much as to a proposed one; don't read a rejection as
   scoped only to the specific PR it closed.
+
+- **[Promoted into `AGENT_PROPOSALS.md` this run.] Proposal volume must respond
+  to whether anything downstream can actually merge — a healthy proposal can
+  still be the wrong thing to add to a pipeline that's jammed.** Across the
+  required-check-integrity incident tracked in *Pipeline reliability* below,
+  Stage A kept firing a full 9-proposal batch every run — quality wasn't the
+  problem, each batch matched the usual 3/3/3 mix and the usual sibling-cited
+  shape — while zero PRs merged for two-plus days because `main`'s own CI
+  stayed red. The unclaimed (`agent:ready`, not yet `agent:building`) backlog
+  grew from roughly 20 to 20 again between two runs simply because Stage B
+  worked through one batch while Stage A added a fresh one on top, and the
+  combined queue awaiting the human (unclaimed issues + in-progress issues +
+  open built PRs) reached 53 items. None of this is a proposal-quality
+  failure; it's a volume-vs-throughput failure the existing "ready backlog
+  growing → rebalance Stage A/B" metric rule already anticipates in the
+  abstract (`AGENT_METRICS.md`'s *Acting on the metrics*) but never turned into
+  a concrete check Stage A runs itself. The general rule: proposing at full
+  volume assumes the pipeline downstream can absorb it; when the evidence says
+  otherwise (a red required check on the default branch, or an already-large
+  combined backlog), the right move is to throttle the *count*, not to lower
+  the *bar* — see the new check added to `AGENT_PROPOSALS.md`'s algorithm.
 
 ## Scoping (Stage B)
 
@@ -271,6 +312,168 @@ before this pivot landed.
   same bar (e.g. an `agent:question` queue silently exceeding its cap, a
   metrics refresh silently failing) — a single severe operational incident
   earns an immediate fix, not a wait-and-see.
+
+- **[Urgent — fixed in `AGENT_BUILD.md` this run, but the underlying repo
+  setting needs a human check.] Auto-merge landed 7 PRs despite their own
+  required `E2E (desktop + mobile)` check reporting `failure`, and the default
+  branch itself is standing red on the same check.** `AGENT_BUILD.md` states
+  plainly: "Auto-merge only completes when CI is green... A red or pending
+  check holds the merge." That did not hold in practice. Checked directly via
+  `get_check_runs` on the PRs' own head commits: #371, #372, #374, #375, #376,
+  #377, #378 (all `agent:auto-merge`, merged 2026-07-18 evening) each show
+  `E2E (desktop + mobile): failure` at the exact commit that merged, with no
+  later re-run and no fix commit — the same 4 mobile specs every time
+  (`autoarrange-feedback.spec.ts`, `furniture-dialog-dismiss-keep.spec.ts`,
+  `furniture-size-commit-on-blur.spec.ts`, `history-bar.spec.ts`, all failing
+  on a 60s timeout, not an assertion mismatch — a resource/timeout flake, not a
+  regression any one of these PRs introduced). Confirming this isn't confined
+  to PR-triggered runs: `main`'s own latest push-triggered CI run (after #361,
+  a docs-only PR) **also** fails the identical 4 mobile specs right now — the
+  default branch is currently red on its own required check. The most likely
+  cause: the repo's branch-protection required-status-checks list may not
+  actually include the `E2E (desktop + mobile)` context (the one-time human
+  setup step named in `AGENT_PIPELINE.md`'s Activation note), so GitHub's
+  auto-merge waits only on `Lint, test & build` and merges regardless of the
+  E2E conclusion. **A human needs to check Settings → Branches → the default
+  branch's required status checks and confirm both contexts are actually
+  listed**, and separately, the 4-test mobile timeout flake itself needs
+  fixing (or the suite needs more headroom) — until then it's silently masking
+  whatever a future PR's E2E run would otherwise have caught. As an immediate
+  safety net, `AGENT_BUILD.md`'s auto-merge step now tells Stage B to verify
+  the E2E check's own conclusion via `get_check_runs` before enabling
+  auto-merge, rather than trusting the platform gate alone — see the promoted
+  rule there. This is a single-occurrence finding but treated as urgent per
+  this file's own standing rule for full-batch operational failures: a safety
+  gate silently not gating doesn't need to recur before it's worth fixing.
+
+- **[Still unresolved a full day later — escalating, not repeating.] The
+  required-check-integrity gap above has not been fixed, and the cost of
+  leaving it open is compounding, not sitting still.** This run found zero new
+  auto-merges to test whether branch protection was corrected, because `main`'s
+  own CI is still failing its required `E2E (desktop + mobile)` check (reconfirmed
+  directly: the push-triggered run right after #397 merged is `failure`) — so
+  nothing can complete the platform's own auto-merge gate right now regardless of
+  the settings question. In the same window, the built-but-unmerged backlog
+  roughly doubled (7 → 15 open PRs: #389–#398, #410–#415), none of which can
+  auto-merge and all of which show a red required check to a human reviewer too.
+  A flagged safety-gate gap that sits for a day while the queue behind it grows is
+  exactly the situation this file's "single severe operational incident" rule
+  exists for — noting it again, more loudly, rather than assuming last run's
+  mention was sufficient. **Update, this run (still unresolved, third
+  consecutive flag):** re-checked directly against the newest PR in the backlog
+  (#416, `E2E (desktop + mobile)` completed 2026-07-20T05:04:15Z) — still
+  `failure`, ~28 hours after the gap was first found. Zero agent PRs merged or
+  rejected in this window (nothing for Stage C to learn from on the taste side
+  this run), but the gap is now visibly steering *behaviour*, not just sitting
+  latent: #416 (a small, faithful, otherwise auto-merge-qualifying CSS fix)
+  explicitly declined to request auto-merge, citing PR #379's own
+  required-check-integrity finding as the reason not to trust the platform gate
+  yet — the promoted `AGENT_BUILD.md` caution from the first flag is visibly
+  changing Stage B's behavior mid-incident, which is the fix working as
+  intended, but it also means the backlog (now 17 open agent-built PRs) can't
+  self-clear through auto-merge *or* confident human review while the check
+  stays red. The one lever this file doesn't control is the human actually
+  opening Settings → Branches — two prior snapshots asked in the learnings
+  body, which a human reviewing a merged doc might not read closely; this
+  run's PR description leads with the ask instead, on the theory that
+  un-merged-for-a-day is itself evidence the ask needs to be louder, not
+  repeated in the same place. **Update, this run (12th snapshot, fourth
+  consecutive flag, now unresolved ~2 days):** re-checked directly against
+  `main`'s own most recent CI run — still the same head commit (`0f047fa`,
+  from #397, merged 2026-07-19T14:25), because **no PR has merged since**, so
+  there has been no fresh chance for the platform gate to prove itself either
+  way. Pulled that run's own job log: `E2E (desktop + mobile)` fails with 6
+  failed specs (`door-leaf-fade.spec.ts` timing out on both desktop *and*
+  mobile at the exact orbit-drag line, plus `autoarrange-feedback`,
+  `furniture-dialog-dismiss-keep`, `furniture-library-rename` — a fifth
+  chronically-flaking mobile spec joining the list this run — and
+  `furniture-size-commit-on-blur`), 1 flaky (`color-undo-batch`), 168 passed.
+  Nothing has changed about the underlying break; only the cost of leaving it
+  has: the combined queue awaiting the human — 20 unclaimed `agent:ready`
+  issues, 16 `agent:building` issues each with their own open PR, and 16 open
+  agent-built PRs (plus this meta-PR) — is now **53 items**, up from roughly
+  20 at the first flag. Stage A kept proposing a full 9-per-run batch every
+  run through this entire incident (the unclaimed backlog alone grew 11→20
+  this run, meaning a full fresh batch landed on top of one Stage B hadn't
+  even started on yet), which is itself a second, distinct problem from the
+  CI gate: **proposing more when nothing downstream can merge just deepens a
+  pile nobody asked for.** Promoted a backlog/CI-aware throttle into
+  `AGENT_PROPOSALS.md` this run for exactly that reason (see *Proposal
+  selection*, below) — the CI-gate finding itself still has no fix Stage C can
+  make; only a human opening Settings → Branches resolves it, and separately,
+  someone needs to either fix or skip `door-leaf-fade.spec.ts`'s orbit-drag
+  step so `main`'s own required check can go green again.
+
+- **A brand-new e2e spec passing in its own authoring session is not the same
+  claim as "this spec passes in CI" — verify the CI run itself before trusting a
+  PR's own `npm run test:e2e` report.** The human's own #396 reported
+  `e2e/door-leaf-fade.spec.ts` passing locally ("170 passed") in its PR body, but
+  every CI run since it merged (checked directly across 5 independent later PR
+  branches, spanning several hours, desktop **and** mobile) times out at the
+  exact orbit-drag line the spec drives (`mouse.move: Test timeout of 30000ms
+  exceeded`) — a new, 100%-reproducible-in-CI failure, not a rare flake, stacked
+  on top of the 4 already-known mobile-timeout specs from last run's finding
+  above. It never showed up in the PR's own authoring session, only under CI's
+  resource constraints. Combined with the still-open required-check gap, this
+  means essentially the entire current backlog is failing its E2E gate for two
+  independent reasons at once. A human needs to look at `Walls.tsx`'s new
+  per-frame door-registry loop (added by #396) or the spec's own orbit-drag
+  interaction — Stage C can observe and report this, per its own guardrails, but
+  can't fix product code or the spec itself.
+
+- **Stage C must reuse its own canonical branch and PR, not whichever branch a
+  session happens to default to.** A prior run pushed its update to
+  `claude/funny-bardeen-j34znb` (the session's own default branch) instead of
+  `agent/learnings-update`, opening a second, redundant `chore(agent): update
+  learnings, metrics & pipeline` PR (#399) alongside the still-open, substantive
+  #379 on the correct branch — two conflicting meta-PRs open at once, with #399's
+  "ready backlog is 0" claim already stale and contradicted by #379's own
+  content and this run's real (large, growing) backlog. Closed #399 as
+  superseded this run, folding its still-valid observations into this update
+  instead. **Promoted into `AGENT_ANALYSIS.md`'s "Writing the learnings" section**
+  this run: always check for an already-open PR on `agent/learnings-update`
+  first and push new commits there instead of assuming a fresh branch/PR is
+  needed.
+
+- **A single stuck `agent:building` issue can hide inside an otherwise-healthy
+  claimed batch — check every claimed issue for its own PR, not just whether
+  the batch as a whole looks fine.** Of 16 open `agent:building` issues this
+  run, 15 each have their own open PR (a healthy, actively-reviewed backlog);
+  the 16th, #386 ("furniture part's colour swatch below the 44px touch
+  target"), has carried `agent:building` since 2026-07-19T02:49 with no PR ever
+  opened for it (confirmed directly — no PR anywhere references #386). A 15/16
+  healthy ratio would look fine at a glance; only checking each one individually
+  surfaced the crash-recovery case `AGENT_BUILD.md`'s reclaim step exists for.
+  Left for Stage B's next run to reclaim (Stage C doesn't touch `agent:building`
+  itself, per its own label guardrails). **Resolved the very next Stage B run:**
+  #416 (`Closes #386`) opened within hours, confirming the reclaim step works
+  once the instance is flagged — no further action needed on this specific
+  issue.
+
+- **A promoted script/loop fix is inert until the PR carrying it actually
+  merges — "promoted this run" is not the same claim as "in effect this run."**
+  The twelfth snapshot promoted a backlog/CI-aware proposal throttle into
+  `AGENT_PROPOSALS.md` specifically to stop Stage A from compounding the
+  required-check outage above. It had zero effect: that edit lives only on this
+  still-open `agent/learnings-update` branch, and every Stage A run reads
+  instruction docs fresh from the default branch, which never received it.
+  Direct proof: issue #435 was opened 2026-07-21T03:00:27Z — nearly two hours
+  *after* the throttle commit — with no sign of throttling, and the combined
+  backlog grew from 53 to 62 in the following ~19 hours. This is a distinct
+  failure mode from every other entry in this section: those were bugs in what
+  the pipeline *does*; this is a gap in how a fix *takes effect* — self-improvement
+  through this stage's own instrument (editing the instruction docs) only works
+  once a human merges the PR carrying the edit, so during any prolonged review
+  gap the pipeline cannot actually self-correct even after Stage C has
+  correctly diagnosed the problem and written the fix. **General rule:** when
+  promoting a fix for a *live, time-sensitive* operational problem (as opposed
+  to a taste/quality lesson that can wait for the next normal review cycle),
+  say explicitly in the PR/learnings entry that the fix is not yet active, and
+  don't let the metrics snapshot imply otherwise — "promoted" and "in effect"
+  are different claims and this file should keep them visibly different until
+  the carrying PR merges. This also means the true fix for this specific
+  incident is unavoidably a human action: merging (or cherry-picking) this
+  meta-PR, not anything Stage C can do from inside it.
 
 ## Stage C methodology
 
@@ -444,6 +647,42 @@ before this pivot landed.
   proposing or building a change to one of several parallel components (selection,
   drag, keyboard handling), check the others for the pattern to match — generalising
   an existing convention beats inventing a new one for a single component.
+
+- **A genuinely new user-facing primitive must land with its gallery entry and
+  `DESIGN.md` rule in the same PR — CLAUDE.md says so explicitly, and #373
+  shows a build can still skip it.** #373 (localStorage-write guard) added
+  `.save-error-banner`, a new dismissible fixed-position notice class in
+  `src/index.css` and a matching `SaveErrorBanner.tsx` component — a genuinely
+  new primitive (nothing in `DESIGN.md`'s "Feedback" vocabulary — `.hint`,
+  `.error`, `.score-badge`, `.severity`, — covers a dismissible floating
+  banner), but the PR touched neither `StyleGuide.tsx`'s gallery nor
+  `DESIGN.md`. It merged clean anyway (no human comment caught it either), so
+  the living gallery has silently drifted one primitive behind `index.css`.
+  First occurrence of this specific miss — not yet promoted into
+  `AGENT_BUILD.md`'s own checklist, but if it recurs, add an explicit
+  "introducing a new class not in DESIGN.md's vocabulary? add the gallery
+  entry + doc rule in this PR" check there. (Stage C left `DESIGN.md` itself
+  alone here rather than describing a primitive with no gallery entry to
+  back it — the gallery entry needs a `src/` change, out of Stage C's scope;
+  a small Stage A candidate: "add `.save-error-banner` to the StyleGuide
+  gallery and document it in DESIGN.md" would close the gap the normal way.)
+
+- **A visual/material effect driven by a parent's existing per-frame loop should
+  be extended to cover its attached children by registering into that same
+  loop, not by adding a second, parallel one.** The human's own #396 found that
+  `Walls.tsx`'s fade loop (an exterior wall standing between the camera and the
+  room turns to a faint glass plane) never touched a door mounted on that wall —
+  the door kept rendering fully opaque, floating in front of an otherwise
+  see-through wall. The fix added a small registry (`doorMatRefs`, keyed by wall
+  id) that `DoorLeaf` registers its material into on mount; the wall's existing
+  per-frame effect now also mirrors its own `opacity`/`depthWrite` onto every
+  door registered against it, right next to where it already sets its own. One
+  loop, one source of truth, instead of a second effect racing the first.
+  Generalises past doors and walls: any child mesh whose visual state should
+  track a parent's animated property (an opening on a fading wall, a decoration
+  on a moving piece of furniture, …) should hook into the parent's existing
+  per-frame mechanism via a small registration callback, not duplicate the
+  update logic in its own `useFrame`.
 
 ## Testing & verification
 
