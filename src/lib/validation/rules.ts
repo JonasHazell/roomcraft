@@ -484,10 +484,22 @@ export const RULES: RuleDef[] = [
     check(ctx) {
       // Pieces that are only usable if the space in front of them stays clear.
       // Beds (side access → ACC-05) and wardrobes (front clearance → ACC-06) are
-      // covered by their own rules, so they are not re-checked here.
-      const subjects = ctx.design.furniture.filter(
-        (f) => f.kind === 'desk' || f.kind === 'sofa' || f.kind === 'box' || isDiningTable(f),
-      );
+      // covered by their own rules, so they are not re-checked here. Kitchen
+      // fittings (counter/stove/fridge) are grounded in ACC-08 (clear floor space
+      // in front of fittings) and bathroom fixtures (toilet/bathtub/sink) in
+      // ACC-09 (clear space in the bathroom); both are gated to their room type
+      // so this rule stays scoped to the context it actually applies in.
+      const subjects = ctx.design.furniture.filter((f) => {
+        if (f.kind === 'desk' || f.kind === 'sofa' || f.kind === 'box' || isDiningTable(f)) return true;
+        if (f.kind === 'bookshelf') return true;
+        if (f.kind === 'counter' || f.kind === 'stove' || f.kind === 'fridge') {
+          return ctx.roomTypes.has('kök');
+        }
+        if (f.kind === 'toilet' || f.kind === 'bathtub' || f.kind === 'sink') {
+          return ctx.roomTypes.has('badrum');
+        }
+        return false;
+      });
       if (subjects.length === 0) return na;
       const violations: Violation[] = [];
       for (const f of subjects) {

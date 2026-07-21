@@ -286,6 +286,120 @@ describe('ACC-14 usable clearance in front of a function', () => {
     const coffee = piece('table', 2, 1.3, { width: 1.1, depth: 0.6, height: 0.4 });
     expect(outcomeOf(makeDesign([sofa, coffee]), 'ACC-14').status).toBe('passed');
   });
+
+  it('flags a fridge whose clearance is blocked (kitchen)', () => {
+    // Fridge against the north wall, front toward +z. Face at z=0.75, access
+    // depth 0.8 -> zone z:0.75-1.55, x:1.65-2.35. A big box fully covers it.
+    const fridge = piece('fridge', 2, 0.4, { width: 0.7, depth: 0.7, height: 1.8 });
+    const box = piece('box', 2, 1.15, { width: 2, depth: 2 });
+    expect(outcomeOf(makeDesign([fridge, box]), 'ACC-14').status).toBe('violated');
+  });
+
+  it('passes a fridge with clear space in front (kitchen)', () => {
+    const fridge = piece('fridge', 2, 0.4, { width: 0.7, depth: 0.7, height: 1.8 });
+    expect(outcomeOf(makeDesign([fridge]), 'ACC-14').status).toBe('passed');
+  });
+
+  it('flags a counter whose clearance is blocked (kitchen)', () => {
+    // Counter against the north wall. Face at z=0.7, access depth 0.8 ->
+    // zone z:0.7-1.5, x:1.1-2.9. A big box fully covers it.
+    const counter = piece('counter', 2, 0.4, { width: 1.8, depth: 0.6, height: 0.9 });
+    const box = piece('box', 2, 1.1, { width: 2.2, depth: 2 });
+    expect(outcomeOf(makeDesign([counter, box]), 'ACC-14').status).toBe('violated');
+  });
+
+  it('passes a counter with clear space in front (kitchen)', () => {
+    const counter = piece('counter', 2, 0.4, { width: 1.8, depth: 0.6, height: 0.9 });
+    expect(outcomeOf(makeDesign([counter]), 'ACC-14').status).toBe('passed');
+  });
+
+  it('flags a stove whose clearance is blocked (kitchen)', () => {
+    // Stove against the north wall. Face at z=0.7, access depth 0.8 ->
+    // zone z:0.7-1.5, x:1.7-2.3. A big box fully covers it.
+    const stove = piece('stove', 2, 0.4, { width: 0.6, depth: 0.6, height: 0.9 });
+    const box = piece('box', 2, 1.1, { width: 2, depth: 2 });
+    expect(outcomeOf(makeDesign([stove, box]), 'ACC-14').status).toBe('violated');
+  });
+
+  it('passes a stove with clear space in front (kitchen)', () => {
+    const stove = piece('stove', 2, 0.4, { width: 0.6, depth: 0.6, height: 0.9 });
+    expect(outcomeOf(makeDesign([stove]), 'ACC-14').status).toBe('passed');
+  });
+
+  it('flags a toilet whose clearance is blocked (bathroom)', () => {
+    // Toilet against the north wall. Face at z=0.75, access depth 0.6 ->
+    // zone z:0.75-1.35, x:1.8-2.2. A big box fully covers it.
+    const toilet = piece('toilet', 2, 0.4, { width: 0.4, depth: 0.7, height: 0.8 });
+    const box = piece('box', 2, 1.05, { width: 2, depth: 2 });
+    expect(outcomeOf(makeDesign([toilet, box]), 'ACC-14').status).toBe('violated');
+  });
+
+  it('passes a toilet with clear space in front (bathroom)', () => {
+    const toilet = piece('toilet', 2, 0.4, { width: 0.4, depth: 0.7, height: 0.8 });
+    expect(outcomeOf(makeDesign([toilet]), 'ACC-14').status).toBe('passed');
+  });
+
+  it('flags a sink whose clearance is blocked (bathroom)', () => {
+    // Sink against the north wall. Face at z=0.625, access depth 0.6 ->
+    // zone z:0.625-1.225, x:1.7-2.3. A big box fully covers it.
+    const sink = piece('sink', 2, 0.4, { width: 0.6, depth: 0.45, height: 0.85 });
+    const box = piece('box', 2, 0.925, { width: 2, depth: 2 });
+    expect(outcomeOf(makeDesign([sink, box]), 'ACC-14').status).toBe('violated');
+  });
+
+  it('passes a sink with clear space in front (bathroom)', () => {
+    const sink = piece('sink', 2, 0.4, { width: 0.6, depth: 0.45, height: 0.85 });
+    expect(outcomeOf(makeDesign([sink]), 'ACC-14').status).toBe('passed');
+  });
+
+  it('flags a bathtub whose clearance is blocked (bathroom)', () => {
+    // Bathtub against the north wall. Face at z=0.775, access depth 0.7 ->
+    // zone z:0.775-1.475, x:1.15-2.85. A big box fully covers it.
+    const bathtub = piece('bathtub', 2, 0.4, { width: 1.7, depth: 0.75, height: 0.6 });
+    const box = piece('box', 2, 1.125, { width: 2.2, depth: 2 });
+    expect(outcomeOf(makeDesign([bathtub, box]), 'ACC-14').status).toBe('violated');
+  });
+
+  it('passes a bathtub with clear space in front (bathroom)', () => {
+    const bathtub = piece('bathtub', 2, 0.4, { width: 1.7, depth: 0.75, height: 0.6 });
+    expect(outcomeOf(makeDesign([bathtub]), 'ACC-14').status).toBe('passed');
+  });
+
+  it('flags a bookshelf whose clearance is blocked', () => {
+    // Bookshelf against the north wall. Face at z=0.575, access depth 0.6 ->
+    // zone z:0.575-1.175, x:1.55-2.45. A big box fully covers it.
+    const bookshelf = piece('bookshelf', 2, 0.4, { width: 0.9, depth: 0.35, height: 1.9 });
+    const box = piece('box', 2, 0.875, { width: 2, depth: 2 });
+    expect(outcomeOf(makeDesign([bookshelf, box]), 'ACC-14').status).toBe('violated');
+  });
+
+  it('passes a bookshelf with clear space in front', () => {
+    const bookshelf = piece('bookshelf', 2, 0.4, { width: 0.9, depth: 0.35, height: 1.9 });
+    expect(outcomeOf(makeDesign([bookshelf]), 'ACC-14').status).toBe('passed');
+  });
+
+  it('flags a desk whose clearance is cut off by an interior wall', () => {
+    // Same desk as the earlier tests: face at z=0.75, access depth 0.8 ->
+    // zone z:0.75-1.55, x:1.4-2.6. This wall crosses straight through it,
+    // even though no furniture blocks the zone.
+    const desk = piece('desk', 2, 0.4, { width: 1.2, depth: 0.7, height: 0.74 });
+    const design = makeDesign([desk]);
+    design.walls.push({ id: 'iw0', kind: 'interior', a: { x: 1, z: 1.1 }, b: { x: 3, z: 1.1 } });
+    const outcome = outcomeOf(design, 'ACC-14');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].furnitureIds).toContain(desk.id);
+    }
+  });
+
+  it('passes a desk when an interior wall sits clear of its clearance zone', () => {
+    // Same desk and zone as above, but the wall sits at z=3, well past the
+    // z:0.75-1.55 clearance zone, so it doesn't cut it off.
+    const desk = piece('desk', 2, 0.4, { width: 1.2, depth: 0.7, height: 0.74 });
+    const design = makeDesign([desk]);
+    design.walls.push({ id: 'iw0', kind: 'interior', a: { x: 1, z: 3 }, b: { x: 3, z: 3 } });
+    expect(outcomeOf(design, 'ACC-14').status).toBe('passed');
+  });
 });
 
 describe('ACO-03 plants', () => {
