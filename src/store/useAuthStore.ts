@@ -19,6 +19,9 @@ interface AuthState {
   /** Whether the server has sign-in configured (a database is connected). */
   enabled: boolean;
   status: AuthStatus;
+  /** Free-tier AI-generation cap from the server (#352), or null until the
+   * first `/api/auth/me` resolves, or when auth is disabled. */
+  aiGenerationCap: number | null;
   /**
    * Set by `lib/projectSync.ts` when the account's free-tier saved-room cap
    * was hit on the last sync attempt (the limit that was hit, or null when
@@ -37,11 +40,12 @@ export const useAuthStore = create<AuthState>()((set) => ({
   user: null,
   enabled: false,
   status: 'loading',
+  aiGenerationCap: null,
   roomCapLimit: null,
   setRoomCapLimit: (roomCapLimit) => set({ roomCapLimit }),
   refresh: async () => {
-    const { user, authEnabled } = await apiMe();
-    set({ user, enabled: authEnabled, status: 'ready' });
+    const { user, authEnabled, aiGenerationCap } = await apiMe();
+    set({ user, enabled: authEnabled, aiGenerationCap, status: 'ready' });
   },
   login: async (email, password) => {
     const user = await apiLogin(email, password);

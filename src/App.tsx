@@ -13,6 +13,7 @@ import { EmptyRoomPrompt } from './components/panel/EmptyRoomPrompt';
 import { FurnitureDialog } from './components/panel/FurnitureDialog';
 import { DialogHost } from './components/panel/DialogHost';
 import { ShortcutsReference } from './components/panel/ShortcutsReference';
+import { UpgradeDialog } from './components/panel/UpgradeDialog';
 import { RoomSummary } from './components/summary/RoomSummary';
 import { AuthDialog } from './components/auth/AuthDialog';
 import { RoomCapDialog } from './components/auth/RoomCapDialog';
@@ -185,6 +186,7 @@ function App() {
       <ShortcutsReference />
       <RoomSummary />
       <AuthDialog />
+      <UpgradeDialog />
       <RoomCapDialog />
       <SaveErrorBanner />
     </div>

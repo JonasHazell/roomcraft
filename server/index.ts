@@ -13,11 +13,13 @@ import {
   createUser,
   deleteSession,
   getSessionUser,
+  incrementAiGenerations,
   isValidPassword,
   normalizeEmail,
   parseCookies,
   serializeClearCookie,
   serializeSessionCookie,
+  type AuthUser,
 } from './auth.ts';
 import { runClaude, type ChatMessages } from './claude.ts';
 import { autoFixProposals } from './autofix.ts';
@@ -43,6 +45,7 @@ import {
   type ProposalScore,
 } from './ruleValidation.ts';
 import { JUDGE_ENABLED, rankByJudge } from './judge.ts';
+import { FREE_TIER_GENERATION_CAP, limitReachedMessage, overFreeTierCap } from './planLimits.ts';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const MODEL = process.env.AI_MODEL ?? 'claude-sonnet-5';
@@ -719,9 +722,17 @@ const server = createServer((req, res) => {
     }
     // Current user for the session cookie. `authEnabled` tells the frontend
     // whether to show sign-in at all (false in dev with no DATABASE_URL).
+    // `aiGenerationCap` lets the client show remaining-generations context
+    // (e.g. "3 of 5 free generations left") before the user ever hits the wall,
+    // not just once the 402 below fires; it's null when auth is disabled since
+    // the cap doesn't apply to the open, unauthenticated dev flow.
     if (req.method === 'GET' && req.url === '/api/auth/me') {
       const user = await getSessionUser(sessionToken(req));
-      return json(res, 200, { user, authEnabled });
+      return json(res, 200, {
+        user,
+        authEnabled,
+        aiGenerationCap: authEnabled ? FREE_TIER_GENERATION_CAP : null,
+      });
     }
     // A signed-in user's account-synced project (see server/projects.ts). GET
     // loads it; PUT saves it (state-changing, so it needs the same same-origin
@@ -769,8 +780,19 @@ const server = createServer((req, res) => {
     // When auth is configured, AI furnishing requires a signed-in user (each call
     // costs real money and runs on the owner's Claude login). With no database
     // the endpoint stays open so the frontend-only/local dev flow is unchanged.
-    if (authEnabled && !(await getSessionUser(sessionToken(req)))) {
-      return json(res, 401, { error: 'Please sign in to use AI furnishing.' });
+    let currentUser: AuthUser | null = null;
+    if (authEnabled) {
+      currentUser = await getSessionUser(sessionToken(req));
+      if (!currentUser) {
+        return json(res, 401, { error: 'Please sign in to use AI furnishing.' });
+      }
+      // Freemium gate (#352): a signed-in 'free' account is capped at
+      // FREE_TIER_GENERATION_CAP lifetime generations (server/planLimits.ts).
+      // Distinct error shape ({ error: 'limit' }, 402) so the client can show a
+      // calm upgrade prompt instead of the generic AI-failure message.
+      if (overFreeTierCap(currentUser)) {
+        return json(res, 402, { error: 'limit', message: limitReachedMessage() });
+      }
     }
     if (!allowRequest(clientIp(req))) {
       return json(res, 429, { error: 'Too many requests. Please wait a moment and try again.' });
@@ -819,6 +841,16 @@ const server = createServer((req, res) => {
             '[proposals] client disconnected; discarding a generation that finished after the fact.',
           );
           return;
+        }
+        // Count the generation only once it actually succeeded and was delivered
+        // (not shed, failed, or discarded on disconnect), so a wasted request never
+        // costs the user one of their free generations (#352).
+        if (currentUser) {
+          try {
+            await incrementAiGenerations(currentUser.id);
+          } catch (e) {
+            console.error('[proposals] could not record AI generation usage:', e);
+          }
         }
         return json(res, 200, { proposals: data.proposals, warnings });
       } catch (e) {
