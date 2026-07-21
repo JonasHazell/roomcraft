@@ -1211,6 +1211,28 @@ select {
   border-color: var(--danger);
 }
 
+/* At tablet width and below, the top bar's editable room-name pill can reach
+   far enough right — same reason `.plan-room-panel` drops a row below the bar
+   at this identical breakpoint, above — to sit directly under this centred
+   pill cluster at its default top offset, with the topbar's higher z-index
+   painting over the start of the text. Drop the whole cluster (hint, error,
+   the exact-length input below it) clear of the bar's height instead, keeping
+   their existing relative spacing intact. Desktop is unaffected. */
+@media (max-width: 768px) {
+  .plan-hint-pill,
+  .plan-error-pill {
+    top: calc(76px + env(safe-area-inset-top));
+  }
+
+  .plan-error-pill {
+    top: calc(114px + env(safe-area-inset-top));
+  }
+
+  .plan-length-input {
+    top: calc(112px + env(safe-area-inset-top));
+  }
+}
+
 /* While drawing, a small box to type the current edge's exact length: aim the
    wall, type a number, press Enter to drop the corner at precisely that distance.
    Sits just under the guidance pill, top-centre. */
