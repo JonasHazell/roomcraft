@@ -13,6 +13,7 @@ import type {
   Room,
   Wall,
   WallOpening,
+  Workspace,
 } from '../types';
 import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR, SCHEMA_VERSION } from '../types';
 import { clampFurniture, clampOpening, findClearSpot, furnitureObstacles } from '../lib/collision';
@@ -20,7 +21,13 @@ import { normalizeOptions } from '../lib/furnitureOptions';
 import { DEFAULT_MATERIAL, normalizeMaterial } from '../lib/materials';
 import { normalizeColors, normalizeMaterials } from '../lib/furnitureParts';
 import { floorPolygon, polygonCenter, type LoopValidation } from '../lib/polygon';
-import { activeRoom, syncActiveProposal, syncActiveRoom } from '../lib/persistence';
+import {
+  activeProject,
+  activeRoom,
+  syncActiveProposal,
+  syncActiveRoom,
+  syncActiveWorkspace,
+} from '../lib/persistence';
 
 // ---- Naming helpers ----
 
@@ -38,6 +45,14 @@ export function nextRoomName(rooms: Design[]): string {
   let n = rooms.length + 1;
   while (taken.has(`Room ${n}`)) n++;
   return `Room ${n}`;
+}
+
+/** First free "Home N" name for a fresh home (project), mirroring {@link nextRoomName}. */
+export function nextHomeName(projects: Project[]): string {
+  const taken = new Set(projects.map((p) => p.name));
+  let n = projects.length + 1;
+  while (taken.has(`Home ${n}`)) n++;
+  return `Home ${n}`;
 }
 
 /**
@@ -151,12 +166,13 @@ export function createDefaultRoom(name = 'Room 1'): Design {
   };
 }
 
-/** A fresh project holding a single default room. */
-export function createDefaultProject(): Project {
+/** A fresh home (project) holding a single default room. */
+export function createDefaultProject(name = 'My home'): Project {
   const room = createDefaultRoom('Room 1');
   return {
+    id: nanoid(8),
     schemaVersion: SCHEMA_VERSION,
-    name: 'My project',
+    name,
     updatedAt: room.updatedAt,
     rooms: [room],
     activeRoomId: room.id,
@@ -197,21 +213,46 @@ export function createEmptyRoom(name = 'Room 1'): Design {
   };
 }
 
-/** An empty workspace: no rooms yet. The lobby shows the "create your first room" state. */
-export function createEmptyProject(): Project {
+/** An empty home: no rooms yet. The lobby shows the "create your first room" state. */
+export function createEmptyProject(name = 'My home'): Project {
   return {
+    id: nanoid(8),
     schemaVersion: SCHEMA_VERSION,
-    name: 'My rooms',
+    name,
     updatedAt: new Date().toISOString(),
     rooms: [],
     activeRoomId: '',
   };
 }
 
-/** The active room, or a throwaway placeholder while the workspace has no rooms. */
+/** The active room, or a throwaway placeholder while the active home has no rooms. */
 export function activeOrPlaceholder(p: Project): Design {
   return activeRoom(p) ?? createEmptyRoom();
 }
+
+/**
+ * A fresh local workspace holding a single, empty home — the true first-run
+ * state (an empty `localStorage`), so a brand-new user still sees today's
+ * "create your first room" lobby, just inside their one default home.
+ */
+export function createEmptyWorkspace(): Workspace {
+  const project = createEmptyProject();
+  return { projects: [project], activeProjectId: project.id };
+}
+
+/**
+ * Folds the live room into its project, then folds that project back into the
+ * workspace — the three-level counterpart of {@link syncedProject}. Called
+ * before persisting or switching homes so the stored snapshot matches the
+ * screen at every level (workspace → home → room).
+ */
+export function syncedWorkspace(workspace: Workspace, project: Project, design: Design): Workspace {
+  return syncActiveWorkspace(workspace, syncedProject(project, design));
+}
+
+// Re-exported so slices needn't reach into lib/persistence for the workspace
+// helpers they need alongside the factories above.
+export { activeProject, syncActiveWorkspace };
 
 /**
  * Deep-copies a room with fresh ids — used when a new room starts from an
@@ -272,10 +313,15 @@ export function wallById(d: Design, id: string): Wall | undefined {
   return d.walls.find((w) => w.id === id);
 }
 
-/** Clamps an opening to its wall; openings without a wall are left to validation. */
+/**
+ * Clamps an opening to its wall and nudges it clear of any sibling opening
+ * already on that same wall; openings without a wall are left to validation.
+ */
 export function clampOpeningIn(d: Design, o: WallOpening): WallOpening {
   const wall = wallById(d, o.wallId);
-  return wall ? clampOpening(o, wall, d.room.height) : o;
+  if (!wall) return o;
+  const siblings = d.openings.filter((sib) => sib.wallId === o.wallId && sib.id !== o.id);
+  return clampOpening(o, wall, d.room.height, siblings);
 }
 
 /**
@@ -326,9 +372,11 @@ export function placeAtCenter(d: Design, spec: FurnitureSpec): FurnitureItem {
 
 /** The live document state every slice reads and writes. */
 export interface DesignData {
-  /** The whole document: all rooms + which one is active. */
+  /** Every home project on this device + which one is active. Persisted directly. */
+  workspace: Workspace;
+  /** The live active home; every room-level action reads and writes it. */
   project: Project;
-  /** The live active room; every wall/opening/furniture action reads and writes it. */
+  /** The live active room within `project`; every wall/opening/furniture action reads and writes it. */
   design: Design;
 }
 
@@ -442,8 +490,21 @@ export interface ProposalActions {
 }
 
 export interface DocumentActions {
+  /** Replaces the active home's project data wholesale (e.g. importing a file). */
   loadProject: (p: Project) => void;
+  /** Resets the whole workspace back to a single fresh default home (dev/reset use). */
   newProject: () => void;
+}
+
+export interface HomeActions {
+  /** Creates a new, empty home and makes it active. */
+  addHome: (name?: string) => string;
+  /** Activates another home; its rooms/furnishings replace the live ones. */
+  setActiveHome: (id: string) => void;
+  /** Renames a home; a blank name falls back to the next free "Home N". */
+  renameHome: (id: string, name: string) => void;
+  /** Removes a home; the workspace always keeps at least one. */
+  removeHome: (id: string) => void;
 }
 
 export type DesignState = DesignData &
@@ -451,7 +512,8 @@ export type DesignState = DesignData &
   PlanActions &
   FurnitureActions &
   ProposalActions &
-  DocumentActions;
+  DocumentActions &
+  HomeActions;
 
 /** The (set, get) a slice factory receives from the store. */
 export type DesignSet = (partial: Partial<DesignState>) => void;

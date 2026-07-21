@@ -1,13 +1,23 @@
 import { optBool, optNum } from '../../../lib/furnitureOptions';
 import { Legs, Mat, shade, type FurnitureProps } from './shared';
 
+/**
+ * Monitor screen width for a desk of width `w` split across `monitors` screens,
+ * floored to a small positive value — mirrors Nightstand's `drawerH` clamp so a
+ * narrow desk with multiple monitors can never produce a negative/degenerate
+ * `boxGeometry` width.
+ */
+export function deskScreenWidth(w: number, monitors: number): number {
+  return Math.max(Math.min(0.6, (w * 0.9) / Math.max(monitors, 1) - 0.08), 0.05);
+}
+
 export function Desk({ size, color, selected, options }: FurnitureProps) {
   const { width: w, depth: d, height: h } = size;
   const top = Math.min(0.04, h * 0.1);
   const inset = Math.min(0.06, w / 4, d / 4);
   const monitors = optNum(options, 'monitors', 1);
   const drawers = optBool(options, 'drawers', true);
-  const screenW = Math.min(0.6, (w * 0.9) / Math.max(monitors, 1) - 0.08);
+  const screenW = deskScreenWidth(w, monitors);
   const screenH = Math.min(0.4, screenW * 0.6);
 
   return (

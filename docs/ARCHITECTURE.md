@@ -36,12 +36,12 @@ are separate stores so they don't get saved.
 
 | Store | File | Owns |
 | --- | --- | --- |
-| Design (composed) | `src/store/useDesignStore.ts` | The whole document: project + live room. Persisted to `localStorage`. Built from the slices below. |
-| — room slice | `src/store/slices/roomSlice.ts` | Multiple rooms per project: create / switch / rename / delete. |
+| Design (composed) | `src/store/useDesignStore.ts` | The whole workspace: every home project + the live active project/room. Persisted to `localStorage`. Built from the slices below. |
+| — room slice | `src/store/slices/roomSlice.ts` | Multiple rooms per home project: create / switch / rename / delete. |
 | — plan slice | `src/store/slices/planSlice.ts` | Walls, doors, windows — the room shape. |
 | — furniture slice | `src/store/slices/furnitureSlice.ts` | Adding / moving / rotating / editing furniture pieces. |
 | — proposal slice | `src/store/slices/proposalSlice.ts` | Furnishing proposals per room (each with its own palette). |
-| — document slice | `src/store/slices/documentSlice.ts` | New / reset project, save-slot plumbing. |
+| — document slice | `src/store/slices/documentSlice.ts` | Load/reset the active home; create/switch/rename/remove home projects (#382, `HomeActions`). |
 | UI / surface | `src/store/useUiStore.ts` | `surface` (lobby/plan/furnish), which panel/dialog is open, selection. |
 | History | `src/store/useHistoryStore.ts` | Undo/redo snapshots of project+design. |
 | Dialogs | `src/store/useDialogStore.ts` | The generic confirm/prompt dialog queue. |
@@ -49,9 +49,10 @@ are separate stores so they don't get saved.
 | Library | `src/store/useLibraryStore.ts` | The saved-furniture library. |
 | Auth | `src/store/useAuthStore.ts` | Whether sign-in is enabled + the current session. |
 | AI | `src/store/useAiStore.ts` | An in-flight AI generation (status, timeout). |
+| Storage status | `src/store/useStorageStatus.ts` | Whether the last `localStorage` write failed (quota / private browsing), driving the save-error banner. |
 
-Shared types for all of the above: `src/types.ts` (`Project`, `Design`, `Room`,
-`Wall`, `WallOpening`, `FurnitureItem`, `Proposal`, …).
+Shared types for all of the above: `src/types.ts` (`Workspace`, `Project`, `Design`,
+`Room`, `Wall`, `WallOpening`, `FurnitureItem`, `Proposal`, …).
 
 The composed store's **state shape, action interfaces, and room/project factory
 helpers** (`DesignData`, `RoomActions`, `FurnitureSpec`, `createDefaultRoom`,
@@ -62,6 +63,7 @@ helpers** (`DesignData`, `RoomActions`, `FurnitureSpec`, `createDefaultRoom`,
 
 | Feature (see README for behaviour) | UI | State | Logic / lib |
 | --- | --- | --- | --- |
+| **Homes** — several home projects on one device, switch/create/rename/delete (#382); each keeps its own independent rooms | `lobby/Lobby.tsx` (`HomeSwitcher`, the "My homes" section) | `slices/documentSlice.ts` (`HomeActions`) | — |
 | **Rooms** — multiple per project, switch/create/rename/delete | `lobby/Lobby.tsx`, `plan/PlanEditor.tsx` (new rooms open straight here), `panel/SwitcherList.tsx` | `slices/roomSlice.ts` | `lib/roomTemplates.ts`, `lib/nav.ts` |
 | **2D floor plan** — free room outline + interior walls, snapping | `plan/PlanEditor.tsx` and siblings (`PlanWalls`, `PlanCorners`, `PlanDraft`, `PlanGrid`, `PlanToolbar`, `PlanRoomPanel`, `PlanStartChooser`, `usePlanDraft.ts`, `useViewport.ts`) | `slices/planSlice.ts` | `lib/polygon.ts`, `lib/geometry.ts` |
 | **Doors & windows** — per wall, position/size/height | `plan/PlanWallPanel.tsx`, `plan/PlanLengthInput.tsx`, `panel/WallBar.tsx` | `slices/planSlice.ts` (openings on `Wall`) | `lib/geometry.ts` |
@@ -74,9 +76,10 @@ helpers** (`DesignData`, `RoomActions`, `FurnitureSpec`, `createDefaultRoom`,
 | **Auto-arrange** — local, no-AI reshuffle to raise score | `panel/ProposalSwitcher.tsx` (the "Auto-arrange" menu action) | `slices/furnitureSlice.ts` | `lib/autoArrange.ts` |
 | **Proposals** — switch between furnishing options per room | `panel/ProposalSwitcher.tsx`, `panel/SwitcherList.tsx` | `slices/proposalSlice.ts` | — |
 | **Design validation / score** — rule findings + score | `panel/ValidationPanel.tsx`, `panel/ValidationScore.tsx`, `scene/ValidationOverlay.tsx` | `useValidationStore` | `lib/validation/*` (see below) |
+| **Room summary** — printable/exportable plan + furniture list + score | `summary/RoomSummary.tsx` (opened from the room top bar, `App.tsx`) | `useUiStore` (`summaryOpen`) | `lib/polygon.ts` (plan), `useValidationStore` (score) |
 | **Undo / redo** — every editing step, one drag = one step | `panel/HistoryBar.tsx` | `useHistoryStore` | `lib/globalKeydown.ts` (shortcuts) |
-| **Autosave & named saves** — localStorage, schema migration | `panel/DialogHost.tsx` (save/load prompts) | `useDesignStore` persist middleware | `lib/persistence.ts` (v1→current migrations) |
-| **Accounts / sign-in** — gates server AI when DB configured | `auth/AuthDialog.tsx`, `auth/AccountControl.tsx` | `useAuthStore` | `lib/authApi.ts` → `server/auth.ts`, `server/db.ts` |
+| **Autosave & named saves** — localStorage, schema migration, failed-write notice | `panel/DialogHost.tsx` (save/load prompts), `ui/SaveErrorBanner.tsx` | `useDesignStore` persist middleware, `useStorageStatus` | `lib/persistence.ts` (v1→current migrations), `lib/safeStorage.ts` (guards a `setItem` failure so it can't crash the app) |
+| **Accounts / sign-in** — gates server AI when DB configured; syncs a signed-in user's whole project to their account (free-tier room cap, `RoomCapDialog` upgrade prompt) | `auth/AuthDialog.tsx`, `auth/AccountControl.tsx`, `auth/RoomCapDialog.tsx` | `useAuthStore` | `lib/authApi.ts`, `lib/projectSync.ts` → `server/auth.ts`, `server/projects.ts`, `server/db.ts` |
 | **Keyboard shortcuts** — R, Delete, Esc, Enter, undo/redo | (global) | various | `lib/globalKeydown.ts`, `lib/useEscape.ts` |
 
 ## Shared building blocks

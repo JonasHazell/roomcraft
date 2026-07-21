@@ -135,6 +135,19 @@ merge. So still run `npm run build`, `npm run lint`, `npm test`, and
 `npm run test:e2e` yourself before opening the PR — auto-merge is a convenience on
 top of a green PR, not a way to skip validation.
 
+**Verify the E2E check's own conclusion yourself before enabling auto-merge — don't
+trust the platform gate alone.** On 2026-07-18/19, 7 PRs were labelled
+`agent:auto-merge` and merged even though their own `E2E (desktop + mobile)` check
+run reported `conclusion: failure` at the exact head commit that merged (see
+`AGENT_LEARNINGS.md`'s Pipeline reliability entry) — most likely because the
+repo's branch-protection required-status-checks list doesn't actually include that
+context, so GitHub waited only on `Lint, test & build`. Until a human confirms
+that's fixed, treat the platform-level gate as unverified: before requesting
+auto-merge, pull the PR's own check runs (`get_check_runs` or equivalent) and
+confirm `E2E (desktop + mobile)` shows `success` for the current head commit
+yourself. If it's red, pending, or you can't confirm it, don't enable auto-merge —
+leave the PR for the human same as any other.
+
 **Enable auto-merge only when ALL of these hold:**
 
 - The issue is a **bug fix** or a **small, self-contained GUI/visual improvement**

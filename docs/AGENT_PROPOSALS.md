@@ -68,6 +68,35 @@ things you do fresh at the start of each run:
 Let what you see in the running app — not just what the docs describe — drive what
 you propose.
 
+## Check the pipeline can absorb it before proposing
+
+A healthy proposal can still be the wrong thing to add to a pipeline that's jammed —
+volume assumes something downstream can merge it. Before generating candidates, do
+two cheap checks:
+
+- **Is the default branch's own CI green?** Check the most recent workflow run on
+  the default branch (not a PR branch). If its required checks (`Lint, test &
+  build`, `E2E (desktop + mobile)`) are failing, nothing can cleanly merge right
+  now regardless of how good a proposal is.
+- **How large is the combined backlog already?** Add up open issues labelled
+  `agent:ready` (whether or not they also carry `agent:building`) plus open PRs
+  labelled `agent:built`. This is everything already waiting on the human or on
+  Stage B.
+
+**If the default branch's CI is red, or the combined backlog is already large
+(rough bar: 25+ items)** — throttle this run's volume instead of proposing the
+full 9: cut to a small number of the strongest candidates (or skip the run
+entirely if nothing stands out), and say why in a comment on one of the
+newest existing `agent:ready` issues so the reason is visible. Adding a fresh
+full batch on top of a pipeline that can't currently merge anything just grows
+a backlog nobody asked for — it doesn't help the human, and it isn't a proposal-
+quality problem this bucket's quality bar can fix. Once CI is green again and the
+backlog has worked back down, resume the normal 9-per-run volume. (This was
+promoted after a real incident: a required-check outage on `main` persisted
+across four consecutive Stage C runs while Stage A kept proposing at full volume
+each time, growing the combined queue to 53 items — see `AGENT_LEARNINGS.md`'s
+Proposal selection and Pipeline reliability sections.)
+
 ## What to look for
 
 Each run produces **9 proposals in a deliberate mix** — a fixed spread so the easy
@@ -212,6 +241,10 @@ bucket — the brake is quality, not hitting an exact per-bucket count.
 - If, after a thorough look at the app, you genuinely cannot find 9 quality
   proposals, create as many strong ones as you can rather than filling the quota with
   filler.
+- **Throttle volume, not quality, when the pipeline is jammed** — see *Check the
+  pipeline can absorb it before proposing* above. A red default-branch CI or an
+  already-large combined backlog is a reason to propose fewer, not a reason to
+  propose worse.
 
 ## Labels
 

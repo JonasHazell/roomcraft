@@ -1,6 +1,11 @@
 import { useState, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 
+/** Clamps a value into [min, max] — the bound every NumberField/CountField commits to. */
+export function clampToRange(n: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, n));
+}
+
 export function NumberField({
   label,
   value,
@@ -35,7 +40,7 @@ export function NumberField({
 
   const commit = (raw: string) => {
     const n = parseFloat(raw);
-    if (Number.isFinite(n)) onChange(n);
+    if (Number.isFinite(n)) onChange(clampToRange(n, min, max));
   };
 
   return (
@@ -104,7 +109,6 @@ export function CountField({
   max?: number;
   title?: string;
 }) {
-  const clamp = (v: number) => Math.min(max, Math.max(min, v));
   return (
     <label className="field" title={title}>
       <span className="field-label">{label}</span>
@@ -114,7 +118,7 @@ export function CountField({
           className="count-step"
           aria-label={`Decrease ${label}`}
           disabled={value <= min}
-          onClick={() => onChange(clamp(value - 1))}
+          onClick={() => onChange(clampToRange(value - 1, min, max))}
         >
           −
         </button>
@@ -126,7 +130,7 @@ export function CountField({
           className="count-step"
           aria-label={`Increase ${label}`}
           disabled={value >= max}
-          onClick={() => onChange(clamp(value + 1))}
+          onClick={() => onChange(clampToRange(value + 1, min, max))}
         >
           +
         </button>
