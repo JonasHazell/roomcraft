@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { useDesignStore } from './useDesignStore';
 import { useHistoryStore } from './useHistoryStore';
 import { furnitureCorners, furnitureFits } from '../lib/collision';
-import { defaultOpening, floorPolygon } from '../lib/polygon';
+import { defaultOpening, floorPolygon, wallLen } from '../lib/polygon';
 import { runValidation } from '../lib/validation/engine';
 import { DEFAULT_FLOOR_COLOR, DEFAULT_WALL_COLOR } from '../types';
 
@@ -354,6 +354,16 @@ describe('resizing a wall reclamps — never deletes — its openings', () => {
     // 1cm dip: clampOpening has no memory of the door's original width.
     const after = store().design.openings.find((o) => o.id === id)!;
     expect(after.width).toBeLessThan(0.9);
+  });
+
+  it('clamps an absurdly large committed length instead of accepting it unbounded (#383)', () => {
+    // Typing e.g. "99999" into the Length field used to reach resizeWall
+    // unbounded — no upper clamp existed at the store level at all, only the
+    // NumberField's advisory (non-enforcing) `max` HTML attribute.
+    const wallId = store().design.walls[0].id;
+    store().resizeWall(wallId, 99999);
+    const wall = store().design.walls.find((w) => w.id === wallId)!;
+    expect(wallLen(wall)).toBe(30); // MAX_WALL_LEN in planSlice.ts
   });
 });
 
