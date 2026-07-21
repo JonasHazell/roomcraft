@@ -433,6 +433,7 @@ async function generateOneProposal(
   brief: string,
   label: string,
   design: Design,
+  signal?: AbortSignal,
 ): Promise<{
   proposal: ResolvedProposals['proposals'][number];
   score: ProposalScore;
@@ -457,6 +458,7 @@ async function generateOneProposal(
     systemPrompt: SYSTEM_PROMPT,
     jsonSchema: proposalJsonSchema,
     model: MODEL,
+    signal,
   });
   // Accumulate the API cost and call count across the first response plus any
   // repair turns, so the caller can report a per-proposal and per-request total.
@@ -507,6 +509,7 @@ async function generateOneProposal(
       systemPrompt: SYSTEM_PROMPT,
       jsonSchema: proposalJsonSchema,
       model: MODEL,
+      signal,
     });
     costUsd += repaired.costUsd;
     calls += 1;
@@ -542,7 +545,7 @@ async function generateOneProposal(
   };
 }
 
-async function generateProposals(design: Design, needs: string) {
+async function generateProposals(design: Design, needs: string, signal?: AbortSignal) {
   // Wall-clock timer for the whole request — planning plus the concurrent proposal
   // calls, i.e. the time the user actually waits, not the sum of the per-call times.
   const start = Date.now();
@@ -555,7 +558,7 @@ async function generateProposals(design: Design, needs: string) {
   let planCalls = 0;
   if (TWO_PHASE) {
     try {
-      const { plan, costUsd, calls } = await generatePlan(design, needs, MODEL);
+      const { plan, costUsd, calls } = await generatePlan(design, needs, MODEL, signal);
       planBrief = `\n\n${buildPlanBrief(plan)}`;
       planCostUsd = costUsd;
       planCalls = calls;
@@ -565,6 +568,10 @@ async function generateProposals(design: Design, needs: string) {
         `[proposals] furniture plan ready: ${need} need-to-have, ${nice} nice-to-have item type(s).`,
       );
     } catch (e) {
+      // A disconnect-triggered abort must propagate, not fall back — otherwise an
+      // abandoned request would "recover" into a full single-phase generation for a
+      // client that is already gone, defeating the whole point of aborting early.
+      if (signal?.aborted) throw e;
       console.error('[proposals] planning step failed; falling back to single-phase:', e);
     }
   }
@@ -580,7 +587,7 @@ async function generateProposals(design: Design, needs: string) {
   // One independent conversation per direction, all in flight at once.
   const settled = await Promise.allSettled(
     PROPOSAL_BRIEFS.map((brief, i) =>
-      generateOneProposal(shared, brief, `#${i + 1}`, design),
+      generateOneProposal(shared, brief, `#${i + 1}`, design, signal),
     ),
   );
 
@@ -698,28 +705,68 @@ const server = createServer((req, res) => {
     } catch (e) {
       return json(res, 400, { error: e instanceof Error ? e.message : 'Invalid request.' });
     }
-    // Take a concurrency slot before doing the expensive AI work; shed load if
-    // the server is already saturated so requests fail fast instead of stacking.
-    let release: () => void;
+    // Derive an AbortSignal from the client connection so a client that cancels,
+    // backgrounds the tab, or drops the network (src/store/useAiStore.ts aborts its
+    // own fetch in all three cases) stops the server-side generation immediately
+    // instead of running — and billing — to completion while it holds a scarce
+    // concurrency slot (#331/#381). `res`'s 'close' event fires both on a normal,
+    // fully-flushed completion and on an early disconnect, so it's guarded by
+    // `writableEnded`: only abort when the response was NOT already sent.
+    const abortController = new AbortController();
+    const onClientClose = () => {
+      if (!res.writableEnded) abortController.abort();
+    };
+    res.on('close', onClientClose);
     try {
-      release = await aiGate.acquire();
-    } catch {
-      return json(res, 503, {
-        error: 'The AI service is busy right now. Please try again in a moment.',
-      });
-    }
-    try {
-      const { data, warnings } = await generateProposals(request.design, request.needs);
-      return json(res, 200, { proposals: data.proposals, warnings });
-    } catch (e) {
-      // Log the full error server-side; return a generic message so raw CLI
-      // stderr or ZodError internals aren't leaked to the client.
-      console.error('[proposals] error:', e);
-      return json(res, 502, {
-        error: 'The AI proposal generation failed. Check the server logs for details.',
-      });
+      // Take a concurrency slot before doing the expensive AI work; shed load if
+      // the server is already saturated so requests fail fast instead of stacking.
+      let release: () => void;
+      try {
+        release = await aiGate.acquire();
+      } catch {
+        return json(res, 503, {
+          error: 'The AI service is busy right now. Please try again in a moment.',
+        });
+      }
+      try {
+        const { data, warnings } = await generateProposals(
+          request.design,
+          request.needs,
+          abortController.signal,
+        );
+        // The client may have disconnected after the generation finished but before
+        // we got here (e.g. between the last Claude call resolving and this line) —
+        // there is no one left to write the response to, so discard it rather than
+        // writing to a closed socket.
+        if (abortController.signal.aborted) {
+          console.log(
+            '[proposals] client disconnected; discarding a generation that finished after the fact.',
+          );
+          return;
+        }
+        return json(res, 200, { proposals: data.proposals, warnings });
+      } catch (e) {
+        if (abortController.signal.aborted) {
+          // Distinct from both a normal completion and a real error: the client left,
+          // so this aborted the in-flight Claude call(s) on purpose. `finally` below
+          // still releases the concurrency slot right away rather than waiting for a
+          // generation nobody will see finish.
+          console.log(
+            '[proposals] client disconnected; aborted in-flight generation early and released its concurrency slot.',
+          );
+          return;
+        }
+        // Log the full error server-side; return a generic message so raw CLI
+        // stderr or ZodError internals aren't leaked to the client.
+        console.error('[proposals] error:', e);
+        return json(res, 502, {
+          error: 'The AI proposal generation failed. Check the server logs for details.',
+        });
+      } finally {
+        release();
+      }
     } finally {
-      release();
+      res.off('close', onClientClose);
     }
   })();
 });
