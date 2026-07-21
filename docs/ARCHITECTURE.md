@@ -49,6 +49,7 @@ are separate stores so they don't get saved.
 | Library | `src/store/useLibraryStore.ts` | The saved-furniture library. |
 | Auth | `src/store/useAuthStore.ts` | Whether sign-in is enabled + the current session. |
 | AI | `src/store/useAiStore.ts` | An in-flight AI generation (status, timeout). |
+| Storage status | `src/store/useStorageStatus.ts` | Whether the last `localStorage` write failed (quota / private browsing), driving the save-error banner. |
 
 Shared types for all of the above: `src/types.ts` (`Workspace`, `Project`, `Design`,
 `Room`, `Wall`, `WallOpening`, `FurnitureItem`, `Proposal`, …).
@@ -77,7 +78,7 @@ helpers** (`DesignData`, `RoomActions`, `FurnitureSpec`, `createDefaultRoom`,
 | **Design validation / score** — rule findings + score | `panel/ValidationPanel.tsx`, `panel/ValidationScore.tsx`, `scene/ValidationOverlay.tsx` | `useValidationStore` | `lib/validation/*` (see below) |
 | **Room summary** — printable/exportable plan + furniture list + score | `summary/RoomSummary.tsx` (opened from the room top bar, `App.tsx`) | `useUiStore` (`summaryOpen`) | `lib/polygon.ts` (plan), `useValidationStore` (score) |
 | **Undo / redo** — every editing step, one drag = one step | `panel/HistoryBar.tsx` | `useHistoryStore` | `lib/globalKeydown.ts` (shortcuts) |
-| **Autosave & named saves** — localStorage, schema migration | `panel/DialogHost.tsx` (save/load prompts) | `useDesignStore` persist middleware | `lib/persistence.ts` (v1→current migrations) |
+| **Autosave & named saves** — localStorage, schema migration, failed-write notice | `panel/DialogHost.tsx` (save/load prompts), `ui/SaveErrorBanner.tsx` | `useDesignStore` persist middleware, `useStorageStatus` | `lib/persistence.ts` (v1→current migrations), `lib/safeStorage.ts` (guards a `setItem` failure so it can't crash the app) |
 | **Accounts / sign-in** — gates server AI when DB configured; syncs a signed-in user's whole project to their account (free-tier room cap, `RoomCapDialog` upgrade prompt) | `auth/AuthDialog.tsx`, `auth/AccountControl.tsx`, `auth/RoomCapDialog.tsx` | `useAuthStore` | `lib/authApi.ts`, `lib/projectSync.ts` → `server/auth.ts`, `server/projects.ts`, `server/db.ts` |
 | **Keyboard shortcuts** — R, Delete, Esc, Enter, undo/redo | (global) | various | `lib/globalKeydown.ts`, `lib/useEscape.ts` |
 
