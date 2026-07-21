@@ -450,6 +450,31 @@ before this pivot landed.
   once the instance is flagged — no further action needed on this specific
   issue.
 
+- **A promoted script/loop fix is inert until the PR carrying it actually
+  merges — "promoted this run" is not the same claim as "in effect this run."**
+  The twelfth snapshot promoted a backlog/CI-aware proposal throttle into
+  `AGENT_PROPOSALS.md` specifically to stop Stage A from compounding the
+  required-check outage above. It had zero effect: that edit lives only on this
+  still-open `agent/learnings-update` branch, and every Stage A run reads
+  instruction docs fresh from the default branch, which never received it.
+  Direct proof: issue #435 was opened 2026-07-21T03:00:27Z — nearly two hours
+  *after* the throttle commit — with no sign of throttling, and the combined
+  backlog grew from 53 to 62 in the following ~19 hours. This is a distinct
+  failure mode from every other entry in this section: those were bugs in what
+  the pipeline *does*; this is a gap in how a fix *takes effect* — self-improvement
+  through this stage's own instrument (editing the instruction docs) only works
+  once a human merges the PR carrying the edit, so during any prolonged review
+  gap the pipeline cannot actually self-correct even after Stage C has
+  correctly diagnosed the problem and written the fix. **General rule:** when
+  promoting a fix for a *live, time-sensitive* operational problem (as opposed
+  to a taste/quality lesson that can wait for the next normal review cycle),
+  say explicitly in the PR/learnings entry that the fix is not yet active, and
+  don't let the metrics snapshot imply otherwise — "promoted" and "in effect"
+  are different claims and this file should keep them visibly different until
+  the carrying PR merges. This also means the true fix for this specific
+  incident is unavoidably a human action: merging (or cherry-picking) this
+  meta-PR, not anything Stage C can do from inside it.
+
 ## Stage C methodology
 
 - **A PR's own description is evidence, not ground truth — always check it against

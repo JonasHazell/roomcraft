@@ -87,24 +87,24 @@ only where a single item dominates a metric.
 <!-- STAGE C: overwrite everything between the markers below each run. -->
 <!-- METRICS-SNAPSHOT:START -->
 
-**Twelfth snapshot** (this run, 2026-07-21). **Empty run for outcomes, fourth
+**Thirteenth snapshot** (this run, 2026-07-21). **Empty run for outcomes, fifth
 consecutive** — zero agent PRs merged/closed, zero issues rejected, zero human
-PRs merged since the eleventh snapshot (confirmed directly: no PR has merged
-to `main` since #397 on 2026-07-19T14:25; the default branch's own CI hasn't
-re-run since, so there's been no fresh evidence either way on the
-required-check question). The subject of this run is again the standing
-operational incident, now escalated further: pulled the actual CI job log for
-`main`'s latest run and confirmed 6 failing specs, including
-`door-leaf-fade.spec.ts` timing out on **both** desktop and mobile at the same
-orbit-drag line, plus a newly-observed fifth chronically-flaking mobile spec
-(`furniture-library-rename`) alongside the four already known. The combined
-queue awaiting the human — unclaimed `agent:ready` issues + `agent:building`
-issues (each with its own open PR) + open `agent:built` PRs — is now **53
-items**, up sharply from the low-20s at the first flag, because Stage A kept
-proposing a full 9-per-run batch throughout the outage. Promoted a
-backlog/CI-aware proposal throttle into `AGENT_PROPOSALS.md` this run to stop
-that compounding — see `AGENT_LEARNINGS.md`'s Proposal selection and Pipeline
-reliability sections. Δ is versus the eleventh snapshot.
+PRs merged since the twelfth snapshot; confirmed directly, still no PR merged to
+`main` since #397 on 2026-07-19T14:25 and no fresh CI run on the default branch
+since. The escalation this run isn't a new outcome, it's a mechanism failure the
+prior four runs' own fixes couldn't have caught: **the twelfth snapshot's own
+promoted fix — the backlog/CI-aware proposal throttle added to
+`AGENT_PROPOSALS.md` — has had zero effect**, because it only exists on this
+still-unmerged `agent/learnings-update` branch. Stage A reads instruction docs
+from the default branch on every fresh run, so it has been proposing at full,
+unthrottled volume the entire time, oblivious to its own supposed fix. Direct
+proof: issue #435 was opened at 2026-07-21T03:00:27Z — nearly two hours *after*
+the throttle commit (01:12) — with no throttling comment anywhere, and the
+combined backlog grew from 53 to **62** in the ~19 hours since. See
+`AGENT_LEARNINGS.md`'s new Pipeline reliability entry ("a promoted fix is inert
+until its PR merges"). The required-check outage itself is now **~2.5 days**
+unresolved (5th consecutive flag), and this meta-PR has now sat unreviewed,
+with no human comment, across **five** runs. Δ is versus the twelfth snapshot.
 
 | Metric | Value | Δ | Window / note |
 | ------ | ----- | - | ------------- |
@@ -115,13 +115,13 @@ reliability sections. Δ is versus the eleventh snapshot.
 | Issue-rejection rate | 5 / 88 = 6% | → (unchanged) | no new decisions this run |
 | Median PR size | 641 lines (n=1) | → (unchanged) | still last run's single data point; no new merges to add to it |
 | Time-to-decision | ≈1422 min (23.7h) median | → (unchanged) | no new decisions this run |
-| Ready backlog | 20 | ↑↑ (was 11) | issues `agent:ready` **without** `agent:building`: #401–#409, #417–#425, plus #387/#388 — a full fresh Stage A batch (#417–#425) landed on top of the prior one (#401–#409) while nothing downstream could merge. This is the trend the new `AGENT_PROPOSALS.md` throttle targets |
-| Stuck-building count | 0 | → (unchanged) | all 16 `agent:building` issues (#351–#353, #364–#370, #380–#386) have their own open PR (#389–#395, #398, #400, #410–#416); none abandoned |
+| Ready backlog | 30 | ↑↑ (was 20) | issues `agent:ready` **without** `agent:building` (30, incl. #435); a fresh Stage A batch landed even after the (unmerged, thus inert) throttle was written — direct evidence the promotion hasn't taken effect, see above |
+| Stuck-building count | 0 | → (unchanged) | all 16 `agent:building` issues have their own open PR (#389–#395, #398, #400, #410–#416); none abandoned |
 | Duplicate-rejection count | 2 | → (unchanged) | #129, #135 — no new duplicate rejections this run |
 | Open questions | 0 | → (unchanged) | none asked yet |
 | Question-answer rate | n/a | → (unchanged) | no questions asked yet |
-| **Required-check integrity** | **still failing, unresolved (~2 days, 4th consecutive flag)** | **→ (unchanged, still bad)** | `main`'s latest CI run (head `0f047fa`, after #397) is still the most recent — confirmed `failure` on `E2E (desktop + mobile)` via the actual job log (6 failed specs, 1 flaky, 168 passed). Built-but-unmerged backlog holds at **16 open agent-built PRs** (#389–#395, #398, #400, #410–#416) plus this meta-PR. Still needs the human's Settings → Branches check (repo-admin action only a human can take) and, separately, a fix for `door-leaf-fade.spec.ts`'s orbit-drag timeout — see `AGENT_LEARNINGS.md` |
-| AI proposal latency | not sampled this run | — | 12th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session |
+| **Required-check integrity** | **still failing, unresolved (~2.5 days, 5th consecutive flag)** | **→ (unchanged, still bad)** | `main`'s latest CI run (head `0f047fa`, after #397) is still the most recent — no fresher run to re-check since nothing has merged. Combined backlog (ready-without-building + building + open built PRs) is now **62** (30 + 16 + 16), up from 53 last run. Still needs the human's Settings → Branches check (repo-admin action only a human can take), a merge/review of this meta-PR itself so the throttle actually takes effect, and separately a fix for `door-leaf-fade.spec.ts`'s orbit-drag timeout — see `AGENT_LEARNINGS.md` |
+| AI proposal latency | not sampled this run | — | 13th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session |
 | AI proposal cost | not sampled this run | — | same as above |
 | AI calls per proposal | not sampled this run | — | same as above |
 | AI failure/timeout rate | not sampled this run | — | same as above |
