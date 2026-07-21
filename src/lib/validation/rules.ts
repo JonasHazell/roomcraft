@@ -875,6 +875,52 @@ export const RULES: RuleDef[] = [
     },
   },
   {
+    id: 'ERG-10',
+    title: 'The work triangle',
+    category: 'Ergonomics & dimensions',
+    importance: 3,
+    source: 'NKBA, kitchen industry practice',
+    appliesTo: ['kök'],
+    check(ctx) {
+      const stoves = ctx.byKind('stove');
+      const sinks = ctx.byKind('sink');
+      const fridges = ctx.byKind('fridge');
+      if (stoves.length === 0 || sinks.length === 0 || fridges.length === 0) return na;
+      const violations: Violation[] = [];
+      for (const stove of stoves) {
+        for (const sink of sinks) {
+          for (const fridge of fridges) {
+            const stoveSink = Math.hypot(
+              stove.position.x - sink.position.x,
+              stove.position.z - sink.position.z,
+            );
+            const sinkFridge = Math.hypot(
+              sink.position.x - fridge.position.x,
+              sink.position.z - fridge.position.z,
+            );
+            const fridgeStove = Math.hypot(
+              fridge.position.x - stove.position.x,
+              fridge.position.z - stove.position.z,
+            );
+            const legs = [stoveSink, sinkFridge, fridgeStove];
+            const total = stoveSink + sinkFridge + fridgeStove;
+            const shortLeg = legs.some((d) => d < 1.2);
+            const longLeg = legs.some((d) => d > 2.7);
+            if (shortLeg || longLeg || total < 4.0 || total > 8.0) {
+              violations.push({
+                message: `The work triangle stove–sink–fridge measures ${formatCm(
+                  total,
+                )} in total (guideline 4.0–8.0 m, no leg under 1.2 m or over 2.7 m) — rearrange "${stove.name}", "${sink.name}" and "${fridge.name}" to bring it within range.`,
+                furnitureIds: [stove.id, sink.id, fridge.id],
+              });
+            }
+          }
+        }
+      }
+      return fail(violations);
+    },
+  },
+  {
     id: 'ERG-13',
     title: 'Desk dimensions',
     category: 'Ergonomics & dimensions',
