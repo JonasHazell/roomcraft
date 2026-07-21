@@ -6,6 +6,30 @@ import { Icon } from '../ui/Icon';
 
 type Mode = 'login' | 'register';
 
+/** The minimum password length the register form states in its own hint copy. */
+export const MIN_REGISTER_PASSWORD_LENGTH = 8;
+
+/**
+ * Whether the submit button should be disabled. A single source of truth for
+ * the JSX below and for the unit test — a new password (register mode) must
+ * meet the length the form's own hint states; an existing password (login)
+ * has no client-side minimum since it isn't being chosen here.
+ */
+export function isAuthSubmitDisabled(params: {
+  mode: Mode;
+  email: string;
+  password: string;
+  submitting: boolean;
+}): boolean {
+  const { mode, email, password, submitting } = params;
+  return (
+    submitting ||
+    email.trim().length === 0 ||
+    password.length === 0 ||
+    (mode === 'register' && password.length < MIN_REGISTER_PASSWORD_LENGTH)
+  );
+}
+
 /**
  * Sign-in / create-account dialog. Built entirely from the shared `.modal`,
  * `.field` and `.btn` primitives so it matches every other dialog. Opened from
@@ -41,10 +65,12 @@ export function AuthDialog() {
   if (!open) return null;
 
   const isRegister = mode === 'register';
+  const passwordTooShort =
+    isRegister && password.length > 0 && password.length < MIN_REGISTER_PASSWORD_LENGTH;
 
   async function submit(e: SyntheticEvent) {
     e.preventDefault();
-    if (submitting) return;
+    if (isAuthSubmitDisabled({ mode, email, password, submitting })) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -105,7 +131,12 @@ export function AuthDialog() {
               />
             </span>
           </label>
-          {isRegister && <p className="hint">Use at least 8 characters.</p>}
+          {isRegister &&
+            (passwordTooShort ? (
+              <p className="error">Password must be at least 8 characters.</p>
+            ) : (
+              <p className="hint">Use at least 8 characters.</p>
+            ))}
           {error && <p className="error">{error}</p>}
           {/* Submit lives in the form so Enter works; the footer mirrors it. */}
           <button type="submit" hidden aria-hidden="true" />
@@ -125,7 +156,7 @@ export function AuthDialog() {
           <button
             type="button"
             className="btn btn-accent"
-            disabled={submitting || email.trim().length === 0 || password.length === 0}
+            disabled={isAuthSubmitDisabled({ mode, email, password, submitting })}
             onClick={submit}
           >
             {submitting

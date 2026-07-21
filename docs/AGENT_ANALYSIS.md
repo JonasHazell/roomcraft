@@ -277,6 +277,16 @@ update per run. Call out each doc fix in the PR description so the human can rev
 deliberately. The human merges it. You may label that PR `agent:built` so it shows up
 in the normal review queue.
 
+**Reuse the exact branch name, and check for an already-open PR before assuming none
+exists.** Push to `agent/learnings-update` specifically — not the session's own
+default working branch — and search for an open PR on that branch first. If one is
+already open (the human hasn't merged the prior run's update yet), push your new
+commits onto that same branch and update its title/body to describe the latest
+cumulative state, rather than opening a second PR from a different branch. A prior
+run pushed to its own session-default branch instead and opened a redundant,
+conflicting second meta-PR (#399) alongside the still-open #379 on the correct
+branch — see `AGENT_LEARNINGS.md`'s Pipeline reliability section.
+
 **Important:** mark the source issues/PRs `agent:analyzed` during this run
 regardless of whether your PR is merged yet — that prevents re-analysis.
 

@@ -115,6 +115,13 @@ rather than duplicating themselves. Existing examples to follow:
 - `PropertiesPanel` — hides a mouse-only affordance when the pointer is coarse.
 - `SelectionBar` — reveals the in-dock material `select` only when there's width
   for it (`min-width: 620px`), so the pill bar never overflows a phone.
+- `SelectionBar` / `FurnitureMesh` — building a multi-selection of furniture
+  needs different *behaviour* per pointer type, not just layout: a fine pointer
+  already has shift/ctrl-click, but a coarse one has no modifier key, so the bar
+  surfaces an explicit "Select multiple" toggle (via `COARSE_POINTER`) only on
+  touch. Tapping it seeds the group from whatever's already selected; further
+  taps add/remove pieces instead of replacing the selection, until the mode is
+  turned off or the selection is cleared.
 
 These are the model: **one component, environment-aware**, not two components.
 

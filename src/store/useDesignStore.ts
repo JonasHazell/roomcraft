@@ -1,13 +1,13 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
 import { SCHEMA_VERSION } from '../types';
-import { parseProjectSafe } from '../lib/persistence';
+import { parseWorkspaceSafe } from '../lib/persistence';
 import { safeSetItem } from '../lib/safeStorage';
 import {
   activeOrPlaceholder,
-  createDefaultProject,
-  createEmptyProject,
-  syncedProject,
+  activeProject,
+  createEmptyWorkspace,
+  syncedWorkspace,
   type DesignSet,
   type DesignState,
 } from './designModel';
@@ -18,18 +18,21 @@ import { createProposalSlice } from './slices/proposalSlice';
 import { createDocumentSlice } from './slices/documentSlice';
 
 // The store is split into focused slices (room, plan, furniture, proposal,
-// document) that all read/write the shared { project, design } live state via
-// get(); see designModel.ts for the state shape and the shared helpers.
+// document, home) that all read/write the shared { workspace, project, design }
+// live state via get(); see designModel.ts for the state shape and the shared
+// helpers.
 export {
   createDefaultRoom,
   createDefaultProject,
   createEmptyRoom,
   createEmptyProject,
+  createEmptyWorkspace,
   type DesignState,
   type FurniturePatch,
 } from './designModel';
 
-const bootProject = createEmptyProject();
+const bootWorkspace = createEmptyWorkspace();
+const bootProject = activeProject(bootWorkspace);
 
 // A `setItem` failure (quota exceeded, or Safari Private Browsing where it
 // throws unconditionally) would otherwise propagate straight out of the store
@@ -56,6 +59,7 @@ export const useDesignStore = create<DesignState>()(
   persist(
     (set, get) => {
       return {
+        workspace: bootWorkspace,
         project: bootProject,
         design: activeOrPlaceholder(bootProject),
         ...createRoomSlice(set as DesignSet, get),
@@ -69,24 +73,30 @@ export const useDesignStore = create<DesignState>()(
       name: 'roomcraft:current',
       version: SCHEMA_VERSION,
       storage: createJSONStorage(safeLocalStorage),
-      // Only the project is persisted; the live `design` is rebuilt from it as
-      // the active room on rehydrate (see merge). The active room is synced back
-      // into the project first so the stored snapshot matches the screen.
-      partialize: (s) => ({ project: syncedProject(s.project, s.design) }),
-      // Older blobs (a single design, zustand versions < 4) are routed through
-      // the same zod+migration path as import; broken data falls back to the
-      // default instead of crashing.
+      // Only the workspace (every home + which is active) is persisted; the live
+      // `project`/`design` are rebuilt from it as the active home/room on
+      // rehydrate (see merge). The active home/room are synced back into the
+      // workspace first so the stored snapshot matches the screen.
+      partialize: (s) => ({ workspace: syncedWorkspace(s.workspace, s.project, s.design) }),
+      // Older blobs (a single project, a bare design, zustand versions < 4) are
+      // routed through the same zod+migration path as import — including the
+      // pre-#382 shape with no `workspace` at all, where the one project becomes
+      // the workspace's first home (see `parseWorkspace` in lib/persistence.ts).
+      // Broken data falls back to a fresh empty workspace instead of crashing.
       migrate: (persisted) => {
-        const raw = persisted as { project?: unknown; design?: unknown } | undefined;
-        const source = raw?.project ?? raw?.design;
-        return { project: parseProjectSafe(source) ?? createDefaultProject() };
+        return { workspace: parseWorkspaceSafe(persisted) ?? createEmptyWorkspace() };
       },
-      // `design` isn't persisted, so reconstruct it from the (re-validated)
-      // project as the active room on every rehydrate.
+      // `project`/`design` aren't persisted, so reconstruct them from the
+      // (re-validated) workspace as the active home/room on every rehydrate.
+      // `persisted` is the raw top-level state either way — migrated (already
+      // `{ workspace }`) or, when the version matched so migrate was skipped,
+      // straight from storage — and `parseWorkspace` itself knows how to find
+      // the workspace (or fall back to the legacy shape) from that top level,
+      // so it must NOT be unwrapped again here.
       merge: (persisted, current) => {
-        const raw = (persisted as { project?: unknown } | undefined)?.project;
-        const project = parseProjectSafe(raw) ?? current.project;
-        return { ...current, project, design: activeOrPlaceholder(project) };
+        const workspace = parseWorkspaceSafe(persisted) ?? current.workspace;
+        const project = activeProject(workspace);
+        return { ...current, workspace, project, design: activeOrPlaceholder(project) };
       },
     },
   ),

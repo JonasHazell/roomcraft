@@ -13,17 +13,26 @@ import {
   createUser,
   deleteSession,
   getSessionUser,
+  incrementAiGenerations,
   isValidPassword,
   normalizeEmail,
   parseCookies,
   serializeClearCookie,
   serializeSessionCookie,
+  type AuthUser,
 } from './auth.ts';
 import { createShare, getShare, ShareNotConfiguredError } from './share.ts';
 import { runClaude, type ChatMessages } from './claude.ts';
 import { autoFixProposals } from './autofix.ts';
 import { placeDeskChairs } from './deskChair.ts';
 import { isSameOrigin } from './origin.ts';
+import {
+  FREE_ROOM_LIMIT,
+  RoomCapExceededError,
+  getSavedProject,
+  parseProjectEnvelope,
+  saveProject,
+} from './projects.ts';
 import { resolveProposals } from './orient.ts';
 import { PROPOSAL_BRIEFS, SYSTEM_PROMPT, buildRepairPrompt, buildUserPrompt } from './prompt.ts';
 import { buildPlanBrief, generatePlan } from './planning.ts';
@@ -37,6 +46,7 @@ import {
   type ProposalScore,
 } from './ruleValidation.ts';
 import { JUDGE_ENABLED, rankByJudge } from './judge.ts';
+import { FREE_TIER_GENERATION_CAP, limitReachedMessage, overFreeTierCap } from './planLimits.ts';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const MODEL = process.env.AI_MODEL ?? 'claude-sonnet-5';
@@ -284,6 +294,63 @@ async function handleLogout(req: IncomingMessage, res: ServerResponse) {
 }
 
 /**
+ * Loads the signed-in user's account-synced project (the whole rooms list), so
+ * a new device/browser can pick up where the account left off. Returns `null`
+ * (not an error) when the account hasn't saved one yet — the client keeps its
+ * local copy in that case and this endpoint's next successful save creates it.
+ */
+async function handleGetProject(req: IncomingMessage, res: ServerResponse) {
+  if (!authEnabled) {
+    return json(res, 503, { error: 'Account sync is not configured on this server.' });
+  }
+  const user = await getSessionUser(sessionToken(req));
+  if (!user) return json(res, 401, { error: 'Please sign in to load your saved rooms.' });
+  try {
+    const project = await getSavedProject(user.id);
+    return json(res, 200, { project });
+  } catch (e) {
+    console.error('[project] load error:', e);
+    return json(res, 500, { error: 'Could not load your saved rooms. Please try again.' });
+  }
+}
+
+/**
+ * Saves the signed-in user's project to their account (last-write-wins — see
+ * server/projects.ts). Enforces the free-tier room cap: a save that would leave
+ * the account over the limit is rejected outright (409) and writes nothing, so
+ * the client can show a calm upgrade prompt instead of silently losing data.
+ */
+async function handleSaveProject(req: IncomingMessage, res: ServerResponse) {
+  if (!authEnabled) {
+    return json(res, 503, { error: 'Account sync is not configured on this server.' });
+  }
+  const user = await getSessionUser(sessionToken(req));
+  if (!user) return json(res, 401, { error: 'Please sign in to save your rooms.' });
+  let body: unknown;
+  try {
+    body = JSON.parse(await readBody(req));
+  } catch (e) {
+    return json(res, 400, { error: e instanceof Error ? e.message : 'Invalid request.' });
+  }
+  let project: ReturnType<typeof parseProjectEnvelope>;
+  try {
+    project = parseProjectEnvelope((body as { project?: unknown } | null)?.project);
+  } catch {
+    return json(res, 400, { error: 'The "project" field is missing or malformed.' });
+  }
+  try {
+    await saveProject(user.id, project);
+    return json(res, 200, { ok: true });
+  } catch (e) {
+    if (e instanceof RoomCapExceededError) {
+      return json(res, 409, { error: e.message, code: 'room_cap_exceeded', limit: FREE_ROOM_LIMIT });
+    }
+    console.error('[project] save error:', e);
+    return json(res, 500, { error: 'Could not save your rooms. Please try again.' });
+  }
+}
+
+/**
  * Bounded concurrency gate. `acquire` resolves a release fn when a slot is free;
  * it rejects immediately when both the running slots and the wait queue are full
  * so callers can shed load (503) instead of buffering requests forever.
@@ -434,6 +501,7 @@ async function generateOneProposal(
   brief: string,
   label: string,
   design: Design,
+  signal?: AbortSignal,
 ): Promise<{
   proposal: ResolvedProposals['proposals'][number];
   score: ProposalScore;
@@ -458,6 +526,7 @@ async function generateOneProposal(
     systemPrompt: SYSTEM_PROMPT,
     jsonSchema: proposalJsonSchema,
     model: MODEL,
+    signal,
   });
   // Accumulate the API cost and call count across the first response plus any
   // repair turns, so the caller can report a per-proposal and per-request total.
@@ -508,6 +577,7 @@ async function generateOneProposal(
       systemPrompt: SYSTEM_PROMPT,
       jsonSchema: proposalJsonSchema,
       model: MODEL,
+      signal,
     });
     costUsd += repaired.costUsd;
     calls += 1;
@@ -543,7 +613,7 @@ async function generateOneProposal(
   };
 }
 
-async function generateProposals(design: Design, needs: string) {
+async function generateProposals(design: Design, needs: string, signal?: AbortSignal) {
   // Wall-clock timer for the whole request — planning plus the concurrent proposal
   // calls, i.e. the time the user actually waits, not the sum of the per-call times.
   const start = Date.now();
@@ -556,7 +626,7 @@ async function generateProposals(design: Design, needs: string) {
   let planCalls = 0;
   if (TWO_PHASE) {
     try {
-      const { plan, costUsd, calls } = await generatePlan(design, needs, MODEL);
+      const { plan, costUsd, calls } = await generatePlan(design, needs, MODEL, signal);
       planBrief = `\n\n${buildPlanBrief(plan)}`;
       planCostUsd = costUsd;
       planCalls = calls;
@@ -566,6 +636,10 @@ async function generateProposals(design: Design, needs: string) {
         `[proposals] furniture plan ready: ${need} need-to-have, ${nice} nice-to-have item type(s).`,
       );
     } catch (e) {
+      // A disconnect-triggered abort must propagate, not fall back — otherwise an
+      // abandoned request would "recover" into a full single-phase generation for a
+      // client that is already gone, defeating the whole point of aborting early.
+      if (signal?.aborted) throw e;
       console.error('[proposals] planning step failed; falling back to single-phase:', e);
     }
   }
@@ -581,7 +655,7 @@ async function generateProposals(design: Design, needs: string) {
   // One independent conversation per direction, all in flight at once.
   const settled = await Promise.allSettled(
     PROPOSAL_BRIEFS.map((brief, i) =>
-      generateOneProposal(shared, brief, `#${i + 1}`, design),
+      generateOneProposal(shared, brief, `#${i + 1}`, design, signal),
     ),
   );
 
@@ -649,9 +723,29 @@ const server = createServer((req, res) => {
     }
     // Current user for the session cookie. `authEnabled` tells the frontend
     // whether to show sign-in at all (false in dev with no DATABASE_URL).
+    // `aiGenerationCap` lets the client show remaining-generations context
+    // (e.g. "3 of 5 free generations left") before the user ever hits the wall,
+    // not just once the 402 below fires; it's null when auth is disabled since
+    // the cap doesn't apply to the open, unauthenticated dev flow.
     if (req.method === 'GET' && req.url === '/api/auth/me') {
       const user = await getSessionUser(sessionToken(req));
-      return json(res, 200, { user, authEnabled });
+      return json(res, 200, {
+        user,
+        authEnabled,
+        aiGenerationCap: authEnabled ? FREE_TIER_GENERATION_CAP : null,
+      });
+    }
+    // A signed-in user's account-synced project (see server/projects.ts). GET
+    // loads it; PUT saves it (state-changing, so it needs the same same-origin
+    // guard the POST endpoints below get).
+    if (req.method === 'GET' && req.url === '/api/project') {
+      return handleGetProject(req, res);
+    }
+    if (req.method === 'PUT' && req.url === '/api/project') {
+      if (!isSameOrigin(req)) {
+        return json(res, 403, { error: 'Cross-origin request rejected.' });
+      }
+      return handleSaveProject(req, res);
     }
     // Read-only shared room snapshot (#353). Publicly readable with no session
     // check — the opaque link itself is the access control, matching the issue's
@@ -738,8 +832,19 @@ const server = createServer((req, res) => {
     // When auth is configured, AI furnishing requires a signed-in user (each call
     // costs real money and runs on the owner's Claude login). With no database
     // the endpoint stays open so the frontend-only/local dev flow is unchanged.
-    if (authEnabled && !(await getSessionUser(sessionToken(req)))) {
-      return json(res, 401, { error: 'Please sign in to use AI furnishing.' });
+    let currentUser: AuthUser | null = null;
+    if (authEnabled) {
+      currentUser = await getSessionUser(sessionToken(req));
+      if (!currentUser) {
+        return json(res, 401, { error: 'Please sign in to use AI furnishing.' });
+      }
+      // Freemium gate (#352): a signed-in 'free' account is capped at
+      // FREE_TIER_GENERATION_CAP lifetime generations (server/planLimits.ts).
+      // Distinct error shape ({ error: 'limit' }, 402) so the client can show a
+      // calm upgrade prompt instead of the generic AI-failure message.
+      if (overFreeTierCap(currentUser)) {
+        return json(res, 402, { error: 'limit', message: limitReachedMessage() });
+      }
     }
     if (!allowRequest(clientIp(req))) {
       return json(res, 429, { error: 'Too many requests. Please wait a moment and try again.' });
@@ -750,28 +855,78 @@ const server = createServer((req, res) => {
     } catch (e) {
       return json(res, 400, { error: e instanceof Error ? e.message : 'Invalid request.' });
     }
-    // Take a concurrency slot before doing the expensive AI work; shed load if
-    // the server is already saturated so requests fail fast instead of stacking.
-    let release: () => void;
+    // Derive an AbortSignal from the client connection so a client that cancels,
+    // backgrounds the tab, or drops the network (src/store/useAiStore.ts aborts its
+    // own fetch in all three cases) stops the server-side generation immediately
+    // instead of running — and billing — to completion while it holds a scarce
+    // concurrency slot (#331/#381). `res`'s 'close' event fires both on a normal,
+    // fully-flushed completion and on an early disconnect, so it's guarded by
+    // `writableEnded`: only abort when the response was NOT already sent.
+    const abortController = new AbortController();
+    const onClientClose = () => {
+      if (!res.writableEnded) abortController.abort();
+    };
+    res.on('close', onClientClose);
     try {
-      release = await aiGate.acquire();
-    } catch {
-      return json(res, 503, {
-        error: 'The AI service is busy right now. Please try again in a moment.',
-      });
-    }
-    try {
-      const { data, warnings } = await generateProposals(request.design, request.needs);
-      return json(res, 200, { proposals: data.proposals, warnings });
-    } catch (e) {
-      // Log the full error server-side; return a generic message so raw CLI
-      // stderr or ZodError internals aren't leaked to the client.
-      console.error('[proposals] error:', e);
-      return json(res, 502, {
-        error: 'The AI proposal generation failed. Check the server logs for details.',
-      });
+      // Take a concurrency slot before doing the expensive AI work; shed load if
+      // the server is already saturated so requests fail fast instead of stacking.
+      let release: () => void;
+      try {
+        release = await aiGate.acquire();
+      } catch {
+        return json(res, 503, {
+          error: 'The AI service is busy right now. Please try again in a moment.',
+        });
+      }
+      try {
+        const { data, warnings } = await generateProposals(
+          request.design,
+          request.needs,
+          abortController.signal,
+        );
+        // The client may have disconnected after the generation finished but before
+        // we got here (e.g. between the last Claude call resolving and this line) —
+        // there is no one left to write the response to, so discard it rather than
+        // writing to a closed socket.
+        if (abortController.signal.aborted) {
+          console.log(
+            '[proposals] client disconnected; discarding a generation that finished after the fact.',
+          );
+          return;
+        }
+        // Count the generation only once it actually succeeded and was delivered
+        // (not shed, failed, or discarded on disconnect), so a wasted request never
+        // costs the user one of their free generations (#352).
+        if (currentUser) {
+          try {
+            await incrementAiGenerations(currentUser.id);
+          } catch (e) {
+            console.error('[proposals] could not record AI generation usage:', e);
+          }
+        }
+        return json(res, 200, { proposals: data.proposals, warnings });
+      } catch (e) {
+        if (abortController.signal.aborted) {
+          // Distinct from both a normal completion and a real error: the client left,
+          // so this aborted the in-flight Claude call(s) on purpose. `finally` below
+          // still releases the concurrency slot right away rather than waiting for a
+          // generation nobody will see finish.
+          console.log(
+            '[proposals] client disconnected; aborted in-flight generation early and released its concurrency slot.',
+          );
+          return;
+        }
+        // Log the full error server-side; return a generic message so raw CLI
+        // stderr or ZodError internals aren't leaked to the client.
+        console.error('[proposals] error:', e);
+        return json(res, 502, {
+          error: 'The AI proposal generation failed. Check the server logs for details.',
+        });
+      } finally {
+        release();
+      }
     } finally {
-      release();
+      res.off('close', onClientClose);
     }
   })();
 });

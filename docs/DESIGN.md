@@ -212,6 +212,24 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   and no selection — just the room plus `.share-badge` (a plain `.card`, only its
   row layout and top-left position over the canvas are new), which always names it
   as a shared snapshot so a visitor never lands on an unexplained bare view.
+- **Home switcher** — the lobby's "My homes" section (`Lobby.tsx`), a compact
+  sibling of the `.room-grid`/`.room-card` below it: a `.home-list` row of
+  `.home-card` tiles (icon + name + room count, `.home-card-active` marking the
+  current one) with rename/delete `.btn-icon`s, plus a dashed `.home-card-new`
+  "New home" tile. Each home keeps its own independent rooms, furniture and
+  proposals — switching never merges or leaks state between them (#382).
+- **Room summary (print/export)** — a printable, static snapshot of the active
+  room (`RoomSummary.tsx`), opened from the printer icon in the room top bar
+  (next to the keyboard-shortcuts icon). Built on the shared `.modal` chrome,
+  widened via `.room-summary-modal`: a `.room-summary-sheet` holding a
+  `.room-summary-plan-svg` (the exterior outline plus every piece's real
+  footprint, reusing `lib/polygon.ts`'s `floorPolygon`/`rectCorners` — not the
+  live `PlanEditor`), the validation score (reusing `ValidationPanel`'s own
+  `.validation-summary` markup), and a `.room-summary-list` of
+  `.room-summary-row` furniture entries (a `.swatch` + kind/size). "Print /
+  save PDF" calls `window.print()`; a scoped `@media print` block hides the
+  rest of the app (via `.app-printing`, set on the app root only while the
+  summary is open) and drops the modal chrome so only the sheet prints.
 
 ## Behaviour conventions
 
@@ -228,6 +246,16 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   view (a floor ring + front knob) for free-angle rotation. It magnetises to the
   nearest right angle (0/90/180/270°) as you pass it, so pieces square up to the
   walls with no key; hold `Shift` while dragging for a finer 15° snap.
+- **Multi-selecting furniture** — shift/ctrl/cmd-click a piece to add it to (or
+  remove it from) the current selection; on a coarse pointer, tap the selection
+  bar's **"Select multiple"** toggle (`.sel-action`, `layers` icon) first, then
+  tap pieces to add/remove them without needing a modifier key. Once 2+ pieces
+  are selected, `SelectionBar`'s Duplicate and Delete act on the whole group, drag
+  moves every selected piece together, and `Ctrl/Cmd+D` / `Delete`/`Backspace`
+  extend the same way. Rotation, colour and "More" stay single-piece-only and are
+  hidden for a multi-selection — deliberately out of scope for the group actions.
+  A plain (non-additive) click or `Esc` always replaces the selection and drops
+  out of multi-select mode.
 - **Touch** — interactive controls keep a ≥44px hit area on coarse pointers.
 - **Disabled actions** — wrap in `.btn-tooltip-wrap` with a `title` so the reason
   shows on hover.

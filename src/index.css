@@ -293,6 +293,7 @@ select {
 }
 
 .btn {
+  display: inline-block;
   font: inherit;
   font-weight: 600;
   font-size: 13px;
@@ -301,6 +302,10 @@ select {
   border-radius: 4px;
   background: transparent;
   color: var(--ink);
+  /* A <button> never has an underline, so this only matters when .btn is used
+     on an <a> (e.g. the furniture dialog's "Buy" link, FurnitureDialog.tsx) —
+     without it, the browser's default anchor underline shows through. */
+  text-decoration: none;
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
 }
@@ -723,12 +728,6 @@ select {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.switch-count {
-  font-weight: 400;
-  font-size: 11.5px;
-  color: var(--muted);
 }
 
 /* ---------- 3D view ---------- */
@@ -1246,6 +1245,28 @@ select {
   color: var(--paper);
   background: var(--danger);
   border-color: var(--danger);
+}
+
+/* At tablet width and below, the top bar's editable room-name pill can reach
+   far enough right — same reason `.plan-room-panel` drops a row below the bar
+   at this identical breakpoint, above — to sit directly under this centred
+   pill cluster at its default top offset, with the topbar's higher z-index
+   painting over the start of the text. Drop the whole cluster (hint, error,
+   the exact-length input below it) clear of the bar's height instead, keeping
+   their existing relative spacing intact. Desktop is unaffected. */
+@media (max-width: 768px) {
+  .plan-hint-pill,
+  .plan-error-pill {
+    top: calc(76px + env(safe-area-inset-top));
+  }
+
+  .plan-error-pill {
+    top: calc(114px + env(safe-area-inset-top));
+  }
+
+  .plan-length-input {
+    top: calc(112px + env(safe-area-inset-top));
+  }
 }
 
 /* While drawing, a small box to type the current edge's exact length: aim the
@@ -1999,7 +2020,9 @@ select {
   .prompt-chip,
   .count-step,
   .check-field,
-  .source-toggle button {
+  .source-toggle button,
+  .home-card-main,
+  .home-card-new {
     min-height: 44px;
   }
 
@@ -2029,6 +2052,14 @@ select {
   .sel-color {
     min-width: 44px;
     justify-content: center;
+  }
+
+  /* The per-part colour swatch in the furniture editor's "Colours & materials"
+     section is a 22px round chip (see .color-field-chip's base rule) — widen
+     it to a real 44px tap target on coarse pointers, matching .sel-color above. */
+  .color-field-chip {
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .section summary {
@@ -2625,6 +2656,98 @@ select {
   padding: 12px 22px;
 }
 
+/* ---------- "My homes" switcher (#382) — a compact sibling of .room-card,
+   one level up: every home project on this device, plus "New home". ---------- */
+
+.home-switcher {
+  max-width: 1120px;
+  margin: 0 auto 22px;
+}
+
+.home-switcher-title {
+  font-family: var(--display);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+.home-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.home-card {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--popup-radius);
+  background: var(--card);
+  padding: 4px;
+}
+
+.home-card-active {
+  border-color: var(--ink);
+  box-shadow: 0 2px 8px rgba(24, 24, 27, 0.08);
+}
+
+.home-card-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: calc(var(--popup-radius) - 4px);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  padding: 6px 10px;
+}
+
+.home-card-icon {
+  display: flex;
+  font-size: var(--icon-sm);
+  color: var(--accent);
+}
+
+.home-card-name {
+  font-family: var(--display);
+  font-variation-settings: 'wght' 560;
+}
+
+.home-card-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.home-card-actions {
+  display: flex;
+  gap: 2px;
+}
+
+/* The "new home" tile mirrors .room-card-new but at the switcher's compact scale. */
+.home-card-new {
+  border-style: dashed;
+  border-color: var(--line);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  cursor: pointer;
+  color: var(--muted);
+  font: inherit;
+}
+
+.home-card-new:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
 .room-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -2940,6 +3063,156 @@ select {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ---------- Room summary (print/export, #368) ----------
+   A printable, static snapshot of the room: floor plan, validation score and
+   furniture list, opened from the printer icon in the room top bar. Built on
+   the shared .modal chrome; `.room-summary-modal` only overrides the
+   properties that genuinely need to differ (wider, taller) rather than
+   redeclaring the primitive's base rules. */
+
+.room-summary-modal {
+  width: min(760px, 100%);
+  max-height: min(88vh, 760px);
+}
+
+.room-summary-toolbar {
+  gap: 10px;
+}
+
+.room-summary-body {
+  background: var(--paper-2);
+}
+
+.room-summary-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.room-summary-head {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px;
+}
+
+.room-summary-title {
+  margin: 0 0 4px;
+  font-family: var(--display);
+  font-variation-settings: 'opsz' 40, 'wght' 560;
+  font-size: 24px;
+}
+
+.room-summary-heading {
+  margin: 0 0 10px;
+  font-family: var(--display);
+  font-variation-settings: 'opsz' 24, 'wght' 560;
+  font-size: 15px;
+}
+
+/* The plan sits centred, same as the template picker's SVG previews. */
+.room-summary-plan-svg {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.room-summary-plan-floor {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+.room-summary-plan-item {
+  stroke: rgba(24, 24, 27, 0.35);
+  stroke-width: 0.75;
+}
+
+.room-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.room-summary-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: 13px;
+}
+
+.room-summary-swatch {
+  width: 14px;
+  height: 14px;
+}
+
+.room-summary-row-name {
+  font-weight: 600;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.room-summary-row-kind {
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.room-summary-row-size {
+  color: var(--muted);
+  flex: 1 1 auto;
+  text-align: right;
+}
+
+/* Printing (or "Save as PDF"): show only the summary sheet, laid out for
+   paper — no backdrop dimming, no modal chrome, no app dock/panels behind it.
+   `.app-printing` is set on the app root only while the summary is open
+   (App.tsx), so this never has to know about every other surface's classes. */
+@media print {
+  .app-printing > *:not(.room-summary-backdrop) {
+    display: none !important;
+  }
+
+  .room-summary-backdrop {
+    position: static;
+    padding: 0;
+    background: none;
+    animation: none;
+  }
+
+  .room-summary-modal {
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    border: none;
+    box-shadow: none;
+    animation: none;
+  }
+
+  .room-summary-toolbar {
+    display: none;
+  }
+
+  .room-summary-body {
+    overflow: visible;
+    padding: 0;
+    background: none;
+  }
+
+  .room-summary-sheet {
+    border: none;
+    padding: 0;
+  }
 }
 
 /* ==========================================================================

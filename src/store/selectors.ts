@@ -1,6 +1,9 @@
+import { useShallow } from 'zustand/react/shallow';
 import type { FurnitureItem, Wall } from '../types';
 import { useDesignStore } from './useDesignStore';
 import { useUiStore } from './useUiStore';
+
+const NO_IDS: string[] = [];
 
 /** The currently selected furniture piece, or undefined when none/other kind is selected. */
 export function useSelectedFurniture(): FurnitureItem | undefined {
@@ -9,6 +12,19 @@ export function useSelectedFurniture(): FurnitureItem | undefined {
     selection?.kind === 'furniture'
       ? s.design.furniture.find((f) => f.id === selection.id)
       : undefined,
+  );
+}
+
+/** The ids of every currently-selected furniture piece: one for a single
+ *  selection, several for a multi-selection, empty otherwise — what the
+ *  selection bar's bulk move/duplicate/delete actions operate over. */
+export function useSelectedFurnitureIds(): string[] {
+  return useUiStore(
+    useShallow((s) => {
+      if (s.selection?.kind === 'furniture') return [s.selection.id];
+      if (s.selection?.kind === 'furniture-multi') return s.selection.ids;
+      return NO_IDS;
+    }),
   );
 }
 

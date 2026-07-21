@@ -4,7 +4,7 @@ import { useLibraryStore } from '../../store/useLibraryStore';
 import { useUiStore } from '../../store/useUiStore';
 import { useHistoryStore } from '../../store/useHistoryStore';
 import { useEscape } from '../../lib/useEscape';
-import type { FurnitureKind, FurnitureLibraryEntry } from '../../types';
+import { isHttpsUrl, type FurnitureKind, type FurnitureLibraryEntry } from '../../types';
 import { Icon } from '../ui/Icon';
 import { FurniturePicker, type Source } from './FurniturePicker';
 import { PropertiesPanel } from './PropertiesPanel';
@@ -54,6 +54,16 @@ export function FurnitureDialog() {
   const editItem = useDesignStore((s) =>
     editId ? s.design.furniture.find((f) => f.id === editId) : undefined,
   );
+
+  // The footer's "Buy" button only appears once a valid product link is set —
+  // a piece with none shows neither field content nor a stray affordance.
+  const product = editItem?.product;
+  const buyUrl = product && isHttpsUrl(product.url) ? product.url : undefined;
+  const priceLabel =
+    product?.priceCents != null ? ` — $${(product.priceCents / 100).toFixed(2)}` : '';
+  const buyTitle = product?.retailer
+    ? `Buy at ${product.retailer}${priceLabel}`
+    : `Open product link${priceLabel}`;
 
   // Set by a pick handler right before it places a piece, so the batch it opens
   // covers the placement itself; the effect below then knows not to open a
@@ -168,38 +178,52 @@ export function FurnitureDialog() {
 
         {dialog.mode === 'edit' && (
           <div className="modal-foot">
-            <button
-              type="button"
-              className="btn"
-              title="Save this piece with its dimensions and color so you can add it again"
-              aria-label="Save to library"
-              disabled={!editItem}
-              onClick={() => {
-                if (!editItem) return;
-                saveToLibrary({
-                  name: editItem.name,
-                  kind: editItem.kind,
-                  size: { ...editItem.size },
-                  elevation: editItem.elevation,
-                  color: editItem.color,
-                  colors: editItem.colors ? { ...editItem.colors } : undefined,
-                  material: editItem.material,
-                  materials: editItem.materials ? { ...editItem.materials } : undefined,
-                  options: editItem.options ? { ...editItem.options } : undefined,
-                });
-                setSavedForId(editItem.id);
-              }}
-            >
-              {savedForId && savedForId === editItem?.id ? (
-                <>
-                  <Icon name="check" /> Saved to library
-                </>
-              ) : (
-                <>
-                  <Icon name="star" /> Save to library
-                </>
+            <div className="button-row">
+              <button
+                type="button"
+                className="btn"
+                title="Save this piece with its dimensions and color so you can add it again"
+                aria-label="Save to library"
+                disabled={!editItem}
+                onClick={() => {
+                  if (!editItem) return;
+                  saveToLibrary({
+                    name: editItem.name,
+                    kind: editItem.kind,
+                    size: { ...editItem.size },
+                    elevation: editItem.elevation,
+                    color: editItem.color,
+                    colors: editItem.colors ? { ...editItem.colors } : undefined,
+                    material: editItem.material,
+                    materials: editItem.materials ? { ...editItem.materials } : undefined,
+                    options: editItem.options ? { ...editItem.options } : undefined,
+                    product: editItem.product ? { ...editItem.product } : undefined,
+                  });
+                  setSavedForId(editItem.id);
+                }}
+              >
+                {savedForId && savedForId === editItem?.id ? (
+                  <>
+                    <Icon name="check" /> Saved to library
+                  </>
+                ) : (
+                  <>
+                    <Icon name="star" /> Save to library
+                  </>
+                )}
+              </button>
+              {buyUrl && (
+                <a
+                  className="btn"
+                  href={buyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={buyTitle}
+                >
+                  <Icon name="external-link" /> Buy
+                </a>
               )}
-            </button>
+            </div>
             <button type="button" className="btn btn-accent" onClick={commitEdit}>
               OK
             </button>

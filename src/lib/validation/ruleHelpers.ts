@@ -10,6 +10,7 @@ import {
   openingInfos,
   rightDir,
   stripZone,
+  wallsHitQuad,
 } from './geo.ts';
 import type { RuleCtx, RoomType, RuleOutcome, Violation } from './ruleTypes';
 import { inferZones } from './zones.ts';
@@ -85,6 +86,11 @@ export function frontClearFraction(
   depth: number,
   ignore: (b: FurnitureItem) => boolean = () => false,
 ): number {
+  // An interior wall crossing the clearance zone cuts it off just like the
+  // sibling rules (ACC-06, ACC-07, ERG-05) already treat wallsHitQuad — the
+  // room's floor polygon only reflects exterior walls (see floorPolygon),
+  // so without this an interior wall silently reads as still "clear".
+  if (wallsHitQuad(design, frontZone(f, depth))) return 0;
   const fwd = frontDir(f.rotationY);
   const right = rightDir(f.rotationY);
   const faceMid = add(f.position, fwd, f.size.depth / 2);

@@ -140,7 +140,16 @@ const ROTATE_HANDLE_COLOR = ACCENT;
 
 export function FurnitureMesh({ id }: { id: string }) {
   const item = useDesignStore((s) => s.design.furniture.find((f) => f.id === id));
-  const selected = useUiStore(
+  // True whether this piece is the lone selection or one of several in a
+  // `furniture-multi` group — both get the same highlight and can be dragged.
+  const selected = useUiStore((s) => {
+    if (s.selection?.kind === 'furniture') return s.selection.id === id;
+    if (s.selection?.kind === 'furniture-multi') return s.selection.ids.includes(id);
+    return false;
+  });
+  // Only true for a genuine single selection — gates the rotate handle and the
+  // "More"/material controls, which only make sense for one piece at a time.
+  const singleSelected = useUiStore(
     (s) => s.selection?.kind === 'furniture' && s.selection.id === id,
   );
   const select = useUiStore((s) => s.select);
@@ -148,6 +157,14 @@ export function FurnitureMesh({ id }: { id: string }) {
   const moveFurniture = useDesignStore((s) => s.moveFurniture);
   const updateFurniture = useDesignStore((s) => s.updateFurniture);
   const dragOffset = useRef({ x: 0, z: 0 });
+  // Set instead of dragOffset when the drag starts from a multi-selection: the
+  // floor point the drag began at, plus every group member's starting position,
+  // so each frame can re-derive the total displacement and apply it to all of
+  // them via the same collision-aware `moveFurniture` a single drag already uses.
+  const groupDragRef = useRef<{
+    hitStart: { x: number; z: number };
+    starts: Record<string, { x: number; z: number }>;
+  } | null>(null);
   // True while the rotation handle is being dragged, so the move handler (which
   // shares the group's pointer events) steps aside.
   const rotatingRef = useRef(false);
@@ -217,24 +234,47 @@ export function FurnitureMesh({ id }: { id: string }) {
     if (!selected) return;
     e.stopPropagation();
     (e.target as Element).setPointerCapture(e.pointerId);
-    if (e.ray.intersectPlane(FLOOR_PLANE, hit)) {
+    if (!e.ray.intersectPlane(FLOOR_PLANE, hit)) return;
+    const selection = useUiStore.getState().selection;
+    if (selection?.kind === 'furniture-multi') {
+      // Snapshot every group member's starting position so each pointer-move
+      // frame can re-derive the total displacement and move them all in step,
+      // grabbing whichever member the drag actually started on.
+      const furniture = useDesignStore.getState().design.furniture;
+      const starts: Record<string, { x: number; z: number }> = {};
+      for (const groupId of selection.ids) {
+        const f = furniture.find((piece) => piece.id === groupId);
+        if (f) starts[groupId] = { x: f.position.x, z: f.position.z };
+      }
+      groupDragRef.current = { hitStart: { x: hit.x, z: hit.z }, starts };
+    } else {
       dragOffset.current = { x: item.position.x - hit.x, z: item.position.z - hit.z };
-      setDragging(id);
-      // Fold the whole drag into a single undo step.
-      useHistoryStore.getState().beginBatch();
     }
+    setDragging(id);
+    // Fold the whole drag into a single undo step.
+    useHistoryStore.getState().beginBatch();
   };
 
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
     if (rotatingRef.current) return; // the rotation handle owns this drag
     if (useUiStore.getState().draggingId !== id) return;
     if (!e.ray.intersectPlane(FLOOR_PLANE, hit)) return;
+    if (groupDragRef.current) {
+      const { hitStart, starts } = groupDragRef.current;
+      const dx = hit.x - hitStart.x;
+      const dz = hit.z - hitStart.z;
+      for (const groupId of Object.keys(starts)) {
+        moveFurniture(groupId, starts[groupId].x + dx, starts[groupId].z + dz);
+      }
+      return;
+    }
     moveFurniture(id, hit.x + dragOffset.current.x, hit.z + dragOffset.current.z);
   };
 
   const endDrag = (e: ThreeEvent<PointerEvent>) => {
     if (useUiStore.getState().draggingId !== id) return;
     (e.target as Element).releasePointerCapture(e.pointerId);
+    groupDragRef.current = null;
     setDragging(null);
     useHistoryStore.getState().endBatch();
   };
@@ -254,7 +294,15 @@ export function FurnitureMesh({ id }: { id: string }) {
         if (e.delta > 3) return;
         // Stop the click so the floor behind the furniture doesn't deselect it.
         e.stopPropagation();
-        select({ kind: 'furniture', id });
+        // Shift/ctrl/cmd-click (desktop) or an active "Select multiple" mode
+        // (the touch equivalent, toggled from the selection bar — see
+        // useUiStore) adds this piece to the selection instead of replacing it.
+        const additive = e.shiftKey || e.ctrlKey || e.metaKey;
+        if (additive || useUiStore.getState().multiSelectMode) {
+          useUiStore.getState().toggleFurnitureSelection(id);
+        } else {
+          select({ kind: 'furniture', id });
+        }
       }}
       onPointerOver={(e) => {
         e.stopPropagation();
@@ -283,10 +331,12 @@ export function FurnitureMesh({ id }: { id: string }) {
           <meshBasicMaterial color={SELECT_EMISSIVE} transparent opacity={0.5} />
         </mesh>
       )}
-      {selected && (
+      {singleSelected && (
         // Free-rotation handle: grab the ring or the front knob and spin. It
         // magnetises to right angles as you pass them; hold Shift while dragging
-        // for a finer 15° snap. Keyboard R / Shift+R still work.
+        // for a finer 15° snap. Keyboard R / Shift+R still work. Only shown for a
+        // genuine single selection — rotating one member of a multi-selection
+        // group isn't part of the group actions (move/duplicate/delete).
         <group
           onPointerDown={beginRotate}
           onPointerMove={moveRotate}
