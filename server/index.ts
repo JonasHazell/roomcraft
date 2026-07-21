@@ -23,6 +23,13 @@ import { runClaude, type ChatMessages } from './claude.ts';
 import { autoFixProposals } from './autofix.ts';
 import { placeDeskChairs } from './deskChair.ts';
 import { isSameOrigin } from './origin.ts';
+import {
+  FREE_ROOM_LIMIT,
+  RoomCapExceededError,
+  getSavedProject,
+  parseProjectEnvelope,
+  saveProject,
+} from './projects.ts';
 import { resolveProposals } from './orient.ts';
 import { PROPOSAL_BRIEFS, SYSTEM_PROMPT, buildRepairPrompt, buildUserPrompt } from './prompt.ts';
 import { buildPlanBrief, generatePlan } from './planning.ts';
@@ -280,6 +287,63 @@ async function handleLogout(req: IncomingMessage, res: ServerResponse) {
     console.error('[auth] logout error:', e);
   }
   return json(res, 200, { ok: true }, { 'set-cookie': serializeClearCookie(isSecureRequest(req)) });
+}
+
+/**
+ * Loads the signed-in user's account-synced project (the whole rooms list), so
+ * a new device/browser can pick up where the account left off. Returns `null`
+ * (not an error) when the account hasn't saved one yet — the client keeps its
+ * local copy in that case and this endpoint's next successful save creates it.
+ */
+async function handleGetProject(req: IncomingMessage, res: ServerResponse) {
+  if (!authEnabled) {
+    return json(res, 503, { error: 'Account sync is not configured on this server.' });
+  }
+  const user = await getSessionUser(sessionToken(req));
+  if (!user) return json(res, 401, { error: 'Please sign in to load your saved rooms.' });
+  try {
+    const project = await getSavedProject(user.id);
+    return json(res, 200, { project });
+  } catch (e) {
+    console.error('[project] load error:', e);
+    return json(res, 500, { error: 'Could not load your saved rooms. Please try again.' });
+  }
+}
+
+/**
+ * Saves the signed-in user's project to their account (last-write-wins — see
+ * server/projects.ts). Enforces the free-tier room cap: a save that would leave
+ * the account over the limit is rejected outright (409) and writes nothing, so
+ * the client can show a calm upgrade prompt instead of silently losing data.
+ */
+async function handleSaveProject(req: IncomingMessage, res: ServerResponse) {
+  if (!authEnabled) {
+    return json(res, 503, { error: 'Account sync is not configured on this server.' });
+  }
+  const user = await getSessionUser(sessionToken(req));
+  if (!user) return json(res, 401, { error: 'Please sign in to save your rooms.' });
+  let body: unknown;
+  try {
+    body = JSON.parse(await readBody(req));
+  } catch (e) {
+    return json(res, 400, { error: e instanceof Error ? e.message : 'Invalid request.' });
+  }
+  let project: ReturnType<typeof parseProjectEnvelope>;
+  try {
+    project = parseProjectEnvelope((body as { project?: unknown } | null)?.project);
+  } catch {
+    return json(res, 400, { error: 'The "project" field is missing or malformed.' });
+  }
+  try {
+    await saveProject(user.id, project);
+    return json(res, 200, { ok: true });
+  } catch (e) {
+    if (e instanceof RoomCapExceededError) {
+      return json(res, 409, { error: e.message, code: 'room_cap_exceeded', limit: FREE_ROOM_LIMIT });
+    }
+    console.error('[project] save error:', e);
+    return json(res, 500, { error: 'Could not save your rooms. Please try again.' });
+  }
 }
 
 /**
@@ -658,6 +722,18 @@ const server = createServer((req, res) => {
     if (req.method === 'GET' && req.url === '/api/auth/me') {
       const user = await getSessionUser(sessionToken(req));
       return json(res, 200, { user, authEnabled });
+    }
+    // A signed-in user's account-synced project (see server/projects.ts). GET
+    // loads it; PUT saves it (state-changing, so it needs the same same-origin
+    // guard the POST endpoints below get).
+    if (req.method === 'GET' && req.url === '/api/project') {
+      return handleGetProject(req, res);
+    }
+    if (req.method === 'PUT' && req.url === '/api/project') {
+      if (!isSameOrigin(req)) {
+        return json(res, 403, { error: 'Cross-origin request rejected.' });
+      }
+      return handleSaveProject(req, res);
     }
     if (req.method === 'GET' || req.method === 'HEAD') {
       return serveStatic(req, res);

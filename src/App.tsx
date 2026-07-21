@@ -15,6 +15,7 @@ import { DialogHost } from './components/panel/DialogHost';
 import { ShortcutsReference } from './components/panel/ShortcutsReference';
 import { RoomSummary } from './components/summary/RoomSummary';
 import { AuthDialog } from './components/auth/AuthDialog';
+import { RoomCapDialog } from './components/auth/RoomCapDialog';
 import { SaveErrorBanner } from './components/ui/SaveErrorBanner';
 import { Icon } from './components/ui/Icon';
 import { PlanEditor } from './components/plan/PlanEditor';
@@ -24,6 +25,7 @@ import { useDialogStore } from './store/useDialogStore';
 import { useAuthStore } from './store/useAuthStore';
 import { backToLobby } from './lib/nav';
 import { handleGlobalKeydown } from './lib/globalKeydown';
+import { initProjectSync } from './lib/projectSync';
 
 // three.js and the whole 3D scene are the bulk of the bundle; load them only
 // when a room is actually opened so the lobby/first paint stays light.
@@ -150,7 +152,11 @@ function App() {
 
   // Establish the session once on load; the store's `enabled`/`user` then drive
   // whether sign-in is shown and whether AI furnishing is gated behind it.
+  // `initProjectSync` wires the account-sync side effects (see lib/projectSync.ts)
+  // that key off that same `user` transition, so it must be set up before refresh()
+  // can resolve.
   useEffect(() => {
+    initProjectSync();
     void useAuthStore.getState().refresh();
   }, []);
 
@@ -179,6 +185,7 @@ function App() {
       <ShortcutsReference />
       <RoomSummary />
       <AuthDialog />
+      <RoomCapDialog />
       <SaveErrorBanner />
     </div>
   );
