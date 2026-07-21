@@ -269,10 +269,15 @@ export function wallById(d: Design, id: string): Wall | undefined {
   return d.walls.find((w) => w.id === id);
 }
 
-/** Clamps an opening to its wall; openings without a wall are left to validation. */
+/**
+ * Clamps an opening to its wall and nudges it clear of any sibling opening
+ * already on that same wall; openings without a wall are left to validation.
+ */
 export function clampOpeningIn(d: Design, o: WallOpening): WallOpening {
   const wall = wallById(d, o.wallId);
-  return wall ? clampOpening(o, wall, d.room.height) : o;
+  if (!wall) return o;
+  const siblings = d.openings.filter((sib) => sib.wallId === o.wallId && sib.id !== o.id);
+  return clampOpening(o, wall, d.room.height, siblings);
 }
 
 /**

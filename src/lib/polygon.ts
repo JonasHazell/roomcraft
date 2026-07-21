@@ -387,7 +387,10 @@ export function formatCm(v: number): string {
 /**
  * The opening a fresh "Add door/window" control creates, in meters. A single
  * source of truth so the wall selection bar and the doors-&-windows editor add
- * identical openings.
+ * identical openings. The `offset` here is only a starting hint — `addOpening`
+ * (via `clampOpeningIn`/`clampOpening`) nudges it to the wall's first clear span
+ * if a sibling opening already sits there, so two openings never land on top of
+ * each other or overlap.
  */
 export function defaultOpening(kind: OpeningKind, wallId: string): Omit<WallOpening, 'id'> {
   return kind === 'door'

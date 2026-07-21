@@ -196,10 +196,59 @@ export function findClearSpot(
   return from;
 }
 
-export function clampOpening(o: WallOpening, wall: Wall, roomHeight: number): WallOpening {
+/** Tolerance for opening-span overlap checks, in meters (avoids float-noise false positives). */
+const OPENING_OVERLAP_EPS = 1e-6;
+
+function opensOverlap(aOffset: number, aWidth: number, bOffset: number, bWidth: number): boolean {
+  return aOffset < bOffset + bWidth - OPENING_OVERLAP_EPS && bOffset < aOffset + aWidth - OPENING_OVERLAP_EPS;
+}
+
+/**
+ * The first clear offset (searching from the wall's start) where a `width`-wide
+ * span doesn't overlap any sibling opening already on the same wall, within the
+ * wall's own [0, len - width] bounds. A clear span can only *begin* at the wall's
+ * start or immediately after a sibling ends, so those are the only candidates
+ * worth checking (a standard interval-scheduling free-slot search) — cheap even
+ * with several openings on one wall. Falls back to the bounds-clamped `preferred`
+ * offset if the wall genuinely has no clear span left for it; flagging that
+ * remaining overlap is validation's job, not placement's.
+ */
+function firstClearOffset(
+  preferred: number,
+  width: number,
+  len: number,
+  siblings: Pick<WallOpening, 'offset' | 'width'>[],
+): number {
+  const max = len - width;
+  const clamped = clamp(preferred, 0, max);
+  if (siblings.length === 0) return clamped;
+  const clashes = (candidate: number) =>
+    siblings.some((s) => opensOverlap(candidate, width, s.offset, s.width));
+  if (!clashes(clamped)) return clamped;
+  const candidates = [0, ...siblings.map((s) => s.offset + s.width)]
+    .map((c) => clamp(c, 0, max))
+    .sort((a, b) => a - b);
+  for (const c of candidates) {
+    if (!clashes(c)) return c;
+  }
+  return clamped; // no clear span anywhere on the wall — leave it, best effort
+}
+
+/**
+ * Clamps an opening to its wall's bounds and, when siblings are given, nudges it
+ * to the first clear span on the wall that doesn't overlap any of them — the
+ * placement backstop for both a freshly-added opening (see `defaultOpening`) and
+ * any add/resize/move that could otherwise land two openings on top of each other.
+ */
+export function clampOpening(
+  o: WallOpening,
+  wall: Wall,
+  roomHeight: number,
+  siblings: Pick<WallOpening, 'offset' | 'width'>[] = [],
+): WallOpening {
   const len = wallLen(wall);
   const width = clamp(o.width, 0.1, len);
-  const offset = clamp(o.offset, 0, len - width);
+  const offset = firstClearOffset(o.offset, width, len, siblings);
   const elevation = o.kind === 'door' ? 0 : clamp(o.elevation, 0, roomHeight - 0.2);
   const height = clamp(o.height, 0.1, roomHeight - elevation);
   return { ...o, width, offset, elevation, height };
