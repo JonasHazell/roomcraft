@@ -4,6 +4,7 @@ import {
   activeRoom,
   deleteFurnitureFromLibrary,
   migrateV1toV2,
+  parseDesign,
   parseProject,
   parseProjectSafe,
   parseWorkspace,
@@ -321,6 +322,44 @@ describe('parseProject', () => {
     const migrated = migrateV1toV2(structuredClone(V1_DESIGN) as never);
     expect(migrated.walls).toHaveLength(4);
     expect(migrated.openings).toHaveLength(2);
+  });
+});
+
+describe('parseDesign', () => {
+  // A standalone room snapshot — one project room entry on its own, the shape a
+  // shared-room link posts to the server (#353, server/share.ts).
+  const room = activeRoom(parseProject(V1_DESIGN));
+
+  it('accepts a valid single room and survives a JSON round trip', () => {
+    const parsed = parseDesign(JSON.parse(JSON.stringify(room)));
+    expect(parsed).toEqual(room);
+  });
+
+  it('rejects a malformed room (bad colour, out-of-range furniture position)', () => {
+    expect(() => parseDesign({ ...room, floorColor: 'not-a-colour' })).toThrow();
+    expect(() =>
+      parseDesign({
+        ...room,
+        furniture: [{ ...room.furniture[0], position: { x: 9999, z: 0 } }],
+      }),
+    ).toThrow();
+  });
+
+  it('rejects a room with a broken exterior wall chain, same as parseProject', () => {
+    expect(() => parseDesign({ ...room, walls: room.walls.slice(0, 3), openings: [] })).toThrow(
+      /Invalid room shape/,
+    );
+  });
+
+  it('rejects a room with an opening on a nonexistent wall', () => {
+    expect(() =>
+      parseDesign({ ...room, openings: [{ ...room.openings[0], wallId: 'does-not-exist' }] }),
+    ).toThrow(/does not exist/);
+  });
+
+  it('rejects non-object input', () => {
+    expect(() => parseDesign(null)).toThrow();
+    expect(() => parseDesign('hello')).toThrow();
   });
 });
 

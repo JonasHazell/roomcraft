@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
+import { useShareStore } from '../../store/useShareStore';
 import { confirmDialog, promptDialog } from '../../store/useDialogStore';
 import { useAiSuggest } from '../../lib/useAiSuggest';
 import { useEscape } from '../../lib/useEscape';
@@ -28,6 +29,8 @@ export function ProposalSwitcher() {
   const reorderProposals = useDesignStore((s) => s.reorderProposals);
   const removeProposal = useDesignStore((s) => s.removeProposal);
   const autoArrange = useDesignStore((s) => s.autoArrange);
+  const design = useDesignStore((s) => s.design);
+  const shareRoom = useShareStore((s) => s.share);
   const select = useUiStore((s) => s.select);
   const appView = useUiStore((s) => s.appView);
   // AI furnishing runs on the owner's Claude login, so when the server has
@@ -127,6 +130,15 @@ export function ProposalSwitcher() {
         setArranging(false);
       }
     }, 16);
+  };
+
+  // First step toward planning together (#353): a read-only link to a
+  // point-in-time snapshot of the room as it looks right now. Closes the menu
+  // and hands off to the share store; ShareDialog (mounted in App.tsx) shows
+  // the resulting link once the server responds.
+  const share = () => {
+    setOpen(false);
+    void shareRoom(design);
   };
 
   const rename = async (id: string, current: string) => {
@@ -235,6 +247,9 @@ export function ProposalSwitcher() {
               onClick={runAutoArrange}
             >
               <Icon name="scan" /> {arranging ? 'Arranging…' : 'Auto-arrange'}
+            </button>
+            <button type="button" className="btn" onClick={share}>
+              <Icon name="share" /> Share
             </button>
             {arrangeStatus && (
               <p className="hint proposal-menu-status" role="status" aria-live="polite">

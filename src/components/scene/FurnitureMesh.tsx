@@ -46,7 +46,13 @@ import { Sink } from './furniture/Sink';
 import { FloorLamp } from './furniture/FloorLamp';
 import { TableLamp } from './furniture/TableLamp';
 
-const COMPONENTS: Record<FurnitureKind, ComponentType<FurnitureProps>> = {
+/**
+ * Kind → 3D component lookup. Exported so a read-only renderer (e.g. the shared
+ * room viewer, `components/share/ShareScene.tsx`) can render the same pieces
+ * without depending on the live editing store this file's own `FurnitureMesh`
+ * reads from.
+ */
+export const COMPONENTS: Record<FurnitureKind, ComponentType<FurnitureProps>> = {
   bed: Bed,
   sofa: Sofa,
   table: Table,
@@ -74,8 +80,9 @@ const COMPONENTS: Record<FurnitureKind, ComponentType<FurnitureProps>> = {
  * Provides the per-part material resolver ({@link PartsContext}) and the primary
  * part as the fallback finish ({@link MaterialContext}) for a piece, so every
  * `Mat` inside — whether it names a part or not — renders the right finish.
+ * Exported for the same reason as {@link COMPONENTS} above.
  */
-function PartMaterials({
+export function PartMaterials({
   kind,
   materials,
   legacy,

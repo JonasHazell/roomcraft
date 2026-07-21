@@ -21,6 +21,7 @@ import {
   serializeSessionCookie,
   type AuthUser,
 } from './auth.ts';
+import { createShare, getShare, ShareNotConfiguredError } from './share.ts';
 import { runClaude, type ChatMessages } from './claude.ts';
 import { autoFixProposals } from './autofix.ts';
 import { placeDeskChairs } from './deskChair.ts';
@@ -746,6 +747,29 @@ const server = createServer((req, res) => {
       }
       return handleSaveProject(req, res);
     }
+    // Read-only shared room snapshot (#353). Publicly readable with no session
+    // check — the opaque link itself is the access control, matching the issue's
+    // "no sign-in required to view" requirement. Path-only match (query stripped)
+    // since a share id never legitimately carries one.
+    if (req.method === 'GET' && req.url) {
+      const path = req.url.split('?')[0];
+      const shareMatch = /^\/api\/share\/([^/]+)$/.exec(path);
+      if (shareMatch) {
+        try {
+          const design = await getShare(decodeURIComponent(shareMatch[1]));
+          if (!design) {
+            return json(res, 404, { error: 'This shared room link is invalid or has expired.' });
+          }
+          return json(res, 200, { design });
+        } catch (e) {
+          if (e instanceof ShareNotConfiguredError) {
+            return json(res, 503, { error: e.message });
+          }
+          console.error('[share] read error:', e);
+          return json(res, 500, { error: 'Could not load the shared room. Please try again.' });
+        }
+      }
+    }
     if (req.method === 'GET' || req.method === 'HEAD') {
       return serveStatic(req, res);
     }
@@ -769,6 +793,34 @@ const server = createServer((req, res) => {
     }
     if (req.url === '/api/auth/logout') {
       return handleLogout(req, res);
+    }
+    // Read-only room sharing (#353): store a point-in-time snapshot and hand back
+    // an opaque id. No sign-in required to create one — unlike AI furnishing, a
+    // share costs one cheap DB write, not a paid model call, so there's no cost
+    // reason to gate it behind an account.
+    if (req.url === '/api/share') {
+      if (!allowRequest(clientIp(req))) {
+        return json(res, 429, { error: 'Too many requests. Please wait a moment and try again.' });
+      }
+      let body: { design?: unknown };
+      try {
+        body = JSON.parse(await readBody(req)) as { design?: unknown };
+      } catch {
+        return json(res, 400, { error: 'Invalid request.' });
+      }
+      try {
+        const id = await createShare(body.design);
+        return json(res, 200, { id });
+      } catch (e) {
+        if (e instanceof ShareNotConfiguredError) {
+          return json(res, 503, { error: e.message });
+        }
+        // A ZodError or validateRoom's Error means the design was malformed —
+        // report it as a 400, same as the auth handlers' own bad-input replies.
+        return json(res, 400, {
+          error: e instanceof Error ? e.message : 'The room could not be shared.',
+        });
+      }
     }
     if (req.url !== '/api/proposals') {
       return json(res, 404, { error: 'Unknown endpoint. Use POST /api/proposals.' });

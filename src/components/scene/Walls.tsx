@@ -193,21 +193,27 @@ function WallMesh({
 // in the 3D view instead of a bare hole in the wall (#355). Roughness anchors
 // to the shared 'wood' finish; the colour is a fixed wood tone, same simplicity
 // level WindowPane already uses for its glass tint.
-function DoorLeaf({
+//
+// Both are exported (with WindowPane below) so the read-only shared-room viewer
+// (`components/share/ShareScene.tsx`) renders identical door/window fill without
+// duplicating the geometry. There, `fadeable`/`register` are omitted: the static
+// viewer has no exterior-wall fade loop to hook into, so the door simply never
+// registers for fading.
+export function DoorLeaf({
   opening: o,
-  fadeable,
+  fadeable = false,
   register,
 }: {
   opening: WallOpening;
-  fadeable: boolean;
-  register: (wallId: string, mat: THREE.MeshStandardMaterial) => () => void;
+  fadeable?: boolean;
+  register?: (wallId: string, mat: THREE.MeshStandardMaterial) => () => void;
 }) {
   const finish = materialSpec('wood');
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
   // Only doors on a fadeable (exterior) wall follow the wall's opacity; register
   // with the parent so the wall's fade loop drives this material too.
   useEffect(() => {
-    if (!fadeable || !matRef.current) return;
+    if (!fadeable || !register || !matRef.current) return;
     return register(o.wallId, matRef.current);
   }, [fadeable, register, o.wallId]);
   return (
@@ -224,7 +230,7 @@ function DoorLeaf({
   );
 }
 
-function WindowPane({ opening: o }: { opening: WallOpening }) {
+export function WindowPane({ opening: o }: { opening: WallOpening }) {
   return (
     <mesh
       position={[o.offset + o.width / 2, o.elevation + o.height / 2, WALL_T / 2]}

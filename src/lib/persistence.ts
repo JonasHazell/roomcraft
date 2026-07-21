@@ -525,6 +525,21 @@ export function parseProjectSafe(raw: unknown): Project | null {
   }
 }
 
+/**
+ * The current single-room schema — the same shape as one entry in a v5 project's
+ * `rooms` array, exported so a standalone room snapshot (not embedded in a
+ * project) can be validated without duplicating the furniture/wall/opening
+ * rules above. Used by the read-only room-sharing feature (#353):
+ * `server/share.ts` validates an incoming share with this before it's stored, so
+ * a share can never persist a malformed design.
+ */
+export const designSchema = roomSchemaEntryV5;
+
+/** The single entry point for untrusted standalone room data (a shared link's snapshot). */
+export function parseDesign(raw: unknown): Design {
+  return validateRoom(designSchema.parse(raw));
+}
+
 // ---- Workspace: every home project on this device (#382) ----
 
 /** The active home — the one whose active room the store's live `project`/`design` mirror. */

@@ -74,6 +74,18 @@ export async function initSchema(): Promise<void> {
     );
   `);
   await pool.query('CREATE INDEX IF NOT EXISTS sessions_user_id_idx ON sessions(user_id);');
+  // Read-only room sharing (#353): a point-in-time snapshot of one room's Design
+  // (see src/lib/persistence.ts's `designSchema`), keyed by an opaque id handed
+  // out from POST /api/share and read back by GET /api/share/:id. Unrelated to
+  // the `users`/`sessions` tables above — sharing needs no account — so it's a
+  // separate CREATE TABLE rather than columns on an existing one.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS shared_rooms (
+      id text PRIMARY KEY,
+      design_json jsonb NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now()
+    );
+  `);
   // One row per user: their whole `Project` (all rooms), synced from the client
   // (see server/projects.ts). A signed-in user gets exactly one saved project,
   // last-write-wins — no history/versioning, matching the app's local-first
