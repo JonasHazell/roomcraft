@@ -9,6 +9,7 @@ import { materialSpec } from '../../lib/materials';
 import { materialBump, materialMap } from './materialTextures';
 import { useDesignStore } from '../../store/useDesignStore';
 import { useUiStore } from '../../store/useUiStore';
+import { isAdditiveSelectMiss } from './Floor';
 import { SELECT_EMISSIVE } from './furniture/shared';
 
 const camVec = new THREE.Vector3();
@@ -132,6 +133,8 @@ function WallMesh({
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     // Same still-click guard as deselectOnStillClick.
     if (e.delta > 3) return;
+    // A near-miss while adding to a selection shouldn't hijack it to the wall.
+    if (isAdditiveSelectMiss(e)) return;
     // Faded walls are still raycast — pass the click through to what's behind.
     const mat = e.eventObject instanceof THREE.Mesh ? e.eventObject.material : null;
     if (mat instanceof THREE.MeshStandardMaterial && mat.transparent && mat.opacity < CLICK_PASSTHROUGH_OPACITY) {

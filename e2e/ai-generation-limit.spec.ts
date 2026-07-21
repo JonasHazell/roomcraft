@@ -86,6 +86,10 @@ test.beforeEach(async ({ page }) => {
 test('hitting the free-tier AI cap shows a calm upgrade prompt instead of a generic error', async ({
   page,
 }, testInfo) => {
+  // Entering the 3D furnish view and driving the AI-panel flow runs well under
+  // 30s on desktop, but the emulated mobile viewport's WebGL is ~2× slower here
+  // and brushes the default timeout — give it headroom so it's not flaky.
+  test.setTimeout(90_000);
   await page
     .locator('.room-card', { hasText: 'Sunroom' })
     .getByRole('button', { name: 'Edit plan' })

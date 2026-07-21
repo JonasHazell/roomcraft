@@ -8,9 +8,9 @@ import { test, expect, type Page, type Locator } from '@playwright/test';
  * `docs/MOBILE-FIRST.md`): a fine pointer (desktop) shift/ctrl/cmd-clicks a
  * second piece; a coarse pointer (mobile) has no modifier key, so it taps the
  * selection bar's "Select multiple" toggle first, then taps pieces to add them.
- * `addToSelection` below picks whichever the current Playwright project actually
- * has, so this spec exercises the real per-device mechanism in both projects
- * rather than faking one on both.
+ * `enterAddMode`/`addTap` below pick whichever the current Playwright project
+ * actually has, so this spec exercises the real per-device mechanism in both
+ * projects rather than faking one on both.
  */
 
 /** Build a small room and land on the 3D furnish view, ready to add pieces. */
@@ -101,12 +101,13 @@ async function dragOnCanvas(
 }
 
 /**
- * Add `point` to the current selection using whichever convention this
- * viewport actually offers: shift-click on a fine (desktop) pointer, or the
- * selection bar's "Select multiple" toggle followed by a plain tap on a coarse
- * (touch/mobile) one — there is no modifier key to hold on a touchscreen.
+ * Engage whichever "add another piece to the selection" convention this viewport
+ * actually offers, returning whether the pointer is coarse. A fine (desktop)
+ * pointer has no mode — Shift is held per click instead — so this is a no-op
+ * there. A coarse (touch/mobile) pointer has no modifier key, so it flips the
+ * selection bar's "Select multiple" toggle once; subsequent plain taps add.
  */
-async function addToSelection(page: Page, canvas: Locator, point: { x: number; y: number }) {
+async function enterAddMode(page: Page): Promise<boolean> {
   const coarse = await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches);
   if (coarse) {
     const toggle = page.getByRole('button', { name: 'Select multiple' });
@@ -116,10 +117,43 @@ async function addToSelection(page: Page, canvas: Locator, point: { x: number; y
     // piece — under parallel test load the store update can lag a beat behind
     // the click, and tapping too early lands as a plain (replacing) select.
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  }
+  return coarse;
+}
+
+/**
+ * One additive tap/click at a canvas point. A single 3D raycast can miss the
+ * piece by a pixel under headless WebGL, but the app now treats an additive
+ * near-miss as a no-op (it never nukes the in-progress selection), so callers
+ * retry this until the group actually forms rather than the first tap having to
+ * land dead-on.
+ */
+async function addTap(
+  page: Page,
+  canvas: Locator,
+  point: { x: number; y: number },
+  coarse: boolean,
+) {
+  if (coarse) {
     await canvas.click({ position: point });
   } else {
     await canvas.click({ position: point, modifiers: ['Shift'] });
   }
+}
+
+/** Fold `point`'s piece into the current selection, retrying the additive tap
+ *  until the two-piece group toolbar is up — resilient to a raycast near-miss. */
+async function addToGroup(
+  page: Page,
+  canvas: Locator,
+  point: { x: number; y: number },
+  groupToolbar: Locator,
+) {
+  const coarse = await enterAddMode(page);
+  await expect(async () => {
+    await addTap(page, canvas, point, coarse);
+    await expect(groupToolbar).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 30_000 });
 }
 
 /**
@@ -188,8 +222,7 @@ test('a multi-selection groups pieces, and Duplicate/Delete act on all of them',
   await expect(page.getByRole('button', { name: 'More settings' })).toBeVisible();
 
   // Add the bed to the current (chair) selection — a group of two.
-  await addToSelection(page, canvas, bedPoint);
-  await expect(groupToolbar).toBeVisible();
+  await addToGroup(page, canvas, bedPoint, groupToolbar);
   // Bulk actions replace the single-piece-only controls while a group is active.
   await expect(page.getByRole('button', { name: 'More settings' })).toBeHidden();
   await expect(page.getByRole('button', { name: 'Duplicate' })).toBeVisible();
@@ -241,8 +274,7 @@ test('dragging one piece of a multi-selection moves every selected piece togethe
   // test above gets this for free from its extra "More settings" assertion.
   await page.waitForTimeout(300);
 
-  await addToSelection(page, canvas, bedPoint);
-  await expect(groupToolbar).toBeVisible();
+  await addToGroup(page, canvas, bedPoint, groupToolbar);
 
   const positionsBefore = await furniturePositions(page);
   const ids = Object.keys(positionsBefore);
@@ -272,4 +304,46 @@ test('dragging one piece of a multi-selection moves every selected piece togethe
 
   await page.keyboard.press('Escape');
   await expect(groupToolbar).toBeHidden();
+});
+
+test('an additive near-miss on empty scenery keeps the selection instead of clearing it', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await smallRoom(page);
+
+  // Matches both the single ("Furniture actions") and multi
+  // ("Furniture actions (N selected)") contextual bars.
+  const furnitureToolbar = page.getByRole('toolbar', { name: /^Furniture actions/ });
+  const singleToolbar = page.getByRole('toolbar', { name: 'Furniture actions', exact: true });
+
+  await addFurniture(page, 'Bed');
+  await expect(singleToolbar).toBeVisible();
+  await expect(page.locator('.scene-loading')).toBeHidden({ timeout: 90_000 });
+  const canvas = page.locator('canvas');
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error('canvas not found');
+  const bedPoint = await findSolePieceOnCanvas(page, canvas, singleToolbar, box);
+
+  // A point on empty scenery (floor/ground), well clear of the piece.
+  const emptyPoint = { x: box.width * 0.5, y: box.height * 0.86 };
+
+  // Sanity check: a *plain* click there really does drop the furniture
+  // selection — otherwise the additive assertion below would pass trivially.
+  await canvas.click({ position: emptyPoint });
+  await expect(furnitureToolbar).toBeHidden();
+
+  // Re-select the bed, then land the exact same click as part of an additive
+  // gesture: shift-click on a fine pointer, or a tap while "Select multiple" is
+  // engaged on a coarse one. The near-miss must now be a no-op, leaving the
+  // piece selected rather than nuking an in-progress multi-selection.
+  await page.keyboard.press('Escape');
+  await canvas.click({ position: bedPoint });
+  await expect(singleToolbar).toBeVisible();
+
+  const coarse = await enterAddMode(page);
+  await addTap(page, canvas, emptyPoint, coarse);
+  await expect(furnitureToolbar).toBeVisible();
+
+  await expect(page.getByRole('alert')).toHaveCount(0);
 });
