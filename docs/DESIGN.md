@@ -205,6 +205,12 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   the shape chooser as its empty state; the room's name is editable inline in the top
   bar (`.plan-name`), and "Furnish this room" (`.plan-furnish-btn`) carries it into
   the 3D view. The provisional room is discarded if left before an outline is drawn.
+- **Home switcher** — the lobby's "My homes" section (`Lobby.tsx`), a compact
+  sibling of the `.room-grid`/`.room-card` below it: a `.home-list` row of
+  `.home-card` tiles (icon + name + room count, `.home-card-active` marking the
+  current one) with rename/delete `.btn-icon`s, plus a dashed `.home-card-new`
+  "New home" tile. Each home keeps its own independent rooms, furniture and
+  proposals — switching never merges or leaks state between them (#382).
 - **Room summary (print/export)** — a printable, static snapshot of the active
   room (`RoomSummary.tsx`), opened from the printer icon in the room top bar
   (next to the keyboard-shortcuts icon). Built on the shared `.modal` chrome,

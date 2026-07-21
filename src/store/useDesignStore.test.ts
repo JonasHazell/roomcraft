@@ -214,7 +214,7 @@ describe('discarding an undrawn new room', () => {
     expect(store().project.activeRoomId).toBe(newId);
   });
 
-  it('leaves an empty workspace when the only room is undrawn', () => {
+  it('leaves an empty home when the only room is undrawn', () => {
     store().loadProject({ ...store().project, rooms: [], activeRoomId: '' });
     const onlyId = store().createRoom();
     expect(store().project.rooms).toHaveLength(1);

@@ -1968,7 +1968,9 @@ select {
   .prompt-chip,
   .count-step,
   .check-field,
-  .source-toggle button {
+  .source-toggle button,
+  .home-card-main,
+  .home-card-new {
     min-height: 44px;
   }
 
@@ -2600,6 +2602,98 @@ select {
 .btn-lg {
   font-size: 16px;
   padding: 12px 22px;
+}
+
+/* ---------- "My homes" switcher (#382) — a compact sibling of .room-card,
+   one level up: every home project on this device, plus "New home". ---------- */
+
+.home-switcher {
+  max-width: 1120px;
+  margin: 0 auto 22px;
+}
+
+.home-switcher-title {
+  font-family: var(--display);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+.home-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.home-card {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--popup-radius);
+  background: var(--card);
+  padding: 4px;
+}
+
+.home-card-active {
+  border-color: var(--ink);
+  box-shadow: 0 2px 8px rgba(24, 24, 27, 0.08);
+}
+
+.home-card-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: calc(var(--popup-radius) - 4px);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  padding: 6px 10px;
+}
+
+.home-card-icon {
+  display: flex;
+  font-size: var(--icon-sm);
+  color: var(--accent);
+}
+
+.home-card-name {
+  font-family: var(--display);
+  font-variation-settings: 'wght' 560;
+}
+
+.home-card-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.home-card-actions {
+  display: flex;
+  gap: 2px;
+}
+
+/* The "new home" tile mirrors .room-card-new but at the switcher's compact scale. */
+.home-card-new {
+  border-style: dashed;
+  border-color: var(--line);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  cursor: pointer;
+  color: var(--muted);
+  font: inherit;
+}
+
+.home-card-new:hover {
+  border-color: var(--accent);
+  color: var(--ink);
 }
 
 .room-grid {
