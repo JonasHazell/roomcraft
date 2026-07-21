@@ -1,12 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  activeProject,
   activeRoom,
   deleteFurnitureFromLibrary,
   migrateV1toV2,
   parseProject,
   parseProjectSafe,
+  parseWorkspace,
+  parseWorkspaceSafe,
   saveFurnitureToLibrary,
   syncActiveRoom,
+  syncActiveWorkspace,
 } from './persistence';
 import { signedArea, validateExteriorLoop } from './polygon';
 import { useStorageStatus } from '../store/useStorageStatus';
@@ -45,7 +49,8 @@ describe('migration to the project schema', () => {
   const room = activeRoom(p);
 
   it('wraps a legacy single design into a one-room project', () => {
-    expect(p.schemaVersion).toBe(5);
+    expect(p.schemaVersion).toBe(6);
+    expect(p.id).toBeTruthy();
     expect(p.rooms).toHaveLength(1);
     expect(p.activeRoomId).toBe(room.id);
     expect(room.id).toBeTruthy();
@@ -117,7 +122,7 @@ describe('rooms', () => {
     expect(parsed?.activeRoomId).toBe(base.rooms[0].id);
   });
 
-  it('accepts an empty workspace (no rooms yet)', () => {
+  it('accepts an empty home project (no rooms yet)', () => {
     // A new user starts with no rooms; the lobby shows its create-first-room state.
     const base = parseProject(V1_DESIGN);
     const empty = { ...base, rooms: [], activeRoomId: '' };
@@ -184,10 +189,10 @@ describe('proposals within a room', () => {
 });
 
 describe('parseProject', () => {
-  it('accepts a v5 project and survives a JSON round trip', () => {
-    const v5 = parseProject(V1_DESIGN);
-    const roundTripped = parseProject(JSON.parse(JSON.stringify(v5)));
-    expect(roundTripped).toEqual(v5);
+  it('accepts a current (v6) project and survives a JSON round trip', () => {
+    const current = parseProject(V1_DESIGN);
+    const roundTripped = parseProject(JSON.parse(JSON.stringify(current)));
+    expect(roundTripped).toEqual(current);
   });
 
   it('rejects unknown schema version', () => {
@@ -254,6 +259,38 @@ describe('parseProject', () => {
     expect(parsed.wallMaterial).toBe('matte');
   });
 
+  it('keeps a valid https product link and drops a malformed one', () => {
+    const base = parseProject(V1_DESIGN);
+    const room = base.rooms[0];
+    const linkedBed = {
+      ...room.furniture[0],
+      product: { url: 'https://example.com/bed', priceCents: 12999, retailer: 'Example Co' },
+    };
+    const badBed = {
+      ...room.furniture[0],
+      id: 'f2',
+      // Not https — must be dropped rather than rejecting the whole piece.
+      product: { url: 'http://example.com/bed' },
+    };
+    const withProducts = {
+      ...base,
+      rooms: [
+        {
+          ...room,
+          furniture: [linkedBed, badBed],
+          proposals: [{ ...room.proposals[0], furniture: [linkedBed, badBed] }],
+        },
+      ],
+    };
+    const parsed = activeRoom(parseProject(JSON.parse(JSON.stringify(withProducts))));
+    expect(parsed.furniture[0].product).toEqual({
+      url: 'https://example.com/bed',
+      priceCents: 12999,
+      retailer: 'Example Co',
+    });
+    expect(parsed.furniture[1].product).toBeUndefined();
+  });
+
   it('rejects garbage and broken structures', () => {
     expect(parseProjectSafe(null)).toBeNull();
     expect(parseProjectSafe('hello')).toBeNull();
@@ -284,6 +321,87 @@ describe('parseProject', () => {
     const migrated = migrateV1toV2(structuredClone(V1_DESIGN) as never);
     expect(migrated.walls).toHaveLength(4);
     expect(migrated.openings).toHaveLength(2);
+  });
+});
+
+describe('workspace: several home projects on one device (#382)', () => {
+  it('migrates the pre-#382 single-project shape into a one-item workspace, preserving the home intact', () => {
+    // The exact shape `roomcraft:current` held before this issue: `{ project: <v5 blob> }`,
+    // no `workspace` wrapper at all.
+    const legacyProject = { ...parseProject(V1_DESIGN), schemaVersion: 5 as const };
+    const workspace = parseWorkspace(JSON.parse(JSON.stringify({ project: legacyProject })));
+
+    expect(workspace.projects).toHaveLength(1);
+    expect(workspace.activeProjectId).toBe(workspace.projects[0].id);
+    // The room, its shape and its furniture all survive the migration untouched.
+    const room = activeRoom(workspace.projects[0]);
+    expect(room.name).toBe('My room');
+    expect(room.furniture).toHaveLength(1);
+    expect(room.walls).toHaveLength(4);
+  });
+
+  it('also migrates a bare pre-project design (no `project` wrapper at all)', () => {
+    const workspace = parseWorkspace(JSON.parse(JSON.stringify({ design: V1_DESIGN })));
+    expect(workspace.projects).toHaveLength(1);
+    expect(activeRoom(workspace.projects[0]).name).toBe('My room');
+  });
+
+  it('round-trips an already-multi-home workspace and keeps each home independent', () => {
+    const home1 = { ...parseProject(V1_DESIGN), name: 'Main place' };
+    const home2 = { ...parseProject(V1_DESIGN), id: 'home-2', name: 'Cabin' };
+    const raw = { workspace: { projects: [home1, home2], activeProjectId: 'home-2' } };
+
+    const workspace = parseWorkspace(JSON.parse(JSON.stringify(raw)));
+
+    expect(workspace.projects.map((p) => p.name)).toEqual(['Main place', 'Cabin']);
+    expect(workspace.activeProjectId).toBe('home-2');
+    expect(activeProject(workspace).name).toBe('Cabin');
+    // Each home's own room is untouched by the other's presence in the list.
+    expect(activeRoom(workspace.projects[0]).furniture).toHaveLength(1);
+    expect(activeRoom(workspace.projects[1]).furniture).toHaveLength(1);
+  });
+
+  it('falls back to the first home when the active id is unknown', () => {
+    const home1 = parseProject(V1_DESIGN);
+    const raw = { workspace: { projects: [home1], activeProjectId: 'nope' } };
+    const workspace = parseWorkspaceSafe(JSON.parse(JSON.stringify(raw)));
+    expect(workspace?.activeProjectId).toBe(home1.id);
+  });
+
+  it('drops one corrupt home rather than failing the whole workspace', () => {
+    const good = parseProject(V1_DESIGN);
+    // A broken exterior wall chain — the same shape the single-project
+    // "rejects a room with a broken exterior wall chain" test below uses.
+    const brokenRoom = { ...good.rooms[0], walls: good.rooms[0].walls.slice(0, 3) };
+    const broken = { ...good, id: 'broken-home', rooms: [brokenRoom] };
+    const raw = { workspace: { projects: [broken, good], activeProjectId: good.id } };
+
+    const workspace = parseWorkspaceSafe(JSON.parse(JSON.stringify(raw)));
+
+    expect(workspace?.projects).toHaveLength(1);
+    expect(workspace?.projects[0].name).toBe(good.name);
+  });
+
+  it('falls back to a fresh default home when every home is corrupt', () => {
+    const good = parseProject(V1_DESIGN);
+    const brokenRoom = { ...good.rooms[0], walls: good.rooms[0].walls.slice(0, 3) };
+    const broken = { ...good, rooms: [brokenRoom] };
+    const raw = { workspace: { projects: [broken], activeProjectId: broken.id } };
+
+    expect(parseWorkspaceSafe(JSON.parse(JSON.stringify(raw)))).toBeNull();
+  });
+
+  it('syncActiveWorkspace folds the live home back into the workspace', () => {
+    const home1 = parseProject(V1_DESIGN);
+    const home2 = { ...parseProject(V1_DESIGN), id: 'home-2', name: 'Cabin' };
+    const workspace = { projects: [home1, home2], activeProjectId: home1.id };
+
+    const edited = { ...home1, name: 'Renamed live' };
+    const synced = syncActiveWorkspace(workspace, edited);
+
+    expect(activeProject(synced).name).toBe('Renamed live');
+    // The other home is untouched.
+    expect(synced.projects[1].name).toBe('Cabin');
   });
 });
 

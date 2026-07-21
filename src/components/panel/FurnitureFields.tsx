@@ -153,7 +153,76 @@ export function FurnitureFields({
       </div>
       <FurnitureOptionFields value={value} onChange={onChange} />
       <FurnitureAppearanceFields value={value} onChange={onChange} />
+      <ProductLinkFields value={value} onChange={onChange} />
     </>
+  );
+}
+
+/**
+ * Optional link to a real, purchasable product for this piece — the first
+ * step toward the furniture-catalogue revenue model
+ * (docs/VISION.md#how-it-makes-money). Leaving it blank keeps the piece
+ * purely abstract, exactly as before; once a link is set, the dialog
+ * footer's "Buy" button (see `FurnitureDialog.tsx`) opens it in a new tab.
+ * Price/retailer only appear once a link is entered — they describe the
+ * link, so they'd have nothing to attach to before then.
+ */
+function ProductLinkFields({
+  value,
+  onChange,
+}: {
+  value: FurnitureDraft;
+  onChange: (patch: FurnitureFieldPatch) => void;
+}) {
+  const product = value.product;
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      <p className="field-label">Product link</p>
+      <label className="field">
+        <span className="field-label">Link</span>
+        <span className="field-input">
+          <input
+            type="url"
+            placeholder="https://…"
+            value={product?.url ?? ''}
+            onChange={(e) => {
+              const url = e.target.value;
+              onChange({ product: url ? { ...product, url } : undefined });
+            }}
+          />
+        </span>
+      </label>
+      {product?.url && (
+        <div className="field-grid">
+          <NumberField
+            label="Price"
+            value={product.priceCents != null ? product.priceCents / 100 : 0}
+            min={0}
+            max={1_000_000}
+            step={0.01}
+            suffix=""
+            commitOnBlur
+            onChange={(v) =>
+              onChange({
+                product: { ...product, priceCents: v > 0 ? Math.round(v * 100) : undefined },
+              })
+            }
+          />
+          <label className="field">
+            <span className="field-label">Retailer</span>
+            <span className="field-input">
+              <input
+                type="text"
+                value={product.retailer ?? ''}
+                onChange={(e) =>
+                  onChange({ product: { ...product, retailer: e.target.value || undefined } })
+                }
+              />
+            </span>
+          </label>
+        </div>
+      )}
+    </div>
   );
 }
 

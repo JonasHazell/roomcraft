@@ -5,10 +5,6 @@ import { Icon } from '../ui/Icon';
 export interface SwitcherEntry {
   id: string;
   name: string;
-  /** Optional number shown at the end of the row (e.g. proposals per room). Omit to hide the badge. */
-  count?: number;
-  /** Optional tooltip for the count badge. */
-  countTitle?: string;
 }
 
 /**
@@ -125,11 +121,6 @@ export function SwitcherList({
                 {active ? '●' : '○'}
               </span>
               <span className="switch-label">{entry.name}</span>
-              {entry.count !== undefined && (
-                <span className="switch-count" title={entry.countTitle}>
-                  {entry.count}
-                </span>
-              )}
             </button>
             <button
               type="button"

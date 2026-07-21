@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Design } from '../types';
-import { fetchProposals, type ProposalsResponse } from '../lib/aiProposals';
+import { fetchProposals, GenerationLimitError, type ProposalsResponse } from '../lib/aiProposals';
 import { useAuthStore } from './useAuthStore';
 
 /**
@@ -35,11 +35,17 @@ interface AiState {
    * the panel explain a failure that follows.
    */
   interrupted: boolean;
+  /** True when the server reports the free-tier generation cap has been hit
+   * (#352). Shown as a calm upgrade prompt (UpgradeDialog) instead of `error`. */
+  limitReached: boolean;
+  /** The server's own message for the limit hit, e.g. "You've used all 5 …". */
+  limitMessage: string | null;
   setNeeds: (needs: string) => void;
   generate: (design: Design) => Promise<void>;
   cancel: () => void;
   markHidden: () => void;
   setApplied: (title: string) => void;
+  dismissLimit: () => void;
 }
 
 // The controller and timeout live at module scope (not in state) so aborting
@@ -62,6 +68,8 @@ export const useAiStore = create<AiState>()((set, get) => ({
   result: null,
   appliedTitle: null,
   interrupted: false,
+  limitReached: false,
+  limitMessage: null,
 
   setNeeds: (needs) => set({ needs }),
 
@@ -85,12 +93,18 @@ export const useAiStore = create<AiState>()((set, get) => ({
       result: null,
       appliedTitle: null,
       interrupted: false,
+      limitReached: false,
+      limitMessage: null,
       startedAt: Date.now(),
     });
 
     try {
       const result = await fetchProposals(design, needs, signal);
       set({ result, loading: false, startedAt: null });
+      // Re-sync the account's remaining-generations count so the panel's "N of
+      // 5 free generations left" hint reflects this run right away, not just
+      // after the next full page load.
+      if (useAuthStore.getState().enabled) void useAuthStore.getState().refresh();
     } catch (e) {
       if (signal.aborted && !timedOut) {
         // The user cancelled — stop quietly, keep their typed needs.
@@ -102,6 +116,10 @@ export const useAiStore = create<AiState>()((set, get) => ({
           error:
             'That took too long and was stopped. Try again, or describe the room a little more simply.',
         });
+      } else if (e instanceof GenerationLimitError) {
+        // Distinct from the generic failure below: a calm upgrade moment, not
+        // an error — see UpgradeDialog.
+        set({ loading: false, startedAt: null, limitReached: true, limitMessage: e.message });
       } else {
         set({
           loading: false,
@@ -129,4 +147,6 @@ export const useAiStore = create<AiState>()((set, get) => ({
   },
 
   setApplied: (appliedTitle) => set({ appliedTitle }),
+
+  dismissLimit: () => set({ limitReached: false, limitMessage: null }),
 }));

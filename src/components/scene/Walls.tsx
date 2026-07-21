@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { Wall, WallOpening } from '../../types';
@@ -25,6 +25,22 @@ const CLICK_PASSTHROUGH_OPACITY = 0.5;
 export function Walls() {
   const walls = useDesignStore((s) => s.design.walls);
   const matRefs = useRef<Record<string, THREE.MeshStandardMaterial | null>>({});
+  // Door-leaf materials keyed by their host wall's id (a wall can hold several
+  // doors), so the fade loop can drive them in lock-step with the wall.
+  const doorMatRefs = useRef<Record<string, Set<THREE.MeshStandardMaterial>>>({});
+
+  // Stable so DoorLeaf's registration effect doesn't re-run every render. Returns
+  // a cleanup that unregisters the material when the door unmounts.
+  const registerDoorMat = useCallback(
+    (wallId: string, mat: THREE.MeshStandardMaterial) => {
+      const set = (doorMatRefs.current[wallId] ??= new Set());
+      set.add(mat);
+      return () => {
+        set.delete(mat);
+      };
+    },
+    [],
+  );
 
   const fadeData = useMemo(
     () =>
@@ -51,6 +67,15 @@ export function Walls() {
       // Write depth only while (near) opaque, so furniture behind a faded wall
       // isn't clipped away.
       mat.depthWrite = mat.opacity > 0.98;
+      // Fade any doors mounted on this wall in lock-step, so a see-through wall
+      // doesn't leave its door panel floating opaque in mid-air.
+      const doors = doorMatRefs.current[id];
+      if (doors) {
+        for (const dm of doors) {
+          dm.opacity = mat.opacity;
+          dm.depthWrite = mat.depthWrite;
+        }
+      }
     }
   });
 
@@ -65,6 +90,7 @@ export function Walls() {
           matRef={(m: THREE.MeshStandardMaterial | null) => {
             matRefs.current[w.id] = m;
           }}
+          registerDoorMat={registerDoorMat}
         />
       ))}
     </>
@@ -76,11 +102,13 @@ function WallMesh({
   endExtension,
   fadeable,
   matRef,
+  registerDoorMat,
 }: {
   wall: Wall;
   endExtension: number;
   fadeable: boolean;
   matRef: (m: THREE.MeshStandardMaterial | null) => void;
+  registerDoorMat: (wallId: string, mat: THREE.MeshStandardMaterial) => () => void;
 }) {
   const height = useDesignStore((s) => s.design.room.height);
   const wallColor = useDesignStore((s) => s.design.wallColor);
@@ -144,7 +172,12 @@ function WallMesh({
       {wallOpenings
         .filter((o) => o.kind === 'door')
         .map((o) => (
-          <DoorLeaf key={o.id} opening={o} />
+          <DoorLeaf
+            key={o.id}
+            opening={o}
+            fadeable={fadeable}
+            register={registerDoorMat}
+          />
         ))}
       {wallOpenings
         .filter((o) => o.kind === 'window')
@@ -160,12 +193,33 @@ function WallMesh({
 // in the 3D view instead of a bare hole in the wall (#355). Roughness anchors
 // to the shared 'wood' finish; the colour is a fixed wood tone, same simplicity
 // level WindowPane already uses for its glass tint.
-function DoorLeaf({ opening: o }: { opening: WallOpening }) {
+function DoorLeaf({
+  opening: o,
+  fadeable,
+  register,
+}: {
+  opening: WallOpening;
+  fadeable: boolean;
+  register: (wallId: string, mat: THREE.MeshStandardMaterial) => () => void;
+}) {
   const finish = materialSpec('wood');
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
+  // Only doors on a fadeable (exterior) wall follow the wall's opacity; register
+  // with the parent so the wall's fade loop drives this material too.
+  useEffect(() => {
+    if (!fadeable || !matRef.current) return;
+    return register(o.wallId, matRef.current);
+  }, [fadeable, register, o.wallId]);
   return (
     <mesh position={[o.offset + o.width / 2, o.elevation + o.height / 2, WALL_T / 2]}>
       <boxGeometry args={[Math.max(o.width - 0.04, 0.02), Math.max(o.height - 0.04, 0.02), 0.02]} />
-      <meshStandardMaterial color="#8b5e34" roughness={finish.roughness} metalness={finish.metalness} />
+      <meshStandardMaterial
+        ref={matRef}
+        color="#8b5e34"
+        roughness={finish.roughness}
+        metalness={finish.metalness}
+        transparent={fadeable}
+      />
     </mesh>
   );
 }

@@ -25,14 +25,16 @@ export function handleGlobalKeydown(e: KeyboardEvent): void {
   if (inField && e.key !== 'Escape') {
     return;
   }
-  // While the furniture dialog, a confirm/prompt dialog, the auth dialog or the
-  // keyboard-shortcuts reference is open it owns the keyboard (Esc closes it,
-  // handled by the overlay itself — see ShortcutsReference), so don't also
-  // deselect or rotate behind it.
+  // While the furniture dialog, a confirm/prompt dialog, the auth dialog, the
+  // keyboard-shortcuts reference or the room summary is open it owns the
+  // keyboard (Esc closes it, handled by the overlay itself — see
+  // ShortcutsReference / RoomSummary), so don't also deselect or rotate behind
+  // it.
   if (
     useUiStore.getState().furnitureDialog ||
     useUiStore.getState().authDialogOpen ||
     useUiStore.getState().shortcutsOpen ||
+    useUiStore.getState().summaryOpen ||
     useDialogStore.getState().active
   ) {
     return;

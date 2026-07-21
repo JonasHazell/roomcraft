@@ -1,9 +1,44 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchProposals } from './aiProposals';
+import { fetchProposals, toFurnitureItem, type AiFurniture } from './aiProposals';
+import { FURNITURE_CATALOG } from './furnitureCatalog';
 import type { Design } from '../types';
 
 // Minimal stand-in — fetchProposals only serializes this into the request body.
 const design = {} as Design;
+
+// Minimal stand-in for a piece in a mocked AI response — only the fields
+// toFurnitureItem reads matter here.
+function aiFurniture(overrides: Partial<AiFurniture>): AiFurniture {
+  return {
+    kind: 'sofa',
+    name: 'Sofa',
+    x: 0,
+    z: 0,
+    rotationY: 0,
+    size: { width: 2.2, depth: 0.9, height: 0.8 },
+    elevation: 0,
+    color: '#b06a45',
+    reasoning: 'Because.',
+    ...overrides,
+  };
+}
+
+describe('toFurnitureItem', () => {
+  it('keeps a well-formed AI colour', () => {
+    const item = toFurnitureItem(aiFurniture({ color: '#123abc' }));
+    expect(item.color).toBe('#123abc');
+  });
+
+  it('degrades a malformed AI colour to the same default an ordinary piece gets', () => {
+    const item = toFurnitureItem(aiFurniture({ color: 'not-a-colour' }));
+    expect(item.color).toBe(FURNITURE_CATALOG.sofa.defaultColor);
+  });
+
+  it('degrades a missing AI colour to the same default an ordinary piece gets', () => {
+    const item = toFurnitureItem(aiFurniture({ color: undefined as unknown as string }));
+    expect(item.color).toBe(FURNITURE_CATALOG.sofa.defaultColor);
+  });
+});
 
 describe('fetchProposals', () => {
   afterEach(() => {
