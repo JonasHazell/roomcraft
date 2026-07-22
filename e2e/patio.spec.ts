@@ -8,12 +8,6 @@ import { test, expect } from '@playwright/test';
  * sheet.
  */
 
-// The planner renders a full WebGL scene that re-renders on every option
-// change. On the CPU-throttled mobile CI runner that competes for the main
-// thread, so these 3D-heavy tests get the tripled "slow" budget rather than the
-// default 30s — matching how the repo's other 3D specs guard themselves.
-test.slow();
-
 test('the lobby links to the patio planner, which renders its 3D view', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /plan a patio in 3d/i }).click();

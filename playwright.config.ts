@@ -38,6 +38,15 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
+  // Many specs drive a full WebGL scene (the 3D furnish/patio views), and the
+  // shared CI runner is markedly slower than a dev machine — a run that takes
+  // ~16 min locally can take 30–36 min there, with several 3D-heavy tests
+  // brushing up against Playwright's default 30 s per-test budget and flaking a
+  // different random subset each run. Give every test real headroom (and a
+  // slightly longer default assertion wait) so a slow-but-correct run passes
+  // instead of tripping the timeout; a genuine hang still fails, just later.
+  timeout: 90_000,
+  expect: { timeout: 10_000 },
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL,
