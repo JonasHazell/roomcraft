@@ -152,6 +152,7 @@ export function StyleGuide() {
   const [modalOpen, setModalOpen] = useState(false);
   const [ceiling, setCeiling] = useState(240);
   const [edge, setEdge] = useState(340);
+  const [span, setSpan] = useState(5);
 
   return (
     <div className="sg-root">
@@ -327,6 +328,27 @@ export function StyleGuide() {
               resetLabel="Match frame colour"
             />
           </div>
+        </Demo>
+
+        <Demo
+          title="Range slider"
+          note="For a continuous, bounded value where trying different amounts matters more than typing an exact number (e.g. the patio planner's deck size). Label + live value in .range-head; the accent fills the thumb."
+        >
+          <label className="field range" style={{ maxWidth: 360 }}>
+            <span className="field-label range-head">
+              <span>Deck width</span>
+              <span className="range-value">{span.toFixed(1)} m</span>
+            </span>
+            <input
+              type="range"
+              min={2}
+              max={9}
+              step={0.1}
+              value={span}
+              aria-label="Deck width"
+              onChange={(e) => setSpan(Number(e.target.value))}
+            />
+          </label>
         </Demo>
 
         {/* ---------- Surfaces & feedback ---------- */}

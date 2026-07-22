@@ -22,6 +22,7 @@ import { RoomCapDialog } from './components/auth/RoomCapDialog';
 import { SaveErrorBanner } from './components/ui/SaveErrorBanner';
 import { Icon } from './components/ui/Icon';
 import { PlanEditor } from './components/plan/PlanEditor';
+import { PatioPlanner } from './components/patio/PatioPlanner';
 import { useDesignStore } from './store/useDesignStore';
 import { useUiStore } from './store/useUiStore';
 import { useDialogStore } from './store/useDialogStore';
@@ -177,6 +178,12 @@ function App() {
   // A dev/reference surface, reachable at #styleguide, that renders every shared
   // UI primitive from the real classes so the app stays visually consistent.
   if (hash === '#styleguide') return <StyleGuide />;
+
+  // The outdoor patio planner (#patio): a standalone 3D sandbox for trying deck
+  // sizes and ground surfaces against a house. Independent of the room model —
+  // like the styleguide/share surfaces, it renders on its own before the normal
+  // app shell.
+  if (hash === '#patio') return <PatioPlanner />;
 
   // A read-only shared-room link (#353): `#share/<id>`, reachable with no
   // sign-in and independent of the local project entirely — it never touches
