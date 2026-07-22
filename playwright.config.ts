@@ -38,7 +38,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  // Many specs drive a full WebGL scene (the 3D furnish/patio views), and the
+  // Many specs drive a full WebGL scene (the 3D furnish view), and the
   // shared CI runner is markedly slower than a dev machine — a run that takes
   // ~16 min locally can take 30–36 min there, with several 3D-heavy tests
   // brushing up against Playwright's default 30 s per-test budget and flaking a

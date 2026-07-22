@@ -40,10 +40,10 @@ jobs:
   # Playwright suite (~200 specs × 2 viewports, most driving a full WebGL scene)
   # in parallel — under that load it wedges and a different random subset of
   # 3D-heavy specs times out every run, on main as well as on PRs. So the
-  # required check runs only a small, fast, stable smoke set (the baseline flows
-  # plus the patio planner) in both viewports — enough to catch a real
-  # desktop/mobile regression without depending on the runner surviving the full
-  # suite. The exhaustive suite still runs, non-blocking, in `e2e-full` below.
+  # required check runs only a small, fast, stable smoke set (the baseline
+  # flows) in both viewports — enough to catch a real desktop/mobile regression
+  # without depending on the runner surviving the full suite. The exhaustive
+  # suite still runs, non-blocking, in `e2e-full` below.
   # (Local `npm run test:e2e` runs the full suite and stamps validation — the
   # split is only about what GATES a merge, not what we run while developing.)
   e2e:
@@ -68,9 +68,9 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       # Smoke subset only (both `desktop` and `mobile` projects): the baseline
-      # flows and the patio planner. Fast and stable on the shared runner.
+      # flows. Fast and stable on the shared runner.
       - name: E2E smoke (desktop + mobile)
-        run: npx playwright test smoke patio
+        run: npx playwright test smoke
 
       - name: Upload Playwright report on failure
         if: failure()

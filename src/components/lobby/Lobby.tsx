@@ -148,16 +148,6 @@ export function Lobby() {
         <div className="lobby-brand">
           <h1>Roomcraft</h1>
           <p>Pick a room to furnish, or create a new one.</p>
-          <button
-            type="button"
-            className="btn lobby-patio-link"
-            title="Plan an outdoor patio in 3D"
-            onClick={() => {
-              window.location.hash = 'patio';
-            }}
-          >
-            <Icon name="home" /> Plan a patio in 3D
-          </button>
         </div>
         <AccountControl />
       </header>

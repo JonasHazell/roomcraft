@@ -128,11 +128,7 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   (large), `.btn-icon` (bare icon button), `.btn-zoom`. Group with `.button-row`.
 - **Fields** — wrap inputs in `.field-input` (consistent focus ring + `.field-suffix`).
   Label with `.field` + `.field-label`; two-up with `.field-grid`; stack with
-  `.stack`. For a continuous, bounded value where trying different amounts
-  matters more than typing an exact one, use `.field.range` — a themed
-  `input[type="range"]` with the label and a live `.range-value` sitting in a
-  `.range-head` row (the accent fills the thumb; e.g. the patio planner's deck
-  size). Also `.check-field`, `.count-field` (stepper), `.color-field`,
+  `.stack`. Also `.check-field`, `.count-field` (stepper), `.color-field`,
   `.source-toggle` (segmented), and bare `select`. A `.field-suffix` (e.g. "cm")
   is visual only — mark it `aria-hidden="true"` and give the `<input>` an
   explicit `aria-label` matching the visible label, so the accessible name
