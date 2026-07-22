@@ -87,41 +87,44 @@ only where a single item dominates a metric.
 <!-- STAGE C: overwrite everything between the markers below each run. -->
 <!-- METRICS-SNAPSHOT:START -->
 
-**Thirteenth snapshot** (this run, 2026-07-21). **Empty run for outcomes, fifth
-consecutive** — zero agent PRs merged/closed, zero issues rejected, zero human
-PRs merged since the twelfth snapshot; confirmed directly, still no PR merged to
-`main` since #397 on 2026-07-19T14:25 and no fresh CI run on the default branch
-since. The escalation this run isn't a new outcome, it's a mechanism failure the
-prior four runs' own fixes couldn't have caught: **the twelfth snapshot's own
-promoted fix — the backlog/CI-aware proposal throttle added to
-`AGENT_PROPOSALS.md` — has had zero effect**, because it only exists on this
-still-unmerged `agent/learnings-update` branch. Stage A reads instruction docs
-from the default branch on every fresh run, so it has been proposing at full,
-unthrottled volume the entire time, oblivious to its own supposed fix. Direct
-proof: issue #435 was opened at 2026-07-21T03:00:27Z — nearly two hours *after*
-the throttle commit (01:12) — with no throttling comment anywhere, and the
-combined backlog grew from 53 to **62** in the ~19 hours since. See
-`AGENT_LEARNINGS.md`'s new Pipeline reliability entry ("a promoted fix is inert
-until its PR merges"). The required-check outage itself is now **~2.5 days**
-unresolved (5th consecutive flag), and this meta-PR has now sat unreviewed,
-with no human comment, across **five** runs. Δ is versus the twelfth snapshot.
+**Fourteenth snapshot** (this run, 2026-07-22). **The backlog broke: #379 (13th
+snapshot's meta-PR) finally merged 2026-07-21T17:56:46Z, and in the same ~12-minute
+window the human individually merged 19 more agent-built PRs (#389–#446)** — the
+first non-empty run in six. Every one of the 19 closed its issue `completed`, zero
+rejected, effectively all clean (one, #393, self-corrected an incomplete commit
+within its own build session before any review, not a human edit). The batch mixed
+small fixes with several vision/monetization-scale builds (multi-home workspaces,
+account sync + room cap, freemium AI cap, shareable room link, product-link "Buy",
+multi-select furniture) — see `AGENT_LEARNINGS.md`'s new Proposal-selection entry.
+Confirmed directly that `AGENT_PROPOSALS.md`'s backlog/CI throttle (promoted 12th
+snapshot) is now live on `main` — but no fresh Stage A run has happened under it yet
+(the newest ready issues, #436–443, were all created 14:43–14:44 on 2026-07-21,
+*before* the throttle merged at 17:56), so next run should check whether the first
+post-throttle Stage A batch actually came out smaller. **The required-check gap
+itself is still not fixed** — `E2E (desktop + mobile)` is still `failure` on
+`main`'s newest commit (verified via `get_check_runs` on PR #391's head) while
+`Lint, test & build` passes — 6th consecutive flag — but this run's new information
+is that it isn't blocking throughput: the human merged all 19 PRs, plus #379, past
+the red check. Re-scoped from "urgent, pipeline-freezing" to a normal watch item
+(two live asks remain: confirm branch-protection's required checks, and fix the
+flaky mobile specs) — see `AGENT_LEARNINGS.md`. Δ is versus the thirteenth snapshot.
 
 | Metric | Value | Δ | Window / note |
 | ------ | ----- | - | ------------- |
-| Merge rate | 83 / 90 = 92% | → (unchanged) | no new decisions this run |
-| Clean-merge rate | 79 / 83 = 95% | → (unchanged) | no new decisions this run |
-| Edit rate | 4 / 83 = 5% | → (unchanged) | no new decisions this run |
-| PR-rejection rate | 7 / 90 = 8% | → (unchanged) | no new decisions this run |
-| Issue-rejection rate | 5 / 88 = 6% | → (unchanged) | no new decisions this run |
-| Median PR size | 641 lines (n=1) | → (unchanged) | still last run's single data point; no new merges to add to it |
-| Time-to-decision | ≈1422 min (23.7h) median | → (unchanged) | no new decisions this run |
-| Ready backlog | 30 | ↑↑ (was 20) | issues `agent:ready` **without** `agent:building` (30, incl. #435); a fresh Stage A batch landed even after the (unmerged, thus inert) throttle was written — direct evidence the promotion hasn't taken effect, see above |
-| Stuck-building count | 0 | → (unchanged) | all 16 `agent:building` issues have their own open PR (#389–#395, #398, #400, #410–#416); none abandoned |
+| Merge rate | 102 / 109 = 94% | ↑ (was 92%) | +19 decided this run, all merged |
+| Clean-merge rate | 98 / 102 = 96% | ↑ (was 95%) | +19 merged this run, all clean (incl. #393's pre-review self-correction) |
+| Edit rate | 4 / 102 = 4% | ↓ (was 5%) | no new post-review edits this run |
+| PR-rejection rate | 7 / 109 = 6% | ↓ (was 8%) | no new PR rejections this run |
+| Issue-rejection rate | 5 / 107 ≈ 5% | ↓ (was 6%) | no new issue-only rejections this run; denominator grows with decided volume |
+| Median PR size | 140 lines (n=19, this run) | — (fresh sample) | replaces the previous stale n=1 placeholder (641 lines); range 2–1083 lines across the batch |
+| Time-to-decision | ≈63.1h (~2.6 days) median (n=19, this run) | ↑ (was 23.7h) | issue-open → PR-merge for this run's 19 items; the jump reflects days spent waiting out the CI-integrity incident, not a new normal — watch next run for whether it reverts |
+| Ready backlog | 34 | ↑ (was 30) | issues `agent:ready` **without** `agent:building` (newest #443); Stage A proposed through 2026-07-21T14:44, before the throttle went live at 17:56 — not yet a test of the throttle, see above |
+| Stuck-building count | 1 | ↑ (was 0) | #402 ("Persist AI-generation cost/latency/reliability metrics...") has carried `agent:building` since 2026-07-19T14:56 with no PR ever opened — a Stage B reclaim candidate; notably, this is the exact proposal the *product observability* rows below have been asking for |
 | Duplicate-rejection count | 2 | → (unchanged) | #129, #135 — no new duplicate rejections this run |
-| Open questions | 0 | → (unchanged) | none asked yet |
+| Open questions | 0 | → (unchanged) | none asked this run either |
 | Question-answer rate | n/a | → (unchanged) | no questions asked yet |
-| **Required-check integrity** | **still failing, unresolved (~2.5 days, 5th consecutive flag)** | **→ (unchanged, still bad)** | `main`'s latest CI run (head `0f047fa`, after #397) is still the most recent — no fresher run to re-check since nothing has merged. Combined backlog (ready-without-building + building + open built PRs) is now **62** (30 + 16 + 16), up from 53 last run. Still needs the human's Settings → Branches check (repo-admin action only a human can take), a merge/review of this meta-PR itself so the throttle actually takes effect, and separately a fix for `door-leaf-fade.spec.ts`'s orbit-drag timeout — see `AGENT_LEARNINGS.md` |
-| AI proposal latency | not sampled this run | — | 13th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session |
+| **Required-check integrity** | **still failing (6th consecutive flag), but no longer blocking throughput** | **→ (bad, re-scoped)** | `E2E (desktop + mobile)`: `failure` on `main`'s newest commit (PR #391's head); `Lint, test & build`: `success`. The human merged 19 PRs + #379 despite the red check — review throughput, not CI status, was the real bottleneck. Combined backlog (ready + stuck-building + open built PRs) is now **35** (34 + 1 + 0), down from 62. Still needs a human Settings → Branches check and a fix for the flaky mobile specs, but downgraded from urgent — see `AGENT_LEARNINGS.md` |
+| AI proposal latency | not sampled this run | — | 14th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session; #402 (above) would fix this if built |
 | AI proposal cost | not sampled this run | — | same as above |
 | AI calls per proposal | not sampled this run | — | same as above |
 | AI failure/timeout rate | not sampled this run | — | same as above |

@@ -196,6 +196,28 @@ before this pivot landed.
   combined backlog), the right move is to throttle the *count*, not to lower
   the *bar* — see the new check added to `AGENT_PROPOSALS.md`'s algorithm.
 
+- **The sibling-comparison shape holds at vision/monetization scale, not just
+  for small fixes — this run's batch is the clearest evidence yet.** All 19 of
+  this run's freshly-decided agent PRs merged, 0 rejected, and effectively all
+  clean (the one two-commit PR, #393, was the agent correcting its own
+  incomplete commit within the same build session, before any human review —
+  not an edit). The batch mixed small fixes (#392 mobile hint overlap, #415
+  Desk clamp, #416 touch target) with several genuinely large,
+  monetization/vision-scale builds: #382 (multi-home workspaces, 856 lines),
+  #398 (account sync + free-tier room cap, 541 lines), #390 (freemium AI-
+  generation cap, 432 lines), #391 (shareable room link, 1083 lines, the
+  biggest PR in the batch), #389 (product-link "Buy" affordance, 363 lines,
+  explicitly framed against `VISION.md`'s "how it makes money"), and #400
+  (multi-select furniture, 553 lines). None of these needed a smaller, safer
+  slice to land clean — each still pointed at an existing sibling mechanism to
+  extend (#398/#369's cap check mirrors the pattern `RoomCapDialog` set up;
+  #400 extends the *existing* single-selection toolbar rather than building a
+  parallel one) even at this scale. Combined with the STRATEGY.md pivot
+  entry at the top of this file, this closes the loop that pivot predicted:
+  monetization/vision-scale proposals aren't a riskier category that needs
+  extra caution — they clear the bar at the same clean-merge rate as small
+  fixes when they're scoped the same sibling-comparison way.
+
 ## Scoping (Stage B)
 
 - **Two issues proposed in the same batch that touch the same file are a real
@@ -475,6 +497,42 @@ before this pivot landed.
   incident is unavoidably a human action: merging (or cherry-picking) this
   meta-PR, not anything Stage C can do from inside it.
 
+- **Resolved: the human merged #379 (13th snapshot), and in the same session
+  cleared nearly the entire built-PR backlog by hand — the "inert fix" gap
+  above is now closed, but the underlying CI gate is not.** #379 merged
+  2026-07-21T17:56:46Z, after sitting open ~2.5 days across five Stage C runs;
+  confirmed directly that `AGENT_PROPOSALS.md`'s backlog/CI throttle is now
+  live on `main`. In the same ~12-minute window (17:53–18:05 that evening) the
+  human individually merged **19 more agent-built PRs** (#389–#446, spanning
+  small fixes through several vision-scale/monetization builds), each closing
+  its own issue as `completed` with zero rejections. The combined queue
+  (unclaimed `agent:ready` + `agent:building` + open `agent:built` PRs) fell
+  from 62 to **35** in one session — proof that a stalled backlog isn't
+  permanent damage, it clears the moment review time is available, and a
+  future incident like this one shouldn't be read as an unrecoverable spiral.
+  **But the required-check-integrity gap these 19 PRs sat behind is still not
+  fixed**: `get_check_runs` on the newest commit on `main` (PR #391's head,
+  the last of the batch) shows `E2E (desktop + mobile)` still `failure` while
+  `Lint, test & build` is `success` — the same pattern flagged for six
+  consecutive snapshots now. The new information this run is about the
+  *human's* behaviour, not the check's: they merged all 19 PRs, plus their own
+  #379, while the required E2E check was red on every one of them — either
+  because branch protection genuinely doesn't require that check (the
+  standing suspicion) or because the human has concluded, correctly per every
+  prior snapshot's own investigation, that the failures are the known
+  mobile-timeout flakes and not real regressions, and merged past them by
+  design. **Re-scope the ask accordingly:** stop describing this as "freezing
+  the pipeline" — it evidently isn't, human review throughput is what gates
+  the queue, not the CI status. Keep two narrower, still-live asks: (1) a
+  human should still confirm via Settings → Branches whether `E2E (desktop +
+  mobile)` is actually a required check, because it changes whether
+  *auto-merge* (which nothing in this batch used — all 19 were plain human
+  merges, not `agent:auto-merge`) can be trusted the next time a small,
+  low-risk fix qualifies for it; (2) the flaky mobile specs themselves
+  (`door-leaf-fade.spec.ts` and friends) still deserve a fix so the check
+  stops crying wolf on every PR's review page. Neither blocks Stage A/B in the
+  meantime, so this drops out of "urgent" back to a normal watch item.
+
 ## Stage C methodology
 
 - **A PR's own description is evidence, not ground truth — always check it against
@@ -530,6 +588,29 @@ before this pivot landed.
   things to learn from — the individual PRs by the normal recipe, and the
   integration/conflict-resolution work by the human's-own-PR recipe — not as one
   oversized PR to summarize.
+
+- **When a batch of same-day PRs land together, some update the descriptive
+  docs they touch and others don't — check every merged feature against
+  `ARCHITECTURE.md`'s feature→code map individually, not just the ones that
+  happen to mention doc changes in their own body.** Of this run's 19 merged
+  PRs, #382 (multi-home workspaces) and #398 (account sync/room cap) each
+  updated their own `ARCHITECTURE.md` rows as part of the build — but three
+  siblings shipped genuinely new, user-facing capabilities with **no** row at
+  all: #391 (shareable room link), #389 (product-link "Buy" affordance), and
+  #400 (multi-select furniture). All three were otherwise clean, well-scoped
+  merges; the gap was invisible unless the feature→code map was actually
+  diffed against what shipped. Fixed directly in this run's own PR (three new
+  rows, citing #353/#351/#370). Separately, the same read of #446 (ACC-14
+  clearance-rule widening) surfaced an *older*, unrelated drift: the code's
+  `ACC-14` (`title: 'Every function keeps its usable clearance'`,
+  `src/lib/validation/rules.ts`) has never matched
+  `interior-design-rules.md`'s ACC-14 entry (a "minimum area per function"
+  condition that no code implements) — predates this run, just never caught
+  before. Also corrected directly, since `interior-design-rules.md` is one of
+  the descriptive docs this stage may fix on sight. General rule: don't assume
+  a clean merge means its docs are current just because a *sibling* PR in the
+  same batch happened to update its own — check the feature→code map against
+  each shipped capability individually.
 
 ## Design & UI
 
