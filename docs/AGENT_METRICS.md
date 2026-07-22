@@ -67,15 +67,22 @@ the click-through can't see:
 
 | Metric | Source | What it tells us |
 | ------ | ------ | ----------------- |
-| **AI proposal latency** | `durationMs` in `[proposals]` server logs | Is the core AI wait getting worse? |
-| **AI proposal cost** | `costUsd` in `[proposals]` server logs | Is a change making the backend expensive? |
-| **AI calls per proposal** | `calls` in `[proposals]` server logs | Are repair/retry loops fanning out? |
-| **AI failure/timeout rate** | error/timeout log lines | Is the flow getting less reliable? |
+| **AI proposal latency** | `durationMs` in `[proposals]` server logs; median/p95 in [`AI_RUNTIME_METRICS.md`](AI_RUNTIME_METRICS.md) | Is the core AI wait getting worse? |
+| **AI proposal cost** | `costUsd` in `[proposals]` server logs; total in [`AI_RUNTIME_METRICS.md`](AI_RUNTIME_METRICS.md) | Is a change making the backend expensive? |
+| **AI calls per proposal** | `calls` in `[proposals]` server logs; average in [`AI_RUNTIME_METRICS.md`](AI_RUNTIME_METRICS.md) | Are repair/retry loops fanning out? |
+| **AI failure/timeout rate** | error/timeout log lines; rate in [`AI_RUNTIME_METRICS.md`](AI_RUNTIME_METRICS.md) | Is the flow getting less reliable? |
 
-Stage C won't always have production log access from a fresh session. When it does
-(or when a PR surfaces these numbers), record the trend. When it doesn't, mark the
-row **"not sampled this run"** rather than guessing — a blank is honest, a fabricated
-number is not.
+Stage C won't always have production log access from a fresh session — but as of
+#402 it doesn't need it for these four rows: every AI generation is persisted to the
+`ai_generations` table (`server/db.ts`, written by `server/aiMetrics.ts`) and
+aggregated into the checked-in, machine-generated
+[`AI_RUNTIME_METRICS.md`](AI_RUNTIME_METRICS.md) by a scheduled workflow
+(`.github/workflows/export-ai-metrics.yml`) — read it directly, the same way this
+file itself is read. When that doc still shows its "no export has run yet" seed state
+(no `DATABASE_URL`/`METRICS_DATABASE_URL` secret configured yet, or the workflow
+hasn't run), or when a PR surfaces these numbers some other way, use those instead.
+Only when neither is available should a row be marked **"not sampled this run"**
+rather than guessing — a blank is honest, a fabricated number is not.
 
 ## The snapshot
 

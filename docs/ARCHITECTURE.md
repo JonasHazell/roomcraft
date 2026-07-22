@@ -97,7 +97,10 @@ helpers** (`DesignData`, `RoomActions`, `FurnitureSpec`, `createDefaultRoom`,
   `claude.ts` + `prompt.ts` (AI proposal generation), `judge.ts` / `validate.ts` /
   `ruleValidation.ts` / `autofix.ts` (server-side scoring & repair), `auth.ts` +
   `db.ts` (accounts). The client reaches it via `lib/aiProposals.ts` and
-  `lib/authApi.ts`.
+  `lib/authApi.ts`. `aiMetrics.ts` persists a best-effort per-generation cost/
+  latency/outcome row to the `ai_generations` table (`db.ts`) whenever a database is
+  configured; `scripts/export-ai-metrics.ts` aggregates it into the checked-in
+  [`docs/AI_RUNTIME_METRICS.md`](AI_RUNTIME_METRICS.md) on a schedule (#402).
 - **Furnish-view chrome / docks** — the 3D view's bars mount via
   `panel/SidePanel.tsx`, with `panel/ActionBar.tsx`, `panel/SelectionBar.tsx`, and the
   shared `panel/SelBar.tsx` primitive (used by WallBar / ActionBar / FloorBar / HistoryBar,

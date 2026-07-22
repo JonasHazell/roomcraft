@@ -1,0 +1,78 @@
+name: Export AI runtime metrics
+
+# Refreshes docs/AI_RUNTIME_METRICS.md from the ai_generations table (see
+# server/db.ts / server/aiMetrics.ts) so a fresh, GitHub-only Stage C session can read
+# real AI cost/latency/reliability numbers straight from the repo instead of from
+# production server console logs it has no access to (#402). Runs on a daily
+# schedule, plus an on-demand trigger for a manual refresh.
+#
+# One-time human setup: this workflow needs a Postgres connection string as a repo
+# secret. Add ONE of:
+#   - METRICS_DATABASE_URL — a read-only credential, preferred (least-privilege).
+#   - DATABASE_URL — the same connection string the production server uses.
+# in Settings → Secrets and variables → Actions. Without either secret the export
+# step is a complete no-op (same "absent → feature just doesn't run" pattern
+# server/db.ts's authEnabled gate already uses) — it logs that nothing is configured
+# and leaves docs/AI_RUNTIME_METRICS.md untouched, rather than failing the run.
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # daily, 06:00 UTC
+  workflow_dispatch: {}
+
+# Don't let two exports race on pushing to main.
+concurrency:
+  group: export-ai-metrics
+  cancel-in-progress: false
+
+# Needed to push the refreshed snapshot back to the default branch.
+permissions:
+  contents: write
+
+jobs:
+  export:
+    name: Export ai_generations summary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Export summary
+        env:
+          # Prefer a dedicated read-only credential; fall back to the same
+          # DATABASE_URL the production server uses if that's the only one set.
+          DATABASE_URL: ${{ secrets.METRICS_DATABASE_URL || secrets.DATABASE_URL }}
+        run: node scripts/export-ai-metrics.ts
+
+      - name: Commit the refreshed snapshot
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- docs/AI_RUNTIME_METRICS.md; then
+            echo "docs/AI_RUNTIME_METRICS.md unchanged — nothing to commit."
+            exit 0
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/AI_RUNTIME_METRICS.md
+          git commit -m "chore(metrics): refresh AI runtime metrics snapshot"
+
+          # Retry the push in case another commit landed on main first.
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "push failed (attempt $attempt); rebasing on latest main and retrying"
+            git pull --rebase origin main
+          done
+          echo "could not push metrics snapshot after 3 attempts" >&2
+          exit 1
