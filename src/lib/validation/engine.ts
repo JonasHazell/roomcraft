@@ -1,4 +1,4 @@
-import type { Design } from '../../types';
+import type { Design } from '../../types.ts';
 import {
   buildCtx,
   CATEGORY_ORDER,

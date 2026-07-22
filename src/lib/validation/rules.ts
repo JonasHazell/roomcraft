@@ -1,4 +1,4 @@
-import type { FurnitureItem, FurnitureKind, Point } from '../../types';
+import type { FurnitureItem, FurnitureKind, Point } from '../../types.ts';
 import { FURNITURE_CATALOG } from '../furnitureCatalog.ts';
 import {
   formatCm,
@@ -47,7 +47,7 @@ import {
   sideZone,
   topOf,
 } from './ruleHelpers.ts';
-import type { RuleDef, Violation } from './ruleTypes';
+import type { RuleDef, Violation } from './ruleTypes.ts';
 import { inferZones, zoneAnchors, ZONE_GAP, ZONE_LABEL } from './zones.ts';
 
 // The rule catalog's taxonomy and types live in ruleTypes.ts and the rule-local

@@ -1,4 +1,4 @@
-import type { Design, FurnitureItem, Point, Wall, WallOpening } from '../../types';
+import type { Design, FurnitureItem, Point, Wall, WallOpening } from '../../types.ts';
 import { FURNITURE_CATALOG } from '../furnitureCatalog.ts';
 import {
   closestPointOnSegment,
