@@ -365,6 +365,7 @@ export function placeAtCenter(d: Design, spec: FurnitureSpec): FurnitureItem {
       product: spec.product,
     },
     poly,
+    d.room.height,
   );
 }
 

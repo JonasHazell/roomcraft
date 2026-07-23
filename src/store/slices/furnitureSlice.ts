@@ -99,6 +99,7 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
           product: src.product ? { ...src.product } : undefined,
         },
         poly,
+        d.room.height,
       );
       set({ design: touch({ ...d, furniture: [...d.furniture, copy] }) });
       return newId;
@@ -139,7 +140,7 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
               // writing it, so it resumes following the primary colour.
               colors: patch.colors ? mergeColorOverrides(f.colors, patch.colors) : f.colors,
             };
-            const clamped = clampFurniture(next, poly);
+            const clamped = clampFurniture(next, poly, d.room.height);
             if (!changesFootprint) return clamped;
             // Give resize/rotate the same wall/obstacle collision guarantee as
             // moveFurniture.

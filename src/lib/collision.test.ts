@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { Point, Wall } from '../types';
+import type { FurnitureItem, Point, Wall } from '../types';
 import { pointInPolygon } from './polygon.ts';
-import { findClearSpot, furnitureCorners, furnitureFits, slideFurniture } from './collision';
+import { clampFurniture, findClearSpot, furnitureCorners, furnitureFits, slideFurniture } from './collision';
 
 /** 4×5 m room with a corner at the origin, canonical winding. */
 const square: Point[] = [
@@ -111,6 +111,74 @@ describe('slideFurniture', () => {
     const p = slideFurniture(item(1, 2.5), { x: 3, z: 4 }, square, noWalls, [other]);
     expect(p.z).toBeCloseTo(4, 5);
     expect(furnitureFits(item(p.x, p.z), square, noWalls, [other])).toBe(true);
+  });
+});
+
+describe('clampFurniture', () => {
+  /** A full FurnitureItem near the room's centre, clear of every wall. */
+  function furnitureItem(elevation: number, height: number): FurnitureItem {
+    return {
+      id: 'f1',
+      kind: 'wardrobe',
+      name: 'Wardrobe',
+      position: { x: 2, z: 2.5 },
+      rotationY: 0,
+      size: { width: 1, depth: 0.6, height },
+      elevation,
+      color: '#fff',
+    };
+  }
+
+  it('leaves elevation/height untouched when comfortably under the ceiling', () => {
+    const item = furnitureItem(0, 1.8);
+    const clamped = clampFurniture(item, square, 2.5);
+    expect(clamped.elevation).toBe(0);
+    expect(clamped.size.height).toBe(1.8);
+    expect(clamped).toBe(item); // no-op returns the same reference
+  });
+
+  // Mirrors clampOpening's `clamp(o.height, 0.1, roomHeight - elevation)` pattern
+  // (see #422): a piece whose top would poke through the ceiling gets its height
+  // reduced instead of the edit being rejected or the piece left oversized.
+  it('shrinks height so the top no longer pokes through a lower ceiling', () => {
+    const item = furnitureItem(0, 3.5); // taller than a 2.5m ceiling
+    const clamped = clampFurniture(item, square, 2.5);
+    expect(clamped.elevation).toBe(0);
+    expect(clamped.size.height).toBeLessThanOrEqual(2.5);
+    expect(clamped.elevation + clamped.size.height).toBeLessThanOrEqual(2.5);
+  });
+
+  it('shrinks height (not elevation) when a mounted piece would otherwise top out over the ceiling', () => {
+    // A shelf mounted at 2.2m with a 0.6m height would top out at 2.8m — over
+    // a 2.5m ceiling — even though its own height alone would fit; elevation
+    // (where it's mounted) is left as-is and only height gives way, mirroring
+    // clampOpening's own elevation-then-height clamp order.
+    const item = furnitureItem(2.2, 0.6);
+    const clamped = clampFurniture(item, square, 2.5);
+    expect(clamped.elevation).toBe(2.2);
+    expect(clamped.size.height).toBeCloseTo(0.3, 5);
+    expect(clamped.elevation + clamped.size.height).toBeLessThanOrEqual(2.5);
+  });
+
+  it('clamps elevation itself when it alone would leave no room for even the minimum height', () => {
+    // Mounted above the ceiling entirely — elevation itself must give way, not
+    // just height, since there is no valid height left to clamp to otherwise.
+    const item = furnitureItem(3.0, 0.6);
+    const clamped = clampFurniture(item, square, 2.5);
+    expect(clamped.elevation).toBeLessThan(2.5);
+    expect(clamped.elevation + clamped.size.height).toBeLessThanOrEqual(2.5);
+  });
+
+  it('never forces an already-valid thin piece (e.g. a rug) taller', () => {
+    const item = furnitureItem(0, 0.02);
+    const clamped = clampFurniture(item, square, 2.5);
+    expect(clamped.size.height).toBe(0.02);
+  });
+
+  it('still clamps the position into the floor polygon alongside the height clamp', () => {
+    const item = { ...furnitureItem(0, 1.8), position: { x: -1, z: 2.5 } }; // outside the square
+    const clamped = clampFurniture(item, square, 2.5);
+    expect(clamped.position.x).toBeGreaterThanOrEqual(0);
   });
 });
 

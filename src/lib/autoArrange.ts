@@ -295,5 +295,5 @@ export function autoArrange(design: Design): FurnitureItem[] {
   }
 
   if (current <= base + 1e-9) return design.furniture; // couldn't do better — no-op
-  return work.map((f) => clampFurniture(f, poly));
+  return work.map((f) => clampFurniture(f, poly, design.room.height));
 }

@@ -38,7 +38,7 @@ function commitWalls(set: DesignSet, d: Design, walls: Wall[]): void {
     design: touch({
       ...next,
       openings: next.openings.map((o) => clampOpeningIn(next, o)),
-      furniture: next.furniture.map((f) => clampFurniture(f, poly)),
+      furniture: next.furniture.map((f) => clampFurniture(f, poly, next.room.height)),
     }),
   });
 }
@@ -60,7 +60,7 @@ export function createPlanSlice(set: DesignSet, get: DesignGet): PlanActions {
           ...d,
           walls: [...walls, ...d.walls.filter((w) => w.kind === 'interior')],
           openings: d.openings.filter((o) => !oldExteriorIds.has(o.wallId)),
-          furniture: d.furniture.map((f) => clampFurniture(f, pts)),
+          furniture: d.furniture.map((f) => clampFurniture(f, pts, d.room.height)),
         }),
       });
       return check;
