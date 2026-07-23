@@ -1,19 +1,19 @@
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
-import type { Design, FurnitureLibraryEntry, FurnitureProduct, Project, Proposal, Wall, Workspace } from '../types';
+import type { Design, FurnitureLibraryEntry, FurnitureProduct, Project, Proposal, Wall, Workspace } from '../types.ts';
 import {
   DEFAULT_FLOOR_COLOR,
   DEFAULT_WALL_COLOR,
   HEX_COLOR_RE,
   SCHEMA_VERSION,
   isHttpsUrl,
-} from '../types';
-import { isAxisParallel, validateExteriorLoop } from './polygon';
-import { FURNITURE_KINDS } from './furnitureCatalog';
-import { normalizeOptions } from './furnitureOptions';
-import { DEFAULT_MATERIAL, normalizeMaterial } from './materials';
-import { normalizeColors, normalizeMaterials } from './furnitureParts';
-import { safeSetItem } from './safeStorage';
+} from '../types.ts';
+import { isAxisParallel, validateExteriorLoop } from './polygon.ts';
+import { FURNITURE_KINDS } from './furnitureCatalog.ts';
+import { normalizeOptions } from './furnitureOptions.ts';
+import { DEFAULT_MATERIAL, normalizeMaterial } from './materials.ts';
+import { normalizeColors, normalizeMaterials } from './furnitureParts.ts';
+import { safeSetItem } from './safeStorage.ts';
 
 const color = z.string().regex(HEX_COLOR_RE, 'invalid color code (expected #rrggbb)');
 const meters = (max: number) => z.number().min(0).max(max);

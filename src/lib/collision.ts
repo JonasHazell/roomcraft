@@ -1,4 +1,4 @@
-import type { FurnitureItem, FurnitureKind, Point, Wall, WallOpening } from '../types';
+import type { FurnitureItem, FurnitureKind, Point, Wall, WallOpening } from '../types.ts';
 import {
   clamp,
   clampToPolygon,
