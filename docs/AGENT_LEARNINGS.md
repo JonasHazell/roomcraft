@@ -470,7 +470,17 @@ before this pivot landed.
   itself, per its own label guardrails). **Resolved the very next Stage B run:**
   #416 (`Closes #386`) opened within hours, confirming the reclaim step works
   once the instance is flagged — no further action needed on this specific
-  issue.
+  issue. **A second instance, this run (16th snapshot):** #407 ("Implement
+  FEN-08") has carried `agent:building` since 2026-07-19T14:57 with no PR ever
+  opened for it (confirmed directly — its four same-batch siblings #402, #403,
+  #405, #406 all moved to open PRs #450/#451/#453/#454 over the same window,
+  while #407 alone never did). Two independent occurrences now, both caught only
+  by checking every claimed issue individually rather than trusting a healthy-
+  looking ratio — the check-each-one habit is earning its keep, not a one-off.
+  Flagged for Stage B's next run to reclaim; not yet promoted into an automatic
+  check beyond `AGENT_BUILD.md`'s existing reclaim step since two instances, both
+  cleanly resolved by that same step, isn't yet evidence the step itself needs to
+  change — just that Stage C should keep checking every claimed issue, every run.
 
 - **A promoted script/loop fix is inert until the PR carrying it actually
   merges — "promoted this run" is not the same claim as "in effect this run."**
