@@ -270,11 +270,6 @@ export function freeComponents(grid: Grid): number[][] {
   return components;
 }
 
-/** Sizes (in cells) of every connected component of free cells. */
-export function freeComponentSizes(grid: Grid): number[] {
-  return freeComponents(grid).map((cells) => cells.length);
-}
-
 /** Flood fill from seed cells; returns the reached cells. */
 export function floodFill(grid: Grid, seed: (p: Point) => boolean): Uint8Array {
   const { cols, rows, free, center, idx } = grid;
