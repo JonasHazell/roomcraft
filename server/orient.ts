@@ -7,6 +7,7 @@ import {
   outwardNormal,
   polygonCenter,
 } from '../src/lib/polygon.ts';
+import { normalizeColors, normalizeMaterials } from '../src/lib/furnitureParts.ts';
 import type { AiFurniture, AiProposals, ResolvedFurniture, ResolvedProposals } from './schema.ts';
 
 const HALF_PI = Math.PI / 2;
@@ -94,6 +95,10 @@ function resolveFurniture(f: AiFurniture, design: Design, roomCenter: Point): Re
     size: f.size,
     elevation: f.elevation,
     color: safeColor(f.color, '#b0a795'),
+    // Sanitized the same way AI colour already is above: unknown parts and
+    // malformed values are dropped/defaulted rather than trusted verbatim.
+    colors: normalizeColors(f.kind, f.colors),
+    materials: normalizeMaterials(f.kind, f.materials),
     reasoning: f.reasoning,
   };
 }

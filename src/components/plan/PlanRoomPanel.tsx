@@ -33,6 +33,7 @@ export function PlanRoomPanel() {
           step={1}
           suffix="cm"
           onChange={(v) => setRoom({ height: v / 100 })}
+          commitOnBlur
         />
         <div className="field">
           <span className="field-label">Floor area</span>

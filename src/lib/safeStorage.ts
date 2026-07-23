@@ -1,4 +1,4 @@
-import { useStorageStatus } from '../store/useStorageStatus';
+import { useStorageStatus } from '../store/useStorageStatus.ts';
 
 /**
  * Writes to `localStorage`, catching a `setItem` failure — quota exceeded, or

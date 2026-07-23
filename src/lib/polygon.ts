@@ -1,4 +1,4 @@
-import type { OpeningKind, Point, Wall, WallOpening } from '../types';
+import type { OpeningKind, Point, Wall, WallOpening } from '../types.ts';
 
 /** Snap grid in the 2D editor, meters. */
 export const GRID = 0.1;

@@ -97,4 +97,33 @@ export async function initSchema(): Promise<void> {
       updated_at timestamptz NOT NULL DEFAULT now()
     );
   `);
+  // One row per AI furnishing generation (#402): the durability half of the
+  // `[proposals]` cost/latency/token logs server/planning.ts and server/index.ts
+  // already compute and print, which otherwise evaporate the moment the process's
+  // console scrolls past them — the exact gap that left AGENT_METRICS.md's AI
+  // latency/cost/reliability rows reading "not sampled this run" for many
+  // consecutive Stage C runs, since Stage C runs in a fresh, GitHub-only session
+  // with no access to the production server's console. Written best-effort by
+  // server/aiMetrics.ts's `recordAiGeneration` (fire-and-forget; see that file for
+  // the failure-isolation guard) and read by `scripts/export-ai-metrics.ts`.
+  // `cost_usd`/token columns/`calls` are nullable: a failed or aborted generation
+  // may not have a reliable total to report, and recording an honest NULL beats a
+  // fabricated 0.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ai_generations (
+      id text PRIMARY KEY,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      duration_ms integer NOT NULL,
+      cost_usd double precision,
+      input_tokens integer,
+      cache_write_tokens integer,
+      cache_read_tokens integer,
+      output_tokens integer,
+      calls integer,
+      outcome text NOT NULL
+    );
+  `);
+  await pool.query(
+    'CREATE INDEX IF NOT EXISTS ai_generations_created_at_idx ON ai_generations(created_at);',
+  );
 }

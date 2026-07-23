@@ -1,4 +1,4 @@
-import type { FurnitureCategory, FurnitureKind, FurnitureSize } from '../types';
+import type { FurnitureCategory, FurnitureKind, FurnitureSize } from '../types.ts';
 
 export interface CatalogEntry {
   label: string;

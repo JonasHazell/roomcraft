@@ -904,6 +904,21 @@ select {
   z-index: 55;
 }
 
+/* At tablet width and below, `.room-topbar`'s buttons (back · keyboard
+   shortcuts · print/export, #227/#368) can render wide enough for their
+   trailing edge to reach under the switcher's centred left edge — the repro
+   in #405, where a tap meant for the switcher's "previous" arrow instead hit
+   the topbar's higher z-index. Same guard `.plan-topbar` uses against
+   `.plan-hint-pill`/`.plan-room-panel` at this identical breakpoint (above):
+   stack the switcher a row below the bar instead of overlapping it, rather
+   than computing the bar's rendered width at runtime. Desktop keeps the
+   switcher on the topbar's row, since there's room for both there. */
+@media (max-width: 768px) {
+  .proposal-switcher {
+    top: calc(76px + env(safe-area-inset-top));
+  }
+}
+
 /* One connected, segmented pill — prev · name ▾ · next — sharing a single
    border, radius and shadow with the bottom dock so the whole 3D-view control
    family reads as one system. The arrows and the name button are borderless
@@ -2264,10 +2279,17 @@ select {
    coarse) block near the top of this file) so its 44px floor wins the cascade
    over the unconditional 38px one. Both selectors have identical specificity
    (one class), so source order decides — a rule earlier in the file loses to
-   an unconditional one later, which is exactly the regression this fixes. */
+   an unconditional one later, which is exactly the regression this fixes.
+   Also floors the width at 44px, same guarantee .sel-color already has above
+   (#404) — icon-only pills (Undo, Redo, Duplicate, Delete, More, Select,
+   Interior, Redraw exterior walls, Cancel drawing, …) were only ~30px wide
+   despite meeting the height floor. Unconditional like .sel-color's own fix:
+   a labelled pill's icon + gap + text + padding already exceeds 44px, so this
+   never visibly changes a labelled pill's width. */
 @media (pointer: coarse) {
   .sel-action {
     min-height: 44px;
+    min-width: 44px;
   }
 }
 

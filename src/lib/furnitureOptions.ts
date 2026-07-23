@@ -1,4 +1,4 @@
-import type { FurnitureKind, FurnitureOptions, FurnitureOptionValue } from '../types';
+import type { FurnitureKind, FurnitureOptions, FurnitureOptionValue } from '../types.ts';
 
 /**
  * Per-type furniture customization. Each {@link FurnitureKind} declares a list of
