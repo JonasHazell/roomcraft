@@ -145,6 +145,41 @@ describe('SAF-02 door swing', () => {
   });
 });
 
+describe('SAF-15 furniture must not physically overlap', () => {
+  it('flags two pieces whose footprints interpenetrate', () => {
+    const sofa = piece('sofa', 2, 2, { width: 2, depth: 0.9, height: 0.8 });
+    const table = piece('table', 2.3, 2, { width: 1, depth: 1, height: 0.4 });
+    const outcome = outcomeOf(makeDesign([sofa, table]), 'SAF-15');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].furnitureIds).toEqual(
+        expect.arrayContaining([sofa.id, table.id]),
+      );
+    }
+  });
+
+  it('passes two pieces placed edge-to-edge (touching, not overlapping)', () => {
+    const box1 = piece('box', 1, 2, { width: 1, depth: 1, height: 0.5 });
+    const box2 = piece('box', 2, 2, { width: 1, depth: 1, height: 0.5 }); // shares the x=1.5 edge
+    expect(outcomeOf(makeDesign([box1, box2]), 'SAF-15').status).toBe('passed');
+  });
+
+  it('does not flag a rug fully underneath other furniture', () => {
+    const rug = piece('rug', 2, 2, { width: 3, depth: 3, height: 0.02 });
+    const sofa = piece('sofa', 2, 2, { width: 2, depth: 0.9, height: 0.8 });
+    const chair = piece('chair', 0.6, 4.5, { width: 0.5, depth: 0.5, height: 0.8 });
+    // The rug spans well underneath both the sofa and the chair, but rugs are
+    // excluded from the overlap check — only the (non-overlapping) sofa/chair
+    // pair is compared, so this must still pass.
+    expect(outcomeOf(makeDesign([rug, sofa, chair]), 'SAF-15').status).toBe('passed');
+  });
+
+  it('not applicable with fewer than two pieces of furniture', () => {
+    const sofa = piece('sofa', 2, 2, { width: 2, depth: 0.9, height: 0.8 });
+    expect(outcomeOf(makeDesign([sofa]), 'SAF-15').status).toBe('not-applicable');
+  });
+});
+
 describe('ERG-08 headboard against a wall', () => {
   it('flags a bed with the headboard under the window', () => {
     // Rotation 0: front (foot end) toward +z, headboard toward the north wall.

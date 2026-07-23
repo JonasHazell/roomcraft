@@ -1,4 +1,5 @@
 import type { FurnitureItem, FurnitureKind, Point } from '../../types';
+import { FIT_SHRINK } from '../collision.ts';
 import { FURNITURE_CATALOG } from '../furnitureCatalog.ts';
 import {
   formatCm,
@@ -198,6 +199,34 @@ export const RULES: RuleDef[] = [
             violations.push({
               message: `"${h.name}" hangs directly above "${rest.name}" — move it to a wall without a bed or sofa below.`,
               furnitureIds: [h.id, rest.id],
+            });
+          }
+        }
+      }
+      return fail(violations);
+    },
+  },
+  {
+    id: 'SAF-15',
+    title: 'Furniture must not physically overlap',
+    category: 'Safety',
+    importance: 5,
+    source: 'Best practice (physical plausibility)',
+    check(ctx) {
+      const pieces = ctx.design.furniture.filter((f) => f.kind !== 'rug');
+      if (pieces.length < 2) return na;
+      const violations: Violation[] = [];
+      for (let i = 0; i < pieces.length; i++) {
+        for (let j = i + 1; j < pieces.length; j++) {
+          const a = pieces[i];
+          const b = pieces[j];
+          // Same tolerance the placement code (findClearSpot/furnitureFits) already
+          // treats as "fits" — two pieces flush against each other must not
+          // false-positive here.
+          if (convexOverlap(footprint(a), footprint(b), FIT_SHRINK)) {
+            violations.push({
+              message: `"${a.name}" and "${b.name}" occupy the same floor space — move one so they no longer overlap.`,
+              furnitureIds: [a.id, b.id],
             });
           }
         }

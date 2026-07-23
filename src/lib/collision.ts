@@ -20,7 +20,7 @@ import {
 type Footprint = Pick<FurnitureItem, 'position' | 'rotationY' | 'size'>;
 
 /** Shrinks the footprint so that flush against a wall does not count as a collision. */
-const FIT_SHRINK = 0.015;
+export const FIT_SHRINK = 0.015;
 
 /** The footprint's four corners in the world (same rotation convention as three.js). */
 export function furnitureCorners(item: Footprint, shrink = FIT_SHRINK): Point[] {
