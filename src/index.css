@@ -2192,10 +2192,17 @@ select {
    coarse) block near the top of this file) so its 44px floor wins the cascade
    over the unconditional 38px one. Both selectors have identical specificity
    (one class), so source order decides — a rule earlier in the file loses to
-   an unconditional one later, which is exactly the regression this fixes. */
+   an unconditional one later, which is exactly the regression this fixes.
+   Also floors the width at 44px, same guarantee .sel-color already has above
+   (#404) — icon-only pills (Undo, Redo, Duplicate, Delete, More, Select,
+   Interior, Redraw exterior walls, Cancel drawing, …) were only ~30px wide
+   despite meeting the height floor. Unconditional like .sel-color's own fix:
+   a labelled pill's icon + gap + text + padding already exceeds 44px, so this
+   never visibly changes a labelled pill's width. */
 @media (pointer: coarse) {
   .sel-action {
     min-height: 44px;
+    min-width: 44px;
   }
 }
 
