@@ -245,6 +245,85 @@ body {
   margin-left: auto;
 }
 
+/* Room orientation: an 8-way compass rose (PlanRoomPanel.tsx) — a 3x3 grid of
+   round direction buttons around a static compass-icon hub, so it reads as a
+   compass without any text label per direction. Tapping the active direction
+   again clears it back to unset. */
+.compass-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-areas:
+    'nw n ne'
+    'w c e'
+    'sw s se';
+  gap: 2px;
+  width: fit-content;
+  margin-top: 2px;
+}
+
+.compass-dir {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted);
+  font: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.compass-dir:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.compass-dir-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
+}
+
+.compass-picker-hub {
+  grid-area: c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: var(--icon-sm);
+}
+
+.compass-dir-n {
+  grid-area: n;
+}
+.compass-dir-ne {
+  grid-area: ne;
+}
+.compass-dir-e {
+  grid-area: e;
+}
+.compass-dir-se {
+  grid-area: se;
+}
+.compass-dir-s {
+  grid-area: s;
+}
+.compass-dir-sw {
+  grid-area: sw;
+}
+.compass-dir-w {
+  grid-area: w;
+}
+.compass-dir-nw {
+  grid-area: nw;
+}
+
 select {
   font: inherit;
   font-size: 13px;
@@ -823,6 +902,21 @@ select {
   right: auto;
   transform: translateX(-50%);
   z-index: 55;
+}
+
+/* At tablet width and below, `.room-topbar`'s buttons (back · keyboard
+   shortcuts · print/export, #227/#368) can render wide enough for their
+   trailing edge to reach under the switcher's centred left edge — the repro
+   in #405, where a tap meant for the switcher's "previous" arrow instead hit
+   the topbar's higher z-index. Same guard `.plan-topbar` uses against
+   `.plan-hint-pill`/`.plan-room-panel` at this identical breakpoint (above):
+   stack the switcher a row below the bar instead of overlapping it, rather
+   than computing the bar's rendered width at runtime. Desktop keeps the
+   switcher on the topbar's row, since there's room for both there. */
+@media (max-width: 768px) {
+  .proposal-switcher {
+    top: calc(76px + env(safe-area-inset-top));
+  }
 }
 
 /* One connected, segmented pill — prev · name ▾ · next — sharing a single
@@ -2062,6 +2156,14 @@ select {
     min-height: 44px;
   }
 
+  /* Each direction of the room-orientation compass (PlanRoomPanel.tsx) is a
+     24px round chip on a fine pointer — widen it to a real 44px tap target on
+     coarse pointers, matching .sel-color/.color-field-chip above. */
+  .compass-dir {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   .section summary {
     padding: 16px 20px;
   }
@@ -2177,10 +2279,17 @@ select {
    coarse) block near the top of this file) so its 44px floor wins the cascade
    over the unconditional 38px one. Both selectors have identical specificity
    (one class), so source order decides — a rule earlier in the file loses to
-   an unconditional one later, which is exactly the regression this fixes. */
+   an unconditional one later, which is exactly the regression this fixes.
+   Also floors the width at 44px, same guarantee .sel-color already has above
+   (#404) — icon-only pills (Undo, Redo, Duplicate, Delete, More, Select,
+   Interior, Redraw exterior walls, Cancel drawing, …) were only ~30px wide
+   despite meeting the height floor. Unconditional like .sel-color's own fix:
+   a labelled pill's icon + gap + text + padding already exceeds 44px, so this
+   never visibly changes a labelled pill's width. */
 @media (pointer: coarse) {
   .sel-action {
     min-height: 44px;
+    min-width: 44px;
   }
 }
 

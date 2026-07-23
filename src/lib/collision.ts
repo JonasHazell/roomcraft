@@ -1,4 +1,4 @@
-import type { FurnitureItem, FurnitureKind, Point, Wall, WallOpening } from '../types';
+import type { FurnitureItem, FurnitureKind, Point, Wall, WallOpening } from '../types.ts';
 import {
   clamp,
   clampToPolygon,
@@ -20,7 +20,7 @@ import {
 type Footprint = Pick<FurnitureItem, 'position' | 'rotationY' | 'size'>;
 
 /** Shrinks the footprint so that flush against a wall does not count as a collision. */
-const FIT_SHRINK = 0.015;
+export const FIT_SHRINK = 0.015;
 
 /** The footprint's four corners in the world (same rotation convention as three.js). */
 export function furnitureCorners(item: Footprint, shrink = FIT_SHRINK): Point[] {
@@ -191,13 +191,125 @@ const CLEAR_SPOT_RADIUS_STEP = 0.3;
 const CLEAR_SPOT_ANGLE_STEPS = 12;
 
 /**
+ * Badness penalty for a corner that lands outside the floor polygon, in the same
+ * units as {@link quadOverlapDepth}'s meter-scale overlap depth. Deliberately much
+ * larger than any realistic furniture-overlap depth, so {@link findClearSpot}'s
+ * fallback never prefers a spot that pokes outside the room over one that merely
+ * overlaps furniture inside it.
+ */
+const OUT_OF_FLOOR_PENALTY = 10;
+
+/**
+ * Penetration depth (m) of two convex quads along the axis of least overlap (the
+ * SAT minimum-translation-vector magnitude) — 0 if they don't overlap at all.
+ * Same algorithm as {@link convexOverlap} in `polygon.ts`, but returns a continuous
+ * "how overlapping" measure instead of a boolean, so a fallback spot can be ranked
+ * against another instead of just pass/fail.
+ */
+function quadOverlapDepth(a: Point[], b: Point[]): number {
+  let depth = Infinity;
+  for (const quad of [a, b]) {
+    for (let i = 0; i < quad.length; i++) {
+      const p0 = quad[i];
+      const p1 = quad[(i + 1) % quad.length];
+      const len = Math.hypot(p1.x - p0.x, p1.z - p0.z) || 1;
+      const axis = { x: -(p1.z - p0.z) / len, z: (p1.x - p0.x) / len };
+      let minA = Infinity;
+      let maxA = -Infinity;
+      let minB = Infinity;
+      let maxB = -Infinity;
+      for (const p of a) {
+        const d = p.x * axis.x + p.z * axis.z;
+        minA = Math.min(minA, d);
+        maxA = Math.max(maxA, d);
+      }
+      for (const p of b) {
+        const d = p.x * axis.x + p.z * axis.z;
+        minB = Math.min(minB, d);
+        maxB = Math.max(maxB, d);
+      }
+      const overlap = Math.min(maxA, maxB) - Math.max(minA, minB);
+      if (overlap <= 0) return 0; // a separating axis exists → no overlap
+      depth = Math.min(depth, overlap);
+    }
+  }
+  return depth;
+}
+
+/**
+ * A continuous "how bad is this candidate" score for {@link findClearSpot}'s
+ * fallback: the sum of how far outside the floor polygon the footprint's corners
+ * land (weighted by {@link OUT_OF_FLOOR_PENALTY}) plus its overlap depth against
+ * every interior wall and obstacle. Lower is better; 0 would mean it actually
+ * fits (in which case `furnitureFits` already returns true and this is never
+ * reached).
+ */
+function footprintBadness(
+  item: Footprint,
+  floorPoly: Point[],
+  walls: Wall[],
+  obstacles: Point[][],
+): number {
+  const corners = furnitureCorners(item);
+  let badness = 0;
+  for (const c of corners) {
+    if (!pointInPolygon(c, floorPoly)) badness += OUT_OF_FLOOR_PENALTY;
+  }
+  for (const w of walls) {
+    if (w.kind === 'interior') badness += quadOverlapDepth(corners, interiorWallQuad(w));
+  }
+  for (const obstacle of obstacles) {
+    badness += quadOverlapDepth(corners, obstacle);
+  }
+  return badness;
+}
+
+/**
+ * Minimum gap (m) {@link findClearSpot} tries to leave between a newly-placed
+ * piece and every other footprint already in the room, on top of the ordinary
+ * no-overlap check — so an auto-placed piece reads as sitting apart from its
+ * neighbours instead of flush against them (mere non-overlap, via `FIT_SHRINK`,
+ * tolerates gaps as small as a centimeter or two). 0.18 m is small enough that a
+ * genuinely tight room still finds a spot for the new piece (the ring search
+ * falls back to the closest merely-non-overlapping candidate when no ring point
+ * clears the full margin — see `findClearSpot`), yet large enough to visibly read
+ * as "not touching" rather than embedded. Only affects this auto-placement
+ * search: it does not change `furnitureFits`/`slideFurniture`, so a user can
+ * still drag a piece flush against another on purpose.
+ */
+const CLEAR_SPOT_MIN_GAP = 0.18;
+
+/**
+ * True if `item`'s full-size footprint (unshrunk, unlike `furnitureFits`'s own
+ * corners) keeps at least {@link CLEAR_SPOT_MIN_GAP} of clearance from every
+ * obstacle. Passing a negative `eps` to `convexOverlap` reports anything closer
+ * than `|eps|` apart — including genuine overlap — as "too close", which is
+ * exactly the extra check {@link findClearSpot} needs on top of the ordinary
+ * no-overlap test.
+ */
+function hasClearMargin(item: Footprint, obstacles: Point[][]): boolean {
+  const corners = furnitureCorners(item, 0);
+  return obstacles.every((obstacle) => !convexOverlap(corners, obstacle, -CLEAR_SPOT_MIN_GAP));
+}
+
+/**
  * Finds a spot near `from` where `item` fits without overlapping `obstacles` or a
- * wall — used when placing a new or duplicated piece so it doesn't spawn embedded
- * in furniture already in the room. `from` is tried first (so a caller's small
- * random jitter is kept when it already clears); if that overlaps, candidates are
- * tried in rings of growing radius around `from` until a clear one is found. Falls
- * back to `from` itself if the room is too full to find a clear spot nearby —
- * callers still clamp/nudge as before, so this only ever improves on that.
+ * wall, and — preferentially — keeps a minimum breathing margin from other
+ * furniture too, so it doesn't spawn embedded in or flush against furniture
+ * already in the room. `from` is tried first (so a caller's small random jitter is
+ * kept when it already clears with margin); if that doesn't clear, candidates are
+ * tried in rings of growing radius around `from` until one clears both checks.
+ *
+ * Fallbacks, in order of preference, when no candidate clears the full margin:
+ * the closest candidate that merely avoids overlapping (`from` itself if it
+ * already qualifies, otherwise the first ring hit) — so a tight room still gets a
+ * spot that sits clear. Only when the room is so full that *nothing* fits does
+ * this fall back to the least-overlapping candidate seen, scored by
+ * {@link footprintBadness} (overlap depth against walls/obstacles, plus a heavy
+ * penalty for landing outside the floor). `from` is returned unchanged only when
+ * no tried candidate scores better than it — e.g. a single obstacle blanketing the
+ * whole room — so the result is never worse than doing nothing, and never silently
+ * accepts a known-overlapping `from` when a less-embedded spot exists.
  */
 export function findClearSpot(
   item: Footprint,
@@ -207,15 +319,33 @@ export function findClearSpot(
   obstacles: Point[][],
 ): Point {
   if (obstacles.length === 0) return from;
-  if (furnitureFits({ ...item, position: from }, floorPoly, walls, obstacles)) return from;
+  const fitsAt = (p: Point) => furnitureFits({ ...item, position: p }, floorPoly, walls, obstacles);
+
+  const fromFits = fitsAt(from);
+  if (fromFits && hasClearMargin({ ...item, position: from }, obstacles)) return from;
+
+  // Preferred fallback: the closest candidate that merely avoids overlap (no margin).
+  let fitOnlyFallback: Point | null = fromFits ? from : null;
+  // Last-resort fallback for a room so full nothing fits: the least-overlapping
+  // candidate, so we never return the known-overlapping `from` unchanged.
+  let best = from;
+  let bestBadness = footprintBadness({ ...item, position: from }, floorPoly, walls, obstacles);
+
   for (let radius = CLEAR_SPOT_RADIUS_STEP; radius <= CLEAR_SPOT_MAX_RADIUS; radius += CLEAR_SPOT_RADIUS_STEP) {
     for (let i = 0; i < CLEAR_SPOT_ANGLE_STEPS; i++) {
       const angle = (i / CLEAR_SPOT_ANGLE_STEPS) * Math.PI * 2;
       const p = { x: from.x + Math.cos(angle) * radius, z: from.z + Math.sin(angle) * radius };
-      if (furnitureFits({ ...item, position: p }, floorPoly, walls, obstacles)) return p;
+      const fits = fitsAt(p);
+      if (fits && hasClearMargin({ ...item, position: p }, obstacles)) return p;
+      if (fits && fitOnlyFallback === null) fitOnlyFallback = p;
+      const badness = footprintBadness({ ...item, position: p }, floorPoly, walls, obstacles);
+      if (badness < bestBadness) {
+        bestBadness = badness;
+        best = p;
+      }
     }
   }
-  return from;
+  return fitOnlyFallback ?? best;
 }
 
 /** Tolerance for opening-span overlap checks, in meters (avoids float-noise false positives). */

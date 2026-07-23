@@ -1,5 +1,5 @@
-import type { Design, FurnitureItem, FurnitureKind, Point } from '../../types';
-import type { OpeningInfo } from './geo';
+import type { Design, FurnitureItem, FurnitureKind, Point } from '../../types.ts';
+import type { OpeningInfo } from './geo.ts';
 
 export type RuleCategory =
   | 'Safety'

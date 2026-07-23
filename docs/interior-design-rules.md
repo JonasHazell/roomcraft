@@ -125,6 +125,12 @@ Each rule has the following fields:
 - **Source:** Fire/energy best practice, Boverket
 - **Remedy:** Pull {furniture} forward at least 10 cm and shorten the curtain above the radiator.
 
+### SAF-15 — Furniture must not physically overlap
+- **Category:** Safety · **Room:** All · **Importance:** 5 · **Measurability:** A
+- **Condition:** No two pieces of furniture share overlapping floor footprints (rugs excluded — a rug is meant to have furniture stand on it), beyond the small tolerance the app's own placement logic already treats as "fits" when a piece sits flush against another.
+- **Source:** Best practice (physical plausibility) — an interpenetrating layout cannot exist in reality
+- **Remedy:** Move {piece} so it no longer overlaps {other piece}.
+
 ---
 
 # Level 4 — Accessibility and basic function
@@ -207,11 +213,11 @@ Each rule has the following fields:
 - **Source:** Best practice, harmonizes with feng shui (free flow of chi)
 - **Remedy:** The room has {measured} % clear floor area — remove or downsize {suggested furniture}.
 
-### ACC-14 — Every function has its minimum area
+### ACC-14 — Every function keeps its usable clearance
 - **Category:** Accessibility · **Room:** All · **Importance:** 4 · **Measurability:** A
-- **Condition:** The room's declared functions fit with their standard dimensions: sleeping area (bed + access), dining area (table + chair space), seating group (sofa + table + passage), workspace (desk ≥ 100 × 60 cm + chair). One function must not "borrow" from another so that both become unusable.
+- **Condition:** Desk, sofa, dining table, media unit and bookshelf each keep ≥ 60 % of their standard front-clearance zone free of obstruction; kitchen fittings (counter, stove, fridge) and bathroom fixtures (toilet, bathtub, sink) are checked the same way once the room is declared a kitchen/bathroom (#446). Beds (ACC-05) and wardrobes (ACC-06) have their own dedicated clearance rules and aren't re-checked here; a wall between a fitting and the rest of the room correctly blocks its clearance zone rather than being ignored.
 - **Source:** SS 91 42 21
-- **Remedy:** {Function} does not fully fit in {room} — move it to {other room} or slim down {other function}.
+- **Remedy:** "{Piece}" can't be used as intended — {blocker or wall} takes up the clear space needed in front of it. Move it away from the front of "{piece}".
 
 ---
 

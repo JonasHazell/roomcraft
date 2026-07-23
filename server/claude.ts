@@ -40,6 +40,24 @@ export interface ClaudeUsage {
   outputTokens: number;
 }
 
+/** Adds two token-usage breakdowns, e.g. to fold a repair round into a running total. */
+export function addUsage(a: ClaudeUsage, b: ClaudeUsage): ClaudeUsage {
+  return {
+    inputTokens: a.inputTokens + b.inputTokens,
+    cacheWriteTokens: a.cacheWriteTokens + b.cacheWriteTokens,
+    cacheReadTokens: a.cacheReadTokens + b.cacheReadTokens,
+    outputTokens: a.outputTokens + b.outputTokens,
+  };
+}
+
+/** A zero-valued usage total, e.g. as the seed for {@link addUsage}. */
+export const ZERO_USAGE: ClaudeUsage = {
+  inputTokens: 0,
+  cacheWriteTokens: 0,
+  cacheReadTokens: 0,
+  outputTokens: 0,
+};
+
 export interface ClaudeRunResult {
   structuredOutput: unknown;
   /** The assistant's reply — append this to the history before a follow-up turn. */

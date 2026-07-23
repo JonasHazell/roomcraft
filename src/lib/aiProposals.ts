@@ -2,7 +2,7 @@ import { isHexColor, type Design, type FurnitureItem } from '../types';
 import { FURNITURE_CATALOG } from './furnitureCatalog';
 import { defaultOptions } from './furnitureOptions';
 import { DEFAULT_MATERIAL } from './materials';
-import { defaultMaterials } from './furnitureParts';
+import { normalizeColors, normalizeMaterials } from './furnitureParts';
 
 /**
  * A single furniture piece in an AI proposal. Matches the server's schema
@@ -18,6 +18,10 @@ export interface AiFurniture {
   size: FurnitureItem['size'];
   elevation: number;
   color: string;
+  /** Optional per-part colour overrides the model chose; sanitized via {@link normalizeColors}. */
+  colors?: Record<string, string>;
+  /** Optional per-part material choices the model made; sanitized via {@link normalizeMaterials}. */
+  materials?: Record<string, string>;
   /** One sentence: why the piece is placed right here (rule/principle). */
   reasoning: string;
 }
@@ -61,8 +65,14 @@ export function toFurnitureItem(f: AiFurniture): Omit<FurnitureItem, 'id'> {
     size: f.size,
     elevation: f.elevation,
     color: validHexColor(f.color) ?? FURNITURE_CATALOG[f.kind].defaultColor,
+    // Sanitized the same way the manual editor's own per-part overrides are
+    // (see placeAtCenter/addFurnitureFromLibrary): unknown parts and malformed
+    // values are dropped/defaulted rather than trusted verbatim. When the model
+    // omits a part (or the whole field), normalizeColors/normalizeMaterials fall
+    // back to today's flat defaults.
+    colors: normalizeColors(f.kind, f.colors),
     material: DEFAULT_MATERIAL,
-    materials: defaultMaterials(f.kind),
+    materials: normalizeMaterials(f.kind, f.materials),
     options: defaultOptions(f.kind),
   };
 }

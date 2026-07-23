@@ -450,8 +450,6 @@ export interface FurnitureActions {
   updateFurniture: (id: string, patch: FurniturePatch) => void;
   moveFurniture: (id: string, x: number, z: number) => void;
   removeFurniture: (id: string) => void;
-  /** Replaces the entire furnishing of the active proposal. */
-  setFurniture: (items: Omit<FurnitureItem, 'id'>[]) => void;
   /**
    * Rearranges the existing pieces (move + rotate, same set and ids) to raise the
    * design score, in a single undoable step. Local and deterministic — no AI. Does
