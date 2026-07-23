@@ -125,6 +125,12 @@ Each rule has the following fields:
 - **Source:** Fire/energy best practice, Boverket
 - **Remedy:** Pull {furniture} forward at least 10 cm and shorten the curtain above the radiator.
 
+### SAF-15 — Furniture must not physically overlap
+- **Category:** Safety · **Room:** All · **Importance:** 5 · **Measurability:** A
+- **Condition:** No two pieces of furniture share overlapping floor footprints (rugs excluded — a rug is meant to have furniture stand on it), beyond the small tolerance the app's own placement logic already treats as "fits" when a piece sits flush against another.
+- **Source:** Best practice (physical plausibility) — an interpenetrating layout cannot exist in reality
+- **Remedy:** Move {piece} so it no longer overlaps {other piece}.
+
 ---
 
 # Level 4 — Accessibility and basic function
