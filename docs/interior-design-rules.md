@@ -213,11 +213,11 @@ Each rule has the following fields:
 - **Source:** Best practice, harmonizes with feng shui (free flow of chi)
 - **Remedy:** The room has {measured} % clear floor area — remove or downsize {suggested furniture}.
 
-### ACC-14 — Every function has its minimum area
+### ACC-14 — Every function keeps its usable clearance
 - **Category:** Accessibility · **Room:** All · **Importance:** 4 · **Measurability:** A
-- **Condition:** The room's declared functions fit with their standard dimensions: sleeping area (bed + access), dining area (table + chair space), seating group (sofa + table + passage), workspace (desk ≥ 100 × 60 cm + chair). One function must not "borrow" from another so that both become unusable.
+- **Condition:** Desk, sofa, dining table, media unit and bookshelf each keep ≥ 60 % of their standard front-clearance zone free of obstruction; kitchen fittings (counter, stove, fridge) and bathroom fixtures (toilet, bathtub, sink) are checked the same way once the room is declared a kitchen/bathroom (#446). Beds (ACC-05) and wardrobes (ACC-06) have their own dedicated clearance rules and aren't re-checked here; a wall between a fitting and the rest of the room correctly blocks its clearance zone rather than being ignored.
 - **Source:** SS 91 42 21
-- **Remedy:** {Function} does not fully fit in {room} — move it to {other room} or slim down {other function}.
+- **Remedy:** "{Piece}" can't be used as intended — {blocker or wall} takes up the clear space needed in front of it. Move it away from the front of "{piece}".
 
 ---
 

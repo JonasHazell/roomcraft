@@ -1,5 +1,49 @@
 import { z } from 'zod';
 import { FURNITURE_KINDS } from '../src/lib/furnitureCatalog.ts';
+import { FURNITURE_PARTS } from '../src/lib/furnitureParts.ts';
+import { MATERIAL_CHOICES } from '../src/lib/materials.ts';
+
+/**
+ * Every distinct part key across the furniture catalog (a bed's "frame" vs
+ * "bedding", a table's "top" vs "legs", …) — the same per-part vocabulary the
+ * manual "Colours & materials" editor exposes (see `FURNITURE_PARTS` in
+ * `src/lib/furnitureParts.ts`). Reused here rather than duplicated, so the
+ * schema the model is constrained to can describe a colour/material per part.
+ * A given piece only has a few of these keys (its own kind's parts); the rest
+ * are simply never set for it.
+ */
+const ALL_PART_KEYS = Array.from(
+  new Set(Object.values(FURNITURE_PARTS).flatMap((parts) => parts.map((p) => p.key))),
+).sort();
+
+const MATERIAL_IDS = MATERIAL_CHOICES.map((m) => m.value).join(', ');
+
+/**
+ * One optional field per known part key. Structured output requires every
+ * object to declare `additionalProperties: false` (via `z.strictObject`), so
+ * every part key across the whole catalog has to be enumerated up front —
+ * the model only ever sets the handful that apply to a given piece's kind.
+ */
+function perPartSchema(field: 'colour' | 'material') {
+  return z.strictObject(
+    Object.fromEntries(
+      ALL_PART_KEYS.map((key) => [
+        key,
+        z
+          .string()
+          .optional()
+          .describe(
+            field === 'colour'
+              ? `Colour override for the "${key}" part, as #rrggbb.`
+              : `Material for the "${key}" part. One of: ${MATERIAL_IDS}.`,
+          ),
+      ]),
+    ),
+  );
+}
+
+const aiColorsSchema = perPartSchema('colour');
+const aiMaterialsSchema = perPartSchema('material');
 
 /**
  * Response schema for AI-generated furnishing proposals. Sent as --json-schema
@@ -45,6 +89,21 @@ const aiFurnitureSchema = z.strictObject({
       'Underside above the floor in meters. 0 for furniture standing on the floor; > 0 for wall-mounted items (shelves etc.).',
     ),
   color: z.string().describe("Color as #rrggbb, harmonized with the proposal's palette."),
+  colors: aiColorsSchema
+    .optional()
+    .describe(
+      'Optional per-part colour overrides, keyed by part name (only the keys belonging to ' +
+        "this piece's own kind apply — e.g. a bed has \"frame\"/\"bedding\", a table has " +
+        '"top"/"legs"). Omit a part, or the whole field, to use the base colour above for it. ' +
+        "Not required to vary every part — it's fine for most parts to just follow the base colour.",
+    ),
+  materials: aiMaterialsSchema
+    .optional()
+    .describe(
+      'Optional per-part material/finish, keyed by part name (same per-kind keys as colors). ' +
+        'Omit a part, or the whole field, to use a sensible default finish for it (e.g. a wood ' +
+        "bed frame with fabric bedding). Not required to vary every part."
+    ),
   reasoning: z
     .string()
     .describe('One sentence: why the furniture is placed exactly here (rule/principle).'),
@@ -89,6 +148,10 @@ export interface ResolvedFurniture {
   size: AiFurniture['size'];
   elevation: number;
   color: string;
+  /** Sanitized per-part colour overrides; see {@link ../src/lib/furnitureParts.normalizeColors}. */
+  colors?: Record<string, string>;
+  /** Sanitized per-part materials; see {@link ../src/lib/furnitureParts.normalizeMaterials}. */
+  materials?: Record<string, string>;
   reasoning: string;
 }
 

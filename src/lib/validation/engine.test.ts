@@ -223,6 +223,25 @@ describe('FEN-02 the coffin position', () => {
   });
 });
 
+describe('FEN-08 the cook sees the door', () => {
+  it('flags a stove with its back to the door', () => {
+    // South door around x=2; rotation 0 faces +z (the door's side), so the
+    // cook (facing -z, the opposite way) has their back to it.
+    const stove = piece('stove', 2, 1.5, { width: 0.6, depth: 0.6, height: 0.9 });
+    expect(outcomeOf(makeDesign([stove]), 'FEN-08').status).toBe('violated');
+  });
+
+  it('passes a stove rotated so the cook faces the door', () => {
+    const stove = piece('stove', 2, 1.5, {
+      width: 0.6,
+      depth: 0.6,
+      height: 0.9,
+      rotationY: Math.PI,
+    });
+    expect(outcomeOf(makeDesign([stove]), 'FEN-08').status).toBe('passed');
+  });
+});
+
 describe('ERG-02 TV viewing distance', () => {
   // diagonal = width * 0.92 / 0.87; the far bound is 2.5× the diagonal.
   const tvWidth = 0.87 / 0.92; // → diagonal of exactly 1.0 m
@@ -289,6 +308,27 @@ describe('ERG-10 kitchen work triangle', () => {
       makeDesign([stove(1, 1), sink(3, 1), fridge(3, 2.8)]),
       'ERG-10',
     );
+    expect(outcome.status).toBe('passed');
+  });
+});
+
+describe('FEN-09 fire and water in conflict', () => {
+  const stove = (x: number, z: number) => piece('stove', x, z, { width: 0.6, depth: 0.6, height: 0.9 });
+  const sink = (x: number, z: number) => piece('sink', x, z, { width: 0.6, depth: 0.45, height: 0.85 });
+  const fridge = (x: number, z: number) => piece('fridge', x, z, { width: 0.7, depth: 0.7, height: 1.8 });
+
+  it('flags a stove standing flush against the sink', () => {
+    // stove spans x 0.7-1.3; sink at 1.75 spans x 1.45-2.05 -> 0.15 m gap (< 0.3 m).
+    const outcome = outcomeOf(makeDesign([stove(1, 1), sink(1.75, 1)]), 'FEN-09');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].message).toContain('30–40 cm');
+    }
+  });
+
+  it('passes a stove with a legitimate counter gap to the fridge', () => {
+    // stove spans x 0.7-1.3; fridge at 2.5 spans x 2.15-2.85 -> 0.85 m gap (>= 0.3 m).
+    const outcome = outcomeOf(makeDesign([stove(1, 1), fridge(2.5, 1)]), 'FEN-09');
     expect(outcome.status).toBe('passed');
   });
 });
@@ -748,6 +788,36 @@ describe('LGT-06 screen reflections', () => {
   it('passes a TV facing away from the window', () => {
     const tv = piece('tv', 1.9, 2, { width: 1.3, depth: 0.35, height: 0.8 });
     expect(outcomeOf(makeDesign([tv]), 'LGT-06').status).toBe('passed');
+  });
+});
+
+describe('COL-03 colour by compass orientation', () => {
+  /** makeDesign's room + wall colour, with orientation/wallColor overridden. */
+  function facing(orientation: Design['room']['orientation'], wallColor: string): Design {
+    const d = makeDesign([]);
+    return { ...d, room: { ...d.room, orientation }, wallColor };
+  }
+
+  it('is not applicable when the room orientation is unset', () => {
+    // Mirrors how the engine treats other missing/unrecognised context (e.g.
+    // an unset room type) as not-applicable rather than assuming an answer.
+    expect(outcomeOf(makeDesign([]), 'COL-03').status).toBe('not-applicable');
+  });
+
+  it('flags a north-facing room with cool-toned walls', () => {
+    // A clearly blue-leaning wall colour (B channel far above R).
+    expect(outcomeOf(facing('N', '#3a5a8c'), 'COL-03').status).toBe('violated');
+  });
+
+  it('passes a north-facing room with warm-toned walls', () => {
+    // The app's own warm default wall colour (R channel above B).
+    expect(outcomeOf(facing('N', '#efe8da'), 'COL-03').status).toBe('passed');
+  });
+
+  it('passes a south-facing room even with cool-toned walls', () => {
+    // South-facing rooms "tolerate cooler/saturated colors" per the catalog —
+    // the same cool wall colour that trips a north-facing room is fine here.
+    expect(outcomeOf(facing('S', '#3a5a8c'), 'COL-03').status).toBe('passed');
   });
 });
 

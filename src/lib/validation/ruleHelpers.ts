@@ -1,4 +1,4 @@
-import type { Design, FurnitureItem, FurnitureKind, Point } from '../../types';
+import type { Design, FurnitureItem, FurnitureKind, Point } from '../../types.ts';
 import { floorPolygon, pointInPolygon } from '../polygon.ts';
 import {
   add,
@@ -12,7 +12,7 @@ import {
   stripZone,
   wallsHitQuad,
 } from './geo.ts';
-import type { RuleCtx, RoomType, RuleOutcome, Violation } from './ruleTypes';
+import type { RuleCtx, RoomType, RuleOutcome, Violation } from './ruleTypes.ts';
 import { inferZones } from './zones.ts';
 
 /** Minimum mattress width counted as a double bed (needs access on both sides). */
@@ -131,6 +131,18 @@ export function blockersInZone(
 
 export function names(items: FurnitureItem[]): string {
   return items.map((f) => `"${f.name}"`).join(', ');
+}
+
+/**
+ * A #rrggbb colour's temperature on the red↔blue axis: positive is warm
+ * (red-leaning — orange/red/yellow), negative is cool (blue-leaning —
+ * blue/cyan/purple), near zero is a comparatively neutral hue (green, grey)
+ * that COL-03 doesn't have a strong opinion on. Range is -1..1.
+ */
+export function colorWarmth(hex: string): number {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return (r - b) / 255;
 }
 
 /**

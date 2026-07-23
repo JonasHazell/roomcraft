@@ -1,4 +1,4 @@
-import type { Design, FurnitureItem, Point, Wall, WallOpening } from '../../types';
+import type { Design, FurnitureItem, Point, Wall, WallOpening } from '../../types.ts';
 import { FURNITURE_CATALOG } from '../furnitureCatalog.ts';
 import {
   closestPointOnSegment,
@@ -268,11 +268,6 @@ export function freeComponents(grid: Grid): number[][] {
     }
   }
   return components;
-}
-
-/** Sizes (in cells) of every connected component of free cells. */
-export function freeComponentSizes(grid: Grid): number[] {
-  return freeComponents(grid).map((cells) => cells.length);
 }
 
 /** Flood fill from seed cells; returns the reached cells. */

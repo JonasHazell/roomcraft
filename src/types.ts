@@ -17,8 +17,22 @@ export interface Wall {
   b: Point;
 }
 
+/**
+ * The compass direction the room faces (i.e. where its main daylight comes
+ * from) — an 8-way point, matching the compass picker in `PlanRoomPanel.tsx`.
+ */
+export type CompassDirection = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
+
 export interface Room {
   height: number; // ceiling height, meters
+  /**
+   * Which way the room faces, for rules that depend on daylight direction
+   * (e.g. COL-03's colour-by-orientation guidance). Optional and unset by
+   * default — existing rooms load fine without answering it, and every rule
+   * gated on it (see `lib/validation/rules.ts`) treats "unset" as
+   * not-applicable rather than assuming a direction.
+   */
+  orientation?: CompassDirection;
 }
 
 /** Default floor/wall colours for a fresh proposal. */

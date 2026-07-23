@@ -1,4 +1,4 @@
-import type { Design, FurnitureItem, Point } from '../../types';
+import type { Design, FurnitureItem, Point } from '../../types.ts';
 import { footprint, quadGap } from './geo.ts';
 import { isCoffeeTable, isDiningTable } from './ruleHelpers.ts';
 

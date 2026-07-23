@@ -77,8 +77,12 @@ breaking a hard requirement, and never invent furniture that is not on the list.
 Start from the catalog's default dimensions but adjust sizes reasonably when needed (e.g. bed 1.4/1.6/1.8 m).
 Use "box" with a descriptive name for furniture missing from the catalog (e.g. desk, TV bench, armchair).
 Choose colors that give a cohesive palette — including the floor and wall colours (floorColor,
-wallColor) for the room — so the proposal has a distinct look that fits its direction. Write all
-user-facing text in English.
+wallColor) for the room — so the proposal has a distinct look that fits its direction. A real
+piece of furniture is rarely one flat material: use the optional "colors"/"materials" fields to
+vary a piece's own parts where it reads as more genuine (a wood bed frame with fabric bedding, a
+fabric sofa frame with a contrasting cushion colour, a stone counter worktop over wood cabinets).
+This is optional per part and per piece — leave a part at its default finish whenever there is no
+reason to vary it; not every piece needs customized parts. Write all user-facing text in English.
 Respond only according to the given JSON schema.`;
 
 /**

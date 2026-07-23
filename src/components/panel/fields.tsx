@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import type { CompassDirection } from '../../types';
 import { Icon } from '../ui/Icon';
 
 /** Clamps a value into [min, max] — the bound every NumberField/CountField commits to. */
@@ -238,6 +239,58 @@ export function ColorField({
         </button>
       )}
     </label>
+  );
+}
+
+const COMPASS_DIRS: CompassDirection[] = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+
+/** Full direction name for a compass button's accessible name; the visible glyph stays a short abbreviation. */
+const COMPASS_LABEL: Record<CompassDirection, string> = {
+  N: 'North',
+  NE: 'Northeast',
+  E: 'East',
+  SE: 'Southeast',
+  S: 'South',
+  SW: 'Southwest',
+  W: 'West',
+  NW: 'Northwest',
+};
+
+/**
+ * An 8-way compass rose: tap a direction to set it, tap the active one again
+ * to clear it back to unset. Used by the plan room panel's orientation field
+ * (`PlanRoomPanel.tsx`) — a shape/position-based control rather than a text
+ * dropdown, per DESIGN.md's "minimal and self-evident" principle: the
+ * compass-icon hub plus the ring of direction buttons reads as a compass with
+ * no instructional copy needed.
+ */
+export function CompassPicker({
+  value,
+  onChange,
+}: {
+  value: CompassDirection | undefined;
+  onChange: (dir: CompassDirection | undefined) => void;
+}) {
+  return (
+    <div className="compass-picker" role="group" aria-label="Room orientation">
+      {COMPASS_DIRS.map((dir) => (
+        <button
+          key={dir}
+          type="button"
+          className={`compass-dir compass-dir-${dir.toLowerCase()}${
+            value === dir ? ' compass-dir-active' : ''
+          }`}
+          aria-label={COMPASS_LABEL[dir]}
+          aria-pressed={value === dir}
+          onClick={() => onChange(value === dir ? undefined : dir)}
+        >
+          {dir}
+        </button>
+      ))}
+      <span className="compass-picker-hub" aria-hidden="true">
+        <Icon name="compass" />
+      </span>
+    </div>
   );
 }
 

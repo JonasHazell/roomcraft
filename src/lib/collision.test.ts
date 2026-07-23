@@ -132,4 +132,64 @@ describe('findClearSpot', () => {
     const p = findClearSpot(item(2, 2.5), { x: 2, z: 2.5 }, square, noWalls, [other]);
     expect(p).toEqual({ x: 2, z: 2.5 });
   });
+
+  it('lands with at least a breathing-room gap from an existing piece, not merely non-overlapping', () => {
+    // A sofa-sized piece already sits at the room's center; a new chair-sized
+    // piece is requested at the same spot, as happens via placeAtCenter.
+    const other = furnitureCorners(item(2, 2.5, 1.8, 0.9), 0);
+    const p = findClearSpot(item(2, 2.5, 0.6, 0.6), { x: 2, z: 2.5 }, square, noWalls, [other]);
+    expect(p).not.toEqual({ x: 2, z: 2.5 });
+    const gap = quadGap(furnitureCorners({ position: p, rotationY: 0, size: { width: 0.6, depth: 0.6, height: 1 } }, 0), other);
+    expect(gap).toBeGreaterThanOrEqual(0.18 - 1e-6);
+  });
+
+  it('still finds a spot in a genuinely tight room where no full-margin candidate exists', () => {
+    // A 4×2 m room with one obstacle spanning the full width and most of the
+    // depth (z 0–1.4) leaves only a shallow top strip (z 1.4–2, only 0.6 m
+    // deep) for a 0.5 m piece: room enough to fit without overlapping (a
+    // plain, legitimate placement) but not room enough to also clear the
+    // full 0.18 m margin from the obstacle everywhere in that strip.
+    // Placement must not become impossible just because the margin can't be
+    // fully satisfied — it should fall back to the merely-fitting candidate.
+    const tightRoom: Point[] = [
+      { x: 0, z: 0 },
+      { x: 4, z: 0 },
+      { x: 4, z: 2 },
+      { x: 0, z: 2 },
+    ];
+    const other = furnitureCorners(item(2, 0.7, 4, 1.4), 0);
+    const from = { x: 2, z: 1.7 };
+    // `from` itself already fits (without the extra margin) — confirm the room
+    // really is this tight before asserting on findClearSpot's behavior.
+    expect(furnitureFits(item(from.x, from.z, 0.5, 0.5), tightRoom, noWalls, [other])).toBe(true);
+    const p = findClearSpot(item(from.x, from.z, 0.5, 0.5), from, tightRoom, noWalls, [other]);
+    expect(p).toEqual(from);
+    expect(furnitureFits(item(p.x, p.z, 0.5, 0.5), tightRoom, noWalls, [other])).toBe(true);
+  });
 });
+
+/**
+ * SAT separation gap between two convex quads (0 if touching or overlapping):
+ * the largest per-axis projection gap across both quads' edge normals. Any
+ * axis's gap is a lower bound on the true distance, and — for the
+ * axis-aligned, non-rotated rectangles these tests use, where the closest
+ * features are always parallel edges rather than diagonal corners — the best
+ * axis gives the exact distance.
+ */
+function quadGap(a: Point[], b: Point[]): number {
+  const axes = (poly: Point[]) =>
+    poly.map((p, i) => {
+      const q = poly[(i + 1) % poly.length];
+      const len = Math.hypot(q.x - p.x, q.z - p.z) || 1;
+      return { x: -(q.z - p.z) / len, z: (q.x - p.x) / len };
+    });
+  let maxGap = -Infinity;
+  for (const axis of [...axes(a), ...axes(b)]) {
+    const proj = (poly: Point[]) => poly.map((p) => p.x * axis.x + p.z * axis.z);
+    const pa = proj(a);
+    const pb = proj(b);
+    const gap = Math.max(Math.min(...pb) - Math.max(...pa), Math.min(...pa) - Math.max(...pb));
+    maxGap = Math.max(maxGap, gap);
+  }
+  return Math.max(maxGap, 0);
+}

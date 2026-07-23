@@ -1,22 +1,34 @@
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
-import type { Design, FurnitureLibraryEntry, FurnitureProduct, Project, Proposal, Wall, Workspace } from '../types';
+import type {
+  CompassDirection,
+  Design,
+  FurnitureLibraryEntry,
+  FurnitureProduct,
+  Project,
+  Proposal,
+  Wall,
+  Workspace,
+} from '../types.ts';
 import {
   DEFAULT_FLOOR_COLOR,
   DEFAULT_WALL_COLOR,
   HEX_COLOR_RE,
   SCHEMA_VERSION,
   isHttpsUrl,
-} from '../types';
-import { isAxisParallel, validateExteriorLoop } from './polygon';
-import { FURNITURE_KINDS } from './furnitureCatalog';
-import { normalizeOptions } from './furnitureOptions';
-import { DEFAULT_MATERIAL, normalizeMaterial } from './materials';
-import { normalizeColors, normalizeMaterials } from './furnitureParts';
-import { safeSetItem } from './safeStorage';
+} from '../types.ts';
+import { isAxisParallel, validateExteriorLoop } from './polygon.ts';
+import { FURNITURE_KINDS } from './furnitureCatalog.ts';
+import { normalizeOptions } from './furnitureOptions.ts';
+import { DEFAULT_MATERIAL, normalizeMaterial } from './materials.ts';
+import { normalizeColors, normalizeMaterials } from './furnitureParts.ts';
+import { safeSetItem } from './safeStorage.ts';
 
 const color = z.string().regex(HEX_COLOR_RE, 'invalid color code (expected #rrggbb)');
 const meters = (max: number) => z.number().min(0).max(max);
+const COMPASS_DIRECTIONS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const satisfies readonly CompassDirection[];
+/** Missing entirely in every save made before the field existed — stays unset (undefined) on load. */
+const orientation = z.enum(COMPASS_DIRECTIONS).optional();
 // A surface finish id; unknown/missing ids normalize to the default matte finish,
 // so saves made before materials existed load unchanged.
 const material = z
@@ -209,9 +221,16 @@ type ProjectV4 = z.infer<typeof projectSchemaV4>;
 
 // ---- v5 (current format: floor/wall colour moves onto each proposal) ----
 
-/** The room now only carries what is shared across proposals: the ceiling height. */
+/**
+ * The room now only carries what is shared across proposals: the ceiling
+ * height, plus the optional compass orientation added later (#418) — additive
+ * and backward-compatible, so it needs no schema-version bump: a save made
+ * before the field existed simply has no `orientation` key, which `.optional()`
+ * loads as unset rather than rejecting the room.
+ */
 const roomSchemaV5 = z.object({
   height: z.number().min(1).max(20),
+  orientation,
 });
 
 /** A furnishing variant: its furniture plus its own floor/wall colours. */

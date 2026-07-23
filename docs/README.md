@@ -74,6 +74,7 @@ so the next round gets better. Start with the overview.
 | [`AGENT_ANALYSIS.md`](AGENT_ANALYSIS.md) | Stage C — instructions for the Routine that learns from each decision. |
 | [`AGENT_LEARNINGS.md`](AGENT_LEARNINGS.md) | The pipeline's memory — durable, qualitative lessons appended by Stage C. |
 | [`AGENT_METRICS.md`](AGENT_METRICS.md) | The pipeline's measurable memory — quantitative health and product monitoring. |
+| [`AI_RUNTIME_METRICS.md`](AI_RUNTIME_METRICS.md) | Machine-generated: AI proposal latency/cost/reliability, exported from the `ai_generations` table on a schedule (#402) so Stage C can read real numbers without production log access. Feeds `AGENT_METRICS.md`'s "Product observability" rows. |
 
 ## A note on naming
 
