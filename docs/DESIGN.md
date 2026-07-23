@@ -142,6 +142,13 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   the `undo-2` glyph, pushed to the row's end via `.color-field-reset` — shown
   only once that part has its own override, so the override can be cleared back
   to following the primary colour instead of staying detached permanently.
+  `.compass-picker` (`CompassPicker` in `panel/fields.tsx`) is an 8-way compass
+  rose for a direction field — a 3×3 grid of round `.compass-dir` chips
+  (`.compass-dir-active` for the current one) around a static
+  `.compass-picker-hub` compass icon, with no per-direction text label beyond
+  the compass abbreviation itself (N/NE/E/…); tapping the active direction
+  again clears it. Used by the plan room panel's orientation field (see below),
+  unset by default.
 - **Surfaces** — `.card` + `.card-head` for repeated records; `.chip` (`.door` /
   `.window`) to tag kind (a static tag, not a button); `.section` (`<details>`)
   for collapsible groups; `.modal`
@@ -170,7 +177,8 @@ Reach for these classes (all in `src/index.css`); see them live in the gallery.
   truncates so it never crowds the bar, and `.plan-furnish-btn` drops to icon-only
   below 560px) and the `.plan-furnish-btn` forward action; `.plan-hint-pill`
   (guidance) and `.plan-error-pill` (failure) top-centre; `.plan-length-input` for
-  typing an exact edge length; the `.plan-room-panel` ceiling-height chip; and the
+  typing an exact edge length; the `.plan-room-panel` ceiling-height chip (its
+  floor area and `.compass-picker` orientation field sit in the same chip); and the
   `.plan-wall-panel` — the selected wall's editing sheet, a `.plan-wall-title`
   header over a `.plan-wall-scroll` body of `.field-grid` + the doors/windows
   editor. The sheet is height-capped and its body scrolls, and the editor lifts the

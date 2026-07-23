@@ -756,6 +756,36 @@ describe('LGT-06 screen reflections', () => {
   });
 });
 
+describe('COL-03 colour by compass orientation', () => {
+  /** makeDesign's room + wall colour, with orientation/wallColor overridden. */
+  function facing(orientation: Design['room']['orientation'], wallColor: string): Design {
+    const d = makeDesign([]);
+    return { ...d, room: { ...d.room, orientation }, wallColor };
+  }
+
+  it('is not applicable when the room orientation is unset', () => {
+    // Mirrors how the engine treats other missing/unrecognised context (e.g.
+    // an unset room type) as not-applicable rather than assuming an answer.
+    expect(outcomeOf(makeDesign([]), 'COL-03').status).toBe('not-applicable');
+  });
+
+  it('flags a north-facing room with cool-toned walls', () => {
+    // A clearly blue-leaning wall colour (B channel far above R).
+    expect(outcomeOf(facing('N', '#3a5a8c'), 'COL-03').status).toBe('violated');
+  });
+
+  it('passes a north-facing room with warm-toned walls', () => {
+    // The app's own warm default wall colour (R channel above B).
+    expect(outcomeOf(facing('N', '#efe8da'), 'COL-03').status).toBe('passed');
+  });
+
+  it('passes a south-facing room even with cool-toned walls', () => {
+    // South-facing rooms "tolerate cooler/saturated colors" per the catalog —
+    // the same cool wall colour that trips a north-facing room is fine here.
+    expect(outcomeOf(facing('S', '#3a5a8c'), 'COL-03').status).toBe('passed');
+  });
+});
+
 describe('FEN-26 rugs zone an open-plan room', () => {
   // An open-plan living/dining room: a sofa at one end, a dining set at the other.
   function openPlan(extra: FurnitureItem[] = []): FurnitureItem[] {
