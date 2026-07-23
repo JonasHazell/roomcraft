@@ -13,6 +13,10 @@ import { test, expect } from '@playwright/test';
 test('a door on an exterior wall renders through a camera orbit without errors', async ({
   page,
 }) => {
+  // Building the room, entering the 3D view, and orbiting the WebGL scene is
+  // heavy — comfortably under the default 30s on desktop, but the emulated
+  // mobile viewport renders ~2× slower here, so give it real headroom.
+  test.setTimeout(90_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(String(e)));
 
