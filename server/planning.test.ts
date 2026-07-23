@@ -4,7 +4,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // we can assert the AbortSignal handed to generatePlan (see #381 — server/index.ts
 // derives this from the client connection so a disconnect aborts the in-flight
 // Claude call) reaches every runClaude call it makes, including the repair turn.
-vi.mock('./claude.ts', () => ({ runClaude: vi.fn() }));
+vi.mock('./claude.ts', () => ({
+  runClaude: vi.fn(),
+  // Real implementation (not a spy): generatePlan uses this to fold the repair
+  // round's usage into the running total, so it needs to actually add.
+  addUsage: (a: Record<string, number>, b: Record<string, number>) => ({
+    inputTokens: a.inputTokens + b.inputTokens,
+    cacheWriteTokens: a.cacheWriteTokens + b.cacheWriteTokens,
+    cacheReadTokens: a.cacheReadTokens + b.cacheReadTokens,
+    outputTokens: a.outputTokens + b.outputTokens,
+  }),
+}));
 import type { Design, Wall } from '../src/types.ts';
 import { runClaude } from './claude.ts';
 import { buildPlanBrief, checkPlan, generatePlan, type FurniturePlan, type PlanItem } from './planning.ts';

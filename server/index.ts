@@ -22,7 +22,8 @@ import {
   type AuthUser,
 } from './auth.ts';
 import { createShare, getShare, ShareNotConfiguredError } from './share.ts';
-import { runClaude, type ChatMessages } from './claude.ts';
+import { addUsage, runClaude, ZERO_USAGE, type ChatMessages, type ClaudeUsage } from './claude.ts';
+import { recordAiGeneration } from './aiMetrics.ts';
 import { autoFixProposals } from './autofix.ts';
 import { placeDeskChairs } from './deskChair.ts';
 import { isSameOrigin } from './origin.ts';
@@ -508,6 +509,7 @@ async function generateOneProposal(
   warnings: Finding[];
   costUsd: number;
   calls: number;
+  usage: ClaudeUsage;
 }> {
   // The full conversation is resent on every call (the API is stateless); each
   // repair turn appends to this same history. The shared context carries a cache
@@ -528,10 +530,12 @@ async function generateOneProposal(
     model: MODEL,
     signal,
   });
-  // Accumulate the API cost and call count across the first response plus any
-  // repair turns, so the caller can report a per-proposal and per-request total.
+  // Accumulate the API cost, call count and token usage across the first response
+  // plus any repair turns, so the caller can report a per-proposal and per-request
+  // total.
   let costUsd = first.costUsd;
   let calls = 1;
+  let usage = first.usage;
   console.log(
     `[proposals] ${label}: first response done (${(first.durationMs / 1000).toFixed(1)} s, ` +
       `~${formatUsd(first.costUsd)}; tokens in ${first.usage.inputTokens}, ` +
@@ -581,6 +585,7 @@ async function generateOneProposal(
     });
     costUsd += repaired.costUsd;
     calls += 1;
+    usage = addUsage(usage, repaired.usage);
     console.log(
       `[proposals] ${label}: round done (${(repaired.durationMs / 1000).toFixed(1)} s, ` +
         `~${formatUsd(repaired.costUsd)}; tokens in ${repaired.usage.inputTokens}, ` +
@@ -610,6 +615,7 @@ async function generateOneProposal(
     warnings: repairFindings(bestScore.findings),
     costUsd,
     calls,
+    usage,
   };
 }
 
@@ -624,12 +630,14 @@ async function generateProposals(design: Design, needs: string, signal?: AbortSi
   let planBrief = '';
   let planCostUsd = 0;
   let planCalls = 0;
+  let planUsage = ZERO_USAGE;
   if (TWO_PHASE) {
     try {
-      const { plan, costUsd, calls } = await generatePlan(design, needs, MODEL, signal);
+      const { plan, costUsd, calls, usage } = await generatePlan(design, needs, MODEL, signal);
       planBrief = `\n\n${buildPlanBrief(plan)}`;
       planCostUsd = costUsd;
       planCalls = calls;
+      planUsage = usage;
       const need = plan.items.filter((i) => i.priority === 'need').length;
       const nice = plan.items.filter((i) => i.priority === 'nice').length;
       console.log(
@@ -692,10 +700,18 @@ async function generateProposals(design: Design, needs: string, signal?: AbortSi
   );
 
   // Server-side total for this /api/proposals request: wall-clock time the user
-  // waited, plus the summed API cost and call count across the planning phase and
-  // every proposal and repair turn (only the fulfilled directions incurred cost).
+  // waited, plus the summed API cost, call count and token usage across the
+  // planning phase and every proposal and repair turn (only the fulfilled
+  // directions incurred cost). Excludes the optional AI_JUDGE call, same as the
+  // log line below always has.
   const totalCostUsd = planCostUsd + ok.reduce((sum, r) => sum + r.value.costUsd, 0);
   const totalCalls = planCalls + ok.reduce((sum, r) => sum + r.value.calls, 0);
+  const totalUsage = ok.reduce((sum, r) => addUsage(sum, r.value.usage), planUsage);
+  // Whether any repair/polish round actually ran anywhere in this request — the
+  // planning phase's self-critique round, or a per-proposal round in
+  // generateOneProposal (each starts its own `calls` count at 1 for the first
+  // response, so a total above that baseline means at least one extra round ran).
+  const repaired = planCalls > 1 || ok.some((r) => r.value.calls > 1);
   console.log(
     `[proposals] done in ${((Date.now() - start) / 1000).toFixed(1)} s wall-clock; ` +
       `${totalCalls} Claude API call(s), ~${formatUsd(totalCostUsd)} total.`,
@@ -712,7 +728,14 @@ async function generateProposals(design: Design, needs: string, signal?: AbortSi
       warnings.push(f.message);
     }
   }
-  return { data: { proposals }, warnings: warnings.slice(0, MAX_WARNINGS) };
+  return {
+    data: { proposals },
+    warnings: warnings.slice(0, MAX_WARNINGS),
+    costUsd: totalCostUsd,
+    calls: totalCalls,
+    usage: totalUsage,
+    repaired,
+  };
 }
 
 const server = createServer((req, res) => {
@@ -878,12 +901,29 @@ const server = createServer((req, res) => {
           error: 'The AI service is busy right now. Please try again in a moment.',
         });
       }
+      // Measures just the generation itself (not time spent queueing for a
+      // concurrency slot), for the ai_generations.duration_ms this request will
+      // record below — see #402.
+      const generationStart = Date.now();
       try {
-        const { data, warnings } = await generateProposals(
+        const { data, warnings, costUsd, calls, usage, repaired } = await generateProposals(
           request.design,
           request.needs,
           abortController.signal,
         );
+        // Best-effort, fire-and-forget persistence of this generation's cost/
+        // latency/token/outcome (#402) — never awaited, so it can't delay or fail
+        // this response; recordAiGeneration's own try/catch swallows any error and
+        // it no-ops entirely when no database is configured. Recorded here (rather
+        // than only on successful delivery below) because the generation itself
+        // genuinely completed even if the client that asked for it is now gone.
+        void recordAiGeneration({
+          durationMs: Date.now() - generationStart,
+          costUsd,
+          usage,
+          calls,
+          outcome: repaired ? 'repaired' : 'success',
+        });
         // The client may have disconnected after the generation finished but before
         // we got here (e.g. between the last Claude call resolving and this line) —
         // there is no one left to write the response to, so discard it rather than
@@ -906,16 +946,34 @@ const server = createServer((req, res) => {
         }
         return json(res, 200, { proposals: data.proposals, warnings });
       } catch (e) {
+        // Cost/calls/token totals aren't reliably known once generateProposals has
+        // thrown (the failure may have happened mid-way through accumulating them),
+        // so record what we do know honestly (duration + outcome) rather than a
+        // fabricated total — see server/aiMetrics.ts.
         if (abortController.signal.aborted) {
           // Distinct from both a normal completion and a real error: the client left,
           // so this aborted the in-flight Claude call(s) on purpose. `finally` below
           // still releases the concurrency slot right away rather than waiting for a
           // generation nobody will see finish.
+          void recordAiGeneration({
+            durationMs: Date.now() - generationStart,
+            costUsd: null,
+            usage: null,
+            calls: null,
+            outcome: 'timed_out',
+          });
           console.log(
             '[proposals] client disconnected; aborted in-flight generation early and released its concurrency slot.',
           );
           return;
         }
+        void recordAiGeneration({
+          durationMs: Date.now() - generationStart,
+          costUsd: null,
+          usage: null,
+          calls: null,
+          outcome: 'failed',
+        });
         // Log the full error server-side; return a generic message so raw CLI
         // stderr or ZodError internals aren't leaked to the client.
         console.error('[proposals] error:', e);
