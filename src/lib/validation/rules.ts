@@ -34,6 +34,7 @@ import {
   backAgainstWall,
   backEdgeMid,
   blockersInZone,
+  colorWarmth,
   DOUBLE_BED_MIN_WIDTH,
   fail,
   frontClearFraction,
@@ -1315,6 +1316,34 @@ export const RULES: RuleDef[] = [
         }
       }
       return fail(violations);
+    },
+  },
+  {
+    id: 'COL-03',
+    title: 'Color by compass orientation',
+    category: 'Color & textiles',
+    importance: 2,
+    source: 'Best practice (color theory, NCS practice)',
+    check(ctx) {
+      // Unset orientation is a genuine "we don't know" — treated as
+      // not-applicable rather than assuming a direction, the same way an
+      // unrecognised room type is skipped elsewhere in the engine.
+      const orientation = ctx.design.room.orientation;
+      if (!orientation) return na;
+      const northFacing = orientation === 'N' || orientation === 'NE' || orientation === 'NW';
+      // South/east/west-facing rooms get warmer or more direct light and
+      // "tolerate cooler/saturated colors" per the catalog — no constraint.
+      if (!northFacing) return ok;
+      // North-facing rooms get cold, indirect light; a wall colour that reads
+      // clearly cool (blue-leaning) compounds it. A near-neutral or warm wall
+      // is fine, so only a meaningfully negative warmth trips the rule.
+      if (colorWarmth(ctx.design.wallColor) > -0.05) return ok;
+      return fail([
+        {
+          message: `The room faces ${orientation} (cold, indirect daylight) and the walls read cool-toned — consider a warmer wall shade to compensate.`,
+          furnitureIds: [],
+        },
+      ]);
     },
   },
   {

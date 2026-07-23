@@ -134,6 +134,18 @@ export function names(items: FurnitureItem[]): string {
 }
 
 /**
+ * A #rrggbb colour's temperature on the red↔blue axis: positive is warm
+ * (red-leaning — orange/red/yellow), negative is cool (blue-leaning —
+ * blue/cyan/purple), near zero is a comparatively neutral hue (green, grey)
+ * that COL-03 doesn't have a strong opinion on. Range is -1..1.
+ */
+export function colorWarmth(hex: string): number {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return (r - b) / 255;
+}
+
+/**
  * Seats that belong to a conversation group: sofas plus the armchairs the
  * engine assigns to the seating zone. Chairs the engine routes to the dining
  * or work zone (a chair pulled up to a dining table, or a desk chair facing

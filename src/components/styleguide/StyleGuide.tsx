@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Icon, ICON_NAMES } from '../ui/Icon';
-import { ColorField, NumberField } from '../panel/fields';
+import { ColorField, CompassPicker, NumberField } from '../panel/fields';
+import type { CompassDirection } from '../../types';
 import { ROOM_TEMPLATES, templatePath } from '../../lib/roomTemplates';
 
 /**
@@ -152,6 +153,7 @@ export function StyleGuide() {
   const [modalOpen, setModalOpen] = useState(false);
   const [ceiling, setCeiling] = useState(240);
   const [edge, setEdge] = useState(340);
+  const [orientation, setOrientation] = useState<CompassDirection | undefined>('N');
 
   return (
     <div className="sg-root">
@@ -285,6 +287,16 @@ export function StyleGuide() {
               <span className="field-label">Floor area</span>
               <span className="field-static">≈ 20 m²</span>
             </div>
+          </div>
+        </Demo>
+
+        <Demo
+          title="Compass orientation"
+          note="Which way the room faces (PlanRoomPanel.tsx, below the ceiling-height/floor-area row) — an 8-way tap target instead of a text dropdown. Tap a direction to set it, tap it again to clear it back to unset; unset is the default so existing rooms are never forced to answer it."
+        >
+          <div className="field" style={{ maxWidth: 200 }}>
+            <span className="field-label">Orientation</span>
+            <CompassPicker value={orientation} onChange={setOrientation} />
           </div>
         </Demo>
 
