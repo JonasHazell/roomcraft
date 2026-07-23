@@ -87,35 +87,39 @@ only where a single item dominates a metric.
 <!-- STAGE C: overwrite everything between the markers below each run. -->
 <!-- METRICS-SNAPSHOT:START -->
 
-**Sixteenth snapshot** (this run, 2026-07-23). **Empty run for outcomes** — zero
-new merged/closed agent PRs, zero new issue rejections, zero new human-authored
-merges since the 15th snapshot; `main` has not advanced at all (still `5b7630d`,
-the same head as the 15th snapshot checked). Re-verified directly: the only
+**Seventeenth snapshot** (this run, 2026-07-23). **Empty run for outcomes, third
+consecutive** — zero new merged/closed agent PRs, zero new issue rejections, zero
+new human-authored merges since the sixteenth snapshot; `main` has not advanced at
+all (still `5b7630d`, the same head the sixteenth snapshot checked — confirmed via a
+fresh `git fetch`). Re-verified all four scan channels directly: the only
 `agent:built` PRs matching merged-or-closed-and-not-`agent:analyzed` are this
-stage's own prior meta-PRs (out of scope by definition); zero `agent:ready`
-issues closed without a merged PR are missing `agent:analyzed`; zero open
-`agent:question` issues. **One new finding, not an outcome but worth recording:**
-checking every currently-`agent:building` issue individually (5 total: #402,
-#403, #405, #406, #407) found **#407 stuck** — `agent:building` since
-2026-07-19T14:57 with no PR ever opened, while its four same-batch siblings all
-now have open PRs (#450/#451/#453/#454). This is the second occurrence of the
-exact pattern the 11th snapshot first caught with #386 (see `AGENT_LEARNINGS.md`'s
-Pipeline reliability section, strengthened this run) — left for Stage B's next run
-to reclaim, Stage C doesn't touch `agent:building` itself. `E2E (desktop + mobile)`
-**does have a new data point**: PR #448's own check run (same `5b7630d` base,
-completed 2026-07-22T13:56:19Z) reconfirms `failure` — `Lint, test & build` still
-`success`. Notably, a human-authored PR is now in flight addressing this directly:
-**#452** ("Fix server deploy crash + split E2E CI into a blocking smoke gate,"
-open, unmerged, no labels) replaces the exhaustive-suite required check with a
-fast blocking smoke gate plus a non-blocking full-suite job — exactly the fix this
-snapshot's required-check-integrity row has been asking for since the 9th
-snapshot. Not yet merged, so not a resolved outcome — noted here as context, not
-recorded as a learning until it lands. **PR #448 (14th/15th/16th snapshot) is
-itself still open**, ~1.3 days since creation, zero human comments beyond one bot
-deploy-status comment — a normal review-queue wait, not yet the multi-run stall
-the 13th snapshot hit; no re-escalation warranted. This run folds its numbers into
-#448 rather than opening a second meta-PR, per the reuse-the-branch rule. Δ is
-versus the fifteenth snapshot.
+stage's own 11 prior meta-PRs (out of scope by definition, left untouched); zero
+`agent:ready` issues closed without a merged PR are missing `agent:analyzed`; zero
+human-authored merged PRs since 2026-07-14 are missing `agent:built`/`agent:analyzed`;
+zero open `agent:question` issues to fold back.
+
+**Resolved since last snapshot:** #407, the stuck-`agent:building` issue the
+sixteenth snapshot flagged (no PR since 2026-07-19), now has an open PR (#456,
+opened 2026-07-23T05:22:35Z) — Stage B's reclaim mechanism caught up on its own,
+no Stage C action needed. All 8 currently-`agent:building` issues (#402, #403,
+#404, #405, #406, #407, #408, #409) now each have their own open PR
+(#450/#451/#455/#453/#454/#456/#457/#458) — checked individually, per this file's
+own "a single stuck issue can hide in a healthy-looking batch" habit. Stuck-building
+count is back to 0.
+
+`E2E (desktop + mobile)` **still failing** — reconfirmed on the freshest available
+check run, PR #458's own (same `5b7630d` base, completed 2026-07-23T06:04:14Z):
+`E2E (desktop + mobile)`: `failure`, `Lint, test & build`: `success`. The candidate
+fix is still in flight and still unmerged: **#452** ("Fix server deploy crash +
+split E2E CI into a blocking smoke gate," human-authored, open) hasn't changed
+state since the sixteenth snapshot noted it.
+
+**PR #448 (this meta-PR, carrying the sixteenth snapshot) is itself still open**,
+about 1.3 days since creation, with only a bot deploy-status comment (no human
+reply) — a normal review-queue wait so far, not yet the multi-run stall the
+thirteenth snapshot escalated. This run folds its update into #448 rather than
+opening a new PR, per the reuse-the-branch rule. Δ is versus the sixteenth
+snapshot.
 
 | Metric | Value | Δ | Window / note |
 | ------ | ----- | - | ------------- |
@@ -126,13 +130,13 @@ versus the fifteenth snapshot.
 | Issue-rejection rate | 5 / 107 ≈ 5% | → (unchanged) | no new decisions this run |
 | Median PR size | 140 lines (n=19, last run) | → (unchanged) | no new merges to add to it |
 | Time-to-decision | ≈63.1h (~2.6 days) median (n=19, last run) | → (unchanged) | no new decisions this run |
-| Ready backlog | 31 | ↓ (was 34) | issues `agent:ready` **without** `agent:building`; net decrease as more of the prior batch (#405, #406) moved into `agent:building`/open PRs, offset by one fresh issue (#449, a focus-trap accessibility proposal) |
-| Stuck-building count | 1 | ↑ (was 0) | #407 (FEN-08 rule) — `agent:building` since 2026-07-19, no PR ever opened; see `AGENT_LEARNINGS.md`. The other 4 building issues (#402, #403, #405, #406) each have a healthy open PR |
+| Ready backlog | 28 | ↓ (was 31) | issues `agent:ready` **without** `agent:building`; net decrease as more of the prior batch moved into `agent:building`/open PRs, offset by fresh issues (#417–#443 range; latest #449 already counted last run) |
+| Stuck-building count | 0 | ↓ (was 1) | #407 resolved — see above; all 8 `agent:building` issues now have their own open PR |
 | Duplicate-rejection count | 2 | → (unchanged) | #129, #135 — no new duplicate rejections this run |
 | Open questions | 0 | → (unchanged) | none asked this run either |
 | Question-answer rate | n/a | → (unchanged) | no questions asked yet |
-| **Required-check integrity** | **still failing — reconfirmed on a fresh run, a candidate fix is in flight** | **→ (unchanged, still bad, not re-escalated in severity)** | Fresh check run on `5b7630d` (completed 2026-07-22T13:56): `E2E (desktop + mobile)`: `failure`, `Lint, test & build`: `success`. Human's own PR #452 (open, unmerged) directly targets this — splits the required check into a blocking smoke gate + non-blocking full suite. Combined backlog (ready-without-building + building + open `agent:built` PRs incl. this meta-PR) is **41** (31 + 5 + 5), up from 39 — expected motion, not a regression: #449 is new, and #405/#406 moved from bare issues into open PRs while still counted under `building` |
-| AI proposal latency | not sampled this run | — | 16th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session; #402/PR #450 would fix this once merged |
+| **Required-check integrity** | **still failing — reconfirmed on the freshest available run** | **→ (unchanged, still bad)** | Freshest check run available, PR #458 on `5b7630d` (completed 2026-07-23T06:04:14): `E2E (desktop + mobile)`: `failure`, `Lint, test & build`: `success`. Human's own PR #452 (open, unmerged) still targets this directly. Combined backlog (ready-without-building 28 + building 8 + open `agent:built` PRs incl. this meta-PR 9) is **45**, up from 41 — expected motion (8 issues moved from bare `agent:building` into open PRs, several fresh issues added), not a regression |
+| AI proposal latency | not sampled this run | — | 17th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session; #402/PR #450 would fix this once merged |
 | AI proposal cost | not sampled this run | — | same as above |
 | AI calls per proposal | not sampled this run | — | same as above |
 | AI failure/timeout rate | not sampled this run | — | same as above |

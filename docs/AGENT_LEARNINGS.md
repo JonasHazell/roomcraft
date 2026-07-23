@@ -481,6 +481,11 @@ before this pivot landed.
   check beyond `AGENT_BUILD.md`'s existing reclaim step since two instances, both
   cleanly resolved by that same step, isn't yet evidence the step itself needs to
   change — just that Stage C should keep checking every claimed issue, every run.
+  **Resolved this run (17th snapshot):** #407 now has an open PR (#456, opened
+  2026-07-23T05:22:35Z) — the reclaim step caught up on its own, no Stage C
+  action needed, and all 8 currently-`agent:building` issues have their own PR
+  again. Third instance now cleanly self-resolved by the existing step; still
+  not promoting an additional automatic check on top of it.
 
 - **A promoted script/loop fix is inert until the PR carrying it actually
   merges — "promoted this run" is not the same claim as "in effect this run."**
