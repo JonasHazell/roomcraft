@@ -277,6 +277,27 @@ describe('ERG-10 kitchen work triangle', () => {
   });
 });
 
+describe('FEN-09 fire and water in conflict', () => {
+  const stove = (x: number, z: number) => piece('stove', x, z, { width: 0.6, depth: 0.6, height: 0.9 });
+  const sink = (x: number, z: number) => piece('sink', x, z, { width: 0.6, depth: 0.45, height: 0.85 });
+  const fridge = (x: number, z: number) => piece('fridge', x, z, { width: 0.7, depth: 0.7, height: 1.8 });
+
+  it('flags a stove standing flush against the sink', () => {
+    // stove spans x 0.7-1.3; sink at 1.75 spans x 1.45-2.05 -> 0.15 m gap (< 0.3 m).
+    const outcome = outcomeOf(makeDesign([stove(1, 1), sink(1.75, 1)]), 'FEN-09');
+    expect(outcome.status).toBe('violated');
+    if (outcome.status === 'violated') {
+      expect(outcome.violations[0].message).toContain('30–40 cm');
+    }
+  });
+
+  it('passes a stove with a legitimate counter gap to the fridge', () => {
+    // stove spans x 0.7-1.3; fridge at 2.5 spans x 2.15-2.85 -> 0.85 m gap (>= 0.3 m).
+    const outcome = outcomeOf(makeDesign([stove(1, 1), fridge(2.5, 1)]), 'FEN-09');
+    expect(outcome.status).toBe('passed');
+  });
+});
+
 describe('ACC-13 over-furnishing', () => {
   it('flags a room where furniture covers more than 60% of the floor', () => {
     const boxes = [
