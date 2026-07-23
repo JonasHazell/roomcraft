@@ -1,3 +1,5 @@
+import { clampFurniture } from '../../lib/collision';
+import { floorPolygon } from '../../lib/polygon';
 import {
   clampOpeningIn,
   cloneRoom,
@@ -155,11 +157,14 @@ export function createRoomSlice(set: DesignSet, get: DesignGet): RoomActions {
       const d = get().design;
       const room = { ...d.room, ...patch };
       const next = { ...d, room };
-      // Re-clamp the openings so a lowered ceiling never leaves anything outside.
+      const poly = floorPolygon(next.walls);
+      // Re-clamp the openings and furniture so a lowered ceiling never leaves
+      // anything (a window, a tall wardrobe) poking above it.
       set({
         design: touch({
           ...next,
           openings: next.openings.map((o) => clampOpeningIn(next, o)),
+          furniture: next.furniture.map((f) => clampFurniture(f, poly, room.height)),
         }),
       });
     },

@@ -41,11 +41,33 @@ function quadsOverlap(a: Point[], b: Point[]): boolean {
   return false;
 }
 
-/** Clamps a furniture piece's center to the floor polygon (deliberately center-based). */
-export function clampFurniture(item: FurnitureItem, floorPoly: Point[]): FurnitureItem {
+/**
+ * Floor for a furniture piece's own elevation/height clamp below, meters — kept at
+ * the smallest catalog default (the rug, 2cm) so an already-valid thin piece is
+ * never forced taller just to satisfy this clamp.
+ */
+const MIN_FURNITURE_HEIGHT = 0.02;
+
+/**
+ * Clamps a furniture piece's center to the floor polygon (deliberately center-based)
+ * and its elevation/height so its top never exceeds `roomHeight` — the same
+ * ceiling guarantee {@link clampOpening} already gives doors/windows, given here to
+ * furniture too (see #422).
+ */
+export function clampFurniture(
+  item: FurnitureItem,
+  floorPoly: Point[],
+  roomHeight: number,
+): FurnitureItem {
   const p = clampToPolygon(item.position, floorPoly);
-  if (p === item.position) return item;
-  return { ...item, position: p };
+  const elevation = clamp(item.elevation, 0, Math.max(0, roomHeight - MIN_FURNITURE_HEIGHT));
+  const height = clamp(
+    item.size.height,
+    MIN_FURNITURE_HEIGHT,
+    Math.max(MIN_FURNITURE_HEIGHT, roomHeight - elevation),
+  );
+  if (p === item.position && elevation === item.elevation && height === item.size.height) return item;
+  return { ...item, position: p, elevation, size: { ...item.size, height } };
 }
 
 /**

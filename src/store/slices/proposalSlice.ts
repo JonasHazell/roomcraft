@@ -49,7 +49,7 @@ export function createProposalSlice(set: DesignSet, get: DesignGet): ProposalAct
     addProposalFromFurniture: (name, items, colors) => {
       const d = syncActiveProposal(get().design);
       const poly = floorPolygon(d.walls);
-      const furniture = items.map((it) => clampFurniture({ ...it, id: nanoid(8) }, poly));
+      const furniture = items.map((it) => clampFurniture({ ...it, id: nanoid(8) }, poly, d.room.height));
       const id = nanoid(8);
       const floorColor = colors?.floorColor ?? d.floorColor;
       const wallColor = colors?.wallColor ?? d.wallColor;
@@ -92,7 +92,7 @@ export function createProposalSlice(set: DesignSet, get: DesignGet): ProposalAct
         design: touch({
           ...d,
           activeProposalId: id,
-          furniture: target.furniture.map((f) => clampFurniture(f, poly)),
+          furniture: target.furniture.map((f) => clampFurniture(f, poly, d.room.height)),
           floorColor: target.floorColor,
           wallColor: target.wallColor,
           floorMaterial: target.floorMaterial,
@@ -144,7 +144,7 @@ export function createProposalSlice(set: DesignSet, get: DesignGet): ProposalAct
           ...d,
           proposals,
           activeProposalId: nextActive.id,
-          furniture: nextActive.furniture.map((f) => clampFurniture(f, poly)),
+          furniture: nextActive.furniture.map((f) => clampFurniture(f, poly, d.room.height)),
           floorColor: nextActive.floorColor,
           wallColor: nextActive.wallColor,
           floorMaterial: nextActive.floorMaterial,

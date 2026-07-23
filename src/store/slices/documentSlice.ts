@@ -31,10 +31,10 @@ export function createDocumentSlice(set: DesignSet, get: DesignGet): DocumentAct
         return {
           ...r,
           openings: r.openings.map((o) => clampOpeningIn(r, o)),
-          furniture: r.furniture.map((f) => clampFurniture(f, poly)),
+          furniture: r.furniture.map((f) => clampFurniture(f, poly, r.room.height)),
           proposals: r.proposals.map((p) => ({
             ...p,
-            furniture: p.furniture.map((f) => clampFurniture(f, poly)),
+            furniture: p.furniture.map((f) => clampFurniture(f, poly, r.room.height)),
           })),
         };
       });

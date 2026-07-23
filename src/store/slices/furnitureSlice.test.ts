@@ -122,6 +122,60 @@ describe('updateFurniture collision guarantee (resize/rotate)', () => {
   });
 });
 
+describe('updateFurniture ceiling-height clamp (#422)', () => {
+  beforeEach(() => {
+    store().newProject(); // default room height is 2.5m
+  });
+
+  it('clamps height so a resize taller than the ceiling is reduced, not rejected', () => {
+    const id = store().addFurnitureConfigured({
+      kind: 'wardrobe',
+      name: 'Wardrobe',
+      size: { width: 1, depth: 0.6, height: 2.0 },
+      elevation: 0,
+      color: '#fff',
+    });
+
+    // Resize to 6m tall (matches the field's own max) against a 2.5m ceiling.
+    store().updateFurniture(id, { size: { height: 6 } });
+
+    const after = furniture(id);
+    expect(after.size.height).toBeLessThanOrEqual(2.5);
+    expect(after.elevation + after.size.height).toBeLessThanOrEqual(2.5);
+  });
+
+  it('clamps elevation + height together when both are raised past the ceiling', () => {
+    const id = store().addFurnitureConfigured({
+      kind: 'floor-lamp',
+      name: 'Lamp',
+      size: { width: 0.4, depth: 0.4, height: 1.2 },
+      elevation: 0,
+      color: '#fff',
+    });
+
+    store().updateFurniture(id, { elevation: 2.0, size: { height: 2.0 } }); // sums to 4m
+
+    const after = furniture(id);
+    expect(after.elevation + after.size.height).toBeLessThanOrEqual(2.5);
+  });
+
+  it('lowering the room ceiling reclamps existing furniture that no longer fits', () => {
+    const id = store().addFurnitureConfigured({
+      kind: 'wardrobe',
+      name: 'Wardrobe',
+      size: { width: 1, depth: 0.6, height: 2.2 },
+      elevation: 0,
+      color: '#fff',
+    });
+    expect(furniture(id).size.height).toBe(2.2); // fits the default 2.5m ceiling
+
+    store().setRoom({ height: 2.0 }); // ceiling lowered below the piece's height
+
+    const after = furniture(id);
+    expect(after.size.height).toBeLessThanOrEqual(2.0);
+  });
+});
+
 describe('updateFurniture colour override', () => {
   beforeEach(() => {
     store().newProject();
