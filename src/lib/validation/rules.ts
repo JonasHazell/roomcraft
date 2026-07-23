@@ -1,4 +1,4 @@
-import type { FurnitureItem, FurnitureKind, Point } from '../../types';
+import type { FurnitureItem, FurnitureKind, Point } from '../../types.ts';
 import { FURNITURE_CATALOG } from '../furnitureCatalog.ts';
 import {
   formatCm,
@@ -47,7 +47,7 @@ import {
   sideZone,
   topOf,
 } from './ruleHelpers.ts';
-import type { RuleDef, Violation } from './ruleTypes';
+import type { RuleDef, Violation } from './ruleTypes.ts';
 import { inferZones, zoneAnchors, ZONE_GAP, ZONE_LABEL } from './zones.ts';
 
 // The rule catalog's taxonomy and types live in ruleTypes.ts and the rule-local
@@ -1115,6 +1115,32 @@ export const RULES: RuleDef[] = [
           violations.push({
             message: `Whoever sits at "${d.name}" has their back to the door — rotate the desk so the door is visible diagonally in front.`,
             furnitureIds: [d.id],
+          });
+        }
+      }
+      return fail(violations);
+    },
+  },
+  {
+    id: 'FEN-08',
+    title: 'The cook sees the door',
+    category: 'Feng shui',
+    importance: 3,
+    source: 'Feng shui',
+    appliesTo: ['kök'],
+    check(ctx) {
+      const stoves = ctx.byKind('stove');
+      if (stoves.length === 0 || ctx.doors.length === 0) return na;
+      const violations: Violation[] = [];
+      for (const s of stoves) {
+        const fwd = frontDir(s.rotationY);
+        const cook = add(s.position, fwd, s.size.depth / 2 + 0.3);
+        // The cook faces -fwd; a door in the +fwd half is behind their back.
+        const doorInBack = ctx.doors.some((door) => dot(sub(door.center, cook), fwd) > 0.2);
+        if (doorInBack) {
+          violations.push({
+            message: `Whoever cooks at "${s.name}" has their back to the door — rotate the stove so the door is visible, or add a reflective backsplash behind it.`,
+            furnitureIds: [s.id],
           });
         }
       }

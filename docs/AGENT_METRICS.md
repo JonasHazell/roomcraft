@@ -67,15 +67,22 @@ the click-through can't see:
 
 | Metric | Source | What it tells us |
 | ------ | ------ | ----------------- |
-| **AI proposal latency** | `durationMs` in `[proposals]` server logs | Is the core AI wait getting worse? |
-| **AI proposal cost** | `costUsd` in `[proposals]` server logs | Is a change making the backend expensive? |
-| **AI calls per proposal** | `calls` in `[proposals]` server logs | Are repair/retry loops fanning out? |
-| **AI failure/timeout rate** | error/timeout log lines | Is the flow getting less reliable? |
+| **AI proposal latency** | `durationMs` in `[proposals]` server logs; median/p95 in [`AI_RUNTIME_METRICS.md`](AI_RUNTIME_METRICS.md) | Is the core AI wait getting worse? |
+| **AI proposal cost** | `costUsd` in `[proposals]` server logs; total in [`AI_RUNTIME_METRICS.md`](AI_RUNTIME_METRICS.md) | Is a change making the backend expensive? |
+| **AI calls per proposal** | `calls` in `[proposals]` server logs; average in [`AI_RUNTIME_METRICS.md`](AI_RUNTIME_METRICS.md) | Are repair/retry loops fanning out? |
+| **AI failure/timeout rate** | error/timeout log lines; rate in [`AI_RUNTIME_METRICS.md`](AI_RUNTIME_METRICS.md) | Is the flow getting less reliable? |
 
-Stage C won't always have production log access from a fresh session. When it does
-(or when a PR surfaces these numbers), record the trend. When it doesn't, mark the
-row **"not sampled this run"** rather than guessing — a blank is honest, a fabricated
-number is not.
+Stage C won't always have production log access from a fresh session — but as of
+#402 it doesn't need it for these four rows: every AI generation is persisted to the
+`ai_generations` table (`server/db.ts`, written by `server/aiMetrics.ts`) and
+aggregated into the checked-in, machine-generated
+[`AI_RUNTIME_METRICS.md`](AI_RUNTIME_METRICS.md) by a scheduled workflow
+(`.github/workflows/export-ai-metrics.yml`) — read it directly, the same way this
+file itself is read. When that doc still shows its "no export has run yet" seed state
+(no `DATABASE_URL`/`METRICS_DATABASE_URL` secret configured yet, or the workflow
+hasn't run), or when a PR surfaces these numbers some other way, use those instead.
+Only when neither is available should a row be marked **"not sampled this run"**
+rather than guessing — a blank is honest, a fabricated number is not.
 
 ## The snapshot
 
@@ -87,41 +94,56 @@ only where a single item dominates a metric.
 <!-- STAGE C: overwrite everything between the markers below each run. -->
 <!-- METRICS-SNAPSHOT:START -->
 
-**Thirteenth snapshot** (this run, 2026-07-21). **Empty run for outcomes, fifth
-consecutive** — zero agent PRs merged/closed, zero issues rejected, zero human
-PRs merged since the twelfth snapshot; confirmed directly, still no PR merged to
-`main` since #397 on 2026-07-19T14:25 and no fresh CI run on the default branch
-since. The escalation this run isn't a new outcome, it's a mechanism failure the
-prior four runs' own fixes couldn't have caught: **the twelfth snapshot's own
-promoted fix — the backlog/CI-aware proposal throttle added to
-`AGENT_PROPOSALS.md` — has had zero effect**, because it only exists on this
-still-unmerged `agent/learnings-update` branch. Stage A reads instruction docs
-from the default branch on every fresh run, so it has been proposing at full,
-unthrottled volume the entire time, oblivious to its own supposed fix. Direct
-proof: issue #435 was opened at 2026-07-21T03:00:27Z — nearly two hours *after*
-the throttle commit (01:12) — with no throttling comment anywhere, and the
-combined backlog grew from 53 to **62** in the ~19 hours since. See
-`AGENT_LEARNINGS.md`'s new Pipeline reliability entry ("a promoted fix is inert
-until its PR merges"). The required-check outage itself is now **~2.5 days**
-unresolved (5th consecutive flag), and this meta-PR has now sat unreviewed,
-with no human comment, across **five** runs. Δ is versus the twelfth snapshot.
+**Seventeenth snapshot** (this run, 2026-07-23). **Empty run for outcomes, third
+consecutive** — zero new merged/closed agent PRs, zero new issue rejections, zero
+new human-authored merges since the sixteenth snapshot; `main` has not advanced at
+all (still `5b7630d`, the same head the sixteenth snapshot checked — confirmed via a
+fresh `git fetch`). Re-verified all four scan channels directly: the only
+`agent:built` PRs matching merged-or-closed-and-not-`agent:analyzed` are this
+stage's own 11 prior meta-PRs (out of scope by definition, left untouched); zero
+`agent:ready` issues closed without a merged PR are missing `agent:analyzed`; zero
+human-authored merged PRs since 2026-07-14 are missing `agent:built`/`agent:analyzed`;
+zero open `agent:question` issues to fold back.
+
+**Resolved since last snapshot:** #407, the stuck-`agent:building` issue the
+sixteenth snapshot flagged (no PR since 2026-07-19), now has an open PR (#456,
+opened 2026-07-23T05:22:35Z) — Stage B's reclaim mechanism caught up on its own,
+no Stage C action needed. All 8 currently-`agent:building` issues (#402, #403,
+#404, #405, #406, #407, #408, #409) now each have their own open PR
+(#450/#451/#455/#453/#454/#456/#457/#458) — checked individually, per this file's
+own "a single stuck issue can hide in a healthy-looking batch" habit. Stuck-building
+count is back to 0.
+
+`E2E (desktop + mobile)` **still failing** — reconfirmed on the freshest available
+check run, PR #458's own (same `5b7630d` base, completed 2026-07-23T06:04:14Z):
+`E2E (desktop + mobile)`: `failure`, `Lint, test & build`: `success`. The candidate
+fix is still in flight and still unmerged: **#452** ("Fix server deploy crash +
+split E2E CI into a blocking smoke gate," human-authored, open) hasn't changed
+state since the sixteenth snapshot noted it.
+
+**PR #448 (this meta-PR, carrying the sixteenth snapshot) is itself still open**,
+about 1.3 days since creation, with only a bot deploy-status comment (no human
+reply) — a normal review-queue wait so far, not yet the multi-run stall the
+thirteenth snapshot escalated. This run folds its update into #448 rather than
+opening a new PR, per the reuse-the-branch rule. Δ is versus the sixteenth
+snapshot.
 
 | Metric | Value | Δ | Window / note |
 | ------ | ----- | - | ------------- |
-| Merge rate | 83 / 90 = 92% | → (unchanged) | no new decisions this run |
-| Clean-merge rate | 79 / 83 = 95% | → (unchanged) | no new decisions this run |
-| Edit rate | 4 / 83 = 5% | → (unchanged) | no new decisions this run |
-| PR-rejection rate | 7 / 90 = 8% | → (unchanged) | no new decisions this run |
-| Issue-rejection rate | 5 / 88 = 6% | → (unchanged) | no new decisions this run |
-| Median PR size | 641 lines (n=1) | → (unchanged) | still last run's single data point; no new merges to add to it |
-| Time-to-decision | ≈1422 min (23.7h) median | → (unchanged) | no new decisions this run |
-| Ready backlog | 30 | ↑↑ (was 20) | issues `agent:ready` **without** `agent:building` (30, incl. #435); a fresh Stage A batch landed even after the (unmerged, thus inert) throttle was written — direct evidence the promotion hasn't taken effect, see above |
-| Stuck-building count | 0 | → (unchanged) | all 16 `agent:building` issues have their own open PR (#389–#395, #398, #400, #410–#416); none abandoned |
+| Merge rate | 102 / 109 = 94% | → (unchanged) | no new decisions this run |
+| Clean-merge rate | 98 / 102 = 96% | → (unchanged) | no new decisions this run |
+| Edit rate | 4 / 102 = 4% | → (unchanged) | no new decisions this run |
+| PR-rejection rate | 7 / 109 = 6% | → (unchanged) | no new decisions this run |
+| Issue-rejection rate | 5 / 107 ≈ 5% | → (unchanged) | no new decisions this run |
+| Median PR size | 140 lines (n=19, last run) | → (unchanged) | no new merges to add to it |
+| Time-to-decision | ≈63.1h (~2.6 days) median (n=19, last run) | → (unchanged) | no new decisions this run |
+| Ready backlog | 28 | ↓ (was 31) | issues `agent:ready` **without** `agent:building`; net decrease as more of the prior batch moved into `agent:building`/open PRs, offset by fresh issues (#417–#443 range; latest #449 already counted last run) |
+| Stuck-building count | 0 | ↓ (was 1) | #407 resolved — see above; all 8 `agent:building` issues now have their own open PR |
 | Duplicate-rejection count | 2 | → (unchanged) | #129, #135 — no new duplicate rejections this run |
-| Open questions | 0 | → (unchanged) | none asked yet |
+| Open questions | 0 | → (unchanged) | none asked this run either |
 | Question-answer rate | n/a | → (unchanged) | no questions asked yet |
-| **Required-check integrity** | **still failing, unresolved (~2.5 days, 5th consecutive flag)** | **→ (unchanged, still bad)** | `main`'s latest CI run (head `0f047fa`, after #397) is still the most recent — no fresher run to re-check since nothing has merged. Combined backlog (ready-without-building + building + open built PRs) is now **62** (30 + 16 + 16), up from 53 last run. Still needs the human's Settings → Branches check (repo-admin action only a human can take), a merge/review of this meta-PR itself so the throttle actually takes effect, and separately a fix for `door-leaf-fade.spec.ts`'s orbit-drag timeout — see `AGENT_LEARNINGS.md` |
-| AI proposal latency | not sampled this run | — | 13th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session |
+| **Required-check integrity** | **still failing — reconfirmed on the freshest available run** | **→ (unchanged, still bad)** | Freshest check run available, PR #458 on `5b7630d` (completed 2026-07-23T06:04:14): `E2E (desktop + mobile)`: `failure`, `Lint, test & build`: `success`. Human's own PR #452 (open, unmerged) still targets this directly. Combined backlog (ready-without-building 28 + building 8 + open `agent:built` PRs incl. this meta-PR 9) is **45**, up from 41 — expected motion (8 issues moved from bare `agent:building` into open PRs, several fresh issues added), not a regression |
+| AI proposal latency | not sampled this run | — | 17th consecutive run with no reachable server/runtime logs from this GitHub-only Stage C session; #402/PR #450 would fix this once merged |
 | AI proposal cost | not sampled this run | — | same as above |
 | AI calls per proposal | not sampled this run | — | same as above |
 | AI failure/timeout rate | not sampled this run | — | same as above |

@@ -73,7 +73,11 @@ async function openFurnishView(page: Page) {
 
 /** Every `.sel-action` pill currently on screen must clear the pointer-aware
  *  hit-area rule: >=44px on a coarse (touch) pointer, exactly the unchanged
- *  38px base height on a fine (mouse) pointer. */
+ *  38px base height on a fine (mouse) pointer. Icon-only pills (no
+ *  `.sel-label`) must also clear a >=44px *width* floor on a coarse pointer
+ *  (#404) — labelled pills are already wider than 44px from their own
+ *  icon + gap + text + padding, so they're excluded from the width
+ *  assertion rather than asserted at some arbitrary larger minimum. */
 async function expectPillsMeetTouchTarget(page: Page) {
   const isCoarse = await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches);
   const pills = page.locator('.sel-action');
@@ -83,6 +87,8 @@ async function expectPillsMeetTouchTarget(page: Page) {
   for (let i = 0; i < count; i++) {
     const pill = pills.nth(i);
     const minHeight = await pill.evaluate((el) => parseFloat(getComputedStyle(el).minHeight));
+    const minWidth = await pill.evaluate((el) => parseFloat(getComputedStyle(el).minWidth));
+    const hasLabel = (await pill.locator('.sel-label').count()) > 0;
     if (isCoarse) {
       expect(minHeight).toBeGreaterThanOrEqual(44);
       const box = await pill.boundingBox();
@@ -91,6 +97,10 @@ async function expectPillsMeetTouchTarget(page: Page) {
       // real shortfall. Allow a 0.5px tolerance: it still catches any genuine
       // regression (e.g. back to the 38px base) while ignoring that rounding.
       expect(box?.height ?? 0).toBeGreaterThanOrEqual(43.5);
+      if (!hasLabel) {
+        expect(minWidth).toBeGreaterThanOrEqual(44);
+        expect(box?.width ?? 0).toBeGreaterThanOrEqual(43.5);
+      }
     } else {
       // Fine-pointer (mouse) behaviour must stay exactly as it was: 38px.
       expect(minHeight).toBe(38);
@@ -98,7 +108,12 @@ async function expectPillsMeetTouchTarget(page: Page) {
   }
 }
 
-test('dock pills (ActionBar + HistoryBar) keep their pointer-aware touch target', async ({ page }) => {
+test('dock pills (ActionBar + HistoryBar) keep their pointer-aware touch target', async ({
+  page,
+}, testInfo) => {
+  // Longer than the 30s default: this drives full room-view 3D rendering, which
+  // runs slower under mobile emulation and can brush the default budget.
+  test.setTimeout(90_000);
   await openFurnishView(page);
   // ActionBar's "Add furniture" pill and HistoryBar's undo/redo pills are both
   // on screen with no selection required. (Auto-arrange and AI suggestions
@@ -106,6 +121,9 @@ test('dock pills (ActionBar + HistoryBar) keep their pointer-aware touch target'
   // switcher's menu so this pill can never grow wide enough to collide with
   // the dock's middle contextual slot again — see ActionBar.tsx.)
   await expect(page.locator('.sel-action')).toHaveCount(3);
+  await page.screenshot({
+    path: `/tmp/sel-action-touch-target-${testInfo.project.name}.png`,
+  });
   await expectPillsMeetTouchTarget(page);
 });
 

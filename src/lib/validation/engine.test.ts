@@ -188,6 +188,25 @@ describe('FEN-02 the coffin position', () => {
   });
 });
 
+describe('FEN-08 the cook sees the door', () => {
+  it('flags a stove with its back to the door', () => {
+    // South door around x=2; rotation 0 faces +z (the door's side), so the
+    // cook (facing -z, the opposite way) has their back to it.
+    const stove = piece('stove', 2, 1.5, { width: 0.6, depth: 0.6, height: 0.9 });
+    expect(outcomeOf(makeDesign([stove]), 'FEN-08').status).toBe('violated');
+  });
+
+  it('passes a stove rotated so the cook faces the door', () => {
+    const stove = piece('stove', 2, 1.5, {
+      width: 0.6,
+      depth: 0.6,
+      height: 0.9,
+      rotationY: Math.PI,
+    });
+    expect(outcomeOf(makeDesign([stove]), 'FEN-08').status).toBe('passed');
+  });
+});
+
 describe('ERG-02 TV viewing distance', () => {
   // diagonal = width * 0.92 / 0.87; the far bound is 2.5× the diagonal.
   const tvWidth = 0.87 / 0.92; // → diagonal of exactly 1.0 m

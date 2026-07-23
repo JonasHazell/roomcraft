@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { FURNITURE_KINDS } from '../src/lib/furnitureCatalog.ts';
 import type { Design } from '../src/types.ts';
-import { runClaude, type ChatMessages } from './claude.ts';
+import { addUsage, runClaude, type ChatMessages, type ClaudeUsage } from './claude.ts';
 import { buildUserPrompt } from './prompt.ts';
 
 /**
@@ -147,7 +147,7 @@ export async function generatePlan(
   needs: string,
   model: string,
   signal?: AbortSignal,
-): Promise<{ plan: FurniturePlan; costUsd: number; calls: number }> {
+): Promise<{ plan: FurniturePlan; costUsd: number; calls: number; usage: ClaudeUsage }> {
   const shared = buildUserPrompt(design, needs);
   const messages: ChatMessages = [
     { role: 'user', content: [{ type: 'text', text: shared, cache_control: { type: 'ephemeral' } }] },
@@ -160,10 +160,11 @@ export async function generatePlan(
     model,
     signal,
   });
-  // Accumulate cost/calls so the caller can fold the planning phase into the
+  // Accumulate cost/calls/usage so the caller can fold the planning phase into the
   // per-request total alongside the placement calls.
   let costUsd = first.costUsd;
   let calls = 1;
+  let usage = first.usage;
   console.log(
     `[proposals] plan: first response done (${(first.durationMs / 1000).toFixed(1)} s, ` +
       `~$${first.costUsd.toFixed(4)}; tokens in ${first.usage.inputTokens}, ` +
@@ -172,7 +173,7 @@ export async function generatePlan(
   );
   let plan = planSchema.parse(first.structuredOutput);
   const findings = checkPlan(plan);
-  if (findings.length === 0) return { plan, costUsd, calls };
+  if (findings.length === 0) return { plan, costUsd, calls, usage };
 
   messages.push(first.assistant, { role: 'user', content: buildPlanRepairPrompt(findings) });
   const repaired = await runClaude({
@@ -184,6 +185,7 @@ export async function generatePlan(
   });
   costUsd += repaired.costUsd;
   calls += 1;
+  usage = addUsage(usage, repaired.usage);
   console.log(
     `[proposals] plan: repair done (${(repaired.durationMs / 1000).toFixed(1)} s, ` +
       `~$${repaired.costUsd.toFixed(4)}; tokens in ${repaired.usage.inputTokens}, ` +
@@ -193,5 +195,5 @@ export async function generatePlan(
   const revised = planSchema.parse(repaired.structuredOutput);
   // Only accept the revision if it fixed things (fewer problems), never if it made them worse.
   if (checkPlan(revised).length < findings.length) plan = revised;
-  return { plan, costUsd, calls };
+  return { plan, costUsd, calls, usage };
 }

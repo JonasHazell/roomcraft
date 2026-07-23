@@ -1,5 +1,5 @@
-import { isHexColor, type FurnitureKind } from '../types';
-import { DEFAULT_MATERIAL, normalizeMaterial } from './materials';
+import { isHexColor, type FurnitureKind } from '../types.ts';
+import { DEFAULT_MATERIAL, normalizeMaterial } from './materials.ts';
 
 /**
  * Per-type material parts. Each {@link FurnitureKind} is split into a few named
