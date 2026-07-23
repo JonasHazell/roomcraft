@@ -80,9 +80,11 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
       const nudge = () => (Math.random() - 0.5) * 0.6;
       const candidate = { x: src.position.x + nudge(), z: src.position.z + nudge() };
       // Steer the copy clear of every piece already in the room — including the
-      // original — instead of letting it spawn embedded in it; falls back to the
-      // jittered spot if the room is too full to find a clear one nearby. The
-      // copy (newId) isn't in d.furniture yet, so nothing needs excluding by id.
+      // original — instead of letting it spawn embedded in it. If the room is too
+      // full to find a fully clear spot nearby, findClearSpot itself falls back to
+      // the least-overlapping candidate it tried, never silently to the jittered
+      // spot that's known to overlap. The copy (newId) isn't in d.furniture yet, so
+      // nothing needs excluding by id.
       const obstacles = furnitureObstacles(d.furniture, src.kind);
       const position = findClearSpot(src, candidate, poly, d.walls, obstacles);
       const copy: FurnitureItem = clampFurniture(

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Point, Wall } from '../types';
+import { pointInPolygon } from './polygon.ts';
 import { findClearSpot, furnitureCorners, furnitureFits, slideFurniture } from './collision';
 
 /** 4×5 m room with a corner at the origin, canonical winding. */
@@ -126,10 +127,39 @@ describe('findClearSpot', () => {
     expect(furnitureFits(item(p.x, p.z), square, noWalls, [other])).toBe(true);
   });
 
-  it('falls back to the candidate spot when the room is too full to find a clear one', () => {
-    // Fill the whole room with one giant obstacle — no ring candidate can fit.
+  it('falls back to the candidate spot when every reachable point is equally bad', () => {
+    // One obstacle exactly the size of the room: every point inside the floor is
+    // just as fully swallowed by it as the original candidate, so there's no
+    // better spot to prefer and the (already-overlapping) candidate is fine as-is.
     const other = furnitureCorners(item(2, 2.5, 4, 5), 0);
     const p = findClearSpot(item(2, 2.5), { x: 2, z: 2.5 }, square, noWalls, [other]);
     expect(p).toEqual({ x: 2, z: 2.5 });
+  });
+
+  it('never returns the original candidate unchanged when a less-overlapping spot exists (#421)', () => {
+    // A room too crowded for any fully-clear 1x1 spot: a single obstacle covers
+    // all but a thin 0.1 m margin around the room's edge. The original candidate
+    // (dead centre) lands fully swallowed by the obstacle; before this fix,
+    // findClearSpot's spiral search would exhaust its radius and silently
+    // `return from` — the exact overlapping candidate — instead of one of the
+    // many candidates nearer the room's edge that are only partly inside it.
+    const from = { x: 2, z: 2.5 };
+    const obstacle = furnitureCorners(item(2, 2.5, 3.8, 4.8), 0);
+    const p = findClearSpot(item(2, 2.5), from, square, noWalls, [obstacle]);
+
+    // Still no fully-clear spot exists nearby, so the fallback path is exercised
+    // (this isn't the "moves off a spot... landing somewhere clear" case above).
+    expect(furnitureFits(item(p.x, p.z), square, noWalls, [obstacle])).toBe(false);
+
+    // But the fallback must not be the naive, known-overlapping original candidate.
+    expect(p).not.toEqual(from);
+
+    // And it must be measurably *less* overlapping: every corner of the item at
+    // `from` sits inside the obstacle (fully embedded), while the returned spot
+    // has fewer corners inside it (only partially overlapping).
+    const cornersInside = (at: Point) =>
+      furnitureCorners(item(at.x, at.z)).filter((c) => pointInPolygon(c, obstacle)).length;
+    expect(cornersInside(from)).toBe(4);
+    expect(cornersInside(p)).toBeLessThan(4);
   });
 });
