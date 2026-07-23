@@ -1,7 +1,7 @@
 import { floorPolygon } from '../../lib/polygon';
 import { templateArea } from '../../lib/roomTemplates';
 import { useDesignStore } from '../../store/useDesignStore';
-import { NumberField } from '../panel/fields';
+import { CompassPicker, NumberField } from '../panel/fields';
 
 /**
  * Room-wide dimensions edited in the floor plan. Ceiling height lives here (not
@@ -10,10 +10,14 @@ import { NumberField } from '../panel/fields';
  * floor area sits alongside it as a read-only readout, reusing the same
  * `templateArea` math the New Room picker uses for its template cards (applied
  * to the room's own outline instead of a template's) so the figure reads the
- * same way in both places, and updating live as the outline changes.
+ * same way in both places, and updating live as the outline changes. The
+ * orientation picker sits below: which way the room faces, left unset by
+ * default so existing rooms are never forced to answer it, and used by
+ * daylight-dependent validation rules (e.g. COL-03) once set.
  */
 export function PlanRoomPanel() {
   const height = useDesignStore((s) => s.design.room.height);
+  const orientation = useDesignStore((s) => s.design.room.orientation);
   const walls = useDesignStore((s) => s.design.walls);
   const setRoom = useDesignStore((s) => s.setRoom);
   const area = templateArea(floorPolygon(walls));
@@ -29,11 +33,16 @@ export function PlanRoomPanel() {
           step={1}
           suffix="cm"
           onChange={(v) => setRoom({ height: v / 100 })}
+          commitOnBlur
         />
         <div className="field">
           <span className="field-label">Floor area</span>
           <span className="field-static">{area}</span>
         </div>
+      </div>
+      <div className="field">
+        <span className="field-label">Orientation</span>
+        <CompassPicker value={orientation} onChange={(dir) => setRoom({ orientation: dir })} />
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
-import type { FurnitureItem, FurnitureKind, Point } from '../../types';
+import type { FurnitureItem, FurnitureKind, Point } from '../../types.ts';
+import { FIT_SHRINK } from '../collision.ts';
 import { FURNITURE_CATALOG } from '../furnitureCatalog.ts';
 import {
   formatCm,
@@ -34,6 +35,7 @@ import {
   backAgainstWall,
   backEdgeMid,
   blockersInZone,
+  colorWarmth,
   DOUBLE_BED_MIN_WIDTH,
   fail,
   frontClearFraction,
@@ -47,7 +49,7 @@ import {
   sideZone,
   topOf,
 } from './ruleHelpers.ts';
-import type { RuleDef, Violation } from './ruleTypes';
+import type { RuleDef, Violation } from './ruleTypes.ts';
 import { inferZones, zoneAnchors, ZONE_GAP, ZONE_LABEL } from './zones.ts';
 
 // The rule catalog's taxonomy and types live in ruleTypes.ts and the rule-local
@@ -198,6 +200,34 @@ export const RULES: RuleDef[] = [
             violations.push({
               message: `"${h.name}" hangs directly above "${rest.name}" — move it to a wall without a bed or sofa below.`,
               furnitureIds: [h.id, rest.id],
+            });
+          }
+        }
+      }
+      return fail(violations);
+    },
+  },
+  {
+    id: 'SAF-15',
+    title: 'Furniture must not physically overlap',
+    category: 'Safety',
+    importance: 5,
+    source: 'Best practice (physical plausibility)',
+    check(ctx) {
+      const pieces = ctx.design.furniture.filter((f) => f.kind !== 'rug');
+      if (pieces.length < 2) return na;
+      const violations: Violation[] = [];
+      for (let i = 0; i < pieces.length; i++) {
+        for (let j = i + 1; j < pieces.length; j++) {
+          const a = pieces[i];
+          const b = pieces[j];
+          // Same tolerance the placement code (findClearSpot/furnitureFits) already
+          // treats as "fits" — two pieces flush against each other must not
+          // false-positive here.
+          if (convexOverlap(footprint(a), footprint(b), FIT_SHRINK)) {
+            violations.push({
+              message: `"${a.name}" and "${b.name}" occupy the same floor space — move one so they no longer overlap.`,
+              furnitureIds: [a.id, b.id],
             });
           }
         }
@@ -1122,6 +1152,58 @@ export const RULES: RuleDef[] = [
     },
   },
   {
+    id: 'FEN-08',
+    title: 'The cook sees the door',
+    category: 'Feng shui',
+    importance: 3,
+    source: 'Feng shui',
+    appliesTo: ['kök'],
+    check(ctx) {
+      const stoves = ctx.byKind('stove');
+      if (stoves.length === 0 || ctx.doors.length === 0) return na;
+      const violations: Violation[] = [];
+      for (const s of stoves) {
+        const fwd = frontDir(s.rotationY);
+        const cook = add(s.position, fwd, s.size.depth / 2 + 0.3);
+        // The cook faces -fwd; a door in the +fwd half is behind their back.
+        const doorInBack = ctx.doors.some((door) => dot(sub(door.center, cook), fwd) > 0.2);
+        if (doorInBack) {
+          violations.push({
+            message: `Whoever cooks at "${s.name}" has their back to the door — rotate the stove so the door is visible, or add a reflective backsplash behind it.`,
+            furnitureIds: [s.id],
+          });
+        }
+      }
+      return fail(violations);
+    },
+  },
+  {
+    id: 'FEN-09',
+    title: 'Fire and water in conflict',
+    category: 'Feng shui',
+    importance: 3,
+    source: 'Feng shui',
+    appliesTo: ['kök'],
+    check(ctx) {
+      const stoves = ctx.byKind('stove');
+      const water = [...ctx.byKind('sink'), ...ctx.byKind('fridge')];
+      if (stoves.length === 0 || water.length === 0) return na;
+      const violations: Violation[] = [];
+      for (const s of stoves) {
+        const near = water
+          .map((w) => ({ w, gap: quadGap(footprint(s), footprint(w)) }))
+          .sort((a, b) => a.gap - b.gap)[0];
+        if (near.gap < 0.3) {
+          violations.push({
+            message: `"${s.name}" sits too close to "${near.w.name}" — leave at least 30–40 cm of counter between the stove and the sink/fridge.`,
+            furnitureIds: [s.id, near.w.id],
+          });
+        }
+      }
+      return fail(violations);
+    },
+  },
+  {
     id: 'FEN-10',
     title: 'Mirror not directly facing the door',
     category: 'Feng shui',
@@ -1315,6 +1397,34 @@ export const RULES: RuleDef[] = [
         }
       }
       return fail(violations);
+    },
+  },
+  {
+    id: 'COL-03',
+    title: 'Color by compass orientation',
+    category: 'Color & textiles',
+    importance: 2,
+    source: 'Best practice (color theory, NCS practice)',
+    check(ctx) {
+      // Unset orientation is a genuine "we don't know" — treated as
+      // not-applicable rather than assuming a direction, the same way an
+      // unrecognised room type is skipped elsewhere in the engine.
+      const orientation = ctx.design.room.orientation;
+      if (!orientation) return na;
+      const northFacing = orientation === 'N' || orientation === 'NE' || orientation === 'NW';
+      // South/east/west-facing rooms get warmer or more direct light and
+      // "tolerate cooler/saturated colors" per the catalog — no constraint.
+      if (!northFacing) return ok;
+      // North-facing rooms get cold, indirect light; a wall colour that reads
+      // clearly cool (blue-leaning) compounds it. A near-neutral or warm wall
+      // is fine, so only a meaningfully negative warmth trips the rule.
+      if (colorWarmth(ctx.design.wallColor) > -0.05) return ok;
+      return fail([
+        {
+          message: `The room faces ${orientation} (cold, indirect daylight) and the walls read cool-toned — consider a warmer wall shade to compensate.`,
+          furnitureIds: [],
+        },
+      ]);
     },
   },
   {

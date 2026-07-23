@@ -1,6 +1,16 @@
 import { optNum } from '../../../lib/furnitureOptions';
 import { Mat, shade, type FurnitureProps } from './shared';
 
+/**
+ * Pillow width for a mattress slot of width `slotWidth`, floored to a small
+ * positive value — mirrors Bed's own `mattressW`/`mattressD` clamp (and every
+ * sibling furniture mesh's `Math.max(x, floor)` subtraction guard) so a narrow,
+ * multi-mattress bed can never produce a negative/degenerate `boxGeometry` width.
+ */
+export function bedPillowWidth(slotWidth: number): number {
+  return Math.max(Math.min(0.5, slotWidth - 0.12), 0.05);
+}
+
 export function Bed({ size, color, selected, options }: FurnitureProps) {
   const { width: w, depth: d, height: h } = size;
   const mattresses = optNum(options, 'mattresses', 1);
@@ -35,7 +45,7 @@ export function Bed({ size, color, selected, options }: FurnitureProps) {
       ))}
       {/* one pillow centered on each mattress, near the head end (local -z) */}
       {slots.map((slot, i) => {
-        const pillowW = Math.min(0.5, slot.width - 0.12);
+        const pillowW = bedPillowWidth(slot.width);
         return (
           <mesh key={`p${i}`} castShadow position={[slot.x, h + 0.04, -d / 2 + 0.28]}>
             <boxGeometry args={[pillowW, 0.09, 0.32]} />

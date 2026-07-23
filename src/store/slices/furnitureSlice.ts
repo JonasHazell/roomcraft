@@ -216,13 +216,6 @@ export function createFurnitureSlice(set: DesignSet, get: DesignGet): FurnitureA
       set({ design: touch({ ...d, furniture: d.furniture.filter((f) => f.id !== id) }) });
     },
 
-    setFurniture: (items) => {
-      const d = get().design;
-      const poly = floorPolygon(d.walls);
-      const furniture = items.map((it) => clampFurniture({ ...it, id: nanoid(8) }, poly));
-      set({ design: touch({ ...d, furniture }) });
-    },
-
     autoArrange: () => {
       const d = get().design;
       const before = runValidation(d).total ?? 0;

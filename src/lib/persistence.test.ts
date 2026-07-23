@@ -292,6 +292,25 @@ describe('parseProject', () => {
     expect(parsed.furniture[1].product).toBeUndefined();
   });
 
+  it('loads a room saved before the orientation field existed with it unset', () => {
+    // V1_DESIGN's room has no `orientation` key at all (#418 added the field
+    // later) — it must load fine, with orientation simply undefined rather
+    // than the room being rejected.
+    const room = activeRoom(parseProject(V1_DESIGN));
+    expect(room.room.orientation).toBeUndefined();
+  });
+
+  it('keeps a valid compass orientation and drops an invalid one', () => {
+    const base = parseProject(V1_DESIGN);
+    const room = base.rooms[0];
+    const facingNorth = { ...base, rooms: [{ ...room, room: { ...room.room, orientation: 'N' } }] };
+    const bogus = { ...base, rooms: [{ ...room, room: { ...room.room, orientation: 'northish' } }] };
+    expect(activeRoom(parseProject(JSON.parse(JSON.stringify(facingNorth)))).room.orientation).toBe(
+      'N',
+    );
+    expect(parseProjectSafe(JSON.parse(JSON.stringify(bogus)))).toBeNull();
+  });
+
   it('rejects garbage and broken structures', () => {
     expect(parseProjectSafe(null)).toBeNull();
     expect(parseProjectSafe('hello')).toBeNull();
