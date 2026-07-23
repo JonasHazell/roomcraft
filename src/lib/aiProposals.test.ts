@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchProposals, toFurnitureItem, type AiFurniture } from './aiProposals';
 import { FURNITURE_CATALOG } from './furnitureCatalog';
+import { DEFAULT_MATERIAL } from './materials';
 import type { Design } from '../types';
 
 // Minimal stand-in — fetchProposals only serializes this into the request body.
@@ -37,6 +38,35 @@ describe('toFurnitureItem', () => {
   it('degrades a missing AI colour to the same default an ordinary piece gets', () => {
     const item = toFurnitureItem(aiFurniture({ color: undefined as unknown as string }));
     expect(item.color).toBe(FURNITURE_CATALOG.sofa.defaultColor);
+  });
+
+  it('falls back to the flat default materials when the model omits per-part materials', () => {
+    const item = toFurnitureItem(aiFurniture({}));
+    // A sofa's parts default to fabric frame + fabric cushions (furnitureParts.ts).
+    expect(item.materials).toEqual({ frame: 'fabric', cushions: 'fabric' });
+    expect(item.colors).toBeUndefined();
+  });
+
+  it('keeps a well-formed per-part material the model supplied, defaulting the rest', () => {
+    const item = toFurnitureItem(aiFurniture({ materials: { frame: 'wood' } }));
+    expect(item.materials).toEqual({ frame: 'wood', cushions: 'fabric' });
+  });
+
+  it('degrades an unknown material id to the same flat default an ordinary piece gets', () => {
+    const item = toFurnitureItem(aiFurniture({ materials: { frame: 'not-a-material' } }));
+    expect(item.materials).toEqual({ frame: DEFAULT_MATERIAL, cushions: 'fabric' });
+  });
+
+  it('keeps a well-formed per-part colour override the model supplied', () => {
+    const item = toFurnitureItem(aiFurniture({ colors: { cushions: '#223344' } }));
+    expect(item.colors).toEqual({ cushions: '#223344' });
+  });
+
+  it('drops a malformed per-part colour override and an unknown part key', () => {
+    const item = toFurnitureItem(
+      aiFurniture({ colors: { cushions: 'not-a-colour', bogusPart: '#223344' } }),
+    );
+    expect(item.colors).toBeUndefined();
   });
 });
 
