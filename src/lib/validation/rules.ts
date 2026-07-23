@@ -1122,6 +1122,32 @@ export const RULES: RuleDef[] = [
     },
   },
   {
+    id: 'FEN-09',
+    title: 'Fire and water in conflict',
+    category: 'Feng shui',
+    importance: 3,
+    source: 'Feng shui',
+    appliesTo: ['kök'],
+    check(ctx) {
+      const stoves = ctx.byKind('stove');
+      const water = [...ctx.byKind('sink'), ...ctx.byKind('fridge')];
+      if (stoves.length === 0 || water.length === 0) return na;
+      const violations: Violation[] = [];
+      for (const s of stoves) {
+        const near = water
+          .map((w) => ({ w, gap: quadGap(footprint(s), footprint(w)) }))
+          .sort((a, b) => a.gap - b.gap)[0];
+        if (near.gap < 0.3) {
+          violations.push({
+            message: `"${s.name}" sits too close to "${near.w.name}" — leave at least 30–40 cm of counter between the stove and the sink/fridge.`,
+            furnitureIds: [s.id, near.w.id],
+          });
+        }
+      }
+      return fail(violations);
+    },
+  },
+  {
     id: 'FEN-10',
     title: 'Mirror not directly facing the door',
     category: 'Feng shui',
